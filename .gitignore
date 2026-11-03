@@ -1,0 +1,11 @@
+*.o
+*.elf
+*.prx
+PARAM.SFO
+EBOOT.PBP
+build/
+*.sav
+*.sav.bak
+*.sav.tmp
+*.log
+__pycache__/
