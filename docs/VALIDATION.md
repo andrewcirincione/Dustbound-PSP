@@ -1,44 +1,36 @@
-# Validation — Dustbound 0.1.0
-
-Validated 2026-11-03. This is emulator and host-simulation evidence; no physical PSP was available.
+# 0.2.0 validation record
 
 ## Executable
 
-The release EBOOT was compiled with PSPDEV v20261101 (GCC 15.2.0), targeting the PSP user-mode PRX format, 12 MiB heap, native 480 × 272 framebuffer and a 30 Hz presentation cadence. Actual hardware frame rate, battery use and suspend/resume remain unqualified.
+- Official PSPDEV v20261101 toolchain, GCC 15.2; PSP user-mode PRX packaged in a valid EBOOT/PBP.
+- EBOOT: **451,492 bytes**. SHA-256: `7667615f13efcf09f5bed8cb7ab8b6eeaea53550d323ab4b85188c3c76585e90`.
+- ELF text 327,736 bytes; data 3,060; BSS 1,117,932. Configured heap: 12 MiB. Two 512-stride RGBA framebuffers use 1,114,112 bytes of VRAM. Large-memory SFO flag is disabled; the target is the original 32 MB PSP memory budget.
+- This is a compiled PSP executable. Native screenshots are used for development inspection only; the `v02-*.png` gameplay images were read from the emulated EBOOT's displayed VRAM.
 
-SHA-256 of the emulator-tested EBOOT:
+## Automated checks
 
-`35a5fb4c95e0223b9dec102d16b3b44e83e625213e78b45c84c3871e56220801`
+- **107 simulation checks:** 61 baseline + 46 expansion checks. Includes economy, inventory, eight-member cap, equipment, combat phases and reach, limb consequences, skills, crafting, construction, theft/fencing, contracts, weather, custody, save checksums, v0.1 migration, invalid legacy rollback, fallen-party selection and town flags.
+- **243 render cases:** all 25 screens across nine regions plus all 18 guide chapters. Verified clipping to 480 × 272 and preservation of the unused 32 pixels in every 512-pixel framebuffer row.
+- **2,016/2,016 unique equipment renders** at both 1× gameplay and 5× portrait scale. This checks actual rendered pixels, not names or item IDs. Variants share modular silhouettes and change materials, trim and details; they are not 2,016 hand-authored assets.
+- AddressSanitizer and UndefinedBehaviorSanitizer exercised simulation and render paths. LeakSanitizer is disabled because this execution environment prevents its process inspection; no leak-test claim is made.
+- The baseline includes a 1,000-second simulated world soak with bounds/finite-state checks. This is not a full-length campaign balance test.
 
-`scripts/validate_pbp.py` checks the PBP section table, PARAM.SFO title, embedded PNG dimensions and PSP ELF payload. The package contains no QA marker or prepared saves.
+Evidence: `evidence/v02-native-tests.txt`, `v02-sanitizers.txt`, `v02-render-checks.txt`, `catalog-audit.json`, and the two catalog CSVs.
 
-## Native simulation
+## Actual EBOOT playthroughs
 
-61 assertions pass in the normal build and in an AddressSanitizer + UndefinedBehaviorSanitizer build. Coverage includes transactions, inventory capacity, recruitment, movement and weight, prosthetics, bleeding and knockout, ammunition, food, healing, crafting stations and costs, research, gathering, lockpicking, controller menus, pause, travel orders, save round trips, corrupt-save rejection and 1,000 simulated seconds of world evolution. Two regression checks cover healthy followers intercepting loot while preserving first-aid access to injured followers. Logs are in `evidence/native-tests.txt` and `evidence/sanitizers.txt`.
+Official PPSSPP 1.20.4, headless software renderer and debugger input/VRAM APIs. The headless harness runs without real-time pacing, so host throughput is **not** a PSP frame-rate measurement. The game requests two vblanks per displayed frame (30 Hz cadence); hardware performance has not been established.
 
-LeakSanitizer is disabled (`ASAN_OPTIONS=detect_leaks=0`) because the hosted ptrace environment does not support it. This does not disable address or undefined-behavior checks. Passing tests are not a guarantee of complete game balance or bug-free long saves.
+1. Fresh normal expedition: name keyboard, ronin origin, creation preview, six-slot equipment, walking, Ivo recruitment (420 → 120 silver), a ration purchase (120 → 85), weapon market filter, looting/equipping leather, mining, manual save, loading the played save, preserved party/gear/money, world atlas and all 18 guide pages.
+2. Prepared test saves loaded through the same player-facing save UI: three-member combat encounter, body health, constructed outpost, custom forge interface, Shogun's Rest, surveyed atlas, faction ledger, snow highlands and pine forest.
 
-## Actual EBOOT playthrough
+`v02-15-combat.gif` contains 120 frames read back **inside the PSP executable** through an optional QA recorder. All four animation phases were observed. The recorder copies the same framebuffer the executable presents; it does not substitute a native renderer or fabricate animation frames. `v02-combat-frames.csv` records simulation timestamps and phases. GIF playback timing uses those recorded timestamps. The prepared encounter and advanced world saves are development fixtures, not earned progression. They are excluded from the release.
 
-PPSSPP 1.20.4 was built from its official source archive with the software renderer and headless debugger. Two headless harness settings were changed: `coreParameter.fastForward = false` for controlled input timing, and `g_Config.bIgnoreBadMemAccess = false` so invalid emulated memory access is not hidden. No emulation-core or game-memory patches were used to advance the playthrough.
+The optional `DUST_QA` marker enables pointer telemetry, and `DUST_RECORD` enables a bounded framebuffer capture for testing. Neither marker is included in a playable package; normal play does not record frames. The released EBOOT is the tested binary.
 
-The automated sequence uses PPSSPP's debugger controller-input API. It boots the EBOOT, starts a new Wanderer expedition, opens inventory/skills/body/map, walks to Ivo, recruits him, walks to Mara, buys food, walks to the free salvage crate, loots and equips leather, walks to an iron node and gathers, saves the expedition, and reloads it. Assertions check money (650 → 350 → 315), squad count (1 → 2), the four equipped item IDs, gathered ore, screen states and persistence after loading. During this journey a hostile drifter reaches the town and combat occurs naturally.
+## Limits and outstanding work
 
-Screens 01–07 and 13–17 are from that fresh-start playthrough. Screens 08–12 use reproducible **prepared test saves** for a three-person armored combat encounter and an eight-structure outpost. They demonstrate the same running EBOOT and menu controls, but do not imply that the outpost was built through a complete natural progression playthrough. The fixture generator is in `src/native_main.c`.
-
-The headless screenshot endpoint did not expose the display image, so the script pauses the emulated CPU, reads the current display pointer and emulated VRAM through the official debugger API, decodes the PSP 8888 framebuffer at its 512-pixel stride, crops to the native 480 × 272 display, and resumes. These are actual game frames from the PSP executable, with no compositing or generated imagery. State reads are assertions, not game-state writes. A `DUST_QA` file enables pointer telemetry only in the test folder.
-
-Reproduce after building the native utility and EBOOT:
-
-```sh
-mkdir -p build/emu
-./build/dustbound-native --fixtures build/emu
-cp EBOOT.PBP build/emu/EBOOT.PBP
-python3 scripts/emulator_test.py /path/to/PPSSPPHeadless
-```
-
-Python needs Pillow and websockets. See `evidence/emulator-checks.json` and `evidence/emulator-playthrough.txt` for the assertions and input log. Screenshot naming is by scenario, not execution order.
-
-## Release gates still open
-
-Physical PSP-1000/2000/3000/Go tests, suspend/resume, storage-removal behavior, long multi-hour campaigns, balancing, memory pressure at actor/building caps, and complete natural progression through every crafting/research/raid system. The current renderer is intentionally simple and has no audio. Full Kenshi mechanics and content are not delivered by this alpha.
+- No physical PSP, suspend/resume, battery, memory-stick failure or hardware audio qualification was possible here.
+- Automated checks demonstrate specific rules and paths, not complete game balance or the absence of every bug.
+- Local grid routing, simulated town events, shared market services and jobs are intentionally smaller systems than Kenshi's. There is no full slavery economy, interior simulation, independent multi-squad campaign or comprehensive Kenshi parity.
+- Save migration was tested against a real v0.1 outpost save. Keep backups of valuable expeditions before upgrading.
