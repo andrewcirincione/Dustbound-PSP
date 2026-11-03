@@ -18,3 +18,5 @@ include $(PSPSDK)/lib/build.mak
 $(OBJS): src/game.h src/combat_pose.h
 src/game.o: src/legacy.h
 EBOOT.PBP: assets/ICON0.png assets/PIC1.png
+
+PARAM.SFO: Makefile
