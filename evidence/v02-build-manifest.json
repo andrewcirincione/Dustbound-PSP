@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "eboot_bytes": 461927,
+  "eboot_sha256": "c6b89513b71e9614e759ba8cf53f9de92182109a4befcd4906624f6170ab6587",
+  "prx_sha256": "cf626f33c20434067d73a94bb19a3db4a4d216a92503a50cc023ae9a71b07654",
+  "full_playthrough_eboot_sha256": "7667615f13efcf09f5bed8cb7ab8b6eeaea53550d323ab4b85188c3c76585e90",
+  "full_playthrough_prx_sha256": "cf626f33c20434067d73a94bb19a3db4a4d216a92503a50cc023ae9a71b07654",
+  "final_package_change": "Updated PSP menu background only; byte-identical runtime payload; final boot passed.",
+  "sfo": {
+    "MEMSIZE": 0,
+    "BOOTABLE": 1,
+    "CATEGORY": "MG",
+    "DISC_ID": "UCJS10041",
+    "DISC_VERSION": "1.00",
+    "PARENTAL_LEVEL": 1,
+    "PSP_SYSTEM_VER": "1.00",
+    "REGION": 32768,
+    "TITLE": "Dustbound 0.2.0"
+  },
+  "simulation_checks": 107,
+  "render_cases": 243,
+  "gear_variants": 2016,
+  "physical_psp_tested": false
+}

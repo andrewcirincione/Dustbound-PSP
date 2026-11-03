@@ -1,0 +1,37 @@
+[
+  {
+    "capture": "v02-01-title",
+    "screen": 13,
+    "expected": 13
+  },
+  {
+    "capture": "v02-02-character-creator",
+    "screen": 15,
+    "expected": 15
+  },
+  {
+    "capture": "v02-03-dusk-haven",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v02-04-layered-equipment",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v02-05-six-equipment-slots",
+    "screen": 23,
+    "expected": 23
+  },
+  {
+    "capture": "v02-06-frontier-atlas",
+    "screen": 5,
+    "expected": 5
+  },
+  {
+    "capture": "v02-07-contextual-guide",
+    "screen": 12,
+    "expected": 12
+  }
+]

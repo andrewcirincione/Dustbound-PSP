@@ -1,0 +1,3 @@
+BOOT {'version': '0.2.0', 'screen': 13, 'frames': 30, 'display_pointer': 142951196, 'screen_pointer': 142953948, 'money_pointer': 142955040, 'squad_pointer': 142955048, 'position_pointer': 143104960, 'gear_pointer': 143105312, 'pack_pointer': 143105120, 'health_pointer': 143104984, 'attack_pointer': 143105796, 'time_pointer': 142955020, 'framecount_pointer': 142953944, 'selected_pointer': 142955044, 'selection_pointer': 142953952, 'weather_pointer': 143359280, 'bounty_pointer': 143105396, 'contracts_pointer': 143359288, 'game_pointer': 142955012}
+SCREENSHOT v02-01-title 480x272 screen 13 VRAM 0x4000000
+FINAL EBOOT BOOT PASS /workspace/scratch/f91171b6dca9/Dustbound/build/milestone-lwpwj5ge

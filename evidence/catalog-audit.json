@@ -1,0 +1,10 @@
+{
+  "portrait": {
+    "items": 2016,
+    "distinct_renders": 2016
+  },
+  "gameplay": {
+    "items": 2016,
+    "distinct_renders": 2016
+  }
+}

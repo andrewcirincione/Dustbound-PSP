@@ -1,0 +1,2017 @@
+id,family,material,quality,render_hash,name
+36,0,0,0,51e981805a5c1036,Worn Scrap Katana
+37,0,0,1,98385a4afe05e582,Field Scrap Katana
+38,0,0,2,be0f679e168c84da,Fine Scrap Katana
+39,0,0,3,bd358c268ca389ae,Master Scrap Katana
+40,0,1,0,fbffda98e067ea22,Worn Iron Katana
+41,0,1,1,991c7df34cbb57da,Field Iron Katana
+42,0,1,2,7432977839477e76,Fine Iron Katana
+43,0,1,3,f263a207d54c77aa,Master Iron Katana
+44,0,2,0,c78171557cdb0250,Worn Bronze Katana
+45,0,2,1,8abe230c08c65a14,Field Bronze Katana
+46,0,2,2,28db963f4271e584,Fine Bronze Katana
+47,0,2,3,6c1deb6f63ad11f8,Master Bronze Katana
+48,0,3,0,59f458a0a65dd20c,Worn Steel Katana
+49,0,3,1,1f666fd0eed90b94,Field Steel Katana
+50,0,3,2,dca6f2170376b4bc,Fine Steel Katana
+51,0,3,3,18cb5127bb3bb7d0,Master Steel Katana
+52,0,4,0,85341cc2cc82e338,Worn Black Katana
+53,0,4,1,63d326a904b63d8c,Field Black Katana
+54,0,4,2,e82f9bb7eb117bd4,Fine Black Katana
+55,0,4,3,ed32d3187e79d1a0,Master Black Katana
+56,0,5,0,e5d154a07013a15c,Worn Relic Katana
+57,0,5,1,b7a89711b8713d84,Field Relic Katana
+58,0,5,2,c6e94f19e41394cc,Fine Relic Katana
+59,0,5,3,464483e9f4d0cf08,Master Relic Katana
+60,1,0,0,c24edc9869791cfb,Worn Scrap Wakizashi
+61,1,0,1,6711f7684875442f,Field Scrap Wakizashi
+62,1,0,2,fddbb8e028c7c863,Fine Scrap Wakizashi
+63,1,0,3,32a9fdc641076597,Master Scrap Wakizashi
+64,1,1,0,749532affb3e04d3,Worn Iron Wakizashi
+65,1,1,1,8494ee92536c3d8f,Field Iron Wakizashi
+66,1,1,2,4cba5345158355fb,Fine Iron Wakizashi
+67,1,1,3,5753ef19fc66dbaf,Master Iron Wakizashi
+68,1,2,0,56db0d23eda44e80,Worn Bronze Wakizashi
+69,1,2,1,4365a80deecd5574,Field Bronze Wakizashi
+70,1,2,2,551201a371c9eae0,Fine Bronze Wakizashi
+71,1,2,3,9217c8a152a049c0,Master Bronze Wakizashi
+72,1,3,0,055b79e4284e3c18,Worn Steel Wakizashi
+73,1,3,1,182ecfaabca5b784,Field Steel Wakizashi
+74,1,3,2,68016c61457c6c78,Fine Steel Wakizashi
+75,1,3,3,6bdf9a99100a7e14,Master Steel Wakizashi
+76,1,4,0,0fb49a69f60a8b74,Worn Black Wakizashi
+77,1,4,1,5a25f5fc216d8ca8,Field Black Wakizashi
+78,1,4,2,0ca57553dc4a78dc,Fine Black Wakizashi
+79,1,4,3,d41b2eb2538ff9fc,Master Black Wakizashi
+80,1,5,0,d082642a36a32794,Worn Relic Wakizashi
+81,1,5,1,7c9d0792845faec8,Field Relic Wakizashi
+82,1,5,2,346535c8b532dc04,Fine Relic Wakizashi
+83,1,5,3,ec16d0ebf446ccb0,Master Relic Wakizashi
+84,2,0,0,d0dc137d7505867e,Worn Scrap Nodachi
+85,2,0,1,0ee116cece9bd6da,Field Scrap Nodachi
+86,2,0,2,c08d5e0172d59312,Fine Scrap Nodachi
+87,2,0,3,c246e4edeb68aa8e,Master Scrap Nodachi
+88,2,1,0,d2f5a12d3ea8f508,Worn Iron Nodachi
+89,2,1,1,13e8eb5d5bfed5cc,Field Iron Nodachi
+90,2,1,2,a2091a7af0725558,Fine Iron Nodachi
+91,2,1,3,8e3f4abe9979ecf4,Master Iron Nodachi
+92,2,2,0,cea4141ac828069b,Worn Bronze Nodachi
+93,2,2,1,2a3075760bf4fe97,Field Bronze Nodachi
+94,2,2,2,f00436004994ab83,Fine Bronze Nodachi
+95,2,2,3,f27e02049afd4f1b,Master Bronze Nodachi
+96,2,3,0,7b78bfed19db2a66,Worn Steel Nodachi
+97,2,3,1,8e7c23857a26c562,Field Steel Nodachi
+98,2,3,2,b41ad53d35ae369a,Fine Steel Nodachi
+99,2,3,3,0999b7588a7c8da6,Master Steel Nodachi
+100,2,4,0,0b947cdb349165a3,Worn Black Nodachi
+101,2,4,1,cbd5bbb9d90b9e47,Field Black Nodachi
+102,2,4,2,c650e284e8153ae3,Fine Black Nodachi
+103,2,4,3,145407dae7cc2dc3,Master Black Nodachi
+104,2,5,0,961deb47d5003f96,Worn Relic Nodachi
+105,2,5,1,89f6580b6de8177a,Field Relic Nodachi
+106,2,5,2,0cbdc9d0a4acd07a,Fine Relic Nodachi
+107,2,5,3,33ab3ce02d35d666,Master Relic Nodachi
+108,3,0,0,88052c33fc003d34,Worn Scrap Tanto
+109,3,0,1,6a0a16a31ed440f0,Field Scrap Tanto
+110,3,0,2,41af0bdd52a9a964,Fine Scrap Tanto
+111,3,0,3,958504d65cf11028,Master Scrap Tanto
+112,3,1,0,9f02481badff1736,Worn Iron Tanto
+113,3,1,1,ee25a8ab5b41886e,Field Iron Tanto
+114,3,1,2,57e58322154eef3a,Fine Iron Tanto
+115,3,1,3,0ad12d0d8f138796,Master Iron Tanto
+116,3,2,0,c8c070808bd3f1c7,Worn Bronze Tanto
+117,3,2,1,540a2831d92c3f03,Field Bronze Tanto
+118,3,2,2,3a9e8b3045bf50ab,Fine Bronze Tanto
+119,3,2,3,87bbed43f8a76eb7,Master Bronze Tanto
+120,3,3,0,62c5322990ff525a,Worn Steel Tanto
+121,3,3,1,e944f77e24cfacaa,Field Steel Tanto
+122,3,3,2,632674b19cbc433e,Fine Steel Tanto
+123,3,3,3,8ef92b1b9dacbb0a,Master Steel Tanto
+124,3,4,0,8a03e73030ede50f,Worn Black Tanto
+125,3,4,1,ef516372ba380523,Field Black Tanto
+126,3,4,2,60c020a12dbe68e3,Fine Black Tanto
+127,3,4,3,6afd6d5a3351f527,Master Black Tanto
+128,3,5,0,d41dcbefe5189cea,Worn Relic Tanto
+129,3,5,1,32536faeaa2a11c2,Field Relic Tanto
+130,3,5,2,6307644e1f8b262e,Fine Relic Tanto
+131,3,5,3,addbf5214c0f6c6a,Master Relic Tanto
+132,4,0,0,11ff9412ae679565,Worn Scrap Naginata
+133,4,0,1,5ba8e8cd17719df5,Field Scrap Naginata
+134,4,0,2,744556efdc4b1065,Fine Scrap Naginata
+135,4,0,3,6bb232b14d8a457d,Master Scrap Naginata
+136,4,1,0,e8a7a5bf5b4e17a9,Worn Iron Naginata
+137,4,1,1,2e11cfdc5aa0ac01,Field Iron Naginata
+138,4,1,2,c03dee39f3fbcc19,Fine Iron Naginata
+139,4,1,3,5d09c963f1ac9245,Master Iron Naginata
+140,4,2,0,d16def5cae864af8,Worn Bronze Naginata
+141,4,2,1,80f8f1257d611da0,Field Bronze Naginata
+142,4,2,2,62f4dd9ce10d3b74,Fine Bronze Naginata
+143,4,2,3,215b97d22963163c,Master Bronze Naginata
+144,4,3,0,3c679844358e84ee,Worn Steel Naginata
+145,4,3,1,412e4094c3036e64,Field Steel Naginata
+146,4,3,2,c585100dc31ea6b2,Fine Steel Naginata
+147,4,3,3,631f9d54a14db9ee,Master Steel Naginata
+148,4,4,0,e9dd47039aca851c,Worn Black Naginata
+149,4,4,1,91637a8471d670e4,Field Black Naginata
+150,4,4,2,0ae208c08d60ab40,Fine Black Naginata
+151,4,4,3,626abd2ffc5931e0,Master Black Naginata
+152,4,5,0,51fa12fcc2e6a30a,Worn Relic Naginata
+153,4,5,1,61a82d57e17e6ea8,Field Relic Naginata
+154,4,5,2,227f47432061aef6,Fine Relic Naginata
+155,4,5,3,4b112c1d1defbcd2,Master Relic Naginata
+156,5,0,0,48edaf4b7524ecb2,Worn Scrap Yari
+157,5,0,1,555fda14da8e487a,Field Scrap Yari
+158,5,0,2,e13de243b8e20412,Fine Scrap Yari
+159,5,0,3,ab632993c9bb7313,Master Scrap Yari
+160,5,1,0,bb33915ff7710e32,Worn Iron Yari
+161,5,1,1,f07267b4efc07d3e,Field Iron Yari
+162,5,1,2,326dddf05ff8702a,Fine Iron Yari
+163,5,1,3,fc4efc42262619bd,Master Iron Yari
+164,5,2,0,acd4e9785723ded3,Worn Bronze Yari
+165,5,2,1,9bdbc8b7116784a3,Field Bronze Yari
+166,5,2,2,54fbacefb0e7aebf,Fine Bronze Yari
+167,5,2,3,c6e615419fe2417a,Master Bronze Yari
+168,5,3,0,9f49651d04487d29,Worn Steel Yari
+169,5,3,1,bc04466b546bf1a3,Field Steel Yari
+170,5,3,2,3b7385d65c4bfd3d,Fine Steel Yari
+171,5,3,3,9f809ce40c0777af,Master Steel Yari
+172,5,4,0,58f91e92aad27547,Worn Black Yari
+173,5,4,1,f484d523be320037,Field Black Yari
+174,5,4,2,2376903171c59113,Fine Black Yari
+175,5,4,3,7a740d2bd687dc4a,Master Black Yari
+176,5,5,0,7da757cc23fb0305,Worn Relic Yari
+177,5,5,1,c8d722e837694bb7,Field Relic Yari
+178,5,5,2,84d9263cf9427b91,Fine Relic Yari
+179,5,5,3,953439efb4a45907,Master Relic Yari
+180,6,0,0,672efd1af664d1b0,Worn Scrap Nagamaki
+181,6,0,1,8e7188cd600c32ff,Field Scrap Nagamaki
+182,6,0,2,0f123a07553aae74,Fine Scrap Nagamaki
+183,6,0,3,6e4cf48d62088fcf,Master Scrap Nagamaki
+184,6,1,0,00eeb502eb80a860,Worn Iron Nagamaki
+185,6,1,1,b22fc024fa20e7d9,Field Iron Nagamaki
+186,6,1,2,e4c196488423fefa,Fine Iron Nagamaki
+187,6,1,3,c0a06f58bc6cd753,Master Iron Nagamaki
+188,6,2,0,f15cca2b6f1c0100,Worn Bronze Nagamaki
+189,6,2,1,ef6b1b871c7b591f,Field Bronze Nagamaki
+190,6,2,2,a4d2cffffda5260e,Fine Bronze Nagamaki
+191,6,2,3,ae8488d1e48640ff,Master Bronze Nagamaki
+192,6,3,0,11855d6e511cb16e,Worn Steel Nagamaki
+193,6,3,1,6195cee7c285aff2,Field Steel Nagamaki
+194,6,3,2,769b0f81b889af51,Fine Steel Nagamaki
+195,6,3,3,3c35bb1e4515065b,Master Steel Nagamaki
+196,6,4,0,ffdaccc4a40bdc48,Worn Black Nagamaki
+197,6,4,1,3c623d7e8be41e3b,Field Black Nagamaki
+198,6,4,2,259ce265df00edf2,Fine Black Nagamaki
+199,6,4,3,54b98cce4c69dfaf,Master Black Nagamaki
+200,6,5,0,5f4911cf86269096,Worn Relic Nagamaki
+201,6,5,1,7b188b649d8c789e,Field Relic Nagamaki
+202,6,5,2,66522461f3f856ed,Fine Relic Nagamaki
+203,6,5,3,13f0f85fc27bcd9b,Master Relic Nagamaki
+204,7,0,0,1c0b1983c9430d77,Worn Scrap Kusarigama
+205,7,0,1,c8ba28cd6682edaf,Field Scrap Kusarigama
+206,7,0,2,3697e20ecf4e61db,Fine Scrap Kusarigama
+207,7,0,3,101c311c081f446f,Master Scrap Kusarigama
+208,7,1,0,4e3cf81687ba2a25,Worn Iron Kusarigama
+209,7,1,1,b33afbfd994c6bb1,Field Iron Kusarigama
+210,7,1,2,0f0a81baba759c1d,Fine Iron Kusarigama
+211,7,1,3,14d3b4375346aee1,Master Iron Kusarigama
+212,7,2,0,1c675c16a290bb95,Worn Bronze Kusarigama
+213,7,2,1,b8e124fa4221c7c5,Field Bronze Kusarigama
+214,7,2,2,5db54560c6cb1fb1,Fine Bronze Kusarigama
+215,7,2,3,d1f07abffa888199,Master Bronze Kusarigama
+216,7,3,0,1b26ce9bd9141aa8,Worn Steel Kusarigama
+217,7,3,1,018785465f6a1cf4,Field Steel Kusarigama
+218,7,3,2,f5c088b40889ed24,Fine Steel Kusarigama
+219,7,3,3,26a67fb99f8b6450,Master Steel Kusarigama
+220,7,4,0,521edf04e1cd30b9,Worn Black Kusarigama
+221,7,4,1,87350c74b9d56c19,Field Black Kusarigama
+222,7,4,2,9b36e94930ff928d,Fine Black Kusarigama
+223,7,4,3,ddc570116e7ee7e5,Master Black Kusarigama
+224,7,5,0,7118ca78bb5859e4,Worn Relic Kusarigama
+225,7,5,1,7e7d21eda7f6f120,Field Relic Kusarigama
+226,7,5,2,2c4b6a7e3da50770,Fine Relic Kusarigama
+227,7,5,3,0a9115f650c51544,Master Relic Kusarigama
+228,8,0,0,1de38e1eecfe1efb,Worn Scrap Frontier sabre
+229,8,0,1,cafcdc11e172daec,Field Scrap Frontier sabre
+230,8,0,2,25b90c9c67e82589,Fine Scrap Frontier sabre
+231,8,0,3,c4c75611e7de7561,Master Scrap Frontier sabre
+232,8,1,0,6fa36136572dffb7,Worn Iron Frontier sabre
+233,8,1,1,fdbc2ab8b8ba4cc4,Field Iron Frontier sabre
+234,8,1,2,1d8071e4cf919925,Fine Iron Frontier sabre
+235,8,1,3,790b937eeb39f505,Master Iron Frontier sabre
+236,8,2,0,6d888fe91ed78d25,Worn Bronze Frontier sabre
+237,8,2,1,79a1c470a6609866,Field Bronze Frontier sabre
+238,8,2,2,e2cbad5c20923d9f,Fine Bronze Frontier sabre
+239,8,2,3,8ed4e52d5ceb11c7,Master Bronze Frontier sabre
+240,8,3,0,0027ef6b0e280081,Worn Steel Frontier sabre
+241,8,3,1,1364a6ec615842e6,Field Steel Frontier sabre
+242,8,3,2,390dac80a32e8947,Fine Steel Frontier sabre
+243,8,3,3,03b7298fffa20e2f,Master Steel Frontier sabre
+244,8,4,0,e5e4efc690de744d,Worn Black Frontier sabre
+245,8,4,1,1022eb086e8c2c7e,Field Black Frontier sabre
+246,8,4,2,2ab8723cd51b87ef,Fine Black Frontier sabre
+247,8,4,3,fdbf0f64d084bc3f,Master Black Frontier sabre
+248,8,5,0,a13add41eba058b1,Worn Relic Frontier sabre
+249,8,5,1,75c0394a72f66c96,Field Relic Frontier sabre
+250,8,5,2,d510d86cda8b7a57,Fine Relic Frontier sabre
+251,8,5,3,f688c74e7ff895d7,Master Relic Frontier sabre
+252,9,0,0,be5ba237909485c5,Worn Scrap Bowie knife
+253,9,0,1,dca3a76d7427a3c1,Field Scrap Bowie knife
+254,9,0,2,324d3615550e03a1,Fine Scrap Bowie knife
+255,9,0,3,0f20909d4ed0cc35,Master Scrap Bowie knife
+256,9,1,0,b4179a36f94512d7,Worn Iron Bowie knife
+257,9,1,1,6e4311a6e823b177,Field Iron Bowie knife
+258,9,1,2,a9e13ac2b8ce01df,Fine Iron Bowie knife
+259,9,1,3,0cf3da0a278c5a1b,Master Iron Bowie knife
+260,9,2,0,51894150ab709cd5,Worn Bronze Bowie knife
+261,9,2,1,f415c2ddc034d071,Field Bronze Bowie knife
+262,9,2,2,c942be3bd1cdadc5,Fine Bronze Bowie knife
+263,9,2,3,1229e977627ba6e1,Master Bronze Bowie knife
+264,9,3,0,e53f861dfa67e68e,Worn Steel Bowie knife
+265,9,3,1,2deccd6d0868f57e,Field Steel Bowie knife
+266,9,3,2,cfbb4de5b8ed64e2,Fine Steel Bowie knife
+267,9,3,3,d41a083dd3de7336,Master Steel Bowie knife
+268,9,4,0,4aa643ab06d72161,Worn Black Bowie knife
+269,9,4,1,9d86da075512e695,Field Black Bowie knife
+270,9,4,2,0f711790ec453421,Fine Black Bowie knife
+271,9,4,3,4fc9344b297dead5,Master Black Bowie knife
+272,9,5,0,661c969699cb39aa,Worn Relic Bowie knife
+273,9,5,1,e2bc0267b44afa02,Field Relic Bowie knife
+274,9,5,2,c13c194477f41c6e,Fine Relic Bowie knife
+275,9,5,3,d0f1aedc2823c52a,Master Relic Bowie knife
+276,10,0,0,991dab0dafa40512,Worn Scrap Trail machete
+277,10,0,1,acb343f0883fe88e,Field Scrap Trail machete
+278,10,0,2,2d7a51035a37bfbe,Fine Scrap Trail machete
+279,10,0,3,ecbf7bb61edea0f2,Master Scrap Trail machete
+280,10,1,0,80e58d452ad495d8,Worn Iron Trail machete
+281,10,1,1,5cff8c622b935ba4,Field Iron Trail machete
+282,10,1,2,6131df70b050cc00,Fine Iron Trail machete
+283,10,1,3,79d5582f48caa214,Master Iron Trail machete
+284,10,2,0,cb2aab106c6dc331,Worn Bronze Trail machete
+285,10,2,1,c666b7409d567bbd,Field Bronze Trail machete
+286,10,2,2,1af33f51dfa78825,Fine Bronze Trail machete
+287,10,2,3,d63cdc015df17315,Master Bronze Trail machete
+288,10,3,0,7ec1ac970afd6baa,Worn Steel Trail machete
+289,10,3,1,08c38bf075a21a7e,Field Steel Trail machete
+290,10,3,2,e319d9f3dd061436,Fine Steel Trail machete
+291,10,3,3,f80804114071d65a,Master Steel Trail machete
+292,10,4,0,828e06e707086951,Worn Black Trail machete
+293,10,4,1,4bf00daf5187282d,Field Black Trail machete
+294,10,4,2,4e7b83eb63ee4b8d,Fine Black Trail machete
+295,10,4,3,24fe407eaf1259ad,Master Black Trail machete
+296,10,5,0,7ea81e14de69358a,Worn Relic Trail machete
+297,10,5,1,e8eadc2e08a51676,Field Relic Trail machete
+298,10,5,2,dae45be62c6e66ee,Fine Relic Trail machete
+299,10,5,3,388487996c4c0f52,Master Relic Trail machete
+300,11,0,0,5f8b0e4feb471f62,Worn Scrap Butcher cleaver
+301,11,0,1,929023012c1a8766,Field Scrap Butcher cleaver
+302,11,0,2,c332f4e278d3b0c6,Fine Scrap Butcher cleaver
+303,11,0,3,b1658fae08a83e4a,Master Scrap Butcher cleaver
+304,11,1,0,db7f35eb866f7dc4,Worn Iron Butcher cleaver
+305,11,1,1,44f76c6b8e911b18,Field Iron Butcher cleaver
+306,11,1,2,75345d3afa5be5b4,Fine Iron Butcher cleaver
+307,11,1,3,8a6abca65d32ecc4,Master Iron Butcher cleaver
+308,11,2,0,6ec4996ba41e60dd,Worn Bronze Butcher cleaver
+309,11,2,1,8d6e3d62ef27f029,Field Bronze Butcher cleaver
+310,11,2,2,c79ec3e9f62e1ef9,Fine Bronze Butcher cleaver
+311,11,2,3,031f5303d79eed19,Master Bronze Butcher cleaver
+312,11,3,0,566296f700a069aa,Worn Steel Butcher cleaver
+313,11,3,1,bc37d8b4c57d59de,Field Steel Butcher cleaver
+314,11,3,2,3554a954cd6e2f66,Fine Steel Butcher cleaver
+315,11,3,3,af0430800afbae96,Master Steel Butcher cleaver
+316,11,4,0,20b2ee5f86823c05,Worn Black Butcher cleaver
+317,11,4,1,bc7e255ef67b9279,Field Black Butcher cleaver
+318,11,4,2,1dc4ce72dc035b41,Fine Black Butcher cleaver
+319,11,4,3,8d84e78d2918d621,Master Black Butcher cleaver
+320,11,5,0,602b7a54d4929bc2,Worn Relic Butcher cleaver
+321,11,5,1,72d057b8904a765e,Field Relic Butcher cleaver
+322,11,5,2,921e232eeeb9f006,Fine Relic Butcher cleaver
+323,11,5,3,2000f4c6f5c28376,Master Relic Butcher cleaver
+324,12,0,0,4510cd69755ded91,Worn Scrap War pick
+325,12,0,1,f1a2b6eaeed19e9c,Field Scrap War pick
+326,12,0,2,ebaba081cda12df6,Fine Scrap War pick
+327,12,0,3,06ba07de0c6a5046,Master Scrap War pick
+328,12,1,0,5d12130f45c940c3,Worn Iron War pick
+329,12,1,1,05134b57aef84b6e,Field Iron War pick
+330,12,1,2,611d6176aefa94b4,Fine Iron War pick
+331,12,1,3,2c9d84199176be64,Master Iron War pick
+332,12,2,0,82d7542ff8d0be53,Worn Bronze War pick
+333,12,2,1,3b7a5820736e99de,Field Bronze War pick
+334,12,2,2,e02c70b20369aa24,Fine Bronze War pick
+335,12,2,3,4dd90194010203d4,Master Bronze War pick
+336,12,3,0,67c635ff2de04a86,Worn Steel War pick
+337,12,3,1,e34f774c6a99533b,Field Steel War pick
+338,12,3,2,9b0f4d8c332079bd,Fine Steel War pick
+339,12,3,3,48ef7dc0e39ad6e9,Master Steel War pick
+340,12,4,0,0ef03d77c86a1f8f,Worn Black War pick
+341,12,4,1,235d85df36e5a82a,Field Black War pick
+342,12,4,2,b548e754f46a6778,Fine Black War pick
+343,12,4,3,ea3a47d44c222778,Master Black War pick
+344,12,5,0,0192bd746665d7aa,Worn Relic War pick
+345,12,5,1,96b023d88fc3bd8f,Field Relic War pick
+346,12,5,2,e65d158c59d9a129,Fine Relic War pick
+347,12,5,3,bc989d97ee69cee5,Master Relic War pick
+348,13,0,0,b1d3beb81bd712c1,Worn Scrap Boarding axe
+349,13,0,1,7b492dd181a9a86c,Field Scrap Boarding axe
+350,13,0,2,92d2982ec0e09e86,Fine Scrap Boarding axe
+351,13,0,3,7431f6557e05b5d6,Master Scrap Boarding axe
+352,13,1,0,2737e489a9f501a9,Worn Iron Boarding axe
+353,13,1,1,193753a74970dfd4,Field Iron Boarding axe
+354,13,1,2,1ac947fbf698f10e,Fine Iron Boarding axe
+355,13,1,3,2b7b5b7f18a41a5e,Master Iron Boarding axe
+356,13,2,0,e2a3f88f77f23273,Worn Bronze Boarding axe
+357,13,2,1,c671ddd67bd2e1fe,Field Bronze Boarding axe
+358,13,2,2,7cb31697dd1bef04,Fine Bronze Boarding axe
+359,13,2,3,52bc9cf40d2e4434,Master Bronze Boarding axe
+360,13,3,0,4b7001fb4f6b50b5,Worn Steel Boarding axe
+361,13,3,1,e588e8d2ad312740,Field Steel Boarding axe
+362,13,3,2,0cad06d0d93248f2,Fine Steel Boarding axe
+363,13,3,3,cef2b58dc6f7ea22,Master Steel Boarding axe
+364,13,4,0,e98c472a8778c72b,Worn Black Boarding axe
+365,13,4,1,f2a2e637491ce1d6,Field Black Boarding axe
+366,13,4,2,078dd7b79e35c5dc,Fine Black Boarding axe
+367,13,4,3,e35f2d4f440fe34c,Master Black Boarding axe
+368,13,5,0,3bf61cc7af999365,Worn Relic Boarding axe
+369,13,5,1,b844476cfd947a50,Field Relic Boarding axe
+370,13,5,2,a2448750e94c3242,Fine Relic Boarding axe
+371,13,5,3,508b7feb46fd0872,Master Relic Boarding axe
+372,14,0,0,59a0c8e6d9a3be8f,Worn Scrap Kanabo
+373,14,0,1,0037ee2a3d92d9d5,Field Scrap Kanabo
+374,14,0,2,f20936dd2ebdcfce,Fine Scrap Kanabo
+375,14,0,3,a1f5534568a48a4a,Master Scrap Kanabo
+376,14,1,0,00fe9c6101ac44cb,Worn Iron Kanabo
+377,14,1,1,6cf8ae2104c2c2b5,Field Iron Kanabo
+378,14,1,2,d6886d0eb84541c2,Fine Iron Kanabo
+379,14,1,3,2cef8ea07bfad71e,Master Iron Kanabo
+380,14,2,0,9605e3712b806147,Worn Bronze Kanabo
+381,14,2,1,8a4ce3da705460bd,Field Bronze Kanabo
+382,14,2,2,ce4608bb4b9a1bbe,Fine Bronze Kanabo
+383,14,2,3,6dcbbd02105d035a,Master Bronze Kanabo
+384,14,3,0,912d4ae65175b56d,Worn Steel Kanabo
+385,14,3,1,b0229fe090209a47,Field Steel Kanabo
+386,14,3,2,58b49f437b9a5e78,Fine Steel Kanabo
+387,14,3,3,46e60e176a81261c,Master Steel Kanabo
+388,14,4,0,fd1a928734e6035f,Worn Black Kanabo
+389,14,4,1,8c54a262a719c9a5,Field Black Kanabo
+390,14,4,2,4c042e3be7b6dc7e,Fine Black Kanabo
+391,14,4,3,bfd1976619df48ba,Master Black Kanabo
+392,14,5,0,3a2df11836e637bd,Worn Relic Kanabo
+393,14,5,1,a475427baafb281f,Field Relic Kanabo
+394,14,5,2,a72f575e3a370458,Fine Relic Kanabo
+395,14,5,3,71c6afd127422f9c,Master Relic Kanabo
+396,15,0,0,5dbdb344a2b5cde4,Worn Scrap Tetsubo
+397,15,0,1,5657c8452765366a,Field Scrap Tetsubo
+398,15,0,2,e5fac0075d9c92c9,Fine Scrap Tetsubo
+399,15,0,3,7dc309ed91d95e65,Master Scrap Tetsubo
+400,15,1,0,e117ede0653deb0c,Worn Iron Tetsubo
+401,15,1,1,a63d424c3801200a,Field Iron Tetsubo
+402,15,1,2,310fd56814ac8e11,Fine Iron Tetsubo
+403,15,1,3,a1749195eeeabb19,Master Iron Tetsubo
+404,15,2,0,e77390d24a151094,Worn Bronze Tetsubo
+405,15,2,1,a7b1e959385de0e2,Field Bronze Tetsubo
+406,15,2,2,b95928b590ade8b9,Fine Bronze Tetsubo
+407,15,2,3,4f0cf7ca7f002285,Master Bronze Tetsubo
+408,15,3,0,d64329564a7a6ea6,Worn Steel Tetsubo
+409,15,3,1,d3cee66fe4f0eea4,Field Steel Tetsubo
+410,15,3,2,613222450525263b,Fine Steel Tetsubo
+411,15,3,3,7a6e1027250269db,Master Steel Tetsubo
+412,15,4,0,738ecc079568c484,Worn Black Tetsubo
+413,15,4,1,229301b12a65ec7a,Field Black Tetsubo
+414,15,4,2,93c862f9bfea1db9,Fine Black Tetsubo
+415,15,4,3,c89e985c1c8077e5,Master Black Tetsubo
+416,15,5,0,3fdf5d3e088779ce,Worn Relic Tetsubo
+417,15,5,1,a503f406ecbbb934,Field Relic Tetsubo
+418,15,5,2,042071155631e5b3,Fine Relic Tetsubo
+419,15,5,3,86c242b1c12f5053,Master Relic Tetsubo
+420,16,0,0,2f8d7b310a5390bc,Worn Scrap Quarterstaff
+421,16,0,1,5101b051244a4814,Field Scrap Quarterstaff
+422,16,0,2,5e0b24ddaa90b010,Fine Scrap Quarterstaff
+423,16,0,3,03bb5361523b20bd,Master Scrap Quarterstaff
+424,16,1,0,4457e2cfdd4266b8,Worn Iron Quarterstaff
+425,16,1,1,e1c014d5efb66c54,Field Iron Quarterstaff
+426,16,1,2,6bf4eeadf4f539bc,Fine Iron Quarterstaff
+427,16,1,3,b93b5e75a87cd407,Master Iron Quarterstaff
+428,16,2,0,f91a5fbc7382518c,Worn Bronze Quarterstaff
+429,16,2,1,f4d947068fffe684,Field Bronze Quarterstaff
+430,16,2,2,67534a366c4cbf80,Fine Bronze Quarterstaff
+431,16,2,3,9fa7b03ce1645859,Master Bronze Quarterstaff
+432,16,3,0,9388ddf186bd2be4,Worn Steel Quarterstaff
+433,16,3,1,6b286f46d872012a,Field Steel Quarterstaff
+434,16,3,2,83080689d7fde29c,Fine Steel Quarterstaff
+435,16,3,3,435acaad035b5752,Master Steel Quarterstaff
+436,16,4,0,cdbb89274da4a9ac,Worn Black Quarterstaff
+437,16,4,1,f21c652d2640d6b4,Field Black Quarterstaff
+438,16,4,2,05f46de29e030150,Fine Black Quarterstaff
+439,16,4,3,03c87e8a8dcd4f45,Master Black Quarterstaff
+440,16,5,0,2feab18df05b1df4,Worn Relic Quarterstaff
+441,16,5,1,57b2e5403acf1ba2,Field Relic Quarterstaff
+442,16,5,2,d1600d454b16b00c,Fine Relic Quarterstaff
+443,16,5,3,c3e402835b5700a6,Master Relic Quarterstaff
+444,17,0,0,b1173abe316e07cd,Worn Scrap Hook blade
+445,17,0,1,b874dd80dee96a09,Field Scrap Hook blade
+446,17,0,2,d5f77bdbf8976acd,Fine Scrap Hook blade
+447,17,0,3,de546b9eecc9baf9,Master Scrap Hook blade
+448,17,1,0,70383eed494b07ef,Worn Iron Hook blade
+449,17,1,1,b23945be9e00c46b,Field Iron Hook blade
+450,17,1,2,2442af7d7ed8d153,Fine Iron Hook blade
+451,17,1,3,1480993d240bdb77,Master Iron Hook blade
+452,17,2,0,8c3d43dc13b5db61,Worn Bronze Hook blade
+453,17,2,1,7a5d026d49013035,Field Bronze Hook blade
+454,17,2,2,9d1849eeb6bd1f95,Fine Bronze Hook blade
+455,17,2,3,1a1af630ae513b45,Master Bronze Hook blade
+456,17,3,0,dcc6315ed5b94c02,Worn Steel Hook blade
+457,17,3,1,ae9fca699827a18e,Field Steel Hook blade
+458,17,3,2,cb308832e662bf46,Fine Steel Hook blade
+459,17,3,3,32c7c5275cf18ad2,Master Steel Hook blade
+460,17,4,0,07a7e1f1687a6135,Worn Black Hook blade
+461,17,4,1,14416ec042d174c1,Field Black Hook blade
+462,17,4,2,474fa5187f936759,Fine Black Hook blade
+463,17,4,3,79eb489cf7d1e511,Master Black Hook blade
+464,17,5,0,43e8a767fda9173e,Worn Relic Hook blade
+465,17,5,1,4134050ede3410ea,Field Relic Hook blade
+466,17,5,2,656648087955eba2,Fine Relic Hook blade
+467,17,5,3,624ea06ff6da7856,Master Relic Hook blade
+468,18,0,0,e018367c313d1be0,Worn Scrap Ring sabre
+469,18,0,1,144e74f9516c69fc,Field Scrap Ring sabre
+470,18,0,2,b4134cd4ac667e74,Fine Scrap Ring sabre
+471,18,0,3,03d16510159ddc00,Master Scrap Ring sabre
+472,18,1,0,bca4b7ee8a68ea18,Worn Iron Ring sabre
+473,18,1,1,246a4fbb38c24190,Field Iron Ring sabre
+474,18,1,2,53222dd4cc05587c,Fine Iron Ring sabre
+475,18,1,3,a50ac7012d71e4a0,Master Iron Ring sabre
+476,18,2,0,0ec68020d07cfa36,Worn Bronze Ring sabre
+477,18,2,1,04f93ceb51754182,Field Bronze Ring sabre
+478,18,2,2,97e099b3feae07f2,Fine Bronze Ring sabre
+479,18,2,3,06114fc8e1d1c066,Master Bronze Ring sabre
+480,18,3,0,a8b6afc965c83d2c,Worn Steel Ring sabre
+481,18,3,1,6bdf5cb639f5d9a4,Field Steel Ring sabre
+482,18,3,2,568f4034e3e89be0,Fine Steel Ring sabre
+483,18,3,3,7fbe1c75c01111a4,Master Steel Ring sabre
+484,18,4,0,94ccc3bce1840636,Worn Black Ring sabre
+485,18,4,1,97629360984b7a9a,Field Black Ring sabre
+486,18,4,2,746557be00ca2212,Fine Black Ring sabre
+487,18,4,3,5ecc0f43aa6cf0a6,Master Black Ring sabre
+488,18,5,0,39ec7d9afc4b7414,Worn Relic Ring sabre
+489,18,5,1,786b8b12c3268b7c,Field Relic Ring sabre
+490,18,5,2,920b89436b8c0768,Fine Relic Ring sabre
+491,18,5,3,9db7c8bae9dcf1d4,Master Relic Ring sabre
+492,19,0,0,68044cb4212d77ee,Worn Scrap Broken falchion
+493,19,0,1,cf619a1cf204935a,Field Scrap Broken falchion
+494,19,0,2,dbbca16a95eacc26,Fine Scrap Broken falchion
+495,19,0,3,0b09ffc560e291da,Master Scrap Broken falchion
+496,19,1,0,05f0610abf35029e,Worn Iron Broken falchion
+497,19,1,1,cb89f3c7ebe54bf2,Field Iron Broken falchion
+498,19,1,2,5037977b80da5306,Fine Iron Broken falchion
+499,19,1,3,aa7a9077e3277baa,Master Iron Broken falchion
+500,19,2,0,a6d97ba25b6807f6,Worn Bronze Broken falchion
+501,19,2,1,3dde01be269068a2,Field Bronze Broken falchion
+502,19,2,2,4c19906694fb7272,Fine Bronze Broken falchion
+503,19,2,3,5ee0d5ca4e334c1e,Master Bronze Broken falchion
+504,19,3,0,46f725eae9e50a3c,Worn Steel Broken falchion
+505,19,3,1,1ff5b5d5f4132c10,Field Steel Broken falchion
+506,19,3,2,4713e410cddde3f4,Fine Steel Broken falchion
+507,19,3,3,2bfd36dd4ac52d78,Master Steel Broken falchion
+508,19,4,0,8bb8c103facd388e,Worn Black Broken falchion
+509,19,4,1,fdfdeea56b35dafa,Field Black Broken falchion
+510,19,4,2,c952f72b9cbf5442,Fine Black Broken falchion
+511,19,4,3,2581e3628270ad9e,Master Black Broken falchion
+512,19,5,0,c1194533b671d92c,Worn Relic Broken falchion
+513,19,5,1,f6478e33c841bcf0,Field Relic Broken falchion
+514,19,5,2,378fced23c5ac4ac,Fine Relic Broken falchion
+515,19,5,3,2ccc46d6c814dd18,Master Relic Broken falchion
+516,20,0,0,8449d0482d9785a5,Worn Scrap Horse cutter
+517,20,0,1,15f6c810911b7741,Field Scrap Horse cutter
+518,20,0,2,e1808bbb031a2595,Fine Scrap Horse cutter
+519,20,0,3,f298ba0aaba55af9,Master Scrap Horse cutter
+520,20,1,0,160f303147301d4d,Worn Iron Horse cutter
+521,20,1,1,1a15948df9dc683d,Field Iron Horse cutter
+522,20,1,2,6d5ff0088a79d98d,Fine Iron Horse cutter
+523,20,1,3,380359d6a6ff1bf9,Master Iron Horse cutter
+524,20,2,0,8b9c05f191e967de,Worn Bronze Horse cutter
+525,20,2,1,c165e29f195eceba,Field Bronze Horse cutter
+526,20,2,2,fed8b05103aab406,Fine Bronze Horse cutter
+527,20,2,3,9f142592b75656f2,Master Bronze Horse cutter
+528,20,3,0,42f62f1827961278,Worn Steel Horse cutter
+529,20,3,1,4839a754d9f130e0,Field Steel Horse cutter
+530,20,3,2,cd69f27d9772a570,Fine Steel Horse cutter
+531,20,3,3,0a0f99730c6bb6cc,Master Steel Horse cutter
+532,20,4,0,561374ed1281bac2,Worn Black Horse cutter
+533,20,4,1,aae0598041e1d796,Field Black Horse cutter
+534,20,4,2,8123b39d5b107e72,Fine Black Horse cutter
+535,20,4,3,017b9ebb5cd47bce,Master Black Horse cutter
+536,20,5,0,6a44dfb42fa8889c,Worn Relic Horse cutter
+537,20,5,1,771fb3c8b93e13c4,Field Relic Horse cutter
+538,20,5,2,2129145e23fe39ac,Fine Relic Horse cutter
+539,20,5,3,abb489dd88cfffe8,Master Relic Horse cutter
+540,21,0,0,ce02360cc603e7d5,Worn Scrap Saw sword
+541,21,0,1,42884d9ed2d4de91,Field Scrap Saw sword
+542,21,0,2,426b242dfb02aefd,Fine Scrap Saw sword
+543,21,0,3,359b689908154889,Master Scrap Saw sword
+544,21,1,0,d3d6b1a6d8f1dbb5,Worn Iron Saw sword
+545,21,1,1,e262ac5c457e9c99,Field Iron Saw sword
+546,21,1,2,3fc3d8a795224bbd,Fine Iron Saw sword
+547,21,1,3,d9ad3d4718df1899,Master Iron Saw sword
+548,21,2,0,8de0727ecc8d1cce,Worn Bronze Saw sword
+549,21,2,1,e4a09d929def70e2,Field Bronze Saw sword
+550,21,2,2,5a10c4d53ce6a402,Fine Bronze Saw sword
+551,21,2,3,149253b0b56ffd9a,Master Bronze Saw sword
+552,21,3,0,6a66d43f1d701784,Worn Steel Saw sword
+553,21,3,1,a58c30c4b3f837a0,Field Steel Saw sword
+554,21,3,2,046089500343dc6c,Fine Steel Saw sword
+555,21,3,3,6b9f98185ddd8b58,Master Steel Saw sword
+556,21,4,0,9855d4944843fad2,Worn Black Saw sword
+557,21,4,1,90d28ade021804ce,Field Black Saw sword
+558,21,4,2,77f52ce2eb8ce03e,Fine Black Saw sword
+559,21,4,3,b9f6b4313f81474e,Master Black Saw sword
+560,21,5,0,d2bb658576d4d6e0,Worn Relic Saw sword
+561,21,5,1,58e0d858e97b0024,Field Relic Saw sword
+562,21,5,2,ec3dccd4716141f0,Fine Relic Saw sword
+563,21,5,3,6298efd92123912c,Master Relic Saw sword
+564,22,0,0,3f435e05a2d34eea,Worn Scrap Twin sickle
+565,22,0,1,4b0ec9923f3ad386,Field Scrap Twin sickle
+566,22,0,2,636e7b75bbd18f06,Fine Scrap Twin sickle
+567,22,0,3,31c30efa876baafa,Master Scrap Twin sickle
+568,22,1,0,e3bc10819d7aa180,Worn Iron Twin sickle
+569,22,1,1,b2c74ca60d3a140c,Field Iron Twin sickle
+570,22,1,2,c3331c770b0df578,Fine Iron Twin sickle
+571,22,1,3,935b84f5eb4e306c,Master Iron Twin sickle
+572,22,2,0,203aab1d6cedece5,Worn Bronze Twin sickle
+573,22,2,1,f187d6d9f2655cd1,Field Bronze Twin sickle
+574,22,2,2,b4aa1746823563f9,Fine Bronze Twin sickle
+575,22,2,3,2c81634cb258d751,Master Bronze Twin sickle
+576,22,3,0,431f73af528846ea,Worn Steel Twin sickle
+577,22,3,1,857a0ac5317d3e3e,Field Steel Twin sickle
+578,22,3,2,51624495e959c6f6,Fine Steel Twin sickle
+579,22,3,3,7fdfbb598ccb5e9a,Master Steel Twin sickle
+580,22,4,0,5292e1b0db0eecc5,Worn Black Twin sickle
+581,22,4,1,fb48a3cbf0183881,Field Black Twin sickle
+582,22,4,2,c0a16ca4e69b0c71,Fine Black Twin sickle
+583,22,4,3,e05a92dff61b9529,Master Black Twin sickle
+584,22,5,0,5057d016ed5f25e2,Worn Relic Twin sickle
+585,22,5,1,324fa69106df9a2e,Field Relic Twin sickle
+586,22,5,2,56cf5ce756468696,Fine Relic Twin sickle
+587,22,5,3,d2f862b2751f9eda,Master Relic Twin sickle
+588,23,0,0,5f0124b8b987a220,Worn Scrap Spiked club
+589,23,0,1,efc58d1ca93a3871,Field Scrap Spiked club
+590,23,0,2,516668fc532ff157,Fine Scrap Spiked club
+591,23,0,3,f4481a12b9168efb,Master Scrap Spiked club
+592,23,1,0,8533686fa4bd63b0,Worn Iron Spiked club
+593,23,1,1,319c2d570a6be27d,Field Iron Spiked club
+594,23,1,2,7739eaaaf42d47f7,Fine Iron Spiked club
+595,23,1,3,9f123f49fb806523,Master Iron Spiked club
+596,23,2,0,69b42f607220a330,Worn Bronze Spiked club
+597,23,2,1,e792a62b3f0ef249,Field Bronze Spiked club
+598,23,2,2,cb978996165cd7bf,Fine Bronze Spiked club
+599,23,2,3,d0f736966730dba3,Master Bronze Spiked club
+600,23,3,0,1715071b1214864a,Worn Steel Spiked club
+601,23,3,1,741202eafcb9c85f,Field Steel Spiked club
+602,23,3,2,84f4bc8067c29979,Fine Steel Spiked club
+603,23,3,3,cdad7a0e9aaf04b5,Master Steel Spiked club
+604,23,4,0,4d97624ad30f4380,Worn Black Spiked club
+605,23,4,1,1fcb205cce005ba1,Field Black Spiked club
+606,23,4,2,66b38647d3753997,Fine Black Spiked club
+607,23,4,3,8017b507fd0264cb,Master Black Spiked club
+608,23,5,0,0c5f743753d1bbb2,Worn Relic Spiked club
+609,23,5,1,03fb667fea5c25ef,Field Relic Spiked club
+610,23,5,2,2a7321bae04db831,Fine Relic Spiked club
+611,23,5,3,dd6534e59bb7a00d,Master Relic Spiked club
+612,24,0,0,532fc13ed714b77e,Worn Scrap Scout bow
+613,24,0,1,ea9cada79346e090,Field Scrap Scout bow
+614,24,0,2,8db2dd6ca9931c77,Fine Scrap Scout bow
+615,24,0,3,b9b289b3749c2147,Master Scrap Scout bow
+616,24,1,0,43ed2053efef68ce,Worn Iron Scout bow
+617,24,1,1,e9c9089403369270,Field Iron Scout bow
+618,24,1,2,2b3b3686806bfd87,Fine Iron Scout bow
+619,24,1,3,ed0ba596f7191687,Master Iron Scout bow
+620,24,2,0,c7bf0d7aea9e5d5e,Worn Bronze Scout bow
+621,24,2,1,3e494efbd585dac0,Field Bronze Scout bow
+622,24,2,2,d7f443d99a604e33,Fine Bronze Scout bow
+623,24,2,3,67f9f36f5a1aff2b,Master Bronze Scout bow
+624,24,3,0,aab2e087664db550,Worn Steel Scout bow
+625,24,3,1,2354371ec5906aaa,Field Steel Scout bow
+626,24,3,2,8b1b19363d27b7c9,Fine Steel Scout bow
+627,24,3,3,19a00b12414f38b9,Master Steel Scout bow
+628,24,4,0,15c35d8a15e6de9e,Worn Black Scout bow
+629,24,4,1,efb1c70d484c21f8,Field Black Scout bow
+630,24,4,2,30dbcb2bed00ab0b,Fine Black Scout bow
+631,24,4,3,043d573f4fbfdda3,Master Black Scout bow
+632,24,5,0,021334a1704a4ca0,Worn Relic Scout bow
+633,24,5,1,e66849e3eaa0edc2,Field Relic Scout bow
+634,24,5,2,6a81807bfabe8471,Fine Relic Scout bow
+635,24,5,3,f327b5ee31d65d49,Master Relic Scout bow
+636,25,0,0,bc04daddfc46ec8d,Worn Scrap Repeater bow
+637,25,0,1,8662052838cd7ebb,Field Scrap Repeater bow
+638,25,0,2,c49bc1b8f6bd5b90,Fine Scrap Repeater bow
+639,25,0,3,6bba460b97bab5ac,Master Scrap Repeater bow
+640,25,1,0,6962759bb550cca7,Worn Iron Repeater bow
+641,25,1,1,152daedf0d19cf45,Field Iron Repeater bow
+642,25,1,2,acbd84ee010249d6,Fine Iron Repeater bow
+643,25,1,3,9c99c5a95ffd002e,Master Iron Repeater bow
+644,25,2,0,8c749ccfe92d4339,Worn Bronze Repeater bow
+645,25,2,1,02a73f0504da8727,Field Bronze Repeater bow
+646,25,2,2,42a06d510a405a7c,Fine Bronze Repeater bow
+647,25,2,3,ed8e3ece4f9302f4,Master Bronze Repeater bow
+648,25,3,0,825fbd1d633d4eb8,Worn Steel Repeater bow
+649,25,3,1,25dff2109cf56bc2,Field Steel Repeater bow
+650,25,3,2,f330ae99f19c3e89,Fine Steel Repeater bow
+651,25,3,3,4ac893868a1f1d75,Master Steel Repeater bow
+652,25,4,0,0984d9a45cb0625d,Worn Black Repeater bow
+653,25,4,1,86d6852ba6333213,Field Black Repeater bow
+654,25,4,2,65aba3a179b6d9b0,Fine Black Repeater bow
+655,25,4,3,79e9ecbcd6d42530,Master Black Repeater bow
+656,25,5,0,cd8ed9f5101e16dc,Worn Relic Repeater bow
+657,25,5,1,0d11a94d971f5aa6,Field Relic Repeater bow
+658,25,5,2,6aa0aa90f79cf74d,Fine Relic Repeater bow
+659,25,5,3,071395e41c14cec1,Master Relic Repeater bow
+660,26,0,0,cea84e57030fbe72,Worn Scrap Heavy arbalest
+661,26,0,1,f4467ac4916e3678,Field Scrap Heavy arbalest
+662,26,0,2,2d67b9f1b223cdbb,Fine Scrap Heavy arbalest
+663,26,0,3,ee069dc165cd752b,Master Scrap Heavy arbalest
+664,26,1,0,c676bdbc0f3ec540,Worn Iron Heavy arbalest
+665,26,1,1,d128abbb52d0151e,Field Iron Heavy arbalest
+666,26,1,2,45c250991e039b59,Fine Iron Heavy arbalest
+667,26,1,3,326c05bfd4140901,Master Iron Heavy arbalest
+668,26,2,0,13becf9263575e7e,Worn Bronze Heavy arbalest
+669,26,2,1,9374cb8aa35d5234,Field Bronze Heavy arbalest
+670,26,2,2,870f10350485a703,Fine Bronze Heavy arbalest
+671,26,2,3,88c7d52fd34d2c8b,Master Bronze Heavy arbalest
+672,26,3,0,61096f011acddb85,Worn Steel Heavy arbalest
+673,26,3,1,fb3cac9f601d4c7b,Field Steel Heavy arbalest
+674,26,3,2,76d57df5e792850c,Fine Steel Heavy arbalest
+675,26,3,3,5fcbf3d29b03a028,Master Steel Heavy arbalest
+676,26,4,0,20dda2c071365902,Worn Black Heavy arbalest
+677,26,4,1,146d23048dfeae40,Field Black Heavy arbalest
+678,26,4,2,e2ef8f3aeb7295f7,Fine Black Heavy arbalest
+679,26,4,3,dd89fffcae50c167,Master Black Heavy arbalest
+680,26,5,0,96be8e5ad37b5629,Worn Relic Heavy arbalest
+681,26,5,1,b9e821063aca813f,Field Relic Heavy arbalest
+682,26,5,2,9c080887f6bceed8,Fine Relic Heavy arbalest
+683,26,5,3,0b96dda4076b1714,Master Relic Heavy arbalest
+684,27,0,0,54927127d7501c08,Worn Scrap Hand crossbow
+685,27,0,1,35c160b6df1184a0,Field Scrap Hand crossbow
+686,27,0,2,1c07b8ddd0227fa9,Fine Scrap Hand crossbow
+687,27,0,3,f806e319e0df35bd,Master Scrap Hand crossbow
+688,27,1,0,1c44f19bafafbaa8,Worn Iron Hand crossbow
+689,27,1,1,6f514dccf5d06848,Field Iron Hand crossbow
+690,27,1,2,c669da44fd55fafd,Fine Iron Hand crossbow
+691,27,1,3,f1672b93787205c1,Master Iron Hand crossbow
+692,27,2,0,fe5dc57c536b8084,Worn Bronze Hand crossbow
+693,27,2,1,b72c625ca4220f04,Field Bronze Hand crossbow
+694,27,2,2,9f9bea3c6f7492b5,Fine Bronze Hand crossbow
+695,27,2,3,17b77c565329d859,Master Bronze Hand crossbow
+696,27,3,0,a36b580ae690ccac,Worn Steel Hand crossbow
+697,27,3,1,a0b2d11d5efdfb70,Field Steel Hand crossbow
+698,27,3,2,811f499780e83b71,Fine Steel Hand crossbow
+699,27,3,3,98a034c3e6725801,Master Steel Hand crossbow
+700,27,4,0,8485229cd0e99b9c,Worn Black Hand crossbow
+701,27,4,1,bdf8d836dcae8004,Field Black Hand crossbow
+702,27,4,2,e956d2eb8324faad,Fine Black Hand crossbow
+703,27,4,3,0fae1279c34d9b89,Master Black Hand crossbow
+704,27,5,0,a1714b97183e4d8c,Worn Relic Hand crossbow
+705,27,5,1,6aa5a54aa4a59890,Field Relic Hand crossbow
+706,27,5,2,1e77052ddca5b0d1,Fine Relic Hand crossbow
+707,27,5,3,be19592879310e31,Master Relic Hand crossbow
+708,28,0,0,9f86b1fe35e49a30,Worn Scrap Longbow
+709,28,0,1,ccae463625685548,Field Scrap Longbow
+710,28,0,2,b90f7556c391e3d1,Fine Scrap Longbow
+711,28,0,3,a5364bd040ea7a5d,Master Scrap Longbow
+712,28,1,0,495e0090f131650a,Worn Iron Longbow
+713,28,1,1,a1191dbb7541c906,Field Iron Longbow
+714,28,1,2,f856a69321572b6f,Fine Iron Longbow
+715,28,1,3,45dec3fc7298f6e3,Master Iron Longbow
+716,28,2,0,3c279eee9de8f920,Worn Bronze Longbow
+717,28,2,1,d400f68777253208,Field Bronze Longbow
+718,28,2,2,5de0bae832c5d1f1,Fine Bronze Longbow
+719,28,2,3,922a3f2f201a9c15,Master Bronze Longbow
+720,28,3,0,3b4b9eae840eaa07,Worn Steel Longbow
+721,28,3,1,c1cbd158617e6137,Field Steel Longbow
+722,28,3,2,71f246d8018cbb7a,Fine Steel Longbow
+723,28,3,3,adefb5b6b18f8076,Master Steel Longbow
+724,28,4,0,bfd7f20cfd8664ec,Worn Black Longbow
+725,28,4,1,0f2be468fea50854,Field Black Longbow
+726,28,4,2,85891d1aa0d626b5,Fine Black Longbow
+727,28,4,3,44bb33089bcc10d9,Master Black Longbow
+728,28,5,0,f5dcf5adef8483cb,Worn Relic Longbow
+729,28,5,1,2093e59048c9e533,Field Relic Longbow
+730,28,5,2,274fdc8c1f0a31b6,Fine Relic Longbow
+731,28,5,3,cd92113b06097c9a,Master Relic Longbow
+732,29,0,0,63fc440e4c995335,Worn Scrap Ranger rifle
+733,29,0,1,6ab9c29dae40a77c,Field Scrap Ranger rifle
+734,29,0,2,7c16b37a6b3fdf23,Fine Scrap Ranger rifle
+735,29,0,3,b1c0c10a81ed19d1,Master Scrap Ranger rifle
+736,29,1,0,c38794180fbf0bab,Worn Iron Ranger rifle
+737,29,1,1,e1134d9e409c3326,Field Iron Ranger rifle
+738,29,1,2,246a16da9024e045,Fine Iron Ranger rifle
+739,29,1,3,fd930c97d37d3473,Master Iron Ranger rifle
+740,29,2,0,ff7aef2c56912be2,Worn Bronze Ranger rifle
+741,29,2,1,8715c408168c1b4b,Field Bronze Ranger rifle
+742,29,2,2,f1e322d9f20fce34,Fine Bronze Ranger rifle
+743,29,2,3,99587a4da2573b7a,Master Bronze Ranger rifle
+744,29,3,0,5641a03f0e0a9d41,Worn Steel Ranger rifle
+745,29,3,1,2fea75a421f79acc,Field Steel Ranger rifle
+746,29,3,2,4e1af92c9135a6b7,Fine Steel Ranger rifle
+747,29,3,3,b9246a8f9d1a5355,Master Steel Ranger rifle
+748,29,4,0,e10476f899ddd72a,Worn Black Ranger rifle
+749,29,4,1,880249cf17a2a04b,Field Black Ranger rifle
+750,29,4,2,7438526d0b4119f4,Fine Black Ranger rifle
+751,29,4,3,f8c456f3ad09a352,Master Black Ranger rifle
+752,29,5,0,28293168f5668101,Worn Relic Ranger rifle
+753,29,5,1,87f76d2ea85235ac,Field Relic Ranger rifle
+754,29,5,2,940c3d7c290d26ff,Fine Relic Ranger rifle
+755,29,5,3,83a47fd5835e4165,Master Relic Ranger rifle
+756,30,0,0,19ef18ee87a7ad62,Worn Scrap Dragoon pistol
+757,30,0,1,63e0d029b3820a97,Field Scrap Dragoon pistol
+758,30,0,2,e7979cb4a82c5a38,Fine Scrap Dragoon pistol
+759,30,0,3,731c589fd41ad90e,Master Scrap Dragoon pistol
+760,30,1,0,f9298f341ef65a08,Worn Iron Dragoon pistol
+761,30,1,1,642fd778eb4f2915,Field Iron Dragoon pistol
+762,30,1,2,9165899e6fc50b06,Fine Iron Dragoon pistol
+763,30,1,3,d0281fe3172ff63c,Master Iron Dragoon pistol
+764,30,2,0,2476db885e64a52f,Worn Bronze Dragoon pistol
+765,30,2,1,666719213a3a104a,Field Bronze Dragoon pistol
+766,30,2,2,f90eaa745b73f905,Fine Bronze Dragoon pistol
+767,30,2,3,a5033ff2376d03c3,Master Bronze Dragoon pistol
+768,30,3,0,cd108def8a94c39e,Worn Steel Dragoon pistol
+769,30,3,1,9c70ceb593e5e873,Field Steel Dragoon pistol
+770,30,3,2,a91006258d841e34,Fine Steel Dragoon pistol
+771,30,3,3,3ee1762d5d64d3f2,Master Steel Dragoon pistol
+772,30,4,0,25e637a6b4d25847,Worn Black Dragoon pistol
+773,30,4,1,35b9ee31be72ee22,Field Black Dragoon pistol
+774,30,4,2,2d64be4e4a11fdf5,Fine Black Dragoon pistol
+775,30,4,3,4f241bf00031ceab,Master Black Dragoon pistol
+776,30,5,0,ed5bd2ffcca9d076,Worn Relic Dragoon pistol
+777,30,5,1,ad7fee2c2e57e9c3,Field Relic Dragoon pistol
+778,30,5,2,3ed3f8c702e1cca4,Fine Relic Dragoon pistol
+779,30,5,3,c1786978dcde44a2,Master Relic Dragoon pistol
+780,31,0,0,a79b6352849c8928,Worn Scrap Scattergun
+781,31,0,1,6c4a726f02ecca31,Field Scrap Scattergun
+782,31,0,2,1d840137eb67573e,Fine Scrap Scattergun
+783,31,0,3,5d939ca7add2272c,Master Scrap Scattergun
+784,31,1,0,147c4c49c674e03a,Worn Iron Scattergun
+785,31,1,1,e337ddc2e64feb3f,Field Iron Scattergun
+786,31,1,2,95797ec215bbcc9c,Fine Iron Scattergun
+787,31,1,3,5c581d66bde86c52,Master Iron Scattergun
+788,31,2,0,ef0839ff23b5ddf0,Worn Bronze Scattergun
+789,31,2,1,f0d437823d3b9769,Field Bronze Scattergun
+790,31,2,2,44d5f7b0a8ef570e,Fine Bronze Scattergun
+791,31,2,3,550700abc96f449c,Master Bronze Scattergun
+792,31,3,0,d6ac1911adee8adb,Worn Steel Scattergun
+793,31,3,1,ed656fc351e8b7e6,Field Steel Scattergun
+794,31,3,2,254e9eec69797f95,Fine Steel Scattergun
+795,31,3,3,84044d4cdfd38de3,Master Steel Scattergun
+796,31,4,0,afd264ef32faa56c,Worn Black Scattergun
+797,31,4,1,94ccf30a00c3fd15,Field Black Scattergun
+798,31,4,2,224d27fdadac6e72,Fine Black Scattergun
+799,31,4,3,98c1c19ff6126548,Master Black Scattergun
+800,31,5,0,5c373ed3bf5f4977,Worn Relic Scattergun
+801,31,5,1,a873e34522ab168a,Field Relic Scattergun
+802,31,5,2,c0f8e1e643e13339,Fine Relic Scattergun
+803,31,5,3,b2d1801ce6d34eaf,Master Relic Scattergun
+804,32,0,0,5409621bd51d29d1,Worn Scrap Trail duster
+805,32,0,1,590a87c3f989d6b5,Field Scrap Trail duster
+806,32,0,2,b932760cfe974843,Fine Scrap Trail duster
+807,32,0,3,ccc5647c7f23ee19,Master Scrap Trail duster
+808,32,1,0,80da2d7e4fa90b40,Worn Iron Trail duster
+809,32,1,1,ede654c9dad4e91e,Field Iron Trail duster
+810,32,1,2,7517974d5a69b362,Fine Iron Trail duster
+811,32,1,3,91b7002e28bde596,Master Iron Trail duster
+812,32,2,0,bfe802003eb1624c,Worn Bronze Trail duster
+813,32,2,1,c0e6bf3c37a73cc9,Field Bronze Trail duster
+814,32,2,2,c25c32e819dd471e,Fine Bronze Trail duster
+815,32,2,3,2e7daf270f69977f,Master Bronze Trail duster
+816,32,3,0,2822594d05221c4e,Worn Steel Trail duster
+817,32,3,1,ed589697db30c970,Field Steel Trail duster
+818,32,3,2,ea846d9388781b38,Fine Steel Trail duster
+819,32,3,3,203dd4346fdfba78,Master Steel Trail duster
+820,32,4,0,d644bf29761bf2d6,Worn Black Trail duster
+821,32,4,1,b6221087cf1ebf1a,Field Black Trail duster
+822,32,4,2,50291c22a789173c,Fine Black Trail duster
+823,32,4,3,b01b508538c80986,Master Black Trail duster
+824,32,5,0,e84ec5c81b0ecf62,Worn Relic Trail duster
+825,32,5,1,e7fb5ff1ba61b2cc,Field Relic Trail duster
+826,32,5,2,060d17a35913c828,Fine Relic Trail duster
+827,32,5,3,f0794a828163db80,Master Relic Trail duster
+828,33,0,0,9540d1d7b3afef1d,Worn Scrap Ronin coat
+829,33,0,1,70daa0f0afb93d5d,Field Scrap Ronin coat
+830,33,0,2,7eb9e3dced5d7c47,Fine Scrap Ronin coat
+831,33,0,3,56addb21b3bc0225,Master Scrap Ronin coat
+832,33,1,0,ddbc45250709be34,Worn Iron Ronin coat
+833,33,1,1,5d6ffc69831019f6,Field Iron Ronin coat
+834,33,1,2,b97f1c05cf39e066,Fine Iron Ronin coat
+835,33,1,3,28d731888f0e1bb2,Master Iron Ronin coat
+836,33,2,0,c3fe08b8cffe15ec,Worn Bronze Ronin coat
+837,33,2,1,0ba52f7a13ddfab5,Field Bronze Ronin coat
+838,33,2,2,797dc0973a3c2a8e,Fine Bronze Ronin coat
+839,33,2,3,03e003887e69487f,Master Bronze Ronin coat
+840,33,3,0,1e149f3e311eb87a,Worn Steel Ronin coat
+841,33,3,1,52a60277659eb820,Field Steel Ronin coat
+842,33,3,2,14b94dc66a759158,Fine Steel Ronin coat
+843,33,3,3,c6b2c09fdccafb30,Master Steel Ronin coat
+844,33,4,0,8d266d8efcf5dece,Worn Black Ronin coat
+845,33,4,1,f6fae4f41c359ba6,Field Black Ronin coat
+846,33,4,2,806dc58c28f57ff4,Fine Black Ronin coat
+847,33,4,3,41779585d5c3ab7e,Master Black Ronin coat
+848,33,5,0,dc12c555c515a1ae,Worn Relic Ronin coat
+849,33,5,1,c6b8b28b65e560dc,Field Relic Ronin coat
+850,33,5,2,1bbdcb8b795ec5f4,Fine Relic Ronin coat
+851,33,5,3,4dee19b1d42f83fc,Master Relic Ronin coat
+852,34,0,0,86caa7e5b002fff9,Worn Scrap Lamellar do
+853,34,0,1,f6dff5968069a83f,Field Scrap Lamellar do
+854,34,0,2,9573d18c8dc8c5e9,Fine Scrap Lamellar do
+855,34,0,3,a7ebb38e459780dc,Master Scrap Lamellar do
+856,34,1,0,4f78f270ef4c6e1b,Worn Iron Lamellar do
+857,34,1,1,6b6c9cb78d4dc7bf,Field Iron Lamellar do
+858,34,1,2,8398e3cefd500b6a,Fine Iron Lamellar do
+859,34,1,3,2f7edf93575bc545,Master Iron Lamellar do
+860,34,2,0,0e7063a2913848f7,Worn Bronze Lamellar do
+861,34,2,1,83f3ef97c9b34055,Field Bronze Lamellar do
+862,34,2,2,4a5222f7f10ca5cd,Fine Bronze Lamellar do
+863,34,2,3,5ef5f4a9c005d890,Master Bronze Lamellar do
+864,34,3,0,a6c10465a827042d,Worn Steel Lamellar do
+865,34,3,1,732115593a18961a,Field Steel Lamellar do
+866,34,3,2,dff108d8d62e3aa2,Fine Steel Lamellar do
+867,34,3,3,55037ce3e9145eee,Master Steel Lamellar do
+868,34,4,0,c488504b3792c05f,Worn Black Lamellar do
+869,34,4,1,5a913da3888eb0f9,Field Black Lamellar do
+870,34,4,2,8c5ccf283d4beca7,Fine Black Lamellar do
+871,34,4,3,a59acbe05da2d142,Master Black Lamellar do
+872,34,5,0,c26608c766a8aadf,Worn Relic Lamellar do
+873,34,5,1,2b3738bc4ca08780,Field Relic Lamellar do
+874,34,5,2,3b30736ef269b276,Fine Relic Lamellar do
+875,34,5,3,13c8b15292c72486,Master Relic Lamellar do
+876,35,0,0,be1f9187345b8777,Worn Scrap Patchwork vest
+877,35,0,1,68d19292cde21090,Field Scrap Patchwork vest
+878,35,0,2,bc07055836aff1cb,Fine Scrap Patchwork vest
+879,35,0,3,0b3f69659b897385,Master Scrap Patchwork vest
+880,35,1,0,ffe19b9929811699,Worn Iron Patchwork vest
+881,35,1,1,acf9eb986a38c930,Field Iron Patchwork vest
+882,35,1,2,741d04bccade4f91,Fine Iron Patchwork vest
+883,35,1,3,bd5fa05edc4397a9,Master Iron Patchwork vest
+884,35,2,0,5c91681e2ebf5e8f,Worn Bronze Patchwork vest
+885,35,2,1,ad238a2604f062b1,Field Bronze Patchwork vest
+886,35,2,2,b09bcd792c658c83,Fine Bronze Patchwork vest
+887,35,2,3,3840c3746cdf5d3a,Master Bronze Patchwork vest
+888,35,3,0,a80ec9a81e766c21,Worn Steel Patchwork vest
+889,35,3,1,ab34db5b097258a8,Field Steel Patchwork vest
+890,35,3,2,86fb6bbc462e7d25,Fine Steel Patchwork vest
+891,35,3,3,d66a8b3e98c5fc11,Master Steel Patchwork vest
+892,35,4,0,b520e63d18320195,Worn Black Patchwork vest
+893,35,4,1,ee4f4f5ede6021ca,Field Black Patchwork vest
+894,35,4,2,3bdf744a277ee6ed,Fine Black Patchwork vest
+895,35,4,3,748f15be422a67f3,Master Black Patchwork vest
+896,35,5,0,3bf39c22c09db1b9,Worn Relic Patchwork vest
+897,35,5,1,577ddc1b9a0387e8,Field Relic Patchwork vest
+898,35,5,2,c6742807ef578c61,Fine Relic Patchwork vest
+899,35,5,3,ea923b1b1ade737d,Master Relic Patchwork vest
+900,36,0,0,1564b508c592cef9,Worn Scrap Brigandine
+901,36,0,1,1d0afe9fcdde8170,Field Scrap Brigandine
+902,36,0,2,01984a6486c3d595,Fine Scrap Brigandine
+903,36,0,3,0993077e08fa4f77,Master Scrap Brigandine
+904,36,1,0,8270d8561b963df8,Worn Iron Brigandine
+905,36,1,1,0ce5102837eb5363,Field Iron Brigandine
+906,36,1,2,b990313d7e9b5d8d,Fine Iron Brigandine
+907,36,1,3,0c5cc9e3167fcd1d,Master Iron Brigandine
+908,36,2,0,3282e4b8f5246846,Worn Bronze Brigandine
+909,36,2,1,a713fb3fb8799efa,Field Bronze Brigandine
+910,36,2,2,8111a4f32adc54fb,Fine Bronze Brigandine
+911,36,2,3,b4a2bdd022724d44,Master Bronze Brigandine
+912,36,3,0,39bd0086756b1db2,Worn Steel Brigandine
+913,36,3,1,7afec2b7153ed669,Field Steel Brigandine
+914,36,3,2,24286ba593b54d69,Fine Steel Brigandine
+915,36,3,3,596c378a8880e5bd,Master Steel Brigandine
+916,36,4,0,6c2b5fcc39df24cf,Worn Black Brigandine
+917,36,4,1,227f02bb51649396,Field Black Brigandine
+918,36,4,2,8e6220e06cc8bea1,Fine Black Brigandine
+919,36,4,3,3b7b62f885a50b7f,Master Black Brigandine
+920,36,5,0,81ccbed8de32f5dc,Worn Relic Brigandine
+921,36,5,1,cbae76e2845f1f13,Field Relic Brigandine
+922,36,5,2,46a571fc80cd1023,Fine Relic Brigandine
+923,36,5,3,ae02b7714db014bf,Master Relic Brigandine
+924,37,0,0,890f21087c7953a1,Worn Scrap Bone harness
+925,37,0,1,a6ff3ef3d65b9279,Field Scrap Bone harness
+926,37,0,2,1913e2ae31134d6b,Fine Scrap Bone harness
+927,37,0,3,699b9dd7f7a79fd5,Master Scrap Bone harness
+928,37,1,0,1cc4de3ceefedced,Worn Iron Bone harness
+929,37,1,1,69a372ffa3ab57f5,Field Iron Bone harness
+930,37,1,2,614904197d789d89,Fine Iron Bone harness
+931,37,1,3,fe5779d56a6e8a0d,Master Iron Bone harness
+932,37,2,0,4327a5f69a23a5ab,Worn Bronze Bone harness
+933,37,2,1,eedfd7cc643246c1,Field Bronze Bone harness
+934,37,2,2,b66e4a22cc3d7c9c,Fine Bronze Bone harness
+935,37,2,3,68b20bf77c315d1f,Master Bronze Bone harness
+936,37,3,0,81a20c4192fdd905,Worn Steel Bone harness
+937,37,3,1,f3d4ddccb191baf5,Field Steel Bone harness
+938,37,3,2,fb057ee5bc763e1d,Fine Steel Bone harness
+939,37,3,3,7b22dbf23c9b27b5,Master Steel Bone harness
+940,37,4,0,a0a1261365926c51,Worn Black Bone harness
+941,37,4,1,97d727f1b07439d1,Field Black Bone harness
+942,37,4,2,860e320c97fb22df,Fine Black Bone harness
+943,37,4,3,71f33b92eecdf9f5,Master Black Bone harness
+944,37,5,0,8ff91d3af322a975,Worn Relic Bone harness
+945,37,5,1,18fa0aaf01692e55,Field Relic Bone harness
+946,37,5,2,2f1cb5a653601aa5,Fine Relic Bone harness
+947,37,5,3,4e0c846fcf5640dd,Master Relic Bone harness
+948,38,0,0,217a454ed31882f1,Worn Scrap Iron cuirass
+949,38,0,1,2b8a83d9ac36df3f,Field Scrap Iron cuirass
+950,38,0,2,bd28d292fd072311,Fine Scrap Iron cuirass
+951,38,0,3,96e59be5da24fe34,Master Scrap Iron cuirass
+952,38,1,0,cb43657f50fac661,Worn Iron Iron cuirass
+953,38,1,1,d0b77539daef5ae9,Field Iron Iron cuirass
+954,38,1,2,2f365700b97af46c,Fine Iron Iron cuirass
+955,38,1,3,0d27e5cb6d1d1243,Master Iron Iron cuirass
+956,38,2,0,a90292c6506af153,Worn Bronze Iron cuirass
+957,38,2,1,1de79aa106a4f035,Field Bronze Iron cuirass
+958,38,2,2,988e7b69be640261,Fine Bronze Iron cuirass
+959,38,2,3,22d7290dc616b9b4,Master Bronze Iron cuirass
+960,38,3,0,13f9d398061603fb,Worn Steel Iron cuirass
+961,38,3,1,2084c9d1f6bc77c4,Field Steel Iron cuirass
+962,38,3,2,df70c6aee6182788,Fine Steel Iron cuirass
+963,38,3,3,449b3691d01615a4,Master Steel Iron cuirass
+964,38,4,0,7beebb14478238cf,Worn Black Iron cuirass
+965,38,4,1,a3e85a5c940e9b89,Field Black Iron cuirass
+966,38,4,2,a69dd6c7cb98c13f,Fine Black Iron cuirass
+967,38,4,3,0b46fcedf82a8dea,Master Black Iron cuirass
+968,38,5,0,9b43dae4cffee731,Worn Relic Iron cuirass
+969,38,5,1,e9147c98ef30939a,Field Relic Iron cuirass
+970,38,5,2,210fd2b4b79521fc,Fine Relic Iron cuirass
+971,38,5,3,f619107c6234a07c,Master Relic Iron cuirass
+972,39,0,0,23af856bed08ed5d,Worn Scrap Monk robes
+973,39,0,1,e7f88e9ee05c7315,Field Scrap Monk robes
+974,39,0,2,91ba4e5c5042076f,Fine Scrap Monk robes
+975,39,0,3,4a14766cb7929735,Master Scrap Monk robes
+976,39,1,0,083186efe3f2d89c,Worn Iron Monk robes
+977,39,1,1,0c44b06d57a43b3e,Field Iron Monk robes
+978,39,1,2,1d513196bf8d9d5e,Fine Iron Monk robes
+979,39,1,3,9631d51d8829a832,Master Iron Monk robes
+980,39,2,0,5a24c70ed2297fc4,Worn Bronze Monk robes
+981,39,2,1,e667efb910d2a115,Field Bronze Monk robes
+982,39,2,2,7797a597d37fa776,Fine Bronze Monk robes
+983,39,2,3,8042ff4daed97ca7,Master Bronze Monk robes
+984,39,3,0,531850910847b902,Worn Steel Monk robes
+985,39,3,1,53d99c0c9d64da78,Field Steel Monk robes
+986,39,3,2,625444d74430a088,Fine Steel Monk robes
+987,39,3,3,86c808f90f61e8a0,Master Steel Monk robes
+988,39,4,0,73a4f16cc3cee8a6,Worn Black Monk robes
+989,39,4,1,f74f3dd4ab36954e,Field Black Monk robes
+990,39,4,2,800237c7f6f25394,Fine Black Monk robes
+991,39,4,3,6c589c20537ce6c6,Master Black Monk robes
+992,39,5,0,ddb0e39c3e2c1b5e,Worn Relic Monk robes
+993,39,5,1,e7fe92cc7808e7dc,Field Relic Monk robes
+994,39,5,2,2bcf3003f67c57ec,Fine Relic Monk robes
+995,39,5,3,feb5f53f01aec8bc,Master Relic Monk robes
+996,40,0,0,6a6667c3cb310655,Worn Scrap Ash cloak
+997,40,0,1,b32bc8df54c67605,Field Scrap Ash cloak
+998,40,0,2,ee20c1bd2b84ac67,Fine Scrap Ash cloak
+999,40,0,3,b63f4dd8eae5d5ad,Master Scrap Ash cloak
+1000,40,1,0,b2d85d7f1600b640,Worn Iron Ash cloak
+1001,40,1,1,45fc039486158fe2,Field Iron Ash cloak
+1002,40,1,2,18f74825700d6322,Fine Iron Ash cloak
+1003,40,1,3,99a24143567d8356,Master Iron Ash cloak
+1004,40,2,0,854760c48c943228,Worn Bronze Ash cloak
+1005,40,2,1,7864a250186f7551,Field Bronze Ash cloak
+1006,40,2,2,57d17258427e56ca,Fine Bronze Ash cloak
+1007,40,2,3,b31e6b9ca8c75a6b,Master Bronze Ash cloak
+1008,40,3,0,5af20736eee81d76,Worn Steel Ash cloak
+1009,40,3,1,8b142cd54b2585cc,Field Steel Ash cloak
+1010,40,3,2,75cc69c9b85ff77c,Fine Steel Ash cloak
+1011,40,3,3,7fb1d4b22b55826c,Master Steel Ash cloak
+1012,40,4,0,334d3c5fb0459f06,Worn Black Ash cloak
+1013,40,4,1,946c0de5256d4ae6,Field Black Ash cloak
+1014,40,4,2,c218edcbd86cdc84,Fine Black Ash cloak
+1015,40,4,3,0a4db8ac15aab5a6,Master Black Ash cloak
+1016,40,5,0,130fdd2f65233e32,Worn Relic Ash cloak
+1017,40,5,1,b4ab21f8fd104b78,Field Relic Ash cloak
+1018,40,5,2,65925325e50a33b8,Fine Relic Ash cloak
+1019,40,5,3,3610377c2b3bccf0,Master Relic Ash cloak
+1020,41,0,0,084c09c201d1d3ef,Worn Scrap Gambeson
+1021,41,0,1,1cc5a6270e949009,Field Scrap Gambeson
+1022,41,0,2,fca4f0dd4131cfa3,Fine Scrap Gambeson
+1023,41,0,3,ba79d3aa569e852b,Master Scrap Gambeson
+1024,41,1,0,2acdef453d976a13,Worn Iron Gambeson
+1025,41,1,1,eb00da7e0d384a3b,Field Iron Gambeson
+1026,41,1,2,4fb1e600aec0e8aa,Fine Iron Gambeson
+1027,41,1,3,5bdd8b13763c5f0c,Master Iron Gambeson
+1028,41,2,0,9fe2b1cdb5a9522b,Worn Bronze Gambeson
+1029,41,2,1,632bb9ee33877754,Field Bronze Gambeson
+1030,41,2,2,06556aea24d5d661,Fine Bronze Gambeson
+1031,41,2,3,5ed0eca7a0355005,Master Bronze Gambeson
+1032,41,3,0,03f3a28db322bdd1,Worn Steel Gambeson
+1033,41,3,1,26345346c8d79051,Field Steel Gambeson
+1034,41,3,2,f32a5721e5e89559,Fine Steel Gambeson
+1035,41,3,3,e86acbb7a6c9af8d,Master Steel Gambeson
+1036,41,4,0,da40f56f83cc4adb,Worn Black Gambeson
+1037,41,4,1,41f29e78f9df1531,Field Black Gambeson
+1038,41,4,2,41777e5becf65fa2,Fine Black Gambeson
+1039,41,4,3,126d669234312674,Master Black Gambeson
+1040,41,5,0,c218f6e975d50895,Worn Relic Gambeson
+1041,41,5,1,05035ef3b48aef95,Field Relic Gambeson
+1042,41,5,2,733b8e2a0bdd0705,Fine Relic Gambeson
+1043,41,5,3,f711c98c2a0e6709,Master Relic Gambeson
+1044,42,0,0,92031c8d71150c1f,Worn Scrap Plated duster
+1045,42,0,1,ea4afc9bcb59fbae,Field Scrap Plated duster
+1046,42,0,2,a7ac215b3588aa73,Fine Scrap Plated duster
+1047,42,0,3,2503986234e78ce9,Master Scrap Plated duster
+1048,42,1,0,64bfd0392e8b7812,Worn Iron Plated duster
+1049,42,1,1,8051f17e3ab9b69d,Field Iron Plated duster
+1050,42,1,2,af5fd1f6a4239277,Fine Iron Plated duster
+1051,42,1,3,bbbb228c7333f477,Master Iron Plated duster
+1052,42,2,0,e25d7047eca741ba,Worn Bronze Plated duster
+1053,42,2,1,65b2dccaef21658e,Field Bronze Plated duster
+1054,42,2,2,c16c6c9b6b2e399b,Fine Bronze Plated duster
+1055,42,2,3,f29a54bdb417f21c,Master Bronze Plated duster
+1056,42,3,0,562d152a9c921c78,Worn Steel Plated duster
+1057,42,3,1,5084f9bbb22d753b,Field Steel Plated duster
+1058,42,3,2,b2fcafa366db3aab,Fine Steel Plated duster
+1059,42,3,3,c287139f5b7ae21f,Master Steel Plated duster
+1060,42,4,0,68d5f6ffd86a5516,Worn Black Plated duster
+1061,42,4,1,26d3264694d7e453,Field Black Plated duster
+1062,42,4,2,a12cda9ed30af9e8,Fine Black Plated duster
+1063,42,4,3,2fd9d4b7615b5546,Master Black Plated duster
+1064,42,5,0,9439a0f75afff972,Worn Relic Plated duster
+1065,42,5,1,def65bbec171b955,Field Relic Plated duster
+1066,42,5,2,86ee7b6a50c59ba5,Fine Relic Plated duster
+1067,42,5,3,a35459ce84cb9d69,Master Relic Plated duster
+1068,43,0,0,6320d8bbe16a323f,Worn Scrap Reed jacket
+1069,43,0,1,bc05f8fa4d06d0f5,Field Scrap Reed jacket
+1070,43,0,2,658333428f6d87db,Fine Scrap Reed jacket
+1071,43,0,3,a065a74eddb1f4db,Master Scrap Reed jacket
+1072,43,1,0,6886c185ef031ac1,Worn Iron Reed jacket
+1073,43,1,1,bfaebaf79b9951ed,Field Iron Reed jacket
+1074,43,1,2,a00778813cf26d40,Fine Iron Reed jacket
+1075,43,1,3,448f33790f61e2ca,Master Iron Reed jacket
+1076,43,2,0,83345b1edc08820e,Worn Bronze Reed jacket
+1077,43,2,1,b607fab92a936b61,Field Bronze Reed jacket
+1078,43,2,2,b52d77d045af1028,Fine Bronze Reed jacket
+1079,43,2,3,2a9a554cef73166c,Master Bronze Reed jacket
+1080,43,3,0,574cfe071684b57f,Worn Steel Reed jacket
+1081,43,3,1,d6b00716eb02fbd3,Field Steel Reed jacket
+1082,43,3,2,123827c9b3084e43,Fine Steel Reed jacket
+1083,43,3,3,ed1b54db31c55d77,Master Steel Reed jacket
+1084,43,4,0,ccfba73a191e06a3,Worn Black Reed jacket
+1085,43,4,1,a2b0446632300a01,Field Black Reed jacket
+1086,43,4,2,f9812c583f569f8e,Fine Black Reed jacket
+1087,43,4,3,45fd1ea058cbfa90,Master Black Reed jacket
+1088,43,5,0,27f7bfd6e0fe5fe7,Worn Relic Reed jacket
+1089,43,5,1,5ef56e43619bc83b,Field Relic Reed jacket
+1090,43,5,2,127224f15b585213,Fine Relic Reed jacket
+1091,43,5,3,20fdfdcfeaf1148f,Master Relic Reed jacket
+1092,44,0,0,16ac0b0b8d33910b,Worn Scrap Scale haori
+1093,44,0,1,03e54484b23ad4da,Field Scrap Scale haori
+1094,44,0,2,2d37290430209bdf,Fine Scrap Scale haori
+1095,44,0,3,fd99daf7f83fb28d,Master Scrap Scale haori
+1096,44,1,0,68a4b69ca77ab951,Worn Iron Scale haori
+1097,44,1,1,4025ba31ff1ecc9a,Field Iron Scale haori
+1098,44,1,2,5911995c0af71d58,Fine Iron Scale haori
+1099,44,1,3,302e820beec32158,Master Iron Scale haori
+1100,44,2,0,f3be37d6429d5235,Worn Bronze Scale haori
+1101,44,2,1,8950bc3988540d3d,Field Bronze Scale haori
+1102,44,2,2,d6d70b4cfae11c60,Fine Bronze Scale haori
+1103,44,2,3,1785252190751fff,Master Bronze Scale haori
+1104,44,3,0,ff8c4c5e3f13fa91,Worn Steel Scale haori
+1105,44,3,1,d00fd8ce7a7a6322,Field Steel Scale haori
+1106,44,3,2,8bdf7618e86aa6b6,Fine Steel Scale haori
+1107,44,3,3,c8e45cbbc10f5bea,Master Steel Scale haori
+1108,44,4,0,aa0659a6c786eae0,Worn Black Scale haori
+1109,44,4,1,7965f406f3d97849,Field Black Scale haori
+1110,44,4,2,3464b6119e515516,Fine Black Scale haori
+1111,44,4,3,a5ee61870a85b500,Master Black Scale haori
+1112,44,5,0,27c28a5d786acd9b,Worn Relic Scale haori
+1113,44,5,1,4547b47283ec5404,Field Relic Scale haori
+1114,44,5,2,f6537b50e243ccb8,Fine Relic Scale haori
+1115,44,5,3,534995c5461d36ac,Master Relic Scale haori
+1116,45,0,0,95e12bf283bc9407,Worn Scrap Bandolier coat
+1117,45,0,1,f6e69b3dee58fff7,Field Scrap Bandolier coat
+1118,45,0,2,b168b95d7d9166e1,Fine Scrap Bandolier coat
+1119,45,0,3,0f6e2aec6ec9e2b9,Master Scrap Bandolier coat
+1120,45,1,0,68aff227b657fc4f,Worn Iron Bandolier coat
+1121,45,1,1,f25e9695449e5221,Field Iron Bandolier coat
+1122,45,1,2,e1243e9a8af4712d,Fine Iron Bandolier coat
+1123,45,1,3,a345c5d70106480d,Master Iron Bandolier coat
+1124,45,2,0,05f2cd04098ae50c,Worn Bronze Bandolier coat
+1125,45,2,1,3bab6d0ed787d7c1,Field Bronze Bandolier coat
+1126,45,2,2,2ca6162d08449616,Fine Bronze Bandolier coat
+1127,45,2,3,a2f42a96a29896fe,Master Bronze Bandolier coat
+1128,45,3,0,38b32f774b0b13d7,Worn Steel Bandolier coat
+1129,45,3,1,1cd90308bbcd33f1,Field Steel Bandolier coat
+1130,45,3,2,04c2e0fd335f2afd,Fine Steel Bandolier coat
+1131,45,3,3,6c07c2bcbdb9fd6d,Master Steel Bandolier coat
+1132,45,4,0,4252487daf2c963d,Worn Black Bandolier coat
+1133,45,4,1,3ccf953e8e088e91,Field Black Bandolier coat
+1134,45,4,2,9e92a3620d31155f,Fine Black Bandolier coat
+1135,45,4,3,59456b59f81aacef,Master Black Bandolier coat
+1136,45,5,0,9f1cdb9b8baf403b,Worn Relic Bandolier coat
+1137,45,5,1,c9eb2c6630516dfd,Field Relic Bandolier coat
+1138,45,5,2,6581cb0c5d015f61,Fine Relic Bandolier coat
+1139,45,5,3,23abfe9d5a25b251,Master Relic Bandolier coat
+1140,46,0,0,a6a252afedf4cdf3,Worn Scrap Scavenger wraps
+1141,46,0,1,22ade49dbe68cfcf,Field Scrap Scavenger wraps
+1142,46,0,2,c3745e7c8684a3d1,Fine Scrap Scavenger wraps
+1143,46,0,3,b9022350a48f226b,Master Scrap Scavenger wraps
+1144,46,1,0,ada4d1bbbe7885ab,Worn Iron Scavenger wraps
+1145,46,1,1,6e246844a6c7a6a5,Field Iron Scavenger wraps
+1146,46,1,2,506c38de6235d129,Fine Iron Scavenger wraps
+1147,46,1,3,abac62038794a055,Master Iron Scavenger wraps
+1148,46,2,0,6226f62a98697960,Worn Bronze Scavenger wraps
+1149,46,2,1,6a22f55ec0443759,Field Bronze Scavenger wraps
+1150,46,2,2,cdbc38c22b50657e,Fine Bronze Scavenger wraps
+1151,46,2,3,69cc8f2d582a7f93,Master Bronze Scavenger wraps
+1152,46,3,0,b3c42a72b0f8727f,Worn Steel Scavenger wraps
+1153,46,3,1,45f1c8160a4622a9,Field Steel Scavenger wraps
+1154,46,3,2,776319f0044f8621,Fine Steel Scavenger wraps
+1155,46,3,3,6e6a60d263cef209,Master Steel Scavenger wraps
+1156,46,4,0,1a752f6649a80671,Worn Black Scavenger wraps
+1157,46,4,1,db3bbb75642faffd,Field Black Scavenger wraps
+1158,46,4,2,49a7e4e4c57fd0f3,Fine Black Scavenger wraps
+1159,46,4,3,865c26059e0b8379,Master Black Scavenger wraps
+1160,46,5,0,88ed601d4c8e4007,Worn Relic Scavenger wraps
+1161,46,5,1,e5db1b0898fb6019,Field Relic Scavenger wraps
+1162,46,5,2,99c146e6dabd8555,Fine Relic Scavenger wraps
+1163,46,5,3,da538854d700dd9d,Master Relic Scavenger wraps
+1164,47,0,0,d90c4076baf92c3b,Worn Scrap Captain armor
+1165,47,0,1,6345213b88970e7a,Field Scrap Captain armor
+1166,47,0,2,3c84a4fae03bc9e7,Fine Scrap Captain armor
+1167,47,0,3,325d7216b7488d4d,Master Scrap Captain armor
+1168,47,1,0,7adbd34718e933da,Worn Iron Captain armor
+1169,47,1,1,3e7e4939ba4dd195,Field Iron Captain armor
+1170,47,1,2,39976ed092519fef,Fine Iron Captain armor
+1171,47,1,3,36a8fcc868f0e2bf,Master Iron Captain armor
+1172,47,2,0,23d8f44ff7c630aa,Worn Bronze Captain armor
+1173,47,2,1,ee857dd1c4cc4946,Field Bronze Captain armor
+1174,47,2,2,50b2a7b01cfc286b,Fine Bronze Captain armor
+1175,47,2,3,cebe8393309c0fcc,Master Bronze Captain armor
+1176,47,3,0,6eca1912a66b41ac,Worn Steel Captain armor
+1177,47,3,1,9c1f24dcdf1bebbf,Field Steel Captain armor
+1178,47,3,2,d113ffbc1ad1bdc7,Fine Steel Captain armor
+1179,47,3,3,ccbde55fc76a0f7b,Master Steel Captain armor
+1180,47,4,0,d1c4f9a36c620dde,Worn Black Captain armor
+1181,47,4,1,53992ce4d31f3fd3,Field Black Captain armor
+1182,47,4,2,4af518cf8c652c20,Fine Black Captain armor
+1183,47,4,3,6091908dd18e24be,Master Black Captain armor
+1184,47,5,0,4fe152bbee520dae,Worn Relic Captain armor
+1185,47,5,1,58020409612c2e01,Field Relic Captain armor
+1186,47,5,2,3b5720a2ac9e8c01,Fine Relic Captain armor
+1187,47,5,3,5296b3cd4f85f385,Master Relic Captain armor
+1188,48,0,0,e8a40a749d02b233,Worn Scrap Sedge kasa
+1189,48,0,1,ed336a7b0a13bbd2,Field Scrap Sedge kasa
+1190,48,0,2,9e9d4aaf5a6cef80,Fine Scrap Sedge kasa
+1191,48,0,3,694fb710b3c4446c,Master Scrap Sedge kasa
+1192,48,1,0,337f8ad6decd3607,Worn Iron Sedge kasa
+1193,48,1,1,5b2b384f6ef892aa,Field Iron Sedge kasa
+1194,48,1,2,bd5d546c5d5940ce,Fine Iron Sedge kasa
+1195,48,1,3,1d643db74461f6fe,Master Iron Sedge kasa
+1196,48,2,0,a28096de1cb9b31b,Worn Bronze Sedge kasa
+1197,48,2,1,3c9b0051d611adba,Field Bronze Sedge kasa
+1198,48,2,2,3d60c772a420b76c,Fine Bronze Sedge kasa
+1199,48,2,3,a5b2bf5f9bed2118,Master Bronze Sedge kasa
+1200,48,3,0,54e5bcbe57b2637f,Worn Steel Sedge kasa
+1201,48,3,1,c13d232c84eb0be0,Field Steel Sedge kasa
+1202,48,3,2,a3524e3cbdf4c8a5,Fine Steel Sedge kasa
+1203,48,3,3,de9ea5d581353e65,Master Steel Sedge kasa
+1204,48,4,0,54379f76a824adfb,Worn Black Sedge kasa
+1205,48,4,1,f7c036b34dc680d2,Field Black Sedge kasa
+1206,48,4,2,28c95f24189af6d0,Fine Black Sedge kasa
+1207,48,4,3,2f9028a390c932ec,Master Black Sedge kasa
+1208,48,5,0,45c4c76013b4db67,Worn Relic Sedge kasa
+1209,48,5,1,f533f272937138a8,Field Relic Sedge kasa
+1210,48,5,2,e3288e2e5e3e2ca1,Fine Relic Sedge kasa
+1211,48,5,3,8662e979350c3dc1,Master Relic Sedge kasa
+1212,49,0,0,378b9599d9d7db78,Worn Scrap Frontier hat
+1213,49,0,1,cbc064edef2f1137,Field Scrap Frontier hat
+1214,49,0,2,87aeff080df3b27e,Fine Scrap Frontier hat
+1215,49,0,3,8d84b67eed40dd60,Master Scrap Frontier hat
+1216,49,1,0,9281c4b304af517b,Worn Iron Frontier hat
+1217,49,1,1,96e4d9f4d3e95dc6,Field Iron Frontier hat
+1218,49,1,2,6caa58c8388bb239,Fine Iron Frontier hat
+1219,49,1,3,4645da5e14ad921f,Master Iron Frontier hat
+1220,49,2,0,c611da50bf5e1f7c,Worn Bronze Frontier hat
+1221,49,2,1,249949fddb2830ef,Field Bronze Frontier hat
+1222,49,2,2,9597ceb000a7a04a,Fine Bronze Frontier hat
+1223,49,2,3,d0c4fa442875023c,Master Bronze Frontier hat
+1224,49,3,0,76459e6e695b8376,Worn Steel Frontier hat
+1225,49,3,1,54633cc82fd51980,Field Steel Frontier hat
+1226,49,3,2,191d46b6032b5430,Fine Steel Frontier hat
+1227,49,3,3,27ef1888dd2f0e32,Master Steel Frontier hat
+1228,49,4,0,439c196d6082c812,Worn Black Frontier hat
+1229,49,4,1,2ea012ed4b671275,Field Black Frontier hat
+1230,49,4,2,45acc80c3d9ba214,Fine Black Frontier hat
+1231,49,4,3,24d359918df88c7a,Master Black Frontier hat
+1232,49,5,0,48d522f101b9d81c,Worn Relic Frontier hat
+1233,49,5,1,d286f3d343320e3e,Field Relic Frontier hat
+1234,49,5,2,b2c6fdd0d5fc6592,Fine Relic Frontier hat
+1235,49,5,3,8affea5d2383f8b0,Master Relic Frontier hat
+1236,50,0,0,14ab15c6f382686d,Worn Scrap Horned kabuto
+1237,50,0,1,e89273af269b7786,Field Scrap Horned kabuto
+1238,50,0,2,e4d9b44a36158cdb,Fine Scrap Horned kabuto
+1239,50,0,3,ae6321785974bde5,Master Scrap Horned kabuto
+1240,50,1,0,c83e873e418e1205,Worn Iron Horned kabuto
+1241,50,1,1,b08cd3977e1a0974,Field Iron Horned kabuto
+1242,50,1,2,6135a3009c9f6a6f,Fine Iron Horned kabuto
+1243,50,1,3,dea8b3eb0f5c9579,Master Iron Horned kabuto
+1244,50,2,0,5f948d7da299e795,Worn Bronze Horned kabuto
+1245,50,2,1,3fb09746583006e2,Field Bronze Horned kabuto
+1246,50,2,2,a01386aab490050b,Fine Bronze Horned kabuto
+1247,50,2,3,a330497c5d84ccb5,Master Bronze Horned kabuto
+1248,50,3,0,6c9b5e07907edecf,Worn Steel Horned kabuto
+1249,50,3,1,69e740176ad534b1,Field Steel Horned kabuto
+1250,50,3,2,418ebe4845ab81b5,Fine Steel Horned kabuto
+1251,50,3,3,1535fd08013b5a97,Master Steel Horned kabuto
+1252,50,4,0,e497da1a3fddee3d,Worn Black Horned kabuto
+1253,50,4,1,242ba8a33af28b6e,Field Black Horned kabuto
+1254,50,4,2,e38a78aae3b791ab,Fine Black Horned kabuto
+1255,50,4,3,aec28c45bcff8f05,Master Black Horned kabuto
+1256,50,5,0,9941e16277759647,Worn Relic Horned kabuto
+1257,50,5,1,c665675fe154d0c5,Field Relic Horned kabuto
+1258,50,5,2,502c755d5f27d60d,Fine Relic Horned kabuto
+1259,50,5,3,2d0b531a440d678f,Master Relic Horned kabuto
+1260,51,0,0,e3835811ce8bd9ce,Worn Scrap Menpo hood
+1261,51,0,1,d11b646e43c7ba4d,Field Scrap Menpo hood
+1262,51,0,2,94180f122baf3470,Fine Scrap Menpo hood
+1263,51,0,3,f4a76980ca0f8ff6,Master Scrap Menpo hood
+1264,51,1,0,433233c29c48fb92,Worn Iron Menpo hood
+1265,51,1,1,822ed29ea3a33fff,Field Iron Menpo hood
+1266,51,1,2,da37deb869522d68,Fine Iron Menpo hood
+1267,51,1,3,3a9f63bdc2aeaade,Master Iron Menpo hood
+1268,51,2,0,8bb9b0374cac9146,Worn Bronze Menpo hood
+1269,51,2,1,a47dcf8622f3e151,Field Bronze Menpo hood
+1270,51,2,2,d27af4b5af05c790,Fine Bronze Menpo hood
+1271,51,2,3,72ccba3440bd2db6,Master Bronze Menpo hood
+1272,51,3,0,a8a7e299d05c7dc6,Worn Steel Menpo hood
+1273,51,3,1,0ed3bb5e90e0fc94,Field Steel Menpo hood
+1274,51,3,2,ac4f96765666048c,Fine Steel Menpo hood
+1275,51,3,3,6c902fe9c0b3041a,Master Steel Menpo hood
+1276,51,4,0,8a775c5464442fbe,Worn Black Menpo hood
+1277,51,4,1,f6ea685e22797ed5,Field Black Menpo hood
+1278,51,4,2,fcd7718ea45a5d00,Fine Black Menpo hood
+1279,51,4,3,9bc028a6c65bdc96,Master Black Menpo hood
+1280,51,5,0,cbd075ffe7d9eeb6,Worn Relic Menpo hood
+1281,51,5,1,d23515ec28175190,Field Relic Menpo hood
+1282,51,5,2,3d9dfea24b35b424,Fine Relic Menpo hood
+1283,51,5,3,8c34435ef4192f02,Master Relic Menpo hood
+1284,52,0,0,a8a8ca7a73194188,Worn Scrap Dust turban
+1285,52,0,1,37ac30da858c483b,Field Scrap Dust turban
+1286,52,0,2,9e5b43abf6ee43c6,Fine Scrap Dust turban
+1287,52,0,3,8dc53d28b5c450e4,Master Scrap Dust turban
+1288,52,1,0,44d310e1af9b45f2,Worn Iron Dust turban
+1289,52,1,1,36c2d6ac02d70e3f,Field Iron Dust turban
+1290,52,1,2,d14eb6973da322b8,Fine Iron Dust turban
+1291,52,1,3,8f553e65a9ec93aa,Master Iron Dust turban
+1292,52,2,0,a37f49a487cc37cc,Worn Bronze Dust turban
+1293,52,2,1,b8414ce13574a3fb,Field Bronze Dust turban
+1294,52,2,2,963d56f34208523a,Fine Bronze Dust turban
+1295,52,2,3,437b5ab8d9639670,Master Bronze Dust turban
+1296,52,3,0,d60f0becd7330ccd,Worn Steel Dust turban
+1297,52,3,1,17f8c957d0aba60b,Field Steel Dust turban
+1298,52,3,2,bb3758585fe27883,Fine Steel Dust turban
+1299,52,3,3,67630ee0a405b179,Master Steel Dust turban
+1300,52,4,0,27bc6b23e27226e0,Worn Black Dust turban
+1301,52,4,1,4338563b34d1fd3b,Field Black Dust turban
+1302,52,4,2,1f0d17abffc3d68e,Fine Black Dust turban
+1303,52,4,3,d8058f5a32667c7c,Master Black Dust turban
+1304,52,5,0,9cf0009612af8031,Worn Relic Dust turban
+1305,52,5,1,c60a2221e32d142b,Field Relic Dust turban
+1306,52,5,2,813e0140cf82faf7,Fine Relic Dust turban
+1307,52,5,3,7c2460048b7e7f55,Master Relic Dust turban
+1308,53,0,0,ef2dc9d58665346d,Worn Scrap Bowl helm
+1309,53,0,1,43f431b19925712e,Field Scrap Bowl helm
+1310,53,0,2,c06b4c80565bb217,Fine Scrap Bowl helm
+1311,53,0,3,4fc016006fc19ed1,Master Scrap Bowl helm
+1312,53,1,0,1fe4b0c390174705,Worn Iron Bowl helm
+1313,53,1,1,d29351a3fa4ac834,Field Iron Bowl helm
+1314,53,1,2,45d5814bc00e58bb,Fine Iron Bowl helm
+1315,53,1,3,1c27fb5c9834a165,Master Iron Bowl helm
+1316,53,2,0,fb8bd0b1dac24f95,Worn Bronze Bowl helm
+1317,53,2,1,a2d5da48e861de1a,Field Bronze Bowl helm
+1318,53,2,2,ad4a734f911907a7,Fine Bronze Bowl helm
+1319,53,2,3,77d7f93f2fc58c61,Master Bronze Bowl helm
+1320,53,3,0,2dfb562ee02b6ccf,Worn Steel Bowl helm
+1321,53,3,1,c5a7fc7d43fad6a9,Field Steel Bowl helm
+1322,53,3,2,07d4cc96c1cbace1,Fine Steel Bowl helm
+1323,53,3,3,17954755ecbb9feb,Master Steel Bowl helm
+1324,53,4,0,4cc72949618c13bd,Worn Black Bowl helm
+1325,53,4,1,44ce3eeb5623ccc6,Field Black Bowl helm
+1326,53,4,2,12e7d48b0e38c7a7,Fine Black Bowl helm
+1327,53,4,3,8c1a81db858b5571,Master Black Bowl helm
+1328,53,5,0,03bd6695d831f547,Worn Relic Bowl helm
+1329,53,5,1,1c2131936d150d35,Field Relic Bowl helm
+1330,53,5,2,7aae4c7cf1ba8c89,Fine Relic Bowl helm
+1331,53,5,3,1bd0267e21aa0d93,Master Relic Bowl helm
+1332,54,0,0,af482a50c681809e,Worn Scrap Ranger hood
+1333,54,0,1,34c404efa28d32e9,Field Scrap Ranger hood
+1334,54,0,2,a718dc8f9018a930,Fine Scrap Ranger hood
+1335,54,0,3,ceb245a723bd9e66,Master Scrap Ranger hood
+1336,54,1,0,9917bbc1e302265c,Worn Iron Ranger hood
+1337,54,1,1,5d9f70a972b56659,Field Iron Ranger hood
+1338,54,1,2,748becfc83b0b1d6,Fine Iron Ranger hood
+1339,54,1,3,feb56fd537be0130,Master Iron Ranger hood
+1340,54,2,0,0a05e97b07a2c43a,Worn Bronze Ranger hood
+1341,54,2,1,7c15d98d0b8ef189,Field Bronze Ranger hood
+1342,54,2,2,c8355cefe75922cc,Fine Bronze Ranger hood
+1343,54,2,3,2bee07066e46e12a,Master Bronze Ranger hood
+1344,54,3,0,bc7eb0a7d2baf601,Worn Steel Ranger hood
+1345,54,3,1,1b39cbbb6df3199f,Field Steel Ranger hood
+1346,54,3,2,ad947501926cfd97,Fine Steel Ranger hood
+1347,54,3,3,317f551fe463968d,Master Steel Ranger hood
+1348,54,4,0,777a5bf384459436,Worn Black Ranger hood
+1349,54,4,1,6c1babbdbc548779,Field Black Ranger hood
+1350,54,4,2,331ff0b6a6ff6a78,Fine Black Ranger hood
+1351,54,4,3,1d59db4f1f7e17de,Master Black Ranger hood
+1352,54,5,0,84d5780d76cb27d5,Worn Relic Ranger hood
+1353,54,5,1,75026b507cef388f,Field Relic Ranger hood
+1354,54,5,2,154f2b1130cf70e3,Fine Relic Ranger hood
+1355,54,5,3,e30deae050abadf1,Master Relic Ranger hood
+1356,55,0,0,d30856bc6d7407d4,Worn Scrap Oni mask
+1357,55,0,1,8f678a56e8bf9e8f,Field Scrap Oni mask
+1358,55,0,2,156d7d9c5c85c992,Fine Scrap Oni mask
+1359,55,0,3,15af002089f8c88c,Master Scrap Oni mask
+1360,55,1,0,915c499dc0ea50ce,Worn Iron Oni mask
+1361,55,1,1,ab3acf09c451d767,Field Iron Oni mask
+1362,55,1,2,031029d3d61888cc,Fine Iron Oni mask
+1363,55,1,3,6d7286d43c9c2922,Master Iron Oni mask
+1364,55,2,0,d0248ba51a60a980,Worn Bronze Oni mask
+1365,55,2,1,41056af4908361c7,Field Bronze Oni mask
+1366,55,2,2,fd250b0412de91f6,Fine Bronze Oni mask
+1367,55,2,3,c9fee2f2225ff168,Master Bronze Oni mask
+1368,55,3,0,d1b91d43572e2905,Worn Steel Oni mask
+1369,55,3,1,7ddec8039123c313,Field Steel Oni mask
+1370,55,3,2,962ee82862a70ccb,Fine Steel Oni mask
+1371,55,3,3,ac79891890a80981,Master Steel Oni mask
+1372,55,4,0,65ce24e8f745465c,Worn Black Oni mask
+1373,55,4,1,f6d277406f33295f,Field Black Oni mask
+1374,55,4,2,cf26d53aa43ba4da,Fine Black Oni mask
+1375,55,4,3,ecc5acf5e7ed8514,Master Black Oni mask
+1376,55,5,0,6a8d42b595e6bdd9,Worn Relic Oni mask
+1377,55,5,1,e5ba84eac1bec60b,Field Relic Oni mask
+1378,55,5,2,fefffb6d186e7897,Fine Relic Oni mask
+1379,55,5,3,8f0bf86fe700a4d5,Master Relic Oni mask
+1380,56,0,0,b2c804c1a870232d,Worn Scrap Goggle cap
+1381,56,0,1,9c3a2c9aa8da70c6,Field Scrap Goggle cap
+1382,56,0,2,1a2557a0b154bd87,Fine Scrap Goggle cap
+1383,56,0,3,f52b65c80b679a75,Master Scrap Goggle cap
+1384,56,1,0,ecce9758d2154862,Worn Iron Goggle cap
+1385,56,1,1,72c5b098526bed0f,Field Iron Goggle cap
+1386,56,1,2,e6a422023e6765b4,Fine Iron Goggle cap
+1387,56,1,3,171c2909dd88480e,Master Iron Goggle cap
+1388,56,2,0,4891cf1a7760e9d9,Worn Bronze Goggle cap
+1389,56,2,1,2c8f56c0b5a4abbe,Field Bronze Goggle cap
+1390,56,2,2,f06f35892616e53b,Fine Bronze Goggle cap
+1391,56,2,3,95c4e2348a869119,Master Bronze Goggle cap
+1392,56,3,0,d59c1cb5a22c2d9f,Worn Steel Goggle cap
+1393,56,3,1,b7d725d33a1e4755,Field Steel Goggle cap
+1394,56,3,2,f0fecd27cae19665,Fine Steel Goggle cap
+1395,56,3,3,d2440c69657c5563,Master Steel Goggle cap
+1396,56,4,0,21fecf2cab766e03,Worn Black Goggle cap
+1397,56,4,1,4a72211fde93cc58,Field Black Goggle cap
+1398,56,4,2,f40403d59f02bff1,Fine Black Goggle cap
+1399,56,4,3,a135ecd439464b8b,Master Black Goggle cap
+1400,56,5,0,3acda8ef3af5a4b9,Worn Relic Goggle cap
+1401,56,5,1,3cc960ea70a81ec7,Field Relic Goggle cap
+1402,56,5,2,627dbe67ee9e3083,Fine Relic Goggle cap
+1403,56,5,3,ccbd65b586c92de5,Master Relic Goggle cap
+1404,57,0,0,ade206eb17c4f07d,Worn Scrap Monk cowl
+1405,57,0,1,c0721ba71c4aa186,Field Scrap Monk cowl
+1406,57,0,2,de50f849a4a0a7c7,Fine Scrap Monk cowl
+1407,57,0,3,71333b56accab2f6,Master Scrap Monk cowl
+1408,57,1,0,ef05c250f0ee8aa1,Worn Iron Monk cowl
+1409,57,1,1,3cec425bf5ae4318,Field Iron Monk cowl
+1410,57,1,2,7dc38997deae56a7,Fine Iron Monk cowl
+1411,57,1,3,86ade1dce4414870,Master Iron Monk cowl
+1412,57,2,0,19536a3c47c653a5,Worn Bronze Monk cowl
+1413,57,2,1,793b858b6863626a,Field Bronze Monk cowl
+1414,57,2,2,f817848792a86817,Fine Bronze Monk cowl
+1415,57,2,3,ca3404d79920d49a,Master Bronze Monk cowl
+1416,57,3,0,be19b17ee15697ab,Worn Steel Monk cowl
+1417,57,3,1,3eda94293a771285,Field Steel Monk cowl
+1418,57,3,2,b78c1e3b38706f4d,Fine Steel Monk cowl
+1419,57,3,3,542b65619d3d75fd,Master Steel Monk cowl
+1420,57,4,0,09d4e6d1b17e0b2d,Worn Black Monk cowl
+1421,57,4,1,02bd376238c258ae,Field Black Monk cowl
+1422,57,4,2,168e177aa0bd4f87,Fine Black Monk cowl
+1423,57,4,3,20b12fd7f276624e,Master Black Monk cowl
+1424,57,5,0,34366e3ab470a503,Worn Relic Monk cowl
+1425,57,5,1,41b0554001899469,Field Relic Monk cowl
+1426,57,5,2,af2f05e792ec4a85,Fine Relic Monk cowl
+1427,57,5,3,9e8d9bb4e7a826d1,Master Relic Monk cowl
+1428,58,0,0,43a6cb12af2a18bb,Worn Scrap Iron jingasa
+1429,58,0,1,3826d08076ae076e,Field Scrap Iron jingasa
+1430,58,0,2,cb0707b32a558d08,Fine Scrap Iron jingasa
+1431,58,0,3,fb947a8d2a6272c6,Master Scrap Iron jingasa
+1432,58,1,0,bfb1f8fa6b353987,Worn Iron Iron jingasa
+1433,58,1,1,1320ac6f9be00472,Field Iron Iron jingasa
+1434,58,1,2,143be3a638516c6e,Fine Iron Iron jingasa
+1435,58,1,3,238df44c410b8870,Master Iron Iron jingasa
+1436,58,2,0,59a668e7dcc2ba5b,Worn Bronze Iron jingasa
+1437,58,2,1,1aa20e08214e04de,Field Bronze Iron jingasa
+1438,58,2,2,80f141d9a2d00634,Fine Bronze Iron jingasa
+1439,58,2,3,2a2793bfcd61c622,Master Bronze Iron jingasa
+1440,58,3,0,f2c6c64c555008c7,Worn Steel Iron jingasa
+1441,58,3,1,7693f09e54ab2e4c,Field Steel Iron jingasa
+1442,58,3,2,537ffd4d4534a6bd,Fine Steel Iron jingasa
+1443,58,3,3,c8019a145087db45,Master Steel Iron jingasa
+1444,58,4,0,5fe5eefddce42aa3,Worn Black Iron jingasa
+1445,58,4,1,4f3853db25b28e6e,Field Black Iron jingasa
+1446,58,4,2,0e475dd9c518afe8,Fine Black Iron jingasa
+1447,58,4,3,b9179b68ea889de6,Master Black Iron jingasa
+1448,58,5,0,8a56e83a41a0f84f,Worn Relic Iron jingasa
+1449,58,5,1,dc39f3ee7b910ffc,Field Relic Iron jingasa
+1450,58,5,2,5fb60fb7785d1479,Fine Relic Iron jingasa
+1451,58,5,3,c71fd97fd51a6da9,Master Relic Iron jingasa
+1452,59,0,0,b2f22f6eac1db593,Worn Scrap Crested helm
+1453,59,0,1,2929b9d640430ff0,Field Scrap Crested helm
+1454,59,0,2,727573d25ad46679,Fine Scrap Crested helm
+1455,59,0,3,f9a80deb9483b417,Master Scrap Crested helm
+1456,59,1,0,4eb117cafc9f7e77,Worn Iron Crested helm
+1457,59,1,1,9b48767513f4226a,Field Iron Crested helm
+1458,59,1,2,31e0bf9eaf744d89,Fine Iron Crested helm
+1459,59,1,3,97b0c22b435d1b2f,Master Iron Crested helm
+1460,59,2,0,f9abe895bae58933,Worn Bronze Crested helm
+1461,59,2,1,01f331232fabd83c,Field Bronze Crested helm
+1462,59,2,2,506e59ff124f1ab1,Fine Bronze Crested helm
+1463,59,2,3,259dd97e19f476cf,Master Bronze Crested helm
+1464,59,3,0,ec14edab33d7a1a7,Worn Steel Crested helm
+1465,59,3,1,9a378f1348d79a2d,Field Steel Crested helm
+1466,59,3,2,9f54fcde4e9b5f1d,Fine Steel Crested helm
+1467,59,3,3,b2a55aee282cf1bf,Master Steel Crested helm
+1468,59,4,0,8a7e840bc51c3d23,Worn Black Crested helm
+1469,59,4,1,d083f8f38da930a8,Field Black Crested helm
+1470,59,4,2,6267a3566f630b19,Fine Black Crested helm
+1471,59,4,3,38f87ebe9b81d947,Master Black Crested helm
+1472,59,5,0,3d5579f0d60f4c77,Worn Relic Crested helm
+1473,59,5,1,a196dbfac794c641,Field Relic Crested helm
+1474,59,5,2,a8fc1a405f0df7bd,Fine Relic Crested helm
+1475,59,5,3,d0b9acc5da32fbaf,Master Relic Crested helm
+1476,60,0,0,2dcbab9e82ac0675,Worn Scrap Riding boots
+1477,60,0,1,a8d113851da01b39,Field Scrap Riding boots
+1478,60,0,2,ae3918c97322fc31,Fine Scrap Riding boots
+1479,60,0,3,0ca1ef6f34a5c735,Master Scrap Riding boots
+1480,60,1,0,13cefd26a532e4e9,Worn Iron Riding boots
+1481,60,1,1,2fdc6fe46a613f39,Field Iron Riding boots
+1482,60,1,2,a1c49452cf409c75,Fine Iron Riding boots
+1483,60,1,3,ae35248e1db694ad,Master Iron Riding boots
+1484,60,2,0,8ec4427a8d31ad0d,Worn Bronze Riding boots
+1485,60,2,1,e43185a608cabfa9,Field Bronze Riding boots
+1486,60,2,2,fb6eac2daabfcadd,Fine Bronze Riding boots
+1487,60,2,3,94b6b29dff795c31,Master Bronze Riding boots
+1488,60,3,0,e74f7fcc3ec2d4e1,Worn Steel Riding boots
+1489,60,3,1,fc79c256dab14d39,Field Steel Riding boots
+1490,60,3,2,7d4d3ce39f147a05,Fine Steel Riding boots
+1491,60,3,3,d06b3aa23d55e805,Master Steel Riding boots
+1492,60,4,0,dc1444ee36345de5,Worn Black Riding boots
+1493,60,4,1,9eda8f883dcf13b9,Field Black Riding boots
+1494,60,4,2,61a9a28386fec1c9,Fine Black Riding boots
+1495,60,4,3,fa7080ec228a044d,Master Black Riding boots
+1496,60,5,0,d8b750b7d8a1bee1,Worn Relic Riding boots
+1497,60,5,1,98aca0fff9f7e179,Field Relic Riding boots
+1498,60,5,2,63b804fe3cec5f05,Fine Relic Riding boots
+1499,60,5,3,907e254204d7e485,Master Relic Riding boots
+1500,61,0,0,ac162ab7c48c2559,Worn Scrap Straw sandals
+1501,61,0,1,f1feb11021c79dcd,Field Scrap Straw sandals
+1502,61,0,2,de64943c13526235,Fine Scrap Straw sandals
+1503,61,0,3,9eff29e59291d059,Master Scrap Straw sandals
+1504,61,1,0,41a01b860efeba4d,Worn Iron Straw sandals
+1505,61,1,1,353070c0a45280ad,Field Iron Straw sandals
+1506,61,1,2,4a1402dcbcd85d29,Fine Iron Straw sandals
+1507,61,1,3,423ab83a13d677e1,Master Iron Straw sandals
+1508,61,2,0,1f157224b8ed8b29,Worn Bronze Straw sandals
+1509,61,2,1,0e7450735b3f1d75,Field Bronze Straw sandals
+1510,61,2,2,01ebe390e6f81989,Fine Bronze Straw sandals
+1511,61,2,3,bf8d76f481045ffd,Master Bronze Straw sandals
+1512,61,3,0,56f261cda425c6a5,Worn Steel Straw sandals
+1513,61,3,1,bb5396639b44d97d,Field Steel Straw sandals
+1514,61,3,2,eb16fa38b3cb4669,Fine Steel Straw sandals
+1515,61,3,3,2101189d09ecd8f9,Master Steel Straw sandals
+1516,61,4,0,d443200b4828ffc9,Worn Black Straw sandals
+1517,61,4,1,b18cd9e2493b5c2d,Field Black Straw sandals
+1518,61,4,2,6b226d8275a1913d,Fine Black Straw sandals
+1519,61,4,3,97b090a32820a1c1,Master Black Straw sandals
+1520,61,5,0,0eebb06996f5b415,Worn Relic Straw sandals
+1521,61,5,1,9cb16c22dd93a02d,Field Relic Straw sandals
+1522,61,5,2,df747d44d43084d9,Fine Relic Straw sandals
+1523,61,5,3,0e28a9f536f555e9,Master Relic Straw sandals
+1524,62,0,0,3230d972dc8cf469,Worn Scrap Plated greaves
+1525,62,0,1,970b2f9f6afac81d,Field Scrap Plated greaves
+1526,62,0,2,ddedf7b1d324fac5,Fine Scrap Plated greaves
+1527,62,0,3,fef0b40501082729,Master Scrap Plated greaves
+1528,62,1,0,782ae006a5762c1d,Worn Iron Plated greaves
+1529,62,1,1,f8bd3b9340d87a7d,Field Iron Plated greaves
+1530,62,1,2,14f0b7e25a94e0f9,Fine Iron Plated greaves
+1531,62,1,3,7d20f4d492238d71,Master Iron Plated greaves
+1532,62,2,0,560a26f339544779,Worn Bronze Plated greaves
+1533,62,2,1,2d543753d8f63b45,Field Bronze Plated greaves
+1534,62,2,2,aece5f586379d659,Fine Bronze Plated greaves
+1535,62,2,3,78b070c71e64f20d,Master Bronze Plated greaves
+1536,62,3,0,a37697e1d9363ef5,Worn Steel Plated greaves
+1537,62,3,1,91cc7dc1d945fc0d,Field Steel Plated greaves
+1538,62,3,2,a21083133d0e6ef9,Fine Steel Plated greaves
+1539,62,3,3,af3d1dafe52d74c9,Master Steel Plated greaves
+1540,62,4,0,2b2f57b2df65c5d9,Worn Black Plated greaves
+1541,62,4,1,2e93a85d9a45177d,Field Black Plated greaves
+1542,62,4,2,171b2fa5c4835f8d,Fine Black Plated greaves
+1543,62,4,3,12e8be61a0efe3d1,Master Black Plated greaves
+1544,62,5,0,e03b27957eaa1ba5,Worn Relic Plated greaves
+1545,62,5,1,4672ffdbf5739bfd,Field Relic Plated greaves
+1546,62,5,2,eecffed431d702e9,Fine Relic Plated greaves
+1547,62,5,3,9000f13484012439,Master Relic Plated greaves
+1548,63,0,0,d0d75f00423ab3e9,Worn Scrap Split tabi
+1549,63,0,1,f658ea103012dadd,Field Scrap Split tabi
+1550,63,0,2,b2b9a5457f3bfb45,Fine Scrap Split tabi
+1551,63,0,3,f2892c9f0f17bee9,Master Scrap Split tabi
+1552,63,1,0,6fbe2b7364d0d5f5,Worn Iron Split tabi
+1553,63,1,1,1c162db7142dc7c9,Field Iron Split tabi
+1554,63,1,2,24a27fbbb4f3e825,Fine Iron Split tabi
+1555,63,1,3,ca494bf0661d04dd,Master Iron Split tabi
+1556,63,2,0,5e8a9522ee212b61,Worn Bronze Split tabi
+1557,63,2,1,4e2b6aad62ae8d2d,Field Bronze Split tabi
+1558,63,2,2,c65c91ebb40d941d,Fine Bronze Split tabi
+1559,63,2,3,c0b4d00133052da1,Master Bronze Split tabi
+1560,63,3,0,b253d40b78f4396d,Worn Steel Split tabi
+1561,63,3,1,c38f214bd0f1d591,Field Steel Split tabi
+1562,63,3,2,82313623416501ad,Fine Steel Split tabi
+1563,63,3,3,78a33be9b81feb7d,Master Steel Split tabi
+1564,63,4,0,5872e72eebdc7a89,Worn Black Split tabi
+1565,63,4,1,564c64127545819d,Field Black Split tabi
+1566,63,4,2,db4d05d33704be7d,Fine Black Split tabi
+1567,63,4,3,474773f18179f2a1,Master Black Split tabi
+1568,63,5,0,ef0d2fb6ef858d5d,Worn Relic Split tabi
+1569,63,5,1,d8f22c977db40d41,Field Relic Split tabi
+1570,63,5,2,744dc2d6fec1855d,Fine Relic Split tabi
+1571,63,5,3,272a7277651186ed,Master Relic Split tabi
+1572,64,0,0,52f90a09d809de51,Worn Scrap Wrapped boots
+1573,64,0,1,75b93df4d1ba95d9,Field Scrap Wrapped boots
+1574,64,0,2,1ffe8dd15a2add71,Fine Scrap Wrapped boots
+1575,64,0,3,c96a7cafd5f208d5,Master Scrap Wrapped boots
+1576,64,1,0,c1e7a62bd53f4d61,Worn Iron Wrapped boots
+1577,64,1,1,6512dda76d991029,Field Iron Wrapped boots
+1578,64,1,2,2566de9d4d37cdd1,Fine Iron Wrapped boots
+1579,64,1,3,3af5b7b8e17d1c99,Master Iron Wrapped boots
+1580,64,2,0,4823e2d9365c93a9,Worn Bronze Wrapped boots
+1581,64,2,1,7bcfc36b4b2489f1,Field Bronze Wrapped boots
+1582,64,2,2,23e6f0b664df02c9,Fine Bronze Wrapped boots
+1583,64,2,3,a8c5325bb6e999bd,Master Bronze Wrapped boots
+1584,64,3,0,a4d2245319cb5c41,Worn Steel Wrapped boots
+1585,64,3,1,67aa13c551d32449,Field Steel Wrapped boots
+1586,64,3,2,2663902929932545,Fine Steel Wrapped boots
+1587,64,3,3,83dca60507c8816d,Master Steel Wrapped boots
+1588,64,4,0,6ced33fba0e0fcf1,Worn Black Wrapped boots
+1589,64,4,1,fe86de4c2a68f2a9,Field Black Wrapped boots
+1590,64,4,2,6ec549cfd809e119,Fine Black Wrapped boots
+1591,64,4,3,61e39badb971df6d,Master Black Wrapped boots
+1592,64,5,0,3a637110e48f4981,Worn Relic Wrapped boots
+1593,64,5,1,8b571755c6ba3559,Field Relic Wrapped boots
+1594,64,5,2,caf0d2108ac2a899,Fine Relic Wrapped boots
+1595,64,5,3,cfac2b346b5bc1f9,Master Relic Wrapped boots
+1596,65,0,0,15b8ed3fa1af2b05,Worn Scrap Scout shoes
+1597,65,0,1,6ad786d86746fc19,Field Scrap Scout shoes
+1598,65,0,2,593d4f97b4487881,Fine Scrap Scout shoes
+1599,65,0,3,53deda9d4945c655,Master Scrap Scout shoes
+1600,65,1,0,27c2fe572f919992,Worn Iron Scout shoes
+1601,65,1,1,0d720dd9bc8f564e,Field Iron Scout shoes
+1602,65,1,2,a184615dfa133712,Fine Iron Scout shoes
+1603,65,1,3,50ae5546b905670a,Master Iron Scout shoes
+1604,65,2,0,75d33a4ed6aa7019,Worn Bronze Scout shoes
+1605,65,2,1,2fbd5e751104e2b9,Field Bronze Scout shoes
+1606,65,2,2,b5e9d3f1103b5415,Fine Bronze Scout shoes
+1607,65,2,3,1542c7101433e461,Master Bronze Scout shoes
+1608,65,3,0,d086692b2248d2bc,Worn Steel Scout shoes
+1609,65,3,1,3c81876cb417e008,Field Steel Scout shoes
+1610,65,3,2,4a831ef84980b58c,Fine Steel Scout shoes
+1611,65,3,3,5b19496e6c854220,Master Steel Scout shoes
+1612,65,4,0,b9234a21e4a4cc03,Worn Black Scout shoes
+1613,65,4,1,e53c836f59d41d1f,Field Black Scout shoes
+1614,65,4,2,a79c031d5a937b27,Fine Black Scout shoes
+1615,65,4,3,1b6309c14084fed7,Master Black Scout shoes
+1616,65,5,0,b703a45f49ed441c,Worn Relic Scout shoes
+1617,65,5,1,a82d461a096a2de8,Field Relic Scout shoes
+1618,65,5,2,91c2afbd83944acc,Fine Relic Scout shoes
+1619,65,5,3,ffe82bfa832c80c0,Master Relic Scout shoes
+1620,66,0,0,3433dd01d40abe09,Worn Scrap Spurred boots
+1621,66,0,1,c377abd0d118aee1,Field Scrap Spurred boots
+1622,66,0,2,87d58cdc0622c295,Fine Scrap Spurred boots
+1623,66,0,3,04ce52d23e569089,Master Scrap Spurred boots
+1624,66,1,0,e2c80f26ec536bd7,Worn Iron Spurred boots
+1625,66,1,1,2e545e367d4d9853,Field Iron Spurred boots
+1626,66,1,2,19427f5b5a27ba4b,Fine Iron Spurred boots
+1627,66,1,3,56ac521a1f7ad0b3,Master Iron Spurred boots
+1628,66,2,0,1e1393ba83ba670a,Worn Bronze Spurred boots
+1629,66,2,1,c37811b7ced0bbea,Field Bronze Spurred boots
+1630,66,2,2,1535267bdf354eaa,Fine Bronze Spurred boots
+1631,66,2,3,e8601393a0f2e19e,Master Bronze Spurred boots
+1632,66,3,0,0cc523d9f36249db,Worn Steel Spurred boots
+1633,66,3,1,41467e5b7494df87,Field Steel Spurred boots
+1634,66,3,2,ab6b395ad59543df,Fine Steel Spurred boots
+1635,66,3,3,22c1d7d76af42d9f,Master Steel Spurred boots
+1636,66,4,0,8bd2ef823d9ad495,Worn Black Spurred boots
+1637,66,4,1,1b953419aefe40ed,Field Black Spurred boots
+1638,66,4,2,d1e19dc93c7b0f61,Fine Black Spurred boots
+1639,66,4,3,c086ffc7132f438d,Master Black Spurred boots
+1640,66,5,0,eb8717b44f6fc02b,Worn Relic Spurred boots
+1641,66,5,1,af3e114271064ad7,Field Relic Spurred boots
+1642,66,5,2,a18d3a9114dbd32f,Fine Relic Spurred boots
+1643,66,5,3,d5df830d7aa9bc2f,Master Relic Spurred boots
+1644,67,0,0,58d1b846c7bd9445,Worn Scrap Ash gaiters
+1645,67,0,1,81ca3db9ed3a0365,Field Scrap Ash gaiters
+1646,67,0,2,24f032221cb148f9,Fine Scrap Ash gaiters
+1647,67,0,3,95f5bdd38515e995,Master Scrap Ash gaiters
+1648,67,1,0,427b9c0b9debfa89,Worn Iron Ash gaiters
+1649,67,1,1,f552ce19fd156d65,Field Iron Ash gaiters
+1650,67,1,2,19c7b4543969e2bd,Fine Iron Ash gaiters
+1651,67,1,3,50e6c3f4fbef608d,Master Iron Ash gaiters
+1652,67,2,0,8bdaec1b80df537d,Worn Bronze Ash gaiters
+1653,67,2,1,279978d04eaa0fd5,Field Bronze Ash gaiters
+1654,67,2,2,309ee5223faa43d5,Fine Bronze Ash gaiters
+1655,67,2,3,189bd230b76f7249,Master Bronze Ash gaiters
+1656,67,3,0,341d18618a503e19,Worn Steel Ash gaiters
+1657,67,3,1,df57a1b0c267f42d,Field Steel Ash gaiters
+1658,67,3,2,e9fad70b5621f465,Fine Steel Ash gaiters
+1659,67,3,3,3e0fed0bf913a3a5,Master Steel Ash gaiters
+1660,67,4,0,f89d79c787a8caad,Worn Black Ash gaiters
+1661,67,4,1,cfba6a7167e44745,Field Black Ash gaiters
+1662,67,4,2,0dc9bc63cb0a25b9,Fine Black Ash gaiters
+1663,67,4,3,9475f28db5280fb5,Master Black Ash gaiters
+1664,67,5,0,dda4dca7763d77c1,Worn Relic Ash gaiters
+1665,67,5,1,d5197750ea1afdc5,Field Relic Ash gaiters
+1666,67,5,2,378086e4af46090d,Fine Relic Ash gaiters
+1667,67,5,3,3a61e335fc95fd85,Master Relic Ash gaiters
+1668,68,0,0,6536650838b5c179,Worn Scrap Hakama
+1669,68,0,1,f48f619e081b765d,Field Scrap Hakama
+1670,68,0,2,f37c230b85cbd2b1,Fine Scrap Hakama
+1671,68,0,3,c10a846728775f3d,Master Scrap Hakama
+1672,68,1,0,f6298702e4ffee01,Worn Iron Hakama
+1673,68,1,1,3309647aac28ea4d,Field Iron Hakama
+1674,68,1,2,4a2a5fae2f0ace89,Fine Iron Hakama
+1675,68,1,3,1c98c2c20c8ac7f1,Master Iron Hakama
+1676,68,2,0,d91178f4f29a24ad,Worn Bronze Hakama
+1677,68,2,1,e1263ba95c3016f9,Field Bronze Hakama
+1678,68,2,2,38e5728126730bed,Fine Bronze Hakama
+1679,68,2,3,48c66a4af65c18d5,Master Bronze Hakama
+1680,68,3,0,c82cc83aaf20163d,Worn Steel Hakama
+1681,68,3,1,4246b5d95624ec19,Field Steel Hakama
+1682,68,3,2,a43bf1d2e4308385,Fine Steel Hakama
+1683,68,3,3,5736f19ad4290acd,Master Steel Hakama
+1684,68,4,0,0aac2b919e45d8a1,Worn Black Hakama
+1685,68,4,1,db28ee3d1b975395,Field Black Hakama
+1686,68,4,2,bb162785ad587849,Fine Black Hakama
+1687,68,4,3,bd5bcb5844e8107d,Master Black Hakama
+1688,68,5,0,c8576148351b2dd9,Worn Relic Hakama
+1689,68,5,1,6bf0996f68b74565,Field Relic Hakama
+1690,68,5,2,c6ee81467f237121,Fine Relic Hakama
+1691,68,5,3,599f3e14a31fe4e9,Master Relic Hakama
+1692,69,0,0,ecea9f77b62abd8d,Worn Scrap Trail trousers
+1693,69,0,1,0e5435d985854be9,Field Scrap Trail trousers
+1694,69,0,2,9244baca1093a6d5,Fine Scrap Trail trousers
+1695,69,0,3,815b2e3f3c19840d,Master Scrap Trail trousers
+1696,69,1,0,f155f936261ecc6d,Worn Iron Trail trousers
+1697,69,1,1,bf37ae557b7f5b81,Field Iron Trail trousers
+1698,69,1,2,4206e4573415372d,Fine Iron Trail trousers
+1699,69,1,3,b15e63b15ded87cd,Master Iron Trail trousers
+1700,69,2,0,b1dc6313e56f8045,Worn Bronze Trail trousers
+1701,69,2,1,d2ff756edfc8f095,Field Bronze Trail trousers
+1702,69,2,2,9a1e05d1d416b7c5,Fine Bronze Trail trousers
+1703,69,2,3,51dff90a2c71560d,Master Bronze Trail trousers
+1704,69,3,0,bfeb732335a2f4dd,Worn Steel Trail trousers
+1705,69,3,1,042b76e5af86e3b1,Field Steel Trail trousers
+1706,69,3,2,e7b3949dda7ba4bd,Fine Steel Trail trousers
+1707,69,3,3,48cd636c6e4db19d,Master Steel Trail trousers
+1708,69,4,0,695a44d45b6fe5bd,Worn Black Trail trousers
+1709,69,4,1,36728272bdebae99,Field Black Trail trousers
+1710,69,4,2,ef2cbfe10f28f9c5,Fine Black Trail trousers
+1711,69,4,3,55febbce611fb8bd,Master Black Trail trousers
+1712,69,5,0,863c9303d55ed72d,Worn Relic Trail trousers
+1713,69,5,1,8d6c46f4991ee7e1,Field Relic Trail trousers
+1714,69,5,2,cdd11648b9858a6d,Fine Relic Trail trousers
+1715,69,5,3,c8a716a6c1a2ebad,Master Relic Trail trousers
+1716,70,0,0,78a9a5bb4911eeed,Worn Scrap Plated tassets
+1717,70,0,1,89c19d8e54b0e04c,Field Scrap Plated tassets
+1718,70,0,2,0087f849a5700ceb,Fine Scrap Plated tassets
+1719,70,0,3,9d659b22e66b4267,Master Scrap Plated tassets
+1720,70,1,0,726ef53f0269865d,Worn Iron Plated tassets
+1721,70,1,1,7dfd168916f76d14,Field Iron Plated tassets
+1722,70,1,2,05e0fdd39ddf04a3,Fine Iron Plated tassets
+1723,70,1,3,e44d06c51e8f1617,Master Iron Plated tassets
+1724,70,2,0,f3a4bb5a535d7abd,Worn Bronze Plated tassets
+1725,70,2,1,774e38ab93b897a8,Field Bronze Plated tassets
+1726,70,2,2,d9bf973c1b225b03,Fine Bronze Plated tassets
+1727,70,2,3,12c86eb86096637f,Master Bronze Plated tassets
+1728,70,3,0,adcdc3476b97f3b5,Worn Steel Plated tassets
+1729,70,3,1,12719163619626fc,Field Steel Plated tassets
+1730,70,3,2,59981f5d665d339b,Fine Steel Plated tassets
+1731,70,3,3,c5194d4e56c147ff,Master Steel Plated tassets
+1732,70,4,0,ee9188ddd7030ffd,Worn Black Plated tassets
+1733,70,4,1,98b242fa3641ed04,Field Black Plated tassets
+1734,70,4,2,d1ded94c0905571b,Fine Black Plated tassets
+1735,70,4,3,1ded2753a854ae67,Master Black Plated tassets
+1736,70,5,0,649cace35c0ea2fd,Worn Relic Plated tassets
+1737,70,5,1,889644dd4c82c7bc,Field Relic Plated tassets
+1738,70,5,2,097606a731229823,Fine Relic Plated tassets
+1739,70,5,3,8d3ab9007968b237,Master Relic Plated tassets
+1740,71,0,0,8ae43d3e3d4f2631,Worn Scrap Reed leggings
+1741,71,0,1,c7094b96bc562d7d,Field Scrap Reed leggings
+1742,71,0,2,73c1d808b1723ee9,Fine Scrap Reed leggings
+1743,71,0,3,cdd2dd1fbc444ef1,Master Scrap Reed leggings
+1744,71,1,0,82fb81e38fd71465,Worn Iron Reed leggings
+1745,71,1,1,20cd1063c7122819,Field Iron Reed leggings
+1746,71,1,2,e7fccaf2cd730ac5,Fine Iron Reed leggings
+1747,71,1,3,afa2123a014ffee5,Master Iron Reed leggings
+1748,71,2,0,24692d33b3b346a1,Worn Bronze Reed leggings
+1749,71,2,1,cf47418a33dc3f11,Field Bronze Reed leggings
+1750,71,2,2,997e87741fa8a081,Fine Bronze Reed leggings
+1751,71,2,3,c29c5d673cd434a9,Master Bronze Reed leggings
+1752,71,3,0,0dd333eb7dcded01,Worn Steel Reed leggings
+1753,71,3,1,0aa9d988b1f2cbf5,Field Steel Reed leggings
+1754,71,3,2,8f4c37360a0cb4e1,Fine Steel Reed leggings
+1755,71,3,3,bfc2f3017b18d571,Master Steel Reed leggings
+1756,71,4,0,d8c2958d8d7b064d,Worn Black Reed leggings
+1757,71,4,1,e5974a282917c769,Field Black Reed leggings
+1758,71,4,2,8d5c99bc01553055,Fine Black Reed leggings
+1759,71,4,3,eef5b98984937a4d,Master Black Reed leggings
+1760,71,5,0,81f25b2e50be98d9,Worn Relic Reed leggings
+1761,71,5,1,b16ec56768717eed,Field Relic Reed leggings
+1762,71,5,2,75078a60fd7bdab9,Fine Relic Reed leggings
+1763,71,5,3,19eed957ab509c39,Master Relic Reed leggings
+1764,72,0,0,4f4409101dc773c1,Worn Scrap Armored chaps
+1765,72,0,1,333c4b2fefa2d37d,Field Scrap Armored chaps
+1766,72,0,2,69e6fccebb2022b9,Fine Scrap Armored chaps
+1767,72,0,3,b0ea5a5e7e919b41,Master Scrap Armored chaps
+1768,72,1,0,5d0075c57436e6fd,Worn Iron Armored chaps
+1769,72,1,1,bf4b9a709fce45e1,Field Iron Armored chaps
+1770,72,1,2,d17ec143d3fb4cdd,Fine Iron Armored chaps
+1771,72,1,3,4ba8d8216a74fffd,Master Iron Armored chaps
+1772,72,2,0,570b3d5a0a247b75,Worn Bronze Armored chaps
+1773,72,2,1,86db0e78dbfdede9,Field Bronze Armored chaps
+1774,72,2,2,fc52b2a91e2d3f09,Fine Bronze Armored chaps
+1775,72,2,3,d22864b2032746d1,Master Bronze Armored chaps
+1776,72,3,0,537ab1cfc9a4f39d,Worn Steel Armored chaps
+1777,72,3,1,81673e53653d8cd5,Field Steel Armored chaps
+1778,72,3,2,713fe9d190b8c651,Fine Steel Armored chaps
+1779,72,3,3,d330a54a2e02d6e1,Master Steel Armored chaps
+1780,72,4,0,f52bce63b6229949,Worn Black Armored chaps
+1781,72,4,1,fb67bae77843805d,Field Black Armored chaps
+1782,72,4,2,5c129bb059ffe459,Fine Black Armored chaps
+1783,72,4,3,93b4dcccda10bdd1,Master Black Armored chaps
+1784,72,5,0,6dba3600531aca75,Worn Relic Armored chaps
+1785,72,5,1,bd2e49a5e30b0ec1,Field Relic Armored chaps
+1786,72,5,2,adcc9c1cea2db53d,Fine Relic Armored chaps
+1787,72,5,3,8ad444c87307a87d,Master Relic Armored chaps
+1788,73,0,0,c300a5b9ddc0a769,Worn Scrap Monk skirt
+1789,73,0,1,515e7e6b3a57d3d3,Field Scrap Monk skirt
+1790,73,0,2,dd39bfa8d7a8857b,Fine Scrap Monk skirt
+1791,73,0,3,b353de8249424889,Master Scrap Monk skirt
+1792,73,1,0,15bf4a678318c6f3,Worn Iron Monk skirt
+1793,73,1,1,10534eda95139837,Field Iron Monk skirt
+1794,73,1,2,abc1dfa7db97186d,Fine Iron Monk skirt
+1795,73,1,3,ec523a54554cf549,Master Iron Monk skirt
+1796,73,2,0,9d315d5876f8aa16,Worn Bronze Monk skirt
+1797,73,2,1,5e55618a35df0ff1,Field Bronze Monk skirt
+1798,73,2,2,7dadc421fdde23ea,Fine Bronze Monk skirt
+1799,73,2,3,f5ab220942f6395d,Master Bronze Monk skirt
+1800,73,3,0,3826f7fefbcc2e2b,Worn Steel Monk skirt
+1801,73,3,1,4635b73ac66ab88b,Field Steel Monk skirt
+1802,73,3,2,953d5f748084492d,Fine Steel Monk skirt
+1803,73,3,3,15bbe65701863c65,Master Steel Monk skirt
+1804,73,4,0,2dfc8764bc7b78d5,Worn Black Monk skirt
+1805,73,4,1,de20748749d4e75b,Field Black Monk skirt
+1806,73,4,2,4077101401d695ff,Fine Black Monk skirt
+1807,73,4,3,5e7a21a051568511,Master Black Monk skirt
+1808,73,5,0,f3f3400a8061cf97,Worn Relic Monk skirt
+1809,73,5,1,118a1b61c52f6417,Field Relic Monk skirt
+1810,73,5,2,b8ee089089930c89,Fine Relic Monk skirt
+1811,73,5,3,759d61cacd517941,Master Relic Monk skirt
+1812,74,0,0,c8ee7e4c2823f76d,Worn Scrap Bandit wraps
+1813,74,0,1,bd4886cadfe3bd56,Field Scrap Bandit wraps
+1814,74,0,2,4c8fbc8e9719671b,Fine Scrap Bandit wraps
+1815,74,0,3,8a86133cf0e1750b,Master Scrap Bandit wraps
+1816,74,1,0,ef01a03a1378bc89,Worn Iron Bandit wraps
+1817,74,1,1,577708da022a739e,Field Iron Bandit wraps
+1818,74,1,2,67aa2e2d4ac5291b,Fine Iron Bandit wraps
+1819,74,1,3,7e407bf63ad55ea7,Master Iron Bandit wraps
+1820,74,2,0,ff849bbe4426e615,Worn Bronze Bandit wraps
+1821,74,2,1,5adabb28ca2081e6,Field Bronze Bandit wraps
+1822,74,2,2,b9dce5c95c13f3cf,Fine Bronze Bandit wraps
+1823,74,2,3,b83df99cc95b019b,Master Bronze Bandit wraps
+1824,74,3,0,f5e225ae988b7b1d,Worn Steel Bandit wraps
+1825,74,3,1,0e3f1e864172703a,Field Steel Bandit wraps
+1826,74,3,2,4cbd18101b6455c7,Fine Steel Bandit wraps
+1827,74,3,3,8d7c998a479eddc3,Master Steel Bandit wraps
+1828,74,4,0,02e5b65d57a0dfdd,Worn Black Bandit wraps
+1829,74,4,1,5d22f1d6644032f6,Field Black Bandit wraps
+1830,74,4,2,c154874d37b2c59b,Fine Black Bandit wraps
+1831,74,4,3,c75cd9975ef7132b,Master Black Bandit wraps
+1832,74,5,0,d15601fbe7061221,Worn Relic Bandit wraps
+1833,74,5,1,437d79956406229e,Field Relic Bandit wraps
+1834,74,5,2,39e0ffc25e52f6fb,Fine Relic Bandit wraps
+1835,74,5,3,1ce4054c6411921f,Master Relic Bandit wraps
+1836,75,0,0,c564d33dcb150851,Worn Scrap Scale guards
+1837,75,0,1,1e277b1a5fdfec65,Field Scrap Scale guards
+1838,75,0,2,123cd1715586299d,Fine Scrap Scale guards
+1839,75,0,3,ee0fe5242842e5c5,Master Scrap Scale guards
+1840,75,1,0,2627b40890dcb365,Worn Iron Scale guards
+1841,75,1,1,7d5fc1a95496cf65,Field Iron Scale guards
+1842,75,1,2,0102dd340e52f0a9,Fine Iron Scale guards
+1843,75,1,3,74fbcb77bc409749,Master Iron Scale guards
+1844,75,2,0,f85bfe00dca7ac71,Worn Bronze Scale guards
+1845,75,2,1,ec2357b052689ea5,Field Bronze Scale guards
+1846,75,2,2,3c765be3d6e7dbe1,Fine Bronze Scale guards
+1847,75,2,3,dc07197d418d5991,Master Bronze Scale guards
+1848,75,3,0,34fb00f96f66bd81,Worn Steel Scale guards
+1849,75,3,1,77869c6c6ec0f125,Field Steel Scale guards
+1850,75,3,2,b388ab7c9fb9f27d,Fine Steel Scale guards
+1851,75,3,3,ea3cfcb30fef6d15,Master Steel Scale guards
+1852,75,4,0,f49e1dced2fe61d1,Worn Black Scale guards
+1853,75,4,1,e4b4a3f836e29955,Field Black Scale guards
+1854,75,4,2,fdd563daef565215,Fine Black Scale guards
+1855,75,4,3,4c7a3a375cb7acad,Master Black Scale guards
+1856,75,5,0,ae27748ccdd5037d,Worn Relic Scale guards
+1857,75,5,1,dda7fa2aa000b7b5,Field Relic Scale guards
+1858,75,5,2,0c6bae9abb0050f9,Fine Relic Scale guards
+1859,75,5,3,92e3bc9b10671029,Master Relic Scale guards
+1860,76,0,0,9ec01728d8f29391,Worn Scrap Travel pack
+1861,76,0,1,52adeb4790f946c9,Field Scrap Travel pack
+1862,76,0,2,83bf10f50a8474a1,Fine Scrap Travel pack
+1863,76,0,3,32daf697fe4788e1,Master Scrap Travel pack
+1864,76,1,0,83ca45137b7e55b1,Worn Iron Travel pack
+1865,76,1,1,5ce45f55ba409c31,Field Iron Travel pack
+1866,76,1,2,637edada43062da1,Fine Iron Travel pack
+1867,76,1,3,43c716031861c0b9,Master Iron Travel pack
+1868,76,2,0,654d40c0f0d49ddb,Worn Bronze Travel pack
+1869,76,2,1,94b35075afe07b13,Field Bronze Travel pack
+1870,76,2,2,38dc349fa6b039b3,Fine Bronze Travel pack
+1871,76,2,3,2fc7d9f02f25aaa3,Master Bronze Travel pack
+1872,76,3,0,4b5a767ef8230373,Worn Steel Travel pack
+1873,76,3,1,9b0b53df53ff757b,Field Steel Travel pack
+1874,76,3,2,740476a64ac8278b,Fine Steel Travel pack
+1875,76,3,3,d8ed08db84bb6083,Master Steel Travel pack
+1876,76,4,0,82423ab1821da7a9,Worn Black Travel pack
+1877,76,4,1,4aecd64434709279,Field Black Travel pack
+1878,76,4,2,11c1ffe37f7c7ee1,Fine Black Travel pack
+1879,76,4,3,7eecefb4189cec61,Master Black Travel pack
+1880,76,5,0,bbb97dccf7a7ee09,Worn Relic Travel pack
+1881,76,5,1,bd9d222129942ff1,Field Relic Travel pack
+1882,76,5,2,5dd27341f1d1b1f1,Fine Relic Travel pack
+1883,76,5,3,9f8e00f132518349,Master Relic Travel pack
+1884,77,0,0,ce794b4185a427b5,Worn Scrap Banner frame
+1885,77,0,1,fa145c5a94e3ac9c,Field Scrap Banner frame
+1886,77,0,2,bfcfecbf5c14d0cf,Fine Scrap Banner frame
+1887,77,0,3,2bd74c2c1d52246b,Master Scrap Banner frame
+1888,77,1,0,f531474765e70759,Worn Iron Banner frame
+1889,77,1,1,1988689f2241bce8,Field Iron Banner frame
+1890,77,1,2,d0f1ade0af7cb2fb,Fine Iron Banner frame
+1891,77,1,3,52ec90620184f717,Master Iron Banner frame
+1892,77,2,0,b53b1fb64022db1d,Worn Bronze Banner frame
+1893,77,2,1,a751c7ab3af3ff4c,Field Bronze Banner frame
+1894,77,2,2,9348398b7de77e6f,Fine Bronze Banner frame
+1895,77,2,3,92619bc4bdf1762b,Master Bronze Banner frame
+1896,77,3,0,44a2b21be704efe2,Worn Steel Banner frame
+1897,77,3,1,8070f9b1ad9256ab,Field Steel Banner frame
+1898,77,3,2,53f57e746d3227b0,Fine Steel Banner frame
+1899,77,3,3,f41634007c3498dc,Master Steel Banner frame
+1900,77,4,0,347c125abcf426e5,Worn Black Banner frame
+1901,77,4,1,dda375c6c927197c,Field Black Banner frame
+1902,77,4,2,06dabe9e81b25d07,Fine Black Banner frame
+1903,77,4,3,89b0d0e7381176a3,Master Black Banner frame
+1904,77,5,0,6d3557f04e82233d,Worn Relic Banner frame
+1905,77,5,1,d5753ed68a8c2bec,Field Relic Banner frame
+1906,77,5,2,34d1562ccd957cef,Fine Relic Banner frame
+1907,77,5,3,36ab07408bf56a53,Master Relic Banner frame
+1908,78,0,0,67b8cca174bdf76b,Worn Scrap Medicine roll
+1909,78,0,1,e6885bfaa3f5107f,Field Scrap Medicine roll
+1910,78,0,2,645d868336f7a6db,Fine Scrap Medicine roll
+1911,78,0,3,7f40503c3a6558b3,Master Scrap Medicine roll
+1912,78,1,0,b0b98d278ac26657,Worn Iron Medicine roll
+1913,78,1,1,36ff27bf3d723baf,Field Iron Medicine roll
+1914,78,1,2,eba49721b1ff50cf,Fine Iron Medicine roll
+1915,78,1,3,38fad622c8071937,Master Iron Medicine roll
+1916,78,2,0,082f468343c2f2ff,Worn Bronze Medicine roll
+1917,78,2,1,53a9c42c75cb2097,Field Bronze Medicine roll
+1918,78,2,2,15cb77c22690ba23,Fine Bronze Medicine roll
+1919,78,2,3,db107be6f2788a83,Master Bronze Medicine roll
+1920,78,3,0,bb03369f979024b7,Worn Steel Medicine roll
+1921,78,3,1,79049662b29338bf,Field Steel Medicine roll
+1922,78,3,2,d657589eec4027db,Fine Steel Medicine roll
+1923,78,3,3,f1945d474cb1c863,Master Steel Medicine roll
+1924,78,4,0,75b018f1ed687d8b,Worn Black Medicine roll
+1925,78,4,1,d3fee4d3f00181f7,Field Black Medicine roll
+1926,78,4,2,2c780681569e8a4b,Fine Black Medicine roll
+1927,78,4,3,61a1c283d0b08ea3,Master Black Medicine roll
+1928,78,5,0,abea5266f8d1deef,Worn Relic Medicine roll
+1929,78,5,1,5324b00e174a755f,Field Relic Medicine roll
+1930,78,5,2,b208b8c2981ad61f,Fine Relic Medicine roll
+1931,78,5,3,147d58eddda9e5b7,Master Relic Medicine roll
+1932,79,0,0,e258e963e430957d,Worn Scrap Ore harness
+1933,79,0,1,f626255cf367e603,Field Scrap Ore harness
+1934,79,0,2,9c5e2734aa1054a1,Fine Scrap Ore harness
+1935,79,0,3,df117f0bbb4d18e1,Master Scrap Ore harness
+1936,79,1,0,77e723b7097578f1,Worn Iron Ore harness
+1937,79,1,1,873b4187ec153ecb,Field Iron Ore harness
+1938,79,1,2,2fa184fd97de5c5d,Fine Iron Ore harness
+1939,79,1,3,6f856cd02dd4d32d,Master Iron Ore harness
+1940,79,2,0,90fbc3f119dbdd07,Worn Bronze Ore harness
+1941,79,2,1,e6a16dd904cc94d1,Field Bronze Ore harness
+1942,79,2,2,1fb66783ecde6737,Fine Bronze Ore harness
+1943,79,2,3,91b2c0a214f5e7d7,Master Bronze Ore harness
+1944,79,3,0,d853dc505bf4d21f,Worn Steel Ore harness
+1945,79,3,1,9500420200f453d9,Field Steel Ore harness
+1946,79,3,2,62ab8e4157851f87,Fine Steel Ore harness
+1947,79,3,3,512298921f9947af,Master Steel Ore harness
+1948,79,4,0,8f0a3e5b73613849,Worn Black Ore harness
+1949,79,4,1,ee02e60b9e56d747,Field Black Ore harness
+1950,79,4,2,dc24aea999020695,Fine Black Ore harness
+1951,79,4,3,33f2b73b238f39b5,Master Black Ore harness
+1952,79,5,0,3ef7d92791881d15,Worn Relic Ore harness
+1953,79,5,1,d076e488c129bbef,Field Relic Ore harness
+1954,79,5,2,7ce18b629e17e821,Fine Relic Ore harness
+1955,79,5,3,d11c53b2d9389e09,Master Relic Ore harness
+1956,80,0,0,615dc57514158bbd,Worn Scrap Ranger cape
+1957,80,0,1,a8dba3b7f03ac082,Field Scrap Ranger cape
+1958,80,0,2,852e4488cf0f85e9,Fine Scrap Ranger cape
+1959,80,0,3,0fc5c92dbd984ab3,Master Scrap Ranger cape
+1960,80,1,0,4612009cc52a52cb,Worn Iron Ranger cape
+1961,80,1,1,a75d72dad9791616,Field Iron Ranger cape
+1962,80,1,2,a74396c818af91f3,Fine Iron Ranger cape
+1963,80,1,3,5571b25122c51d03,Master Iron Ranger cape
+1964,80,2,0,f40ec7b0916a850e,Worn Bronze Ranger cape
+1965,80,2,1,cfe4076586f0fb4c,Field Bronze Ranger cape
+1966,80,2,2,72e0c1f0326c46bc,Fine Bronze Ranger cape
+1967,80,2,3,9c04f7238a960cf1,Master Bronze Ranger cape
+1968,80,3,0,8477053ae1b9e78f,Worn Steel Ranger cape
+1969,80,3,1,ce39134b812e40de,Field Steel Ranger cape
+1970,80,3,2,4c376a42717bf53f,Fine Steel Ranger cape
+1971,80,3,3,64ba800a3e6a626b,Master Steel Ranger cape
+1972,80,4,0,c85b85f78c857159,Worn Black Ranger cape
+1973,80,4,1,40201a0000bc19a2,Field Black Ranger cape
+1974,80,4,2,25b146a9c377399d,Fine Black Ranger cape
+1975,80,4,3,257611751e86b2ab,Master Black Ranger cape
+1976,80,5,0,1c776d77bb26f52f,Worn Relic Ranger cape
+1977,80,5,1,956c33c50227ddde,Field Relic Ranger cape
+1978,80,5,2,61a770070f0ee2df,Fine Relic Ranger cape
+1979,80,5,3,ca78eb211788236b,Master Relic Ranger cape
+1980,81,0,0,6949f1f545fb0ad4,Worn Scrap Sword rack
+1981,81,0,1,eb53874a9fbb3a3e,Field Scrap Sword rack
+1982,81,0,2,0ccbb85e8283d554,Fine Scrap Sword rack
+1983,81,0,3,1dd26a19ffb19a34,Master Scrap Sword rack
+1984,81,1,0,0a36e7eebd362996,Worn Iron Sword rack
+1985,81,1,1,edfa31658d6509b2,Field Iron Sword rack
+1986,81,1,2,214bf1567755551c,Fine Iron Sword rack
+1987,81,1,3,8a509e764f0a2da0,Master Iron Sword rack
+1988,81,2,0,32273a41cf460cbe,Worn Bronze Sword rack
+1989,81,2,1,422ff380bdd92ccd,Field Bronze Sword rack
+1990,81,2,2,98196da6b30b663f,Fine Bronze Sword rack
+1991,81,2,3,d3bdde5cdb8a5e97,Master Bronze Sword rack
+1992,81,3,0,11348bc508c03514,Worn Steel Sword rack
+1993,81,3,1,98e8db8bb292f347,Field Steel Sword rack
+1994,81,3,2,962983905261b281,Fine Steel Sword rack
+1995,81,3,3,9d735d580cdd9e71,Master Steel Sword rack
+1996,81,4,0,f8d04fb713e04f9f,Worn Black Sword rack
+1997,81,4,1,d9affcf573b6ec49,Field Black Sword rack
+1998,81,4,2,54989742c7acbd27,Fine Black Sword rack
+1999,81,4,3,7be297efcf050457,Master Black Sword rack
+2000,81,5,0,0dafa9ba58fbeb09,Worn Relic Sword rack
+2001,81,5,1,62ea45dada5cdd6d,Field Relic Sword rack
+2002,81,5,2,cbe20b3ad91c4e07,Fine Relic Sword rack
+2003,81,5,3,c8afb0b084c770f3,Master Relic Sword rack
+2004,82,0,0,5c4ee622756e1648,Worn Scrap Bedroll pack
+2005,82,0,1,4eede40f9eebb0f1,Field Scrap Bedroll pack
+2006,82,0,2,911affb1dc73fa36,Fine Scrap Bedroll pack
+2007,82,0,3,33253d85f8218c4a,Master Scrap Bedroll pack
+2008,82,1,0,4cefc0dde98bc9b6,Worn Iron Bedroll pack
+2009,82,1,1,fd5a9105f3e03e2f,Field Iron Bedroll pack
+2010,82,1,2,1bcd008da6b89b48,Fine Iron Bedroll pack
+2011,82,1,3,a24f58daf4131fe4,Master Iron Bedroll pack
+2012,82,2,0,d5189fd73d33e293,Worn Bronze Bedroll pack
+2013,82,2,1,79688f7ab6525bc2,Field Bronze Bedroll pack
+2014,82,2,2,de20784f4d03f815,Fine Bronze Bedroll pack
+2015,82,2,3,f530d6bbd05cbbb1,Master Bronze Bedroll pack
+2016,82,3,0,3533338900da42cc,Worn Steel Bedroll pack
+2017,82,3,1,a74ac14b2ea4501d,Field Steel Bedroll pack
+2018,82,3,2,ec1c55b62937ebb6,Fine Steel Bedroll pack
+2019,82,3,3,dfb7a92d90a90e6a,Master Steel Bedroll pack
+2020,82,4,0,8092c7ea95dd6b54,Worn Black Bedroll pack
+2021,82,4,1,188f2da1bbf75f8d,Field Black Bedroll pack
+2022,82,4,2,d32c6a54ee5992ca,Fine Black Bedroll pack
+2023,82,4,3,7fcefcda88524a56,Master Black Bedroll pack
+2024,82,5,0,abe977464d05e292,Worn Relic Bedroll pack
+2025,82,5,1,96b232e34474cd4b,Field Relic Bedroll pack
+2026,82,5,2,cf18f34efb390c4c,Fine Relic Bedroll pack
+2027,82,5,3,3125a2cb2b6bbc90,Master Relic Bedroll pack
+2028,83,0,0,6b82bad003d6dedd,Worn Scrap Pilgrim mantle
+2029,83,0,1,62f3c07a5191e0d6,Field Scrap Pilgrim mantle
+2030,83,0,2,328442a6fa493799,Fine Scrap Pilgrim mantle
+2031,83,0,3,d9c9d28bc1da7783,Master Scrap Pilgrim mantle
+2032,83,1,0,9ddc9ff2ede576f9,Worn Iron Pilgrim mantle
+2033,83,1,1,b369c11849d8dce0,Field Iron Pilgrim mantle
+2034,83,1,2,11c6df5c59ad4231,Fine Iron Pilgrim mantle
+2035,83,1,3,21919081124cc6d1,Master Iron Pilgrim mantle
+2036,83,2,0,aacd99dc56f3ffa9,Worn Bronze Pilgrim mantle
+2037,83,2,1,e70c472ff1c8c893,Field Bronze Pilgrim mantle
+2038,83,2,2,2513ca0274aa4837,Fine Bronze Pilgrim mantle
+2039,83,2,3,fcbad1889b9e7726,Master Bronze Pilgrim mantle
+2040,83,3,0,bd453fc1ac094fc1,Worn Steel Pilgrim mantle
+2041,83,3,1,0d0ba1728d41dadc,Field Steel Pilgrim mantle
+2042,83,3,2,c82579385f3c7be1,Fine Steel Pilgrim mantle
+2043,83,3,3,83a362fc9e26e465,Master Steel Pilgrim mantle
+2044,83,4,0,0eaabe632001208d,Worn Black Pilgrim mantle
+2045,83,4,1,28baf9a60b88c23a,Field Black Pilgrim mantle
+2046,83,4,2,6a6941df6edd9069,Fine Black Pilgrim mantle
+2047,83,4,3,d217c3bca4c3ea8f,Master Black Pilgrim mantle
+2048,83,5,0,dc043bb9fc8bc441,Worn Relic Pilgrim mantle
+2049,83,5,1,5407ede33f8d72fc,Field Relic Pilgrim mantle
+2050,83,5,2,c9a0f00a3eb93061,Fine Relic Pilgrim mantle
+2051,83,5,3,349a5a55d32d4905,Master Relic Pilgrim mantle
