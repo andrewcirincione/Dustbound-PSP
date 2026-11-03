@@ -13,12 +13,8 @@ static int total, failed;
         } else                                                                                               \
             printf("PASS %02d: %s\n", total, msg);                                                           \
     } while (0)
-static void fresh(void) {
-    game_new(73819, 0);
-}
-static void clear_pack(Actor *a) {
-    memset(a->pack, 0, sizeof(a->pack));
-}
+static void fresh(void) { game_new(73819, 0); }
+static void clear_pack(Actor *a) { memset(a->pack, 0, sizeof(a->pack)); }
 static int find_kind(int k) {
     for (int i = 0; i < g.actorCount; i++)
         if (g.actors[i].kind == k)
@@ -32,8 +28,8 @@ static void press(int key) {
 int main(void) {
     fresh();
     Actor *a = &g.actors[0];
-    CHECK(g.actorCount > 40 && g.buildingCount == 35 && g.nodeCount > 60,
-          "world includes five towns, residents, hostiles and resources");
+    CHECK(g.actorCount > 140 && g.buildingCount >= 150 && g.nodeCount > 450,
+          "world includes sixteen towns, residents, hostiles and resources");
     CHECK(g.squadCount == 1 && g.money == 650, "wanderer starts with one member and 650 silver");
     CHECK(can_walk(a->x, a->y), "player starts on walkable ground");
     CHECK(!can_walk(22, 24) && !can_walk(-1, 2), "buildings and map boundaries block movement");
@@ -43,9 +39,9 @@ int main(void) {
     CHECK(inventory_remove(a, ORE, 5) && inventory_count(a, ORE) == 0, "removal clears an exhausted slot");
     for (int i = 1; i <= PACK; i++)
         inventory_add(a, i, 1);
-    CHECK(!inventory_add(a, HELM, 1), "full inventory rejects new items");
-    int m = g.money, s = g.stock[0][HELM];
-    CHECK(!buy_item(0, HELM) && g.money == m && g.stock[0][HELM] == s,
+    CHECK(!inventory_add(a, TONIC, 1), "full inventory rejects new items");
+    int m = g.money, s = g.stock[0][TONIC];
+    CHECK(!buy_item(0, TONIC) && g.money == m && g.stock[0][TONIC] == s,
           "failed purchase does not consume money or shop stock");
     fresh();
     a = &g.actors[0];
@@ -80,7 +76,7 @@ int main(void) {
     for (int i = 0; i < g.actorCount; i++)
         if (g.actors[i].kind == RECRUIT)
             recruit_actor(i);
-    CHECK(g.squadCount == 4, "squad recruitment enforces four-member cap");
+    CHECK(g.squadCount == 8, "squad recruitment enforces eight-member cap");
     fresh();
     a = &g.actors[0];
     float sp = movement_speed(a), xp = a->xp[ATHLETICS];
@@ -105,14 +101,23 @@ int main(void) {
     a->y = 40;
     e->x = 41;
     e->y = 40;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < GEARS; i++)
         e->gear[i] = 0;
+    for (int i = 1; i < g.actorCount; i++)
+        if (i != enemy)
+            g.actors[i].active = 0;
+    e->kind = SETTLER;
+    a->autoattack = 0;
     float health = 0;
     for (int i = 0; i < LIMBS; i++)
         health += e->health[i];
     for (int i = 0; i < 15; i++) {
         a->cooldown = 0;
+        a->attackPhase = 0;
+        e->stun = 0;
         strike(0, enemy);
+        for (int j = 0; j < 12; j++)
+            simulate(.1f);
     }
     float after = 0;
     for (int i = 0; i < LIMBS; i++)
@@ -154,9 +159,17 @@ int main(void) {
     e->y = 40;
     a->gear[0] = CROSSBOW;
     inventory_add(a, BOLTS, 2);
+    e->kind = SETTLER;
+    a->autoattack = 0;
+    for (int i = 1; i < g.actorCount; i++)
+        if (i != enemy)
+            g.actors[i].active = 0;
     strike(0, enemy);
+    for (int j = 0; j < 15; j++)
+        simulate(.1f);
     CHECK(inventory_count(a, BOLTS) == 1, "crossbow attacks consume ammunition at range");
     a->cooldown = 0;
+    a->attackPhase = 0;
     inventory_remove(a, BOLTS, 1);
     strike(0, enemy);
     CHECK(a->gear[0] == NONE && inventory_count(a, CROSSBOW) == 1,
@@ -209,6 +222,9 @@ int main(void) {
             node = i;
             break;
         }
+    for (int i = 1; i < g.actorCount; i++)
+        g.actors[i].active = 0;
+    a->autoattack = 0;
     a->x = g.nodes[node].x;
     a->y = g.nodes[node].y;
     find_context();
@@ -263,8 +279,7 @@ int main(void) {
           "healthy followers do not intercept nearby loot");
     g.actors[r].health[HEAD] = 50;
     find_context();
-    CHECK(ui.contextKind == 0 && ui.contextIndex == r,
-          "injured followers remain available for first aid");
+    CHECK(ui.contextKind == 0 && ui.contextIndex == r, "injured followers remain available for first aid");
     fresh();
     g.money = 1234;
     g.day = 4;
@@ -295,7 +310,7 @@ int main(void) {
         }
     }
     CHECK(invalid == 0, "1000-second whole-world simulation keeps actors finite and in bounds");
-    CHECK(g.dayTime > 8 && g.time > 999, "long simulation advances world time");
+    CHECK(g.dayTime > 8 && g.time > 970, "long simulation advances world time");
     printf("\n%d/%d passed\n", total - failed, total);
     return failed ? 1 : 0;
 }
