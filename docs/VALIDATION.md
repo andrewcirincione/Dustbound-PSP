@@ -3,7 +3,7 @@
 ## Executable
 
 - Official PSPDEV v20261101 toolchain, GCC 15.2; PSP user-mode PRX packaged in a valid EBOOT/PBP.
-- EBOOT: **451,492 bytes**. SHA-256: `7667615f13efcf09f5bed8cb7ab8b6eeaea53550d323ab4b85188c3c76585e90`.
+- EBOOT: **461,927 bytes**. SHA-256: `c6b89513b71e9614e759ba8cf53f9de92182109a4befcd4906624f6170ab6587`.
 - ELF text 327,736 bytes; data 3,060; BSS 1,117,932. Configured heap: 12 MiB. Two 512-stride RGBA framebuffers use 1,114,112 bytes of VRAM. Large-memory SFO flag is disabled; the target is the original 32 MB PSP memory budget.
 - This is a compiled PSP executable. Native screenshots are used for development inspection only; the `v02-*.png` gameplay images were read from the emulated EBOOT's displayed VRAM.
 
@@ -26,7 +26,7 @@ Official PPSSPP 1.20.4, headless software renderer and debugger input/VRAM APIs.
 
 `v02-15-combat.gif` contains 120 frames read back **inside the PSP executable** through an optional QA recorder. All four animation phases were observed. The recorder copies the same framebuffer the executable presents; it does not substitute a native renderer or fabricate animation frames. `v02-combat-frames.csv` records simulation timestamps and phases. GIF playback timing uses those recorded timestamps. The prepared encounter and advanced world saves are development fixtures, not earned progression. They are excluded from the release.
 
-The optional `DUST_QA` marker enables pointer telemetry, and `DUST_RECORD` enables a bounded framebuffer capture for testing. Neither marker is included in a playable package; normal play does not record frames. The released EBOOT is the tested binary.
+The optional `DUST_QA` marker enables pointer telemetry, and `DUST_RECORD` enables a bounded framebuffer capture for testing. Neither marker is included in a playable package; normal play does not record frames. The final package received an additional boot check after updating its PSP menu background; its executable PRX is byte-identical to the one used for both full playthroughs.
 
 ## Limits and outstanding work
 
