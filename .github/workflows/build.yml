@@ -1,0 +1,29 @@
+name: PSP build and simulation tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run native simulation tests
+        run: bash scripts/build_native.sh
+      - name: Install pinned PSPDEV toolchain
+        run: |
+          curl -L --fail --retry 3 -o "$RUNNER_TEMP/pspdev.tar.gz" https://github.com/pspdev/pspdev/releases/download/v20261101/pspdev-ubuntu-latest-x86_64.tar.gz
+          echo "5dc9d785a5fd490ee9d5204b90f715efb6c46940ba3944036bbef9c993c17713  $RUNNER_TEMP/pspdev.tar.gz" | sha256sum -c -
+          tar --no-same-owner -xzf "$RUNNER_TEMP/pspdev.tar.gz" -C "$RUNNER_TEMP"
+          echo "PSPDEV=$RUNNER_TEMP/pspdev" >> "$GITHUB_ENV"
+          echo "$RUNNER_TEMP/pspdev/bin" >> "$GITHUB_PATH"
+      - name: Compile PSP executable
+        run: make -j2
+      - name: Validate package
+        run: python3 scripts/validate_pbp.py EBOOT.PBP
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dustbound-PSP
+          path: EBOOT.PBP
