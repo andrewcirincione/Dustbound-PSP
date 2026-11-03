@@ -1,0 +1,174 @@
+{
+  "rom_bytes": 130303,
+  "palette_cache_bytes": 24576,
+  "sprites": [
+    {
+      "source": "buildings.png",
+      "cell": 0,
+      "width": 116,
+      "height": 102,
+      "bytes": 9700
+    },
+    {
+      "source": "buildings.png",
+      "cell": 1,
+      "width": 117,
+      "height": 114,
+      "bytes": 11359
+    },
+    {
+      "source": "buildings.png",
+      "cell": 2,
+      "width": 128,
+      "height": 136,
+      "bytes": 14078
+    },
+    {
+      "source": "buildings.png",
+      "cell": 3,
+      "width": 92,
+      "height": 128,
+      "bytes": 9900
+    },
+    {
+      "source": "buildings.png",
+      "cell": 4,
+      "width": 116,
+      "height": 102,
+      "bytes": 10059
+    },
+    {
+      "source": "buildings.png",
+      "cell": 5,
+      "width": 100,
+      "height": 88,
+      "bytes": 8016
+    },
+    {
+      "source": "buildings.png",
+      "cell": 6,
+      "width": 105,
+      "height": 104,
+      "bytes": 9097
+    },
+    {
+      "source": "buildings.png",
+      "cell": 7,
+      "width": 104,
+      "height": 87,
+      "bytes": 7867
+    },
+    {
+      "source": "wilderness.png",
+      "cell": 0,
+      "width": 68,
+      "height": 86,
+      "bytes": 4457
+    },
+    {
+      "source": "wilderness.png",
+      "cell": 1,
+      "width": 48,
+      "height": 39,
+      "bytes": 2509
+    },
+    {
+      "source": "wilderness.png",
+      "cell": 2,
+      "width": 53,
+      "height": 104,
+      "bytes": 3975
+    },
+    {
+      "source": "wilderness.png",
+      "cell": 3,
+      "width": 56,
+      "height": 67,
+      "bytes": 3448
+    },
+    {
+      "source": "wilderness.png",
+      "cell": 4,
+      "width": 36,
+      "height": 32,
+      "bytes": 2000
+    },
+    {
+      "source": "wilderness.png",
+      "cell": 5,
+      "width": 46,
+      "height": 48,
+      "bytes": 2699
+    },
+    {
+      "source": "wilderness.png",
+      "cell": 6,
+      "width": 53,
+      "height": 51,
+      "bytes": 2990
+    },
+    {
+      "source": "wilderness.png",
+      "cell": 7,
+      "width": 49,
+      "height": 62,
+      "bytes": 2868
+    },
+    {
+      "source": "furniture.png",
+      "cell": 0,
+      "width": 59,
+      "height": 55,
+      "bytes": 3199
+    },
+    {
+      "source": "furniture.png",
+      "cell": 1,
+      "width": 67,
+      "height": 58,
+      "bytes": 3948
+    },
+    {
+      "source": "furniture.png",
+      "cell": 2,
+      "width": 61,
+      "height": 44,
+      "bytes": 2971
+    },
+    {
+      "source": "furniture.png",
+      "cell": 3,
+      "width": 64,
+      "height": 84,
+      "bytes": 4582
+    },
+    {
+      "source": "furniture.png",
+      "cell": 4,
+      "width": 35,
+      "height": 31,
+      "bytes": 2034
+    },
+    {
+      "source": "furniture.png",
+      "cell": 5,
+      "width": 47,
+      "height": 74,
+      "bytes": 4346
+    },
+    {
+      "source": "furniture.png",
+      "cell": 6,
+      "width": 24,
+      "height": 33,
+      "bytes": 1594
+    },
+    {
+      "source": "furniture.png",
+      "cell": 7,
+      "width": 60,
+      "height": 40,
+      "bytes": 2607
+    }
+  ]
+}
