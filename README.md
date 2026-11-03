@@ -2,11 +2,15 @@
 
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and procedural art, not a Kenshi port.
 
-**Current milestone: 0.2.0, playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.2.1, playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 
-![Actual PSP EBOOT gameplay in PPSSPP](evidence/v02-03-dusk-haven.png)
+![Actual PSP EBOOT gameplay in PPSSPP](evidence/v021-03-dusk-haven.png)
+
+## Combat and visual revision
+
+0.2.1 gives characters longer legs, narrower torsos, shaded faces, worn cloth and darker steel. Attacks use bent knees, hip loading, two-bone arms and attached grips, with separate cuts, thrusts, heavy chops and firearm recoil. Contact damage now lands during the visible stroke; preparation and recovery join without pose snapping. Menu portraits fit the revised proportions, and squad portraits are clipped to their cards.
 
 ## What you can play
 
@@ -14,19 +18,19 @@ An original isometric western–samurai squad RPG for PSP homebrew. Build a band
 - Up to eight controllable survivors; twenty skills improve through use. Followers, holding, mining, farming, medicine, smelting, cooking and depot hauling jobs.
 - Character naming, five starts, three original ancestries, body build, eight skin tones, hairstyles, hair colors, beards and scars. Town barbers edit appearance.
 - **2,016 generated gear variants:** 84 designs × 6 materials × 4 grades, plus base supplies and legacy equipment. Six visible slots. These are modular procedural variants, not 2,016 hand-drawn assets. Automated image hashes distinguish every variant at gameplay and portrait scale.
-- Melee, polearms, bows, crossbows and frontier firearms. Windup/contact/recovery animations, directional swings, projectile traces, stagger, recoil, hit stop, blood/spark effects and procedural sound effects. Weapon reach, weight, skill and injured arms affect attacks.
+- Melee, polearms, bows, crossbows and frontier firearms. Windup/contact/recovery animations, directional swings, subtle muzzle flashes, stagger, recoil, hit stop, blood/spark effects and procedural sound effects. Weapon reach, weight, skill and injured arms affect attacks.
 - Six separate limb health values, armor coverage, bleeding, blood loss, knockout, permanent death, limb loss, prosthetics, first aid, carrying, paid doctors and sleep.
 - NPC speech and service dialogue, finite market stocks, rotating daily gear, reputation/prosperity prices, recruitment, looting, theft, fencing, lockpicking, bounty and custody/bail/escape.
 - Delivery, supply, hunt and relic contracts; persistent journal, faction ledger, town prosperity/ownership events and expedition legacy goals.
 - Construction, farming/irrigation, storage, eight supply recipes, custom equipment forging and three research tiers.
 - Six manual save slots plus autosave, checksums, backup files and v0.1 save migration. Eighteen contextual in-game guide chapters.
 
-![Combat captured from the EBOOT; prepared encounter](evidence/v02-15-combat.gif)
+![Combat captured from the EBOOT; prepared encounter](evidence/v021-15-combat.gif)
 
 ## Install on PSP
 
 1. Use a PSP already configured to run homebrew. This repository does not install or modify firmware.
-2. Download `Dustbound-0.2.0-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
+2. Download `Dustbound-0.2.1-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
 3. The executable should be at `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Launch it from **Game → Memory Stick**.
 4. Back up existing `DUST_*.sav` files before upgrading. v0.1 saves are migrated when loaded; save the migrated game to a different slot first. Do not remove the memory stick during a save.
 
@@ -64,7 +68,7 @@ The native build exercises the same simulation and renderer. `make` uses the PSP
 # Generate test-only scenarios, then drive the EBOOT through PPSSPP:
 mkdir -p build/emu
 build/dustbound-native --fixtures build/emu
-python scripts/emulator_v02.py /path/to/PPSSPPHeadless
+python scripts/emulator_v021.py /path/to/PPSSPPHeadless
 # Verify all equipment drawings:
 python scripts/audit_catalog.py
 ```
