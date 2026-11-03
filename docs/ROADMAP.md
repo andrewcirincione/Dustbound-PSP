@@ -1,5 +1,15 @@
 # Development ledger
 
+## 0.3.0 — the weathered frontier
+
+- [x] Painted building, wilderness and furniture atlases with a bounded PSP sprite budget.
+- [x] Sword follow-through fixed with a common rigid grip for both hands.
+- [x] Controller pictograms throughout every prompt and guide.
+- [x] Walkable single-room interiors, collision, depth ordering, counters, beds and workshops.
+- [x] Interior save state; version 3 saves with version 1 and 2 migration.
+- [x] Terrain cache, indexed sprite spans and RAM framebuffer staging.
+- [x] Nineteenth field guide chapter covering interiors.
+
 ## 0.2.0 — frontier expansion
 
 Implemented and covered by native and/or EBOOT playtests:
@@ -23,7 +33,7 @@ Implemented and covered by native and/or EBOOT playtests:
 
 - [ ] Test on physical PSP-1000/2000/3000/Go; measure frame time, memory, audio and battery behavior.
 - [ ] Qualify suspend/resume, low battery, full memory stick and interrupted writes on hardware.
-- [ ] Larger authored settlement layouts, interiors and more varied resident dialogue.
+- [ ] Larger authored settlement layouts, multistorey interiors, resident indoor schedules and more varied dialogue.
 - [ ] Long-range hierarchical navigation and more sophisticated group formations.
 - [ ] Rich faction diplomacy, physical siege campaigns and consequences beyond town event simulation.
 - [ ] Multi-squad management, more industrial production chains and storage routing.
