@@ -19,6 +19,22 @@ static void ppm(const char *path) {
 }
 int main(int argc, char **argv) {
     game_new(73819, 0);
+    if (argc > 1 && strcmp(argv[1], "--catalog") == 0) {
+        FILE *f = fopen(argc > 2 ? argv[2] : "build/catalog.csv", "w");
+        if (!f)
+            return 1;
+        fprintf(f, "id,family,material,quality,render_hash,name\n");
+        for (int it = BASE_ITEMS; it < ITEMS; it++) {
+            render_catalog_scale(pixels, 480, it, argc > 3 ? atoi(argv[3]) : 5);
+            uint64_t h = 1469598103934665603ull;
+            for (int z = 0; z < 480 * 272; z++)
+                h = (h ^ pixels[z]) * 1099511628211ull;
+            fprintf(f, "%d,%d,%d,%d,%016llx,%s\n", it, itemDefs[it].family, itemDefs[it].material,
+                    itemDefs[it].quality, (unsigned long long)h, itemDefs[it].name);
+        }
+        fclose(f);
+        return 0;
+    }
     if (argc > 1 && strcmp(argv[1], "--frame") == 0) {
         if (argc > 3)
             ui.screen = atoi(argv[3]);
@@ -47,6 +63,43 @@ int main(int argc, char **argv) {
                 break;
             }
         ui.screen = SCREEN_WORLD;
+        for (int i = 1; i < g.actorCount; i++)
+            if (!g.actors[i].squad)
+                g.actors[i].active = 0;
+        const int full[6] = {2, 34, 50, 62, 68, 77};
+        for (int j = 0; j < GEARS; j++)
+            a->gear[j] = gear_id(full[j], 3, 2);
+        for (int j = 0; j < SKILLS; j++)
+            a->xp[j] = 12 * 14 * 14;
+        int en = 1;
+        while (en < g.actorCount && g.actors[en].squad)
+            en++;
+        Actor *foe = &g.actors[en];
+        foe->active = 1;
+        foe->kind = RAIDER;
+        foe->faction = HOSTILE;
+        foe->x = 37.1f;
+        foe->y = 35;
+        foe->homeX = 37;
+        foe->homeY = 35;
+        foe->gear[0] = gear_id(14, 1, 1);
+        foe->gear[1] = gear_id(35, 0, 1);
+        foe->gear[2] = gear_id(51, 0, 0);
+        foe->gear[3] = gear_id(63, 1, 1);
+        foe->gear[4] = gear_id(72, 1, 1);
+        foe->gear[5] = 0;
+        snprintf(foe->name, 16, "MESA ENFORCER");
+        for (int j = 0; j < SKILLS; j++)
+            foe->xp[j] = 12 * 12 * 12;
+        g.actors[1].x = 34;
+        g.actors[1].y = 35;
+        g.actors[1].job = JOB_HOLD;
+        g.actors[1].autoattack = 0;
+        g.actors[2].x = 35;
+        g.actors[2].y = 37;
+        g.actors[2].job = JOB_HOLD;
+        g.actors[2].autoattack = 0;
+        a->autoattack = 1;
         save_slot(2);
         game_new(73819, 1);
         a = &g.actors[0];
@@ -88,7 +141,44 @@ int main(int argc, char **argv) {
                 g.buildings[i].stock = 1;
             }
         ui.screen = SCREEN_WORLD;
+        a->xp[SMITHING] = 12 * 40 * 40;
+        inventory_add(a, COAL, 20);
+        inventory_add(a, CLOTH, 30);
+        const int armored[6] = {29, 42, 49, 66, 72, 82};
+        for (int j = 0; j < GEARS; j++)
+            a->gear[j] = gear_id(armored[j], 4, 3);
+        inventory_add(a, CARTRIDGE, 60);
         save_slot(3);
+        game_new(73819, 0);
+        a = &g.actors[0];
+        a->x = 280;
+        a->y = 201;
+        g.money = 5000;
+        g.tech = 3;
+        g.discovered[11] = 1;
+        const int ronin[6] = {4, 44, 59, 63, 68, 81};
+        for (int j = 0; j < GEARS; j++)
+            a->gear[j] = gear_id(ronin[j], 2, 3);
+        a->skin = 4;
+        a->hair = 3;
+        a->scar = 4;
+        memset(g.seen, 255, sizeof(g.seen));
+        for (int t = 0; t < TOWNS; t++)
+            g.discovered[t] = 1;
+        save_slot(4);
+        a->x = 302;
+        a->y = 310;
+        g.weather = 4;
+        g.weatherTimer = 600;
+        a->gear[1] = gear_id(40, 5, 3);
+        a->gear[2] = gear_id(54, 5, 3);
+        a->gear[5] = gear_id(83, 5, 3);
+        save_slot(5);
+        a->x = 54;
+        a->y = 322;
+        g.weather = 2;
+        g.weatherTimer = 600;
+        save_slot(6);
         return 0;
     }
 #ifdef USE_SDL

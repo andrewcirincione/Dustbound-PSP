@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-PSP_MODULE_INFO("Dustbound", 0, 0, 1);
+PSP_MODULE_INFO("Dustbound", 0, 0, 2);
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU);
 PSP_HEAP_SIZE_KB(12 * 1024);
 static volatile int running = 1;
@@ -73,6 +73,7 @@ int main(int argc, char *argv[]) {
                           PSP_DISPLAY_SETBUF_IMMEDIATE);
     int draw = 1, old = 0, frames = 0;
     float repeat = 0;
+    audio_init();
     game_new(73819, 0);
     ui.screen = SCREEN_TITLE;
     FILE *q = fopen("DUST_QA", "r");
@@ -121,6 +122,7 @@ int main(int argc, char *argv[]) {
     }
     if (ui.screen != SCREEN_TITLE)
         save_slot(0);
+    audio_shutdown();
     sceKernelExitGame();
     return 0;
 }

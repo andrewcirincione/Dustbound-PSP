@@ -1,17 +1,26 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.1.0"
-#define WORLD 128
-#define MAX_ACTORS 80
-#define MAX_BUILDINGS 100
-#define MAX_NODES 200
-#define PACK 20
+#define VERSION "0.2.0"
+#define WORLD 384
+#define MAX_ACTORS 192
+#define MAX_BUILDINGS 320
+#define MAX_NODES 640
+#define PACK 24
 #define SKILLS 20
 #define LIMBS 6
-#define ITEMS 30
-#define TOWNS 5
-#define SQUAD 4
+#define BASE_ITEMS 36
+#define FAMILIES 84
+#define MATERIALS 6
+#define QUALITIES 4
+#define ITEMS (BASE_ITEMS + FAMILIES * MATERIALS * QUALITIES)
+#define GEARS 6
+#define FACTIONS 8
+#define CONTRACTS 24
+#define GUIDE_PAGES 18
+#define SAVE_SLOTS 7
+#define TOWNS 16
+#define SQUAD 8
 #define LOGS 6
 enum {
     ATHLETICS,
@@ -66,13 +75,19 @@ enum {
     ARM,
     LEG,
     TOOLS,
-    RELIC
+    RELIC,
+    CARTRIDGE,
+    HIDE,
+    COAL,
+    PARTS,
+    TONIC,
+    MAPSCROLL
 };
 enum { PLAYER, SETTLER, GUARD, TRADER, RECRUIT, RAIDER, BEAST, CARAVAN };
-enum { FREE, UNION, SCAVENGERS, HOSTILE };
+enum { FREE, UNION, SCAVENGERS, HOSTILE, SHOGUN, MONKS, OUTLAWS, WILDLIFE };
 enum { HOUSE, SHOP, BAR, TOWER, WINDMILL, WELL, CAMPFIRE, BED, FARM, FORGE, BENCH, WALL, STORE };
 enum { NODE_ORE, NODE_COPPER, NODE_WOOD, NODE_LOOT, NODE_LOCKED, NODE_RUIN };
-enum { JOB_FOLLOW, JOB_HOLD, JOB_MINE, JOB_FARM, JOB_MEDIC };
+enum { JOB_FOLLOW, JOB_HOLD, JOB_MINE, JOB_FARM, JOB_MEDIC, JOB_SMELT, JOB_COOK, JOB_HAUL };
 enum {
     SCREEN_WORLD,
     SCREEN_PACK,
@@ -88,7 +103,17 @@ enum {
     SCREEN_MENU,
     SCREEN_HELP,
     SCREEN_TITLE,
-    SCREEN_CONFIRM
+    SCREEN_CONFIRM,
+    SCREEN_CREATE,
+    SCREEN_NAME,
+    SCREEN_DIALOG,
+    SCREEN_FORGE,
+    SCREEN_JOURNAL,
+    SCREEN_FACTIONS,
+    SCREEN_STORAGE,
+    SCREEN_SAVES,
+    SCREEN_EQUIPPED,
+    SCREEN_LOOT
 };
 enum {
     KEY_UP = 1,
@@ -111,6 +136,10 @@ typedef struct {
     const char *name, *desc;
     int price, weight, slot, power, armor;
     uint32_t color;
+    int family, material, quality, effect, potency, penetration, accuracy, speed, stealth, capacity,
+        protection;
+    float range, cooldown;
+    uint32_t trim;
 } ItemDef;
 typedef struct {
     char name[16];
@@ -118,14 +147,24 @@ typedef struct {
         unconscious;
     float xp[SKILLS];
     Stack pack[PACK];
-    int gear[4];
+    int gear[GEARS];
     int active, kind, faction, squad, dead, job, target, taskKind, taskIndex, sneaking, autoattack, carrying,
         carriedBy, lostMask, prostheticMask, bounty, arrested, lootTaken;
+    int body, skin, hair, hairColor, beard, scar, origin, race, facing, homeTown;
+    int voice, speech, prisonTown, stolen[PACK], bountyReward;
+    float speechTime, speechCooldown, prisonTime, stun, exposure, bleedTimer;
+    int routeLen, routePos, routeX[24], routeY[24];
+    float routeClock, routeTargetX, routeTargetY;
+    int attackPhase, attackTarget, attackWeapon, impactLimb, impactDamage, impactKind, defeatCredited,
+        gearStolen[GEARS];
+    float attackClock, attackDuration, attackAngle, hitFlash, recoilX, recoilY, movedTimer;
+
 } Actor;
 typedef struct {
     float x, y;
     int type, faction, owner, level, stock;
     float progress;
+    Stack storage[16];
 } Building;
 typedef struct {
     float x, y;
@@ -138,9 +177,16 @@ typedef struct {
     int faction;
 } Town;
 typedef struct {
+    int active, type, town, target, item, needed, progress, reward, completed, baseline;
+} Contract;
+typedef struct {
+    int exists, valid, version, day, squad, money;
+    char name[16];
+} SaveInfo;
+typedef struct {
     uint32_t seed, rng;
     float time, dayTime, raidTimer, autosave;
-    int day, money, selected, squadCount, tech, rep[4], kills, discovered[TOWNS], stock[TOWNS][ITEMS],
+    int day, money, selected, squadCount, tech, rep[FACTIONS], kills, discovered[TOWNS], stock[TOWNS][ITEMS],
         lastRestock;
     int actorCount, buildingCount, nodeCount, baseExists;
     float baseX, baseY;
@@ -148,6 +194,11 @@ typedef struct {
     Actor actors[MAX_ACTORS];
     Building buildings[MAX_BUILDINGS];
     Node nodes[MAX_NODES];
+    Contract contracts[CONTRACTS];
+    int townOwner[TOWNS], prosperity[TOWNS], townState[TOWNS], weather, season, contractsDone;
+    int factionWar[FACTIONS], storyStage, playOrigin, unlocks, difficulty;
+    float eventTimer, weatherTimer, worldPulse, hitstop, shake;
+    char worldNews[96];
 } Game;
 typedef struct {
     int screen, selection, scroll, tab, paused, speed, contextKind, contextIndex, tradeTown, sell, slot,
@@ -155,6 +206,12 @@ typedef struct {
     float mapX, mapY, camX, camY, noticeTime, repeat;
     char logs[LOGS][80], notice[100];
     int logCount;
+    int helpReturn, helpTopic, dialogActor, dialogPage, forgeSlot, forgeFamily, forgeMaterial, forgeQuality;
+    int createRow, createOrigin, createBody, createSkin, createHair, createHairColor, createBeard, createScar,
+        createRace;
+    int nameCursor, nameCell, storageIndex, storageSide, shopFilter, saveMode, lootActor, mapZoom, mapTown;
+    char createName[16];
+    SaveInfo saves[SAVE_SLOTS];
 } UI;
 typedef struct {
     int held, pressed;
@@ -164,7 +221,7 @@ extern Game g;
 extern UI ui;
 extern volatile uint32_t display_buffer;
 extern volatile uint32_t rendered_frames;
-extern const ItemDef itemDefs[ITEMS];
+extern ItemDef itemDefs[ITEMS];
 extern const Town towns[TOWNS];
 extern const char *skillNames[SKILLS], *limbNames[LIMBS], *buildNames[], *jobNames[];
 int level(const Actor *a, int skill);
@@ -204,4 +261,47 @@ void render_title_art(uint32_t *pixels, int stride);
 void debug_snapshot(const char *path);
 extern const char *recipeNames[];
 extern const int recipeCount, buildCount;
+
+extern const char *factionNames[FACTIONS], *regionNames[9], *weatherNames[5];
+extern const char *originNames[5], *raceNames[3], *effectNames[12], *materialNames[MATERIALS],
+    *qualityNames[QUALITIES];
+extern const char *familyNames[FAMILIES], *guideTitles[GUIDE_PAGES], *guideBodies[GUIDE_PAGES];
+extern const uint32_t factionColors[FACTIONS];
+void audio_event(int kind);
+void audio_init(void);
+void audio_shutdown(void);
+void content_init(void);
+int gear_id(int family, int material, int quality);
+int gear_family(int item);
+int weapon_ranged(int item);
+int gear_bonus(const Actor *a, int stat);
+int item_price(int town, int item, int selling);
+int shop_count(void);
+int shop_item(int index);
+void init_expansion(void);
+void tick_expansion(float dt);
+int expansion_input(float dt, Input in);
+void dialogue_open(int actor);
+const char *dialogue_line(int actor, int page);
+const char *ambient_line(int actor);
+int forge_equipment(int item);
+int storage_transfer(int building, int fromStorage, int slot);
+int accept_contract(int town, int kind);
+int complete_contract(int index);
+void contract_description(int index, char *dst, int size);
+int pickpocket(int actor);
+void character_begin(int origin);
+void character_finish(void);
+int save_inspect(int slot, SaveInfo *info);
+void save_refresh(void);
+int terrain_height(float x, float y);
+int terrain_water(float x, float y);
+int terrain_road(float x, float y);
+void route_toward(Actor *a, float x, float y, float dt);
+int nearby_workstation(int type);
+int start_sleep(int town);
+int doctor_heal(int town);
+void open_help(int topic);
+void render_catalog_scale(uint32_t *pixels, int stride, int item, int sc);
+void render_catalog_sample(uint32_t *pixels, int stride, int item);
 #endif

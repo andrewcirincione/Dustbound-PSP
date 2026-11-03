@@ -1,4 +1,5 @@
 #include "game.h"
+#include "legacy.h"
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -16,13 +17,13 @@ const char *skillNames[SKILLS] = {
     "Cooking",      "Smithing", "Engineering", "Science",      "Crossbows",      "Perception"};
 const char *limbNames[LIMBS] = {"Head", "Chest", "Left arm", "Right arm", "Left leg", "Right leg"};
 const char *jobNames[] = {"Follow squad", "Hold position", "Mine nearest ore", "Tend camp farm",
-                          "Field medic"};
+                          "Field medic",  "Smelt iron",    "Cook rations",     "Haul to depot"};
 const char *buildNames[] = {"Campfire",       "Bedroll & shelter", "Farm plot",     "Iron forge",
                             "Research bench", "Palisade",          "Storage depot", "Wind pump"};
 const char *recipeNames[] = {"Iron bar",      "Cooked ration",  "Field dressing", "Iron sabre",
                              "Plate cuirass", "Mechanical arm", "Mechanical leg", "Crossbow bolts"};
 const int recipeCount = 8, buildCount = 8;
-const ItemDef itemDefs[ITEMS] = {
+const ItemDef baseDefs[BASE_ITEMS] = {
     {"Empty", "", 0, 0, -1, 0, 0, 0},
     {"Trail ration", "Restores 48 hunger. Eaten automatically below 40.", 35, 1, -1, 0, 0, 0xc39e65},
     {"Field dressing", "Stops bleeding; restores injured limbs. X to treat.", 65, 1, -1, 0, 0, 0xd8d2ad},
@@ -52,12 +53,21 @@ const ItemDef itemDefs[ITEMS] = {
     {"Mechanical arm", "Fits a lost arm. Restores its function.", 700, 3, -1, 0, 0, 0x9fa8a1},
     {"Mechanical leg", "Fits a lost leg. Restores walking speed.", 700, 3, -1, 0, 0, 0x9fa8a1},
     {"Lock tools", "Reusable. Needed to pick sealed salvage.", 90, 1, -1, 0, 0, 0xb5ada0},
-    {"Old-world relic", "Sell for silver or spend on research.", 300, 2, -1, 0, 0, 0x80c8be}};
-const Town towns[TOWNS] = {{"DUSK HAVEN", 26, 27, UNION},
-                           {"COPPER CROSS", 76, 32, SCAVENGERS},
-                           {"SALTWATCH", 32, 83, UNION},
-                           {"THE DRY MARKET", 91, 88, SCAVENGERS},
-                           {"BROKEN SPIRE", 61, 62, HOSTILE}};
+    {"Old-world relic", "Sell for silver or spend on research.", 300, 2, -1, 0, 0, 0x80c8be},
+    {"Cartridge", "Ammunition for frontier guns.", 10, 0, -1, 0, 0, 0xac925b},
+    {"Cured hide", "Leatherworking and trade material.", 24, 1, -1, 0, 0, 0x78553b},
+    {"Coal", "High-grade forging fuel.", 18, 2, -1, 0, 0, 0x34393a},
+    {"Machine parts", "Salvage for advanced equipment.", 90, 2, -1, 0, 0, 0x698078},
+    {"Blood tonic", "Restores blood and reduces exposure.", 110, 1, -1, 0, 0, 0x9c5141},
+    {"Survey chart", "Reveals settlement positions and terrain.", 180, 0, -1, 0, 0, 0xbea777}};
+const Town towns[TOWNS] = {{"DUSK HAVEN", 26, 27, UNION},       {"COPPER CROSS", 76, 32, SCAVENGERS},
+                           {"SALTWATCH", 32, 83, UNION},        {"THE DRY MARKET", 91, 88, SCAVENGERS},
+                           {"BROKEN SPIRE", 61, 62, HOSTILE},   {"RED GULCH", 155, 42, UNION},
+                           {"IRON GATE", 235, 71, SHOGUN},      {"ASH MONASTERY", 322, 36, MONKS},
+                           {"BLACK MESA", 165, 150, OUTLAWS},   {"REED CROSSING", 65, 215, SCAVENGERS},
+                           {"CINDER PORT", 138, 294, UNION},    {"SHOGUN'S REST", 278, 198, SHOGUN},
+                           {"PALE PASS", 307, 322, MONKS},      {"DUSK FERRY", 228, 281, SCAVENGERS},
+                           {"VULTURE NEST", 338, 135, HOSTILE}, {"PINE REFUGE", 48, 333, MONKS}};
 
 static uint32_t rnd(void) {
     uint32_t x = g.rng;
@@ -67,22 +77,16 @@ static uint32_t rnd(void) {
     g.rng = x ? x : 17;
     return g.rng;
 }
-static float rf(void) {
-    return (rnd() & 65535) / 65535.0f;
-}
-static float clamp(float f, float a, float b) {
-    return f < a ? a : (f > b ? b : f);
-}
+static float rf(void) { return (rnd() & 65535) / 65535.0f; }
+static float clamp(float f, float a, float b) { return f < a ? a : (f > b ? b : f); }
 float distance(float x, float y, float u, float v) {
     float a = x - u, b = y - v;
     return sqrtf(a * a + b * b);
 }
-static int conscious(const Actor *a) {
-    return a->active && !a->dead && a->unconscious <= 0 && a->carriedBy < 0;
+int conscious(const Actor *a) {
+    return a->active && !a->dead && a->unconscious <= 0 && a->carriedBy < 0 && a->stun <= 0;
 }
-int level(const Actor *a, int s) {
-    return (int)clamp(1 + sqrtf(a->xp[s] / 12), 1, 100);
-}
+int level(const Actor *a, int s) { return (int)clamp(1 + sqrtf(a->xp[s] / 12), 1, 100); }
 void gain(Actor *a, int s, float n) {
     if (s < 0 || s >= SKILLS || !a->squad)
         return;
@@ -134,8 +138,10 @@ int inventory_remove(Actor *a, int item, int qty) {
             int n = a->pack[i].qty < qty ? a->pack[i].qty : qty;
             a->pack[i].qty -= n;
             qty -= n;
-            if (!a->pack[i].qty)
+            if (!a->pack[i].qty) {
                 a->pack[i].item = 0;
+                a->stolen[i] = 0;
+            }
         }
     return 1;
 }
@@ -143,14 +149,14 @@ float encumbrance(const Actor *a) {
     float w = 0;
     for (int i = 0; i < PACK; i++)
         w += itemDefs[a->pack[i].item].weight * a->pack[i].qty;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < GEARS; i++)
         w += itemDefs[a->gear[i]].weight;
     if (a->carrying >= 0)
         w += 40;
     return w;
 }
 float movement_speed(const Actor *a) {
-    float cap = 30 + level(a, STRENGTH) * 2;
+    float cap = 30 + level(a, STRENGTH) * 2 + gear_bonus(a, 3);
     float f = 1.0f / (1 + fmaxf(0, encumbrance(a) - cap) / cap);
     if (a->health[LLEG] < 20 || a->health[RLEG] < 20)
         f *= .55f;
@@ -160,18 +166,8 @@ float movement_speed(const Actor *a) {
         f *= .7f;
     if (a->fatigue > 85)
         f *= .75f;
-    return (1.9f + level(a, ATHLETICS) * .027f) * f * (a->sneaking ? .55f : 1);
-}
-int biome(float x, float y) {
-    if (x > 74 && y > 62)
-        return 3;
-    if (y > 69)
-        return 2;
-    if (x > 58 && y < 49)
-        return 1;
-    if (distance(x, y, 61, 62) < 16)
-        return 4;
-    return 0;
+    return (1.9f + level(a, ATHLETICS) * .027f) * f * (a->sneaking ? .55f : 1) *
+           (1 + gear_bonus(a, 1) * .005f);
 }
 int town_near(float x, float y, float r) {
     for (int i = 0; i < TOWNS; i++)
@@ -181,6 +177,8 @@ int town_near(float x, float y, float r) {
 }
 int can_walk(float x, float y) {
     if (x < 2 || y < 2 || x > WORLD - 3 || y > WORLD - 3)
+        return 0;
+    if (terrain_water(x, y))
         return 0;
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
@@ -200,6 +198,9 @@ void move_actor(Actor *a, float dx, float dy, float dt) {
         dx /= len;
         dy /= len;
     }
+    if (g.hitstop > 0 || a->prisonTime > 0 || a->attackPhase == 1 || a->attackPhase == 2)
+        return;
+    a->facing = dx - dy > 0 ? 1 : 0;
     float sp = movement_speed(a) * dt;
     float ox = a->x, oy = a->y;
     if (can_walk(a->x + dx * sp, a->y))
@@ -209,6 +210,7 @@ void move_actor(Actor *a, float dx, float dy, float dt) {
     float moved = distance(ox, oy, a->x, a->y);
     if (moved > .001f) {
         a->anim += dt * 8;
+        a->movedTimer = .12f;
         gain(a, ATHLETICS, moved * 2);
         gain(a, STRENGTH, moved * encumbrance(a) * .035f);
         if (a->sneaking)
@@ -216,17 +218,7 @@ void move_actor(Actor *a, float dx, float dy, float dt) {
         a->fatigue = clamp(a->fatigue + dt * .016f, 0, 100);
     }
 }
-static void toward(Actor *a, float x, float y, float dt) {
-    float dx = x - a->x, dy = y - a->y;
-    if (fabsf(dx) + fabsf(dy) < .2f)
-        return;
-    float ox = a->x, oy = a->y;
-    move_actor(a, dx, dy, dt);
-    if (distance(ox, oy, a->x, a->y) < .01f) {
-        move_actor(a, -dy, dx, dt);
-    }
-}
-static int add_actor(const char *name, int kind, int faction, float x, float y, int skill) {
+int add_actor(const char *name, int kind, int faction, float x, float y, int skill) {
     if (g.actorCount >= MAX_ACTORS)
         return -1;
     int n = g.actorCount++;
@@ -234,12 +226,21 @@ static int add_actor(const char *name, int kind, int faction, float x, float y, 
     memset(a, 0, sizeof(*a));
     snprintf(a->name, 16, "%s", name);
     a->active = 1;
+    a->homeTown = town_near(x, y, 12);
+    a->prisonTown = -1;
+    a->skin = n % 8;
+    a->hair = n % 7;
+    a->hairColor = n % 6;
+    a->body = n % 3;
+    a->beard = n % 4;
+    a->scar = n % 5;
+    a->speechCooldown = 6 + n % 13;
     a->kind = kind;
     a->faction = faction;
     a->x = a->homeX = a->tx = x;
     a->y = a->homeY = a->ty = y;
     a->blood = a->hunger = 100;
-    a->target = a->carrying = a->carriedBy = -1;
+    a->target = a->carrying = a->carriedBy = a->attackTarget = -1;
     for (int i = 0; i < LIMBS; i++)
         a->health[i] = 100;
     for (int i = 0; i < SKILLS; i++)
@@ -258,27 +259,35 @@ static int add_actor(const char *name, int kind, int faction, float x, float y, 
     }
     return n;
 }
-static int add_build(float x, float y, int type, int faction, int owner) {
+int add_build(float x, float y, int type, int faction, int owner) {
     if (g.buildingCount >= MAX_BUILDINGS)
         return -1;
     int n = g.buildingCount++;
     g.buildings[n] = (Building){x, y, type, faction, owner, 1, 0, 0};
     return n;
 }
-static void add_node(float x, float y, int type, int owner, int item, int qty) {
+void add_node(float x, float y, int type, int owner, int item, int qty) {
     if (g.nodeCount >= MAX_NODES)
         return;
     g.nodes[g.nodeCount++] =
         (Node){x,    y,   type, type <= NODE_WOOD ? 20 : 1, type == NODE_LOCKED || type == NODE_RUIN, owner,
                item, qty, 0};
 }
-static void restock(void) {
-    for (int t = 0; t < TOWNS - 1; t++)
-        for (int j = 1; j < ITEMS; j++)
-            g.stock[t][j] = j <= 10 ? 16 : (j == BOLTS ? 60 : j == RELIC ? 1 : 3);
+void restock(void) {
+    for (int t = 0; t < TOWNS; t++) {
+        memset(g.stock[t], 0, sizeof(g.stock[t]));
+        for (int j = 1; j < BASE_ITEMS; j++)
+            g.stock[t][j] = j <= 10 ? 16 : (j == BOLTS || j == CARTRIDGE ? 60 : j == RELIC ? 1 : 3);
+        for (int j = 0; j < 36; j++) {
+            int f = (t * 11 + j * 7 + g.day * 3) % FAMILIES;
+            int m = (t + j / 6 + g.day) % MATERIALS, q = (j + t + g.day) % QUALITIES;
+            g.stock[t][gear_id(f, m, q)] = 1 + (j % 3);
+        }
+    }
     g.lastRestock = g.day;
 }
 void game_new(uint32_t seed, int scenario) {
+    content_init();
     memset(&g, 0, sizeof(g));
     memset(&ui, 0, sizeof(ui));
     g.seed = g.rng = seed ? seed : 73819;
@@ -316,7 +325,7 @@ void game_new(uint32_t seed, int scenario) {
         inventory_add(&g.actors[n], BOLTS, 40);
         g.squadCount = 3;
     }
-    for (int t = 0; t < TOWNS; t++) {
+    for (int t = 0; t < 5; t++) {
         float x = towns[t].x, y = towns[t].y;
         int f = towns[t].faction;
         add_build(x - 4, y - 3, HOUSE, f, -1);
@@ -360,7 +369,7 @@ void game_new(uint32_t seed, int scenario) {
             y += 12;
         }
         add_actor(i % 3 == 0 ? "Dust hound" : "Dune scavenger", i % 3 == 0 ? BEAST : RAIDER, HOSTILE,
-                  clamp(x, 3, 124), clamp(y, 3, 124), i % 3 == 0 ? 6 : 5 + i % 7);
+                  clamp(x, 3, WORLD - 4), clamp(y, 3, WORLD - 4), i % 3 == 0 ? 6 : 5 + i % 7);
     }
     add_actor("Starving drifter", RAIDER, HOSTILE, 36, 35, 3);
     restock();
@@ -368,12 +377,13 @@ void game_new(uint32_t seed, int scenario) {
     ui.camX = a->x;
     ui.camY = a->y;
     log_msg("Dusk Haven. Find supplies, allies, and a way out.");
+    init_expansion();
 }
 
-static int hostile(const Actor *a, const Actor *b) {
+int hostile(const Actor *a, const Actor *b) {
     if (a->faction == b->faction)
         return 0;
-    if (a->faction == HOSTILE || b->faction == HOSTILE)
+    if (a->faction == HOSTILE || b->faction == HOSTILE || a->faction == WILDLIFE || b->faction == WILDLIFE)
         return 1;
     if (a->squad && b->kind == GUARD && g.rep[b->faction] < -25)
         return 1;
@@ -382,33 +392,72 @@ static int hostile(const Actor *a, const Actor *b) {
     return 0;
 }
 static int armor_at(const Actor *a, int limb) {
-    return itemDefs[a->gear[limb == HEAD ? 2 : limb >= LLEG ? 3 : 1]].armor;
+    return limb >= LLEG ? itemDefs[a->gear[3]].armor / 2 + itemDefs[a->gear[4]].armor
+                        : itemDefs[a->gear[limb == HEAD ? 2 : 1]].armor;
 }
 void strike(int ai, int bi) {
+    if (ai < 0 || bi < 0 || ai >= g.actorCount || bi >= g.actorCount || ai == bi)
+        return;
+    Actor *a = &g.actors[ai], *b = &g.actors[bi];
+    if (!conscious(a) || !conscious(b) || a->cooldown > 0 || a->attackPhase || a->prisonTime > 0)
+        return;
+    int w = a->gear[0], ranged = weapon_ranged(w);
+    if (distance(a->x, a->y, b->x, b->y) > (w ? itemDefs[w].range : 1.55f))
+        return;
+    if (ranged && !inventory_count(a, gear_family(w) >= 29 ? CARTRIDGE : BOLTS)) {
+        if (inventory_add(a, w, 1)) {
+            a->gear[0] = NONE;
+            a->gearStolen[0] = 0;
+        }
+        if (a->squad)
+            log_msg("%s needs ammunition.", a->name);
+        return;
+    }
+    if ((a->lostMask & (1 << RARM)) && !(a->prostheticMask & (1 << RARM)))
+        w = NONE;
+    float cadence = fmaxf(.55f, (w ? itemDefs[w].cooldown : 1.0f) - level(a, DEXTERITY) * .003f);
+    a->attackPhase = 1;
+    a->attackTarget = bi;
+    a->attackWeapon = w;
+    a->attackDuration = a->attackClock = fmaxf(.16f, cadence * (ranged ? .46f : .28f));
+    a->cooldown = cadence;
+    a->taskKind = 0;
+    a->attackAngle = atan2f((b->x + b->y - a->x - a->y) * 11, (b->x - b->y - a->x + a->y) * 22);
+    a->facing = cosf(a->attackAngle) >= 0;
+    if (distance(a->x, a->y, g.actors[g.selected].x, g.actors[g.selected].y) < 12)
+        audio_event(ranged ? (gear_family(w) >= 29 ? 4 : 1) : 1);
+}
+static void resolve_strike(int ai, int bi) {
     if (ai < 0 || bi < 0 || ai >= g.actorCount || bi >= g.actorCount)
         return;
     Actor *a = &g.actors[ai], *b = &g.actors[bi];
-    if (!conscious(a) || !conscious(b) || a->cooldown > 0)
+    if (!conscious(a) || b->dead || b->unconscious > 0)
         return;
-    int w = a->gear[0], ranged = w == CROSSBOW;
-    float d = distance(a->x, a->y, b->x, b->y);
-    if (d > (ranged ? 7 : 1.55f))
+    int w = a->attackWeapon, ranged = weapon_ranged(w);
+    if (distance(a->x, a->y, b->x, b->y) > (w ? itemDefs[w].range : 1.55f) + .3f)
         return;
-    if (ranged && !inventory_remove(a, BOLTS, 1)) {
-        a->gear[0] = NONE;
-        inventory_add(a, CROSSBOW, 1);
-        if (a->squad)
-            log_msg("%s is out of bolts; fighting unarmed.", a->name);
+    if (ranged && !inventory_remove(a, gear_family(w) >= 29 ? CARTRIDGE : BOLTS, 1))
         return;
-    }
     int sk = ranged ? CROSSBOWS : w ? MELEE : MARTIAL;
-    float atk = level(a, sk), def = level(b, b->gear[0] ? DEFENCE : DODGE);
-    a->cooldown = ranged ? 2.3f : (1.2f + itemDefs[w].weight * .025f - level(a, DEXTERITY) * .003f);
-    a->anim = 1.0f;
+    float atk = level(a, sk) + gear_bonus(a, 0), def = level(b, b->gear[0] ? DEFENCE : DODGE);
+    for (int e = 0; e < GEARS; e++)
+        if (itemDefs[b->gear[e]].effect == 4)
+            def += itemDefs[b->gear[e]].potency;
+    if (ranged && g.weather)
+        atk -= 7;
+    if (a->health[LARM] < 30)
+        atk -= 15;
+    if ((a->lostMask & (1 << LARM)) && !(a->prostheticMask & (1 << LARM)))
+        atk -= 15;
     gain(a, sk, 8);
     gain(a, DEXTERITY, 3);
     if (rf() > clamp(.71f + (atk - def) * .008f, .22f, .95f)) {
         gain(b, b->gear[0] ? DEFENCE : DODGE, 9);
+        if (distance(b->x, b->y, g.actors[g.selected].x, g.actors[g.selected].y) < 12 && b->gear[0])
+            audio_event(3);
+        b->impactKind = b->gear[0] ? 2 : 3;
+        b->hitFlash = .24f;
+        b->impactDamage = 0;
         return;
     }
     int limb = rnd() % LIMBS;
@@ -417,17 +466,40 @@ void strike(int ai, int bi) {
     float damage =
         (w ? itemDefs[w].power : 7 + level(a, MARTIAL) * .4f) + level(a, STRENGTH) * .16f + atk * .18f;
     damage *= .8f + rf() * .4f;
-    damage -= armor_at(b, limb) * .65f;
+    damage -= fmaxf(0, armor_at(b, limb) - itemDefs[w].penetration) * .65f;
+    if (itemDefs[w].effect == 3)
+        b->stun = .3f + itemDefs[w].potency * .03f;
     damage = fmaxf(2, damage);
     if (a->health[RARM] < 20)
         damage *= .65f;
     if (a->hunger < 15)
         damage *= .7f;
+    if (distance(b->x, b->y, g.actors[g.selected].x, g.actors[g.selected].y) < 12)
+        audio_event(2);
     b->health[limb] -= damage;
+    b->impactLimb = limb;
+    b->impactDamage = (int)damage;
+    b->impactKind = 1;
+    b->hitFlash = .38f;
+    b->stun = fmaxf(b->stun, .10f + fminf(.35f, damage * .006f));
+    b->attackPhase = 0;
+    float dx = b->x - a->x, dy = b->y - a->y, d = fmaxf(.1f, sqrtf(dx * dx + dy * dy));
+    b->recoilX = dx / d;
+    b->recoilY = dy / d;
+    float knock = fminf(.28f, damage * .006f);
+    if (can_walk(b->x + dx / d * knock, b->y + dy / d * knock)) {
+        b->x += dx / d * knock;
+        b->y += dy / d * knock;
+    }
+    if (a->squad || b->squad) {
+        g.hitstop = fminf(.075f, .025f + damage * .001f);
+        g.shake = fminf(.22f, damage * .006f);
+    }
+
     gain(b, TOUGHNESS, damage * 1.3f);
     gain(b, DEFENCE, 4);
-    if (w && w != STAFF)
-        b->bleed += damage * .025f;
+    if (w && w != STAFF && !(gear_family(w) >= 14 && gear_family(w) <= 16))
+        b->bleed += damage * (itemDefs[w].effect == 0 ? .04f : .025f);
     b->target = ai;
     if (a->squad || b->squad)
         log_msg("%s hits %s: %s -%d", a->name, b->name, limbNames[limb], (int)damage);
@@ -440,8 +512,12 @@ void strike(int ai, int bi) {
     if (b->health[HEAD] <= 0 || b->health[CHEST] <= 0 || b->blood < 20) {
         b->unconscious = 25 + damage;
         b->autoattack = 0;
-        if (a->squad)
+        if (a->squad && !b->defeatCredited) {
+            b->defeatCredited = 1;
             g.kills++;
+            if (b->bountyReward)
+                log_msg("Bounty target down. Loot for proof and reward.");
+        }
         if (a->squad || b->squad)
             log_msg("%s is unconscious.", b->name);
     }
@@ -466,7 +542,7 @@ int heal_actor(int mi, int pi) {
     p->bleed = 0;
     for (int j = 0; j < LIMBS; j++)
         if (!(p->lostMask & (1 << j)))
-            p->health[j] = fminf(100, p->health[j] + 18 + level(m, MEDICINE) * .65f);
+            p->health[j] = fminf(100, p->health[j] + 18 + level(m, MEDICINE) * .65f + gear_bonus(m, 5));
     p->blood = fminf(100, p->blood + 10);
     gain(m, MEDICINE, 24);
     log_msg("%s bandaged %s. Bleeding stopped.", m->name, p->name);
@@ -478,19 +554,36 @@ void use_item(int s) {
         return;
     int it = a->pack[s].item;
     if (itemDefs[it].slot >= 0) {
-        int e = itemDefs[it].slot, old = a->gear[e];
+        int e = itemDefs[it].slot, old = a->gear[e], owner = a->stolen[s], oldOwner = a->gearStolen[e];
+        Actor backup = *a;
         inventory_remove(a, it, 1);
         if (old && !inventory_add(a, old, 1)) {
-            inventory_add(a, it, 1);
+            *a = backup;
             log_msg("Pack full. Cannot swap equipment.");
             return;
         }
         a->gear[e] = it;
+        a->gearStolen[e] = owner;
+        if (old && oldOwner)
+            for (int j = 0; j < PACK; j++)
+                if (a->pack[j].item == old)
+                    a->stolen[j] = oldOwner;
         log_msg("Equipped %s.", itemDefs[it].name);
     } else if (it == RATION || it == WATER) {
         inventory_remove(a, it, 1);
         a->hunger = fminf(100, a->hunger + (it == RATION ? 48 : 12));
         log_msg("Used %s.", itemDefs[it].name);
+    } else if (it == TONIC) {
+        inventory_remove(a, TONIC, 1);
+        a->blood = fminf(100, a->blood + 35);
+        a->exposure = fmaxf(0, a->exposure - 60);
+        log_msg("Tonic restores blood and warmth.");
+    } else if (it == MAPSCROLL) {
+        inventory_remove(a, MAPSCROLL, 1);
+        memset(g.seen, 255, sizeof(g.seen));
+        for (int t = 0; t < TOWNS; t++)
+            g.discovered[t] = 1;
+        log_msg("Survey chart reveals the frontier.");
     } else if (it == MEDKIT)
         heal_actor(g.selected, g.selected);
     else if (it == ARM || it == LEG) {
@@ -511,10 +604,10 @@ void use_item(int s) {
 }
 int buy_item(int town, int it) {
     Actor *a = &g.actors[g.selected];
-    if (town < 0 || town >= TOWNS - 1 || it <= 0 || it >= ITEMS)
+    if (town < 0 || town >= TOWNS || it <= 0 || it >= ITEMS)
         return 0;
-    int price = itemDefs[it].price;
-    if (g.rep[towns[town].faction] < -25) {
+    int price = item_price(town, it, 0);
+    if (g.rep[g.townOwner[town]] < -25) {
         log_msg("This faction refuses to trade with you.");
         return 0;
     }
@@ -537,9 +630,15 @@ int buy_item(int town, int it) {
 }
 int sell_item(int town, int s) {
     Actor *a = &g.actors[g.selected];
-    if (town < 0 || town >= TOWNS - 1 || s < 0 || s >= PACK || !a->pack[s].item)
+    if (town < 0 || town >= TOWNS || s < 0 || s >= PACK || !a->pack[s].item)
         return 0;
-    int it = a->pack[s].item, price = itemDefs[it].price * 6 / 10;
+    int it = a->pack[s].item, price = item_price(town, it, 1);
+    if (a->stolen[s] && a->stolen[s] == g.townOwner[town]) {
+        g.rep[a->stolen[s]] -= 8;
+        a->bounty += 40;
+        log_msg("Recognized stolen goods. The trader alerts guards.");
+        return 0;
+    }
     inventory_remove(a, it, 1);
     g.money += price;
     g.stock[town][it]++;
@@ -553,7 +652,7 @@ int recruit_actor(int n) {
     if (a->kind != RECRUIT || a->squad)
         return 0;
     if (g.squadCount >= SQUAD) {
-        log_msg("Squad is full (4 members).");
+        log_msg("Squad is full (8 members).");
         return 0;
     }
     if (g.money < 300) {
@@ -629,7 +728,7 @@ static const Recipe recipes[] = {{IRONBAR, 1, ORE, 3, NONE, 0, FORGE, SMITHING, 
                                  {ARM, 1, IRONBAR, 5, RELIC, 1, FORGE, ENGINEERING, 3},
                                  {LEG, 1, IRONBAR, 5, RELIC, 1, FORGE, ENGINEERING, 3},
                                  {BOLTS, 10, IRONBAR, 1, WOOD, 1, FORGE, SMITHING, 0}};
-static int nearby_station(int type, float r) {
+int nearby_station(int type, float r) {
     Actor *a = &g.actors[g.selected];
     for (int i = 0; i < g.buildingCount; i++)
         if (g.buildings[i].type == type && distance(a->x, a->y, g.buildings[i].x, g.buildings[i].y) < r)
@@ -714,7 +813,8 @@ void find_context(void) {
             if (!hurt)
                 continue;
         }
-        if (b->kind == TRADER || b->kind == RECRUIT || b->dead || b->unconscious > 0 || b->squad) {
+        if (b->kind == TRADER || b->kind == RECRUIT || b->dead || b->unconscious > 0 || b->squad ||
+            b->kind == SETTLER || b->kind == GUARD || b->kind == CARAVAN) {
             float d = distance(a->x, a->y, b->x, b->y);
             if (d < best) {
                 best = d;
@@ -794,32 +894,18 @@ void interact(void) {
             return;
         }
         if (b->unconscious > 0 || b->dead) {
-            int taken = 0;
-            for (int s = 0; s < PACK; s++)
-                if (b->pack[s].item && inventory_add(a, b->pack[s].item, b->pack[s].qty)) {
-                    b->pack[s] = (Stack){0, 0};
-                    taken++;
-                }
-            if (!b->lootTaken) {
-                int w = b->gear[0];
-                if (w && inventory_add(a, w, 1)) {
-                    b->gear[0] = 0;
-                    b->lootTaken = 1;
-                    taken++;
-                }
+            if (b->bountyReward) {
+                g.money += b->bountyReward;
+                log_msg("Bounty proof recovered: %d silver.", b->bountyReward);
+                b->bountyReward = 0;
             }
-            log_msg(taken ? "Salvaged supplies from %s." : "Nothing you can carry from %s.", b->name);
-            return;
-        }
-        if (b->kind == TRADER) {
-            ui.tradeTown = town_near(b->x, b->y, 10);
-            ui.screen = SCREEN_TRADE;
+            ui.lootActor = n;
             ui.selection = 0;
-            ui.sell = 0;
-        } else if (b->kind == RECRUIT) {
-            ui.screen = SCREEN_RECRUIT;
-            ui.selection = n;
-        }
+            ui.screen = SCREEN_LOOT;
+        } else if (a->sneaking)
+            pickpocket(n);
+        else
+            dialogue_open(n);
         return;
     }
     if (ui.contextKind == 1) {
@@ -845,6 +931,10 @@ void interact(void) {
         if (inventory_add(a, b->item, b->qty)) {
             if (b->owner)
                 theft(a, b);
+            if (b->owner)
+                for (int s = 0; s < PACK; s++)
+                    if (a->pack[s].item == b->item)
+                        a->stolen[s] = b->owner;
             b->remaining = 0;
             log_msg("Found %d %s.", b->qty, itemDefs[b->item].name);
         } else
@@ -858,9 +948,13 @@ void interact(void) {
             log_msg("Drew 2 water.");
         }
     } else if (b->type == BED || b->type == CAMPFIRE) {
+        if (b->type == BED && b->owner < 0) {
+            start_sleep(town_near(a->x, a->y, 12));
+            return;
+        }
         a->taskKind = 3;
         a->taskIndex = n;
-        a->action = 20;
+        a->action = 180;
         log_msg("Resting. Move to wake; wounds recover slowly.");
     } else if (b->type == FARM) {
         if (b->progress >= 100) {
@@ -883,14 +977,10 @@ void interact(void) {
         ui.screen = SCREEN_RESEARCH;
         ui.selection = 0;
     } else if (b->type == STORE) {
-        if (inventory_remove(a, ORE, 5)) {
-            b->stock += 5;
-            log_msg("Stored 5 ore. Interact without ore to withdraw.");
-        } else if (b->stock >= 5 && inventory_add(a, ORE, 5)) {
-            b->stock -= 5;
-            log_msg("Withdrew 5 ore.");
-        } else
-            log_msg("Depot holds %d ore; deposits in batches of 5.", b->stock);
+        ui.storageIndex = n;
+        ui.storageSide = 0;
+        ui.selection = 0;
+        ui.screen = SCREEN_STORAGE;
     }
 }
 
@@ -961,7 +1051,7 @@ static void squad_job(Actor *a, float dt) {
     if (a->job == JOB_FOLLOW) {
         Actor *l = &g.actors[g.selected];
         if (a != l && distance(a->x, a->y, l->x, l->y) > 2.2f)
-            toward(a, l->x + (a - g.actors) % 2, l->y + 1.4f, dt);
+            route_toward(a, l->x + (a - g.actors) % 2, l->y + 1.4f, dt);
     } else if (a->job == JOB_MINE) {
         int n = -1;
         float d = 12;
@@ -975,7 +1065,7 @@ static void squad_job(Actor *a, float dt) {
             }
         if (n >= 0) {
             if (d > 2)
-                toward(a, g.nodes[n].x, g.nodes[n].y, dt);
+                route_toward(a, g.nodes[n].x, g.nodes[n].y, dt);
             else {
                 a->taskKind = 1;
                 a->taskIndex = n;
@@ -987,7 +1077,7 @@ static void squad_job(Actor *a, float dt) {
             if (g.actors[j].squad && !g.actors[j].dead &&
                 (g.actors[j].bleed > .1f || g.actors[j].health[CHEST] < 60)) {
                 if (distance(a->x, a->y, g.actors[j].x, g.actors[j].y) > 2)
-                    toward(a, g.actors[j].x, g.actors[j].y, dt);
+                    route_toward(a, g.actors[j].x, g.actors[j].y, dt);
                 else
                     heal_actor((int)(a - g.actors), j);
                 break;
@@ -998,7 +1088,7 @@ static void squad_job(Actor *a, float dt) {
             if (b->type != FARM || b->owner < 0 || distance(a->x, a->y, b->x, b->y) > 15)
                 continue;
             if (distance(a->x, a->y, b->x, b->y) > 2)
-                toward(a, b->x, b->y, dt);
+                route_toward(a, b->x, b->y, dt);
             else if (b->progress >= 100 && inventory_add(a, GRAIN, 5)) {
                 b->progress = 0;
                 b->stock = 0;
@@ -1010,6 +1100,12 @@ static void squad_job(Actor *a, float dt) {
     }
 }
 void simulate(float dt) {
+    g.shake = fmaxf(0, g.shake - dt);
+    if (g.hitstop > 0) {
+        g.hitstop = fmaxf(0, g.hitstop - dt);
+        return;
+    }
+    tick_expansion(dt);
     g.time += dt;
     g.dayTime += dt / 75;
     if (g.dayTime >= 24) {
@@ -1041,6 +1137,29 @@ void simulate(float dt) {
         if (!a->active || a->dead)
             continue;
         a->cooldown = fmaxf(0, a->cooldown - dt);
+        a->stun = fmaxf(0, a->stun - dt);
+        a->hitFlash = fmaxf(0, a->hitFlash - dt);
+        a->movedTimer = fmaxf(0, a->movedTimer - dt);
+        if (a->attackPhase) {
+            if (!conscious(a))
+                a->attackPhase = 0;
+            else {
+                a->attackClock -= dt;
+                if (a->attackClock <= 0) {
+                    if (a->attackPhase == 1) {
+                        a->attackPhase = 2;
+                        a->attackDuration = a->attackClock = .16f;
+                        resolve_strike(i, a->attackTarget);
+                    } else if (a->attackPhase == 2) {
+                        a->attackPhase = 3;
+                        a->attackDuration = a->attackClock = fmaxf(.12f, a->cooldown);
+                    } else
+                        a->attackPhase = 0;
+                }
+            }
+        }
+        if (!a->squad && distance(a->x, a->y, g.actors[g.selected].x, g.actors[g.selected].y) > 45)
+            continue;
         if (a->carriedBy >= 0) {
             Actor *c = &g.actors[a->carriedBy];
             if (c->dead || c->unconscious > 0) {
@@ -1095,7 +1214,7 @@ void simulate(float dt) {
                 if (a->bleed <= 0)
                     for (int l = 0; l < LIMBS; l++)
                         if (!(a->lostMask & (1 << l)) || (a->prostheticMask & (1 << l)))
-                            a->health[l] = fminf(100, a->health[l] + dt * .6f);
+                            a->health[l] = fminf(100, a->health[l] + dt * (.6f + gear_bonus(a, 6) * .015f));
             }
             a->action -= dt;
             if (a->action <= 0)
@@ -1104,15 +1223,19 @@ void simulate(float dt) {
         if (!conscious(a))
             continue;
         int target = -1;
-        float best = a->gear[0] == CROSSBOW ? 7.8f : 6.0f;
+        float best = weapon_ranged(a->gear[0]) ? itemDefs[a->gear[0]].range + 1 : 6.0f;
         if (a->kind == BEAST)
             best = 4.5f;
+        if (g.weather == 1 || g.weather == 3)
+            best *= .75f;
         for (int j = 0; j < g.actorCount; j++) {
             Actor *b = &g.actors[j];
             if (i == j || !conscious(b) || !hostile(a, b))
                 continue;
             float d = distance(a->x, a->y, b->x, b->y);
-            float detect = b->sneaking ? best * .45f : best;
+            float detect =
+                b->sneaking ? best * fmaxf(.12f, .5f - level(b, STEALTH) * .003f - gear_bonus(b, 2) * .003f)
+                            : best;
             if (d < best && d < detect) {
                 target = j;
                 best = d;
@@ -1122,10 +1245,10 @@ void simulate(float dt) {
                             (a->squad && a->autoattack))) {
             a->target = target;
             Actor *b = &g.actors[target];
-            float range = a->gear[0] == CROSSBOW ? 6.7f : 1.35f;
+            float range = (a->gear[0] ? itemDefs[a->gear[0]].range : 1.55f) - .2f;
             if (best > range) {
                 if (i != g.selected)
-                    toward(a, b->x, b->y, dt);
+                    route_toward(a, b->x, b->y, dt);
             } else
                 strike(i, target);
             continue;
@@ -1141,11 +1264,11 @@ void simulate(float dt) {
                     a->tx = towns[t].x;
                     a->ty = towns[t].y + 6;
                 } else {
-                    a->tx = clamp(a->homeX + (rf() - .5f) * 9, 3, 124);
-                    a->ty = clamp(a->homeY + (rf() - .5f) * 9, 3, 124);
+                    a->tx = clamp(a->homeX + (rf() - .5f) * 9, 3, WORLD - 4);
+                    a->ty = clamp(a->homeY + (rf() - .5f) * 9, 3, WORLD - 4);
                 }
             }
-            toward(a, a->tx, a->ty, dt * .45f);
+            route_toward(a, a->tx, a->ty, dt * .45f);
         }
     }
     if (g.baseExists) {
@@ -1158,19 +1281,23 @@ void simulate(float dt) {
                 if (i < g.actorCount && g.actors[i].dead && !g.actors[i].squad)
                     n = i;
                 else if (g.actorCount < MAX_ACTORS) {
-                    n = add_actor("Camp raider", RAIDER, HOSTILE, clamp(g.baseX + 10, 3, 124), g.baseY, 9);
+                    n = add_actor("Camp raider", RAIDER, HOSTILE, clamp(g.baseX + 10, 3, WORLD - 4), g.baseY,
+                                  9);
                     i = g.actorCount;
                 }
                 if (n >= 0) {
                     Actor *a = &g.actors[n];
                     if (a->dead) {
                         a->dead = 0;
+                        a->defeatCredited = 0;
+                        a->lostMask = a->prostheticMask = 0;
+                        a->attackPhase = 0;
                         a->unconscious = 0;
                         a->blood = 100;
                         a->bleed = 0;
                         for (int l = 0; l < LIMBS; l++)
                             a->health[l] = 100;
-                        a->x = clamp(g.baseX + 10, 3, 124);
+                        a->x = clamp(g.baseX + 10, 3, WORLD - 4);
                         a->y = g.baseY;
                         a->kind = RAIDER;
                         a->faction = HOSTILE;
@@ -1186,9 +1313,7 @@ void simulate(float dt) {
     }
 }
 
-void set_save_root(const char *p) {
-    snprintf(saveRoot, sizeof(saveRoot), "%s", p);
-}
+void set_save_root(const char *p) { snprintf(saveRoot, sizeof(saveRoot), "%s", p); }
 static uint32_t checksum(const void *p, size_t n) {
     const uint8_t *b = p;
     uint32_t h = 2166136261u;
@@ -1207,7 +1332,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 1, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 2, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1229,14 +1354,60 @@ static int validate_game(const Game *t) {
         t->selected >= t->actorCount || !t->actors[t->selected].squad || t->tech < 0 || t->tech > 3 ||
         t->squadCount < 1 || t->squadCount > SQUAD)
         return 0;
+    if (!isfinite(t->time) || !isfinite(t->dayTime) || t->weather < 0 || t->weather > 4 || t->day < 1 ||
+        t->money < 0)
+        return 0;
+    for (int i = 0; i < TOWNS; i++) {
+        if (t->townOwner[i] < 0 || t->townOwner[i] >= FACTIONS)
+            return 0;
+        for (int j = 0; j < ITEMS; j++)
+            if (t->stock[i][j] < 0)
+                return 0;
+    }
+    for (int i = 0; i < CONTRACTS; i++) {
+        const Contract *c = &t->contracts[i];
+        if (c->active && (c->town < 0 || c->town >= TOWNS || c->target < 0 || c->target >= TOWNS ||
+                          c->item < 0 || c->item >= ITEMS || c->type < 0 || c->type > 3))
+            return 0;
+    }
+    for (int i = 0; i < t->buildingCount; i++) {
+        const Building *b = &t->buildings[i];
+        if (!isfinite(b->x) || !isfinite(b->y) || b->type < 0 || b->type > STORE || b->faction < 0 ||
+            b->faction >= FACTIONS)
+            return 0;
+        for (int j = 0; j < 16; j++)
+            if (b->storage[j].item < 0 || b->storage[j].item >= ITEMS || b->storage[j].qty < 0 ||
+                b->storage[j].qty > 999)
+                return 0;
+    }
+    for (int i = 0; i < t->nodeCount; i++) {
+        const Node *n = &t->nodes[i];
+        if (!isfinite(n->x) || !isfinite(n->y) || n->owner < 0 || n->owner >= FACTIONS || n->item < 0 ||
+            n->item >= ITEMS || n->type < 0 || n->type > NODE_RUIN)
+            return 0;
+    }
     for (int i = 0; i < t->actorCount; i++) {
         const Actor *a = &t->actors[i];
         if (!isfinite(a->x) || !isfinite(a->y) || a->x < 0 || a->x > WORLD || a->y < 0 || a->y > WORLD)
             return 0;
+        if (!memchr(a->name, 0, sizeof(a->name)) || a->faction < 0 || a->faction >= FACTIONS || a->kind < 0 ||
+            a->kind > CARAVAN || a->job < 0 || a->job > JOB_HAUL || a->skin < 0 || a->skin > 7 ||
+            a->hairColor < 0 || a->hairColor > 5 || a->routeLen < 0 || a->routeLen > 24 || a->routePos < 0 ||
+            a->routePos > 24 || a->attackPhase < 0 || a->attackPhase > 3 || a->attackWeapon < 0 ||
+            a->attackWeapon >= ITEMS || a->attackTarget >= t->actorCount || a->prisonTown >= TOWNS ||
+            a->homeTown >= TOWNS || !isfinite(a->blood) || !isfinite(a->bleed) || !isfinite(a->hunger) ||
+            !isfinite(a->fatigue))
+            return 0;
+        for (int j = 0; j < LIMBS; j++)
+            if (!isfinite(a->health[j]))
+                return 0;
+        for (int j = 0; j < SKILLS; j++)
+            if (!isfinite(a->xp[j]) || a->xp[j] < 0)
+                return 0;
         for (int j = 0; j < PACK; j++)
             if (a->pack[j].item < 0 || a->pack[j].item >= ITEMS || a->pack[j].qty < 0 || a->pack[j].qty > 999)
                 return 0;
-        for (int j = 0; j < 4; j++)
+        for (int j = 0; j < GEARS; j++)
             if (a->gear[j] < 0 || a->gear[j] >= ITEMS)
                 return 0;
         if (a->carrying >= t->actorCount || a->carriedBy >= t->actorCount)
@@ -1244,32 +1415,180 @@ static int validate_game(const Game *t) {
     }
     return 1;
 }
+static int migrate_legacy(const LegacyGame *old) {
+    if (old->actorCount < 1 || old->actorCount > 80 || old->buildingCount < 0 || old->buildingCount > 100 ||
+        old->nodeCount < 0 || old->nodeCount > 200 || old->selected < 0 || old->selected >= old->actorCount)
+        return 0;
+    for (int i = 0; i < old->actorCount; i++)
+        if (!isfinite(old->actors[i].x) || !isfinite(old->actors[i].y))
+            return 0;
+    Game *expanded = malloc(sizeof(Game));
+    if (!expanded)
+        return 0;
+    game_new(old->seed, 0);
+    *expanded = g;
+    g.seed = old->seed;
+    g.rng = old->rng;
+    g.time = old->time;
+    g.dayTime = old->dayTime;
+    g.day = old->day;
+    g.money = old->money;
+    g.selected = old->selected;
+    g.squadCount = old->squadCount;
+    g.tech = old->tech;
+    g.kills = old->kills;
+    g.baseExists = old->baseExists;
+    g.baseX = old->baseX;
+    g.baseY = old->baseY;
+    g.raidTimer = old->raidTimer;
+    g.actorCount = old->actorCount;
+    g.buildingCount = old->buildingCount;
+    g.nodeCount = old->nodeCount;
+    for (int i = 0; i < 4; i++)
+        g.rep[i] = old->rep[i];
+    for (int i = 0; i < 5; i++) {
+        g.discovered[i] = old->discovered[i];
+        for (int j = 0; j < 30; j++)
+            g.stock[i][j] = old->stock[i][j];
+    }
+    memset(g.seen, 0, sizeof(g.seen));
+    for (int y = 0; y < 128; y++)
+        for (int x = 0; x < 128; x++)
+            if (old->seen[(y * 128 + x) >> 3] & (1 << ((y * 128 + x) & 7))) {
+                int z = y * WORLD + x;
+                g.seen[z >> 3] |= 1 << (z & 7);
+            }
+    for (int i = 0; i < old->actorCount; i++) {
+        Actor *a = &g.actors[i];
+        const LegacyActor *o = &old->actors[i];
+        memset(a, 0, sizeof(*a));
+        memcpy(a, o, (char *)&o->pack - (char *)o);
+        memcpy(a->pack, o->pack, sizeof(o->pack));
+        memcpy(a->gear, o->gear, sizeof(o->gear));
+        memcpy(&a->active, &o->active, sizeof(*o) - ((char *)&o->active - (char *)o));
+        a->prisonTown = -1;
+        a->homeTown = town_near(a->x, a->y, 12);
+        a->skin = i % 8;
+        a->hair = i % 7;
+        a->speechCooldown = 15;
+        a->gear[4] = gear_id(69, 0, 0);
+        if (a->squad)
+            a->gear[5] = gear_id(76, 0, 0);
+    }
+    for (int i = 46; i < expanded->actorCount && g.actorCount < MAX_ACTORS; i++)
+        g.actors[g.actorCount++] = expanded->actors[i];
+    for (int i = 0; i < old->buildingCount; i++) {
+        memset(&g.buildings[i], 0, sizeof(Building));
+        memcpy(&g.buildings[i], &old->buildings[i], sizeof(LegacyBuilding));
+    }
+    for (int i = 35; i < expanded->buildingCount && g.buildingCount < MAX_BUILDINGS; i++)
+        g.buildings[g.buildingCount++] = expanded->buildings[i];
+    memcpy(g.nodes, old->nodes, sizeof(LegacyNode) * old->nodeCount);
+    for (int i = 0; i < expanded->nodeCount && g.nodeCount < MAX_NODES; i++)
+        if (expanded->nodes[i].x >= 128 || expanded->nodes[i].y >= 128)
+            g.nodes[g.nodeCount++] = expanded->nodes[i];
+    free(expanded);
+    return validate_game(&g);
+}
 int load_game(const char *path) {
+    content_init();
     FILE *f = fopen(path, "rb");
     if (!f)
         return 0;
     SaveHeader h;
-    Game *t = malloc(sizeof(Game));
-    if (!t) {
+    if (fread(&h, sizeof(h), 1, f) != 1 || memcmp(h.magic, "DUSTSAVE", 8)) {
         fclose(f);
         return 0;
     }
-    int ok = fread(&h, sizeof(h), 1, f) == 1 && memcmp(h.magic, "DUSTSAVE", 8) == 0 && h.version == 1 &&
-             h.size == sizeof(Game) && fread(t, sizeof(Game), 1, f) == 1;
-    if (ok)
-        ok = h.hash == checksum(t, sizeof(Game)) && validate_game(t);
+    int ok = 0;
+    if (h.version == 2 && h.size == sizeof(Game)) {
+        Game *t = malloc(sizeof(Game));
+        if (t) {
+            ok = fread(t, sizeof(*t), 1, f) == 1 && h.hash == checksum(t, sizeof(*t)) && validate_game(t);
+            if (ok)
+                g = *t;
+            free(t);
+        }
+    } else if (h.version == 1 && h.size == sizeof(LegacyGame)) {
+        LegacyGame *t = malloc(sizeof(LegacyGame));
+        if (t) {
+            ok = fread(t, sizeof(*t), 1, f) == 1 && h.hash == checksum(t, sizeof(*t));
+            if (ok) {
+                Game *before = malloc(sizeof(Game));
+                UI oldui = ui;
+                if (before) {
+                    *before = g;
+                    ok = migrate_legacy(t);
+                    if (!ok) {
+                        g = *before;
+                        ui = oldui;
+                    }
+                    free(before);
+                } else
+                    ok = 0;
+            }
+            free(t);
+        }
+    }
     fclose(f);
     if (ok) {
-        g = *t;
         memset(&ui, 0, sizeof(ui));
         ui.speed = 1;
         ui.slot = 1;
         ui.camX = g.actors[g.selected].x;
         ui.camY = g.actors[g.selected].y;
-        log_msg("Expedition loaded.");
+        log_msg(h.version == 1 ? "Old expedition migrated. Save to a new slot first." : "Expedition loaded.");
     }
-    free(t);
     return ok;
+}
+int save_inspect(int slot, SaveInfo *info) {
+    memset(info, 0, sizeof(*info));
+    char path[400];
+    snprintf(path, sizeof(path), "%s/DUST_%d.sav", saveRoot, slot);
+    FILE *f = fopen(path, "rb");
+    if (!f)
+        return 0;
+    info->exists = 1;
+    SaveHeader h;
+    if (fread(&h, sizeof(h), 1, f) != 1 || memcmp(h.magic, "DUSTSAVE", 8)) {
+        fclose(f);
+        return 0;
+    }
+    info->version = h.version;
+    info->valid =
+        (h.version == 2 && h.size == sizeof(Game)) || (h.version == 1 && h.size == sizeof(LegacyGame));
+    if (info->valid) {
+        unsigned char *buf = malloc(h.size);
+        if (buf && fread(buf, h.size, 1, f) == 1 && checksum(buf, h.size) == h.hash) {
+            if (h.version == 2) {
+                Game *v = (Game *)buf;
+                if (validate_game(v)) {
+                    info->day = v->day;
+                    info->money = v->money;
+                    info->squad = v->squadCount;
+                    snprintf(info->name, 16, "%.15s", v->actors[v->selected].name);
+                } else
+                    info->valid = 0;
+            } else {
+                LegacyGame *v = (LegacyGame *)buf;
+                if (v->selected >= 0 && v->selected < v->actorCount && v->actorCount <= 80) {
+                    info->day = v->day;
+                    info->money = v->money;
+                    info->squad = v->squadCount;
+                    snprintf(info->name, 16, "%.15s", v->actors[v->selected].name);
+                } else
+                    info->valid = 0;
+            }
+        } else
+            info->valid = 0;
+        free(buf);
+    }
+    fclose(f);
+    return info->valid;
+}
+void save_refresh(void) {
+    for (int i = 0; i < SAVE_SLOTS; i++)
+        save_inspect(i, &ui.saves[i]);
 }
 int save_slot(int n) {
     char p[400];
@@ -1305,6 +1624,8 @@ void game_tick(float dt, Input in) {
     dt = clamp(dt, 0, .1f);
     ui.noticeTime = fmaxf(0, ui.noticeTime - dt);
     int p = in.pressed;
+    if (expansion_input(dt, in))
+        return;
     Actor *a = &g.actors[g.selected];
     if (ui.screen == SCREEN_TITLE) {
         if (p & KEY_UP)
@@ -1313,12 +1634,13 @@ void game_tick(float dt, Input in) {
             ui.selection = (ui.selection + 1) % 4;
         if (p & KEY_CROSS) {
             if (ui.selection == 0 || ui.selection == 1) {
-                game_new(73819 + (uint32_t)(g.time * 100), ui.selection);
-                ui.screen = SCREEN_WORLD;
-            } else if (ui.selection == 2)
-                load_slot(1);
-            else
-                open_screen(SCREEN_HELP);
+                character_begin(ui.selection == 1 ? 4 : 0);
+            } else if (ui.selection == 2) {
+                ui.saveMode = 0;
+                save_refresh();
+                open_screen(SCREEN_SAVES);
+            } else
+                open_help(0);
         }
         g.time += dt;
         return;
@@ -1328,8 +1650,7 @@ void game_tick(float dt, Input in) {
             open_screen(SCREEN_MENU);
         if (p & KEY_CROSS) {
             if (ui.confirmAction == 1) {
-                game_new(73819, 0);
-                ui.screen = SCREEN_WORLD;
+                character_begin(0);
             } else if (ui.confirmAction == 2) {
                 load_slot(ui.slot);
             } else if (ui.confirmAction == 3) {
@@ -1356,10 +1677,12 @@ void game_tick(float dt, Input in) {
             count = LIMBS;
             break;
         case SCREEN_SQUAD:
-            count = 5;
+            count = 8;
             break;
         case SCREEN_TRADE:
-            count = ui.sell ? PACK : ITEMS - 1;
+            count = ui.sell ? PACK : shop_count();
+            if (count < 1)
+                count = 1;
             break;
         case SCREEN_BUILD:
             count = buildCount;
@@ -1368,10 +1691,10 @@ void game_tick(float dt, Input in) {
             count = recipeCount;
             break;
         case SCREEN_MENU:
-            count = 11;
+            count = 16;
             break;
         case SCREEN_HELP:
-            count = 3;
+            count = GUIDE_PAGES;
             break;
         default:
             break;
@@ -1424,7 +1747,7 @@ void game_tick(float dt, Input in) {
                 log_msg("%s: %s.", a->name, jobNames[a->job]);
             }
         } else if (ui.screen == SCREEN_MAP) {
-            float sp = 20 * dt;
+            float sp = 65 * dt;
             if (in.held & KEY_LEFT)
                 ui.mapX -= sp;
             if (in.held & KEY_RIGHT)
@@ -1433,8 +1756,8 @@ void game_tick(float dt, Input in) {
                 ui.mapY -= sp;
             if (in.held & KEY_DOWN)
                 ui.mapY += sp;
-            ui.mapX = clamp(ui.mapX, 3, 124);
-            ui.mapY = clamp(ui.mapY, 3, 124);
+            ui.mapX = clamp(ui.mapX, 3, WORLD - 4);
+            ui.mapY = clamp(ui.mapY, 3, WORLD - 4);
             if (p & KEY_CROSS) {
                 ui.waypoint = 1;
                 open_screen(SCREEN_WORLD);
@@ -1449,7 +1772,7 @@ void game_tick(float dt, Input in) {
                 if (ui.sell)
                     sell_item(ui.tradeTown, ui.selection);
                 else
-                    buy_item(ui.tradeTown, ui.selection + 1);
+                    buy_item(ui.tradeTown, shop_item(ui.selection));
             }
         } else if (ui.screen == SCREEN_RECRUIT && (p & KEY_CROSS)) {
             if (recruit_actor(ui.selection))
@@ -1462,7 +1785,7 @@ void game_tick(float dt, Input in) {
             research_tech();
         else if (ui.screen == SCREEN_MENU) {
             if (p & (KEY_LEFT | KEY_RIGHT))
-                ui.slot = (ui.slot + 1) % 4;
+                ui.slot = (ui.slot + 1) % SAVE_SLOTS;
             if (p & KEY_CROSS) {
                 switch (ui.selection) {
                 case 0:
@@ -1478,28 +1801,52 @@ void game_tick(float dt, Input in) {
                     open_screen(SCREEN_RESEARCH);
                     break;
                 case 4:
-                    ui.confirmAction = 3;
-                    open_screen(SCREEN_CONFIRM);
+                    ui.saveMode = 1;
+                    save_refresh();
+                    open_screen(SCREEN_SAVES);
                     break;
                 case 5:
-                    ui.confirmAction = 2;
-                    open_screen(SCREEN_CONFIRM);
+                    ui.saveMode = 0;
+                    save_refresh();
+                    open_screen(SCREEN_SAVES);
                     break;
                 case 6:
                     ui.speed = ui.speed == 1 ? 2 : 1;
                     break;
                 case 7:
-                    open_screen(SCREEN_HELP);
+                    open_help(0);
                     break;
                 case 8:
                     ui.confirmAction = 1;
                     open_screen(SCREEN_CONFIRM);
                     break;
                 case 9:
-                    save_slot(1);
-                    open_screen(SCREEN_TITLE);
+                    if (save_slot(ui.slot ? ui.slot : 1))
+                        open_screen(SCREEN_TITLE);
+                    break;
+                case 11:
+                    open_screen(SCREEN_FORGE);
+                    break;
+                case 12:
+                    open_screen(SCREEN_JOURNAL);
+                    break;
+                case 13:
+                    open_screen(SCREEN_FACTIONS);
+                    break;
+                case 14:
+                    if (town_near(a->x, a->y, 12) >= 0) {
+                        character_begin(-1);
+                    } else
+                        log_msg("A town barber is required.");
+                    break;
+                case 15:
+                    start_sleep(town_near(a->x, a->y, 10));
                     break;
                 case 10:
+                    if (town_near(a->x, a->y, 10) < 0) {
+                        log_msg("Visit a town official to pay a bounty.");
+                        break;
+                    }
                     if (a->bounty && g.money >= a->bounty) {
                         g.money -= a->bounty;
                         a->bounty = 0;
@@ -1571,7 +1918,7 @@ void game_tick(float dt, Input in) {
             ui.waypoint = 0;
             log_msg("Waypoint reached.");
         } else
-            toward(a, ui.mapX, ui.mapY, step);
+            route_toward(a, ui.mapX, ui.mapY, step);
     }
     simulate(step);
     g.autosave += step;
@@ -1586,16 +1933,27 @@ void debug_snapshot(const char *path) {
     if (!f)
         return;
     Actor *a = &g.actors[g.selected];
-    fprintf(f,
-            "{\"version\":\"%s\",\"time\":%.2f,\"day\":%d,\"screen\":%d,\"paused\":%d,\"x\":%.3f,\"y\":%.3f,"
-            "\"silver\":%d,\"squad\":%d,\"actors\":%d,\"buildings\":%d,\"nodes\":%d,\"gear\":[%d,%d,%d,%d],"
-            "\"blood\":%.2f,\"hunger\":%.2f,\"notice\":\"%s\",\"display_pointer\":%u,\"screen_pointer\":%u,"
-            "\"money_pointer\":%u,\"squad_pointer\":%u,\"position_pointer\":%u,\"gear_pointer\":%u,"
-            "\"pack_pointer\":%u,\"frames\":%u}\n",
-            VERSION, g.time, g.day, ui.screen, ui.paused, a->x, a->y, g.money, g.squadCount, g.actorCount,
-            g.buildingCount, g.nodeCount, a->gear[0], a->gear[1], a->gear[2], a->gear[3], a->blood, a->hunger,
-            ui.notice, (unsigned)(uintptr_t)&display_buffer, (unsigned)(uintptr_t)&ui.screen,
-            (unsigned)(uintptr_t)&g.money, (unsigned)(uintptr_t)&g.squadCount, (unsigned)(uintptr_t)&a->x,
-            (unsigned)(uintptr_t)&a->gear[0], (unsigned)(uintptr_t)&a->pack[0], (unsigned)rendered_frames);
+    fprintf(f, "{\"version\":\"%s\",\"screen\":%d,\"frames\":%u", VERSION, ui.screen,
+            (unsigned)rendered_frames);
+#define PTR(n, p) fprintf(f, ",\"%s_pointer\":%u", n, (unsigned)(uintptr_t)(p))
+    PTR("display", &display_buffer);
+    PTR("screen", &ui.screen);
+    PTR("money", &g.money);
+    PTR("squad", &g.squadCount);
+    PTR("position", &a->x);
+    PTR("gear", a->gear);
+    PTR("pack", a->pack);
+    PTR("health", a->health);
+    PTR("attack", &a->attackPhase);
+    PTR("time", &g.time);
+    PTR("framecount", &rendered_frames);
+    PTR("selected", &g.selected);
+    PTR("selection", &ui.selection);
+    PTR("weather", &g.weather);
+    PTR("bounty", &a->bounty);
+    PTR("contracts", &g.contractsDone);
+    PTR("game", &g);
+#undef PTR
+    fprintf(f, "}\n");
     fclose(f);
 }
