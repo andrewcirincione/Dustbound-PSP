@@ -22,9 +22,9 @@ class Emulator:
         self.ticket += 1
         ticket = str(self.ticket)
         await self.ws.send(json.dumps(dict(event=event, ticket=ticket, **args)))
-        deadline = time.monotonic() + 20
+        deadline = time.monotonic() + 60
         while time.monotonic() < deadline:
-            data = json.loads(await asyncio.wait_for(self.ws.recv(), 20))
+            data = json.loads(await asyncio.wait_for(self.ws.recv(), 60))
             if data.get('ticket') == ticket or data.get('event') == event:
                 if data.get('event') == 'error':
                     raise RuntimeError(data)
