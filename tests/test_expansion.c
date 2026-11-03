@@ -1,4 +1,5 @@
 #include "game.h"
+#include "combat_pose.h"
 #include "legacy.h"
 #include <math.h>
 #include <stdio.h>
@@ -247,6 +248,29 @@ int main(void) {
     strike(0, 1);
     CHECK(a->attackWeapon == NONE, "a missing weapon arm forces unarmed attacks");
     fresh();
+    a=&g.actors[0]; e=&g.actors[1];
+    a->x=40; a->y=40; a->autoattack=0;
+    e->x=e->homeX=e->tx=41; e->y=e->homeY=e->ty=40;
+    e->active=1; e->faction=HOSTILE; e->kind=SETTLER; e->autoattack=0;
+    a->attackPhase=2; a->attackTarget=1; a->attackWeapon=gear_id(0,1,1);
+    a->attackClock=a->attackDuration=STRIKE_SECONDS;
+    step(.08f);
+    CHECK(e->hitFlash==0, "no hit before the blade reaches the contact marker");
+    step(.04f);
+    CHECK(e->hitFlash>0, "hit or block resolves at visible blade contact");
+    float earned=a->xp[MELEE];
+    step(.35f);
+    CHECK(a->xp[MELEE]==earned, "follow-through cannot resolve the same strike twice");
+    int seamless=1;
+    for(int f=0;f<32;f++) for(int phase=1;phase<4;phase++) {
+        CombatPose end=combat_pose(gear_id(f,1,1),phase,1);
+        CombatPose next=combat_pose(gear_id(f,1,1),phase==3?0:phase+1,0);
+        if(fabsf(end.handX-next.handX)>.001f || fabsf(end.handY-next.handY)>.001f ||
+           fabsf(end.blade-next.blade)>.001f || fabsf(end.step-next.step)>.001f ||
+           fabsf(end.shift-next.shift)>.001f) seamless=0;
+    }
+    CHECK(seamless, "all 32 weapon families join preparation, strike and recovery without pose snapping");
+    fresh();
     a = &g.actors[0];
     a->gear[0] = gear_id(29, 4, 3);
     a->gear[5] = gear_id(83, 5, 3);
@@ -273,8 +297,7 @@ int main(void) {
     FILE *f = fopen("tests/fixtures/legacy-v01.dust", "rb");
     unsigned char header[20];
     LegacyGame *old = malloc(sizeof(*old));
-    fread(header, 20, 1, f);
-    fread(old, sizeof(*old), 1, f);
+    if (fread(header, 20, 1, f)!=1 || fread(old, sizeof(*old), 1, f)!=1) return 1;
     fclose(f);
     old->actors[0].gear[0] = 999999;
     uint32_t hash = hashbytes(old, sizeof(*old));
