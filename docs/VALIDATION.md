@@ -38,3 +38,7 @@ The combat GIF uses 240 frames written from the PSP executable's display buffer.
 An initial advanced harness run lost its debugger WebSocket while the title loop remained active; a subsequent run passed, and the final package passed all three playthroughs. The interior harness initially resumed before CPU startup and later stopped too close to an NPC instead of the inn door; startup waiting and precise button-driven door positioning resolved those harness issues.
 
 `evidence/v030-*-checks.json` records the exact EBOOT checksum for each final playthrough. The build manifest, test transcripts, benchmark CSVs, screenshots and combat frames CSV provide the reproducible evidence. Source art and sprite packing/export scripts are included in the repository.
+
+## Independent build
+
+GitHub Actions run `41726347159` passed on source commit `a193d2b896df9ae5223c017c127f02164745b98b`. Its pinned PSPDEV build produced the same 750,528-byte EBOOT and SHA-256 as the package exercised by all three PPSSPP playthroughs. See `evidence/v030-ci.json`.
