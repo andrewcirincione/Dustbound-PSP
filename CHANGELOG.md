@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 — The weathered frontier
+
+Replaced flat exterior art with original painted buildings and wilderness sprites, added furnishings and walkable single-room interiors with trading, beds, forging, research and storage. Furniture collision and depth ordering keep rooms navigable. Version 3 saves preserve indoor position and migrate version 1/2 saves.
+
+Fixed sword follow-through by solving both hands and the weapon in one rigid screen-space coordinate system; fingers draw over the handle. Revised walking leg travel, cloth facets, character labels and the weathered interface. All controller prompts and guide text now use button pictograms/keycaps, including full Start/Select labels.
+
+Added indexed row-span sprites, palette lighting, scrolling terrain reuse and a cached RAM framebuffer. Added interior, migration and rigid-grip regressions, a nineteenth guide chapter, source art and a reproducible sprite compiler. Physical PSP-3000 qualification is still outstanding.
+
 ## 0.2.1 — Dust and steel
 
 Reworked character proportions, shaded faces, weathered cloth/metal, articulated knees, hip loading, elbows and two-handed grips. Four attack motion families blend continuously through preparation, strike and recovery. Moved damage resolution to the visible contact point and removed bright circular slash trails. Fixed squad portrait overflow and fitted menu previews to the taller silhouettes.

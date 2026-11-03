@@ -1,16 +1,22 @@
 # Dustbound — PSP frontier survival RPG
 
-An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and procedural art, not a Kenshi port.
+An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.2.1, playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.3.0, playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 
-![Actual PSP EBOOT gameplay in PPSSPP](evidence/v021-03-dusk-haven.png)
+![Actual PSP EBOOT gameplay in PPSSPP](evidence/v030-03-dusk-haven.png)
 
-## Combat and visual revision
+## The weathered frontier
 
-0.2.1 gives characters longer legs, narrower torsos, shaded faces, worn cloth and darker steel. Attacks use bent knees, hip loading, two-bone arms and attached grips, with separate cuts, thrusts, heavy chops and firearm recoil. Contact damage now lands during the visible stroke; preparation and recovery join without pose snapping. Menu portraits fit the revised proportions, and squad portraits are clipped to their cards.
+0.3.0 replaces the flat building and wilderness drawings with 24 original painted sprites: tiled-roof frontier homes, trading posts, inns, stone towers, smithies, trees, rocks and indoor furnishings. Indexed row spans, cached lighting palettes, scrolling terrain reuse and a cached RAM framebuffer keep the renderer bounded. Gear remains modular and visibly distinct; character materials, walking legs and interface colors were revised to fit the new world.
+
+Both hands now share the weapon's rigid screen-space grip throughout a strike. Torso twist and crouching no longer pull the second hand away during follow-through. All in-game button prompts use PSP pictograms and keycaps.
+
+Walk through a door into a house, shop, inn, tower, smithy, workshop or depot. Furniture has collision and proper draw ordering; counters trade, beds restore wounds, and workstations open forging, research or storage. Saves preserve your room and indoor position. Nineteen in-game guide chapters explain the rules.
+
+![Walkable interior captured from the PSP executable](evidence/v030-27-shop-interior.png)
 
 ## What you can play
 
@@ -23,16 +29,16 @@ An original isometric western–samurai squad RPG for PSP homebrew. Build a band
 - NPC speech and service dialogue, finite market stocks, rotating daily gear, reputation/prosperity prices, recruitment, looting, theft, fencing, lockpicking, bounty and custody/bail/escape.
 - Delivery, supply, hunt and relic contracts; persistent journal, faction ledger, town prosperity/ownership events and expedition legacy goals.
 - Construction, farming/irrigation, storage, eight supply recipes, custom equipment forging and three research tiers.
-- Six manual save slots plus autosave, checksums, backup files and v0.1 save migration. Eighteen contextual in-game guide chapters.
+- Six manual save slots plus autosave, checksums, backup files and v0.1/v0.2 save migration. Nineteen contextual in-game guide chapters.
 
-![Combat captured from the EBOOT; prepared encounter](evidence/v021-15-combat.gif)
+![Combat captured from the EBOOT; prepared encounter](evidence/v030-15-combat.gif)
 
 ## Install on PSP
 
 1. Use a PSP already configured to run homebrew. This repository does not install or modify firmware.
-2. Download `Dustbound-0.2.1-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
+2. Download `Dustbound-0.3.0-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
 3. The executable should be at `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Launch it from **Game → Memory Stick**.
-4. Back up existing `DUST_*.sav` files before upgrading. v0.1 saves are migrated when loaded; save the migrated game to a different slot first. Do not remove the memory stick during a save.
+4. Back up existing `DUST_*.sav` files before upgrading. v0.1 and v0.2 saves are migrated when loaded; save the migrated game to a different slot first. Do not remove the memory stick during a save.
 
 The single EBOOT includes its art, catalog and sounds. No network access or external assets are needed. Release packages exclude developer test saves and `DUST_QA` telemetry markers.
 
@@ -40,17 +46,17 @@ The single EBOOT includes its art, catalog and sounds. No network access or exte
 
 | PSP input | Action |
 |---|---|
-| Analog / D-pad | Move in screen direction; navigate menus |
-| Cross | Interact, confirm, equip/use, buy/sell |
-| Triangle | Pack; press again for worn equipment |
-| Square | Fight/passive stance; transfer an item in pack |
-| Circle | Sneak; close an overlay |
-| L | Next squad member; previous inventory tab |
-| R | Tactical pause; next inventory tab |
-| Select | Atlas; contextual guide inside an overlay |
-| Start | Expedition menu |
+| Analog / ![D-pad](assets/ui/dpad.svg) | Move in screen direction; navigate menus |
+| ![Cross](assets/ui/cross.svg) | Interact, confirm, equip/use, buy/sell |
+| ![Triangle](assets/ui/triangle.svg) | Pack; press again for worn equipment |
+| ![Square](assets/ui/square.svg) | Fight/passive stance; transfer an item in pack |
+| ![Circle](assets/ui/circle.svg) | Sneak; close an overlay |
+| ![L](assets/ui/l.svg) | Next squad member; previous inventory tab |
+| ![R](assets/ui/r.svg) | Tactical pause; next inventory tab |
+| ![Select](assets/ui/select.svg) | Atlas; contextual guide inside an overlay |
+| ![Start](assets/ui/start.svg) | Expedition menu |
 
-Menus stop simulation. Attacks are automatic when fighting is enabled and a hostile is in reach. Move to interrupt work or a travel route. In the forge, left/right chooses a design, material and grade; Cross on the final row crafts it. The guide explains each section.
+Menus stop simulation. Attacks are automatic when fighting is enabled and a hostile is in reach. Move to interrupt work or a travel route. In the forge, ![directions](assets/ui/horizontal.svg) chooses a design, material and grade; ![cross](assets/ui/cross.svg) on the final row crafts it. The guide explains each section.
 
 ## Build and test
 
@@ -68,15 +74,17 @@ The native build exercises the same simulation and renderer. `make` uses the PSP
 # Generate test-only scenarios, then drive the EBOOT through PPSSPP:
 mkdir -p build/emu
 build/dustbound-native --fixtures build/emu
-python scripts/emulator_v021.py /path/to/PPSSPPHeadless
+python scripts/emulator_v030.py /path/to/PPSSPPHeadless
+python scripts/emulator_v030.py /path/to/PPSSPPHeadless --advanced
+python scripts/emulator_interiors.py /path/to/PPSSPPHeadless
 # Verify all equipment drawings:
 python scripts/audit_catalog.py
 ```
 
-A desktop interactive build can define `USE_SDL` and link SDL2. Keyboard mapping: arrows, X/C/Z/V = Cross/Circle/Square/Triangle; Q/E = L/R; Enter = Start; Tab = Select.
+A desktop interactive build can define `USE_SDL` and link SDL2. Keyboard mapping: arrows, X/C/Z/V map to the four face-button pictograms; Q/E map to the shoulder keycaps; Enter and Tab map to the two system keycaps.
 
 ## Practical limits
 
-The engine uses a fixed-size world state, capped actor/building/node pools and a software renderer designed for the 32 MB PSP model. It targets a 30 Hz display cadence at 333 MHz; emulator results do not establish physical hardware performance. This alpha has simplified town services, local navigation, faction simulation and job logistics. It has no full interior simulation, slavery economy, multiple independent squads, diplomacy campaign or Kenshi asset/content parity. See the roadmap for explicit remaining work.
+The engine uses a fixed-size world state, capped actor/building/node pools and a software renderer designed for the 32 MB PSP model. It targets a 30 Hz display cadence at 333 MHz; emulator results do not establish physical hardware performance. This alpha has simplified town services, local navigation, faction simulation and job logistics. Interiors are single rooms with services, not multistorey NPC schedules or indoor combat. It has no slavery economy, multiple independent squads, diplomacy campaign or Kenshi asset/content parity. See the roadmap for explicit remaining work.
 
-MIT license for the original source and procedural art. PSPDEV and PPSSPP remain separate projects with their own licenses; neither is bundled in the game release.
+MIT license for the original source and included artwork. Art source atlases and the reproducible sprite packing script are included. PSPDEV and PPSSPP remain separate projects with their own licenses; neither is bundled in the game release.
