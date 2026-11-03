@@ -1,4 +1,5 @@
 #include "game.h"
+#include "combat_pose.h"
 #include "legacy.h"
 #include <math.h>
 #include <stdarg.h>
@@ -1144,12 +1145,15 @@ void simulate(float dt) {
             if (!conscious(a))
                 a->attackPhase = 0;
             else {
+                float before = a->attackClock;
                 a->attackClock -= dt;
+                if (a->attackPhase == 2 && before > a->attackDuration*(1-STRIKE_CONTACT) &&
+                    a->attackClock <= a->attackDuration*(1-STRIKE_CONTACT))
+                    resolve_strike(i, a->attackTarget);
                 if (a->attackClock <= 0) {
                     if (a->attackPhase == 1) {
                         a->attackPhase = 2;
-                        a->attackDuration = a->attackClock = .16f;
-                        resolve_strike(i, a->attackTarget);
+                        a->attackDuration = a->attackClock = STRIKE_SECONDS;
                     } else if (a->attackPhase == 2) {
                         a->attackPhase = 3;
                         a->attackDuration = a->attackClock = fmaxf(.12f, a->cooldown);

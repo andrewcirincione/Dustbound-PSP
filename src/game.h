@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.2.0"
+#define VERSION "0.2.1"
 #define WORLD 384
 #define MAX_ACTORS 192
 #define MAX_BUILDINGS 320

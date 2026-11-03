@@ -1,4 +1,5 @@
 #include "game.h"
+#include "combat_pose.h"
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
@@ -9,6 +10,7 @@
    No external asset files are required at runtime. */
 static uint32_t *fb;
 static int pitch;
+static int clipLeft=0, clipTop=0, clipRight=480, clipBottom=272;
 static const uint32_t INK = 0x171e21, PANEL = 0x252b2c, EDGE = 0x6e715e, GOLD = 0xd8ba78, TEXT = 0xe4dbc0,
                       MUTED = 0xa5aa99, TEAL = 0x8abeb1, RED = 0xcb7560;
 static uint32_t abgr(uint32_t c) { return 0xff000000 | ((c & 255) << 16) | (c & 0xff00) | ((c >> 16) & 255); }
@@ -33,22 +35,22 @@ static unsigned hash(int x, int y) {
     return v ^ (v >> 16);
 }
 static void px(int x, int y, uint32_t c) {
-    if ((unsigned)x < 480 && (unsigned)y < 272)
+    if (x >= clipLeft && x < clipRight && y >= clipTop && y < clipBottom)
         fb[y * pitch + x] = abgr(c);
 }
 static void rect(int x, int y, int w, int h, uint32_t c) {
-    if (x < 0) {
-        w += x;
-        x = 0;
+    if (x < clipLeft) {
+        w += x-clipLeft;
+        x = clipLeft;
     }
-    if (y < 0) {
-        h += y;
-        y = 0;
+    if (y < clipTop) {
+        h += y-clipTop;
+        y = clipTop;
     }
-    if (x + w > 480)
-        w = 480 - x;
-    if (y + h > 272)
-        h = 272 - y;
+    if (x + w > clipRight)
+        w = clipRight - x;
+    if (y + h > clipBottom)
+        h = clipBottom - y;
     if (w <= 0 || h <= 0)
         return;
     uint32_t z = abgr(c);
@@ -612,11 +614,21 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
              boot = shade(a->gear[3] ? itemDefs[a->gear[3]].color : skins[a->skin % 8], li);
     int face = a->facing ? 1 : -1, pose = a->movedTimer > 0 ? (int)(sinf(a->anim * 2) * 2.8f) : 0;
     int missing = a->lostMask & ~a->prostheticMask;
-#define R(xx, yy, w, h, c) rect(x + (xx) * sc, y + (yy) * sc, (w) * sc, (h) * sc, c)
-#define L(xx, yy, xx1, yy1, c) thickline(x + (xx) * sc, y + (yy) * sc, x + (xx1) * sc, y + (yy1) * sc, sc, c)
-#define Q(xx, yy, xx1, yy1, xx2, yy2, xx3, yy3, c)                                                           \
-    quad(x + (xx) * sc, y + (yy) * sc, x + (xx1) * sc, y + (yy1) * sc, x + (xx2) * sc, y + (yy2) * sc,       \
-         x + (xx3) * sc, y + (yy3) * sc, c)
+    float progress = a->attackDuration > 0 ? 1 - a->attackClock / a->attackDuration : 0;
+    int weapon = a->attackPhase ? a->attackWeapon : a->gear[0];
+    CombatPose rig = combat_pose(weapon, a->attackPhase, progress);
+    float aim = a->attackPhase ? a->attackAngle : (face > 0 ? 0 : 3.14159265f);
+    float forward = cosf(aim), depth = sinf(aim);
+    float lean = rig.shift * forward;
+    if (a->hitFlash > 0 && a->impactKind == 1)
+        lean -= (a->recoilX-a->recoilY)*4*pose_ease(a->hitFlash/.38f);
+    float crouch = rig.crouch + (a->sneaking ? 3 : 0);
+    /* Longer legs and a narrow torso. Grounded feet stay fixed while the hips load. */
+#define RX(xx, yy) (x + (int)lroundf(((xx)*(1+rig.twist) + lean*fminf(1,fmaxf(0,-(yy)/24.f)))*sc))
+#define RY(yy) (y + (int)lroundf(((yy)*1.25f + crouch*fminf(1,fmaxf(0,-(yy)/13.f)))*sc))
+#define Q(xx, yy, xx1, yy1, xx2, yy2, xx3, yy3, c) quad(RX(xx,yy),RY(yy),RX(xx1,yy1),RY(yy1),RX(xx2,yy2),RY(yy2),RX(xx3,yy3),RY(yy3),c)
+#define R(xx, yy, w, h, c) Q(xx,yy,(xx)+(w),yy,(xx)+(w),(yy)+(h),xx,(yy)+(h),c)
+#define L(xx, yy, xx1, yy1, c) thickline(RX(xx,yy),RY(yy),RX(xx1,yy1),RY(yy1),sc,c)
     ellipse(x + 2 * sc, y + 2 * sc, 10 * sc, 3 * sc, shade(0x39342c, li));
     if (chosen && sc == 1) {
         diamond(x, y + 2, 13, 6, 0x665948);
@@ -644,15 +656,6 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
         weapon_sprite(a->gear[0], x - 4 * sc, y + 4 * sc, sc, .1f, li);
         return;
     }
-    float progress = a->attackDuration > 0 ? 1 - a->attackClock / a->attackDuration : 0;
-    int lean = 0;
-    if (a->attackPhase == 1)
-        lean = -face * 2;
-    if (a->attackPhase == 2)
-        lean = face * 3;
-    if (a->hitFlash > .18f && a->impactKind == 1)
-        lean = -(int)((a->recoilX - a->recoilY) * 3);
-    y += (a->sneaking ? 4 : 0) * sc;
     if (back) {
         if (bf == 80 || bf == 83) {
             int hem = bf == 83 ? -7 : -3;
@@ -693,12 +696,17 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
         if (missing & (1 << limb))
             continue;
         int xx = i ? 1 : -5, off = i ? pose : -pose;
-        if (a->health[limb] < 20)
-            off /= 2;
-        uint32_t c = a->prostheticMask & (1 << limb) ? 0x8c9690 : lc;
-        R(xx, -13, 4, 10 + off, c);
-        R(xx - 1, -4 + off, 6, 3, boot);
-        L(xx, -11, xx, -5 + off, shade(c, 1.3f));
+        if (a->health[limb] < 20) off /= 2;
+        float foot = xx + (i ? 1 : -1)*rig.step*forward;
+        float knee = xx + rig.shift*forward + (i ? 1 : -1);
+        float lift = a->attackPhase ? 0 : fmaxf(0,off)*.5f;
+        uint32_t c = a->prostheticMask & (1 << limb) ? 0x777b78 : lc;
+        Q(xx,-13,xx+3,-13,knee+3,-7,knee,-7,shade(c,.8f));
+        Q(knee,-8,knee+3,-8,foot+3,-2-lift,foot,-2-lift,c);
+        L(xx,-12,knee,-7,shade(c,1.12f));
+        L(knee,-7,foot,-3-lift,shade(c,1.12f));
+        R(foot-1,-3-lift,5,2,shade(boot,.65f));
+        R(foot+face,-2-lift,4,1,boot);
         if (lf == 68) {
             R(xx - 1, -13, 6, 7, lc);
             L(xx, -13, xx, -6, itemDefs[legs].trim);
@@ -741,15 +749,15 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
                 R(xx + j, -3 + off, 1, 1, itemDefs[a->gear[3]].trim);
         }
     }
-    x += lean * sc;
-    int bw = a->body == 1 ? 6 : a->body == 2 ? 4 : 5;
+
+    int bw = a->body == 1 ? 5 : a->body == 2 ? 3 : 4;
     int coat = tf == 32 || tf == 33 || tf == 39 || tf == 40 || tf == 42 || tf == 44 || tf == 47;
     if (coat) {
-        Q(-bw, -23, bw, -23, bw + 3 + pose, -5, -bw - 3, -5, cloth);
+        Q(-bw, -23, bw, -23, bw + 2 + pose - rig.shift, -5, -bw - 2 - rig.shift, -6, cloth);
         L(0, -17, 0, -5, shade(cloth, .48f));
     }
     Q(-bw, -24, bw, -24, bw - 1, -12, -bw + 1, -12, cloth);
-    L(-bw, -23, -bw + 1, -13, shade(cloth, 1.4f));
+    L(-bw, -23, -bw + 1, -13, shade(cloth, 1.18f));
     if (tf == 34 || tf == 36 || tf == 38 || tf == 42 || tf == 44 || tf == 47) {
         R(-bw - 2, -24, 4, 5, shade(cloth, 1.15f));
         R(bw - 1, -24, 4, 5, shade(cloth, .78f));
@@ -771,36 +779,52 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
             for (int j = -3; j < 4; j += 3)
                 L(j, -22, j, -13, shade(cloth, .75f));
     }
+    if (tf == 40) { /* ash cloak: asymmetric weather-beaten overlap */
+        Q(-bw,-23,1,-22,bw+2,-7,-2,-9,shade(cloth,.66f));
+        L(1,-22,-2,-9,shade(trim,.7f));
+    }
+    if (coat) {
+        L(-bw+1,-14,-bw-1-rig.shift,-7,shade(cloth,.62f));
+        L(bw-1,-16,bw+1+pose-rig.shift,-7,shade(cloth,1.1f));
+    }
     R(-bw, -13, bw * 2, 2, 0x3c3027);
     R(0, -13, 2, 2, trim);
+    L(-bw,-14,bw,-14,shade(trim,.65f));
+    if (torso) { /* irregular seam wear, subdued against the fabric */
+        R(-bw+1,-20,1,2,shade(cloth,.6f));
+        R(bw-2,-17,1,1,shade(cloth,1.2f));
+    }
     if (torso) {
         for (int j = 0; j < itemDefs[torso].quality + 1; j++)
             R(-bw + 1 + j * 2, -15, 1, 1, trim);
         R(tf % 7 - 3, -21, 1 + (tf % 2), 2, shade(cloth, .65f));
     }
-    float angle = -1.1f;
-    if (a->attackPhase == 1)
-        angle = a->attackAngle - (weapon_ranged(a->attackWeapon) ? 0 : 1.9f + progress * .4f);
-    if (a->attackPhase == 2)
-        angle = a->attackAngle + (weapon_ranged(a->attackWeapon) ? 0 : -1.8f + progress * 3.4f);
-    if (a->attackPhase == 3)
-        angle = a->attackAngle + .9f * (1 - progress);
-    int handx = 7 * face, handy = -16;
-    if (a->attackPhase) {
-        handx = (int)(cosf(angle) * 8);
-        handy = -20 + (int)(sinf(angle) * 4);
-    }
+    float angle = aim + face * rig.blade;
+    float handx = forward * rig.handX, handy = rig.handY + depth*rig.handX*.4f;
     for (int i = 0; i < 2; i++) {
         int limb = i ? RARM : LARM;
-        if (missing & (1 << limb))
-            continue;
-        int sx = (i ? bw + 1 : -bw - 2), hx = i ? handx : -6, hy = i ? handy : -15;
-        uint32_t c = a->prostheticMask & (1 << limb) ? 0x99aaa3 : skin;
-        L(sx, -22, (sx + hx) / 2, -18, shade(cloth, .85f));
-        L((sx + hx) / 2, -18, hx, hy, c);
-        R(hx - 1, hy, 2, 2, c);
+        if (missing & (1 << limb)) continue;
+        float sx = i ? bw : -bw;
+        float hx = handx, hy = handy;
+        if (!i) {
+            if (combat_two_hands(weapon)) {
+                hx -= cosf(angle)*4; hy -= sinf(angle)*3.2f;
+            } else { hx = -face*5; hy = -17 + rig.crouch; }
+        }
+        /* Two bone arm: elbows bend outward, hands remain attached to the grip. */
+        float dx=hx-sx, dy=hy+23, d=sqrtf(dx*dx+dy*dy);
+        float bend=sqrtf(fmaxf(0,49-d*d*.25f));
+        float ex=(sx+hx)*.5f-(d>.01f ? dy/d : 0)*bend*(i?1:-1);
+        float ey=(-23+hy)*.5f+(d>.01f ? dx/d : 1)*bend*(i?1:-1);
+        uint32_t c = a->prostheticMask & (1 << limb) ? 0x858982 : skin;
+        thickline(RX(sx,-23),RY(-23),RX(ex,ey),RY(ey),3*sc,shade(cloth,.65f));
+        thickline(RX(ex,ey),RY(ey),RX(hx,hy),RY(hy),2*sc,shade(c,.8f));
+        L(ex,ey,hx,hy,c);
+        R(hx-1,hy-1,2,2,c);
     }
-    R(-3, -29, 6, 6, skin);
+    Q(-2,-30,2,-30,3,-26,1,-24,skin);
+    Q(-2,-30,-3,-26,-1,-24,1,-24,shade(skin,.68f));
+    L(-2,-29,2,-29,shade(skin,.5f));
     R(-2, -23, 4, 2, skin);
     if (a->hair) {
         R(-3, -30, 6, 2, hair);
@@ -874,27 +898,20 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
             R(-2 + j * 2, -30, 1, 1, itemDefs[head].trim);
     }
     if (!(missing & (1 << RARM)))
-        weapon_sprite(a->attackPhase ? a->attackWeapon : a->gear[0], x + handx * sc, y + handy * sc, sc,
+        weapon_sprite(a->attackPhase ? a->attackWeapon : a->gear[0], RX(handx,handy), RY(handy), sc,
                       angle, li);
     if (a->carrying >= 0) {
         R(-9, -25, 18, 5, 0x7c6852);
         ellipse(x + 10 * sc, y - 23 * sc, 3 * sc, 3 * sc, skin);
     }
-    if (sc == 1 && a->attackPhase == 2) {
-        if (weapon_ranged(a->attackWeapon)) {
-            if (a->attackClock > .09f) {
-                int ex = x + handx + (int)(cosf(angle) * 30), ey = y + handy + (int)(sinf(angle) * 30);
-                line(ex, ey, ex + (int)(cosf(angle) * 20), ey + (int)(sinf(angle) * 20), 0xe8ce8c);
-                if (gear_family(a->attackWeapon) >= 29)
-                    diamond(ex, ey, 5, 3, 0xf6d7a0);
-            }
-        } else {
-            for (int j = 0; j < 5; j++) {
-                float t = angle - .14f * j;
-                int ex = x + (int)(cosf(t) * 28), ey = y - 18 + (int)(sinf(t) * 17);
-                line(ex, ey, x + (int)(cosf(t - .18f) * 28), y - 18 + (int)(sinf(t - .18f) * 17),
-                     shade(0xded0ad, 1 - j * .13f));
-            }
+    /* Brief, restrained muzzle flash. No luminous circular melee trails. */
+    if (sc == 1 && a->attackPhase == 2 && weapon_ranged(weapon) &&
+        progress >= STRIKE_CONTACT && progress < STRIKE_CONTACT+.18f) {
+        int ex=RX(handx,handy)+(int)(cosf(angle)*27);
+        int ey=RY(handy)+(int)(sinf(angle)*27);
+        if (gear_family(weapon)>=29) {
+            line(ex,ey,ex+(int)(cosf(angle)*6),ey+(int)(sinf(angle)*6),0xd7b98a);
+            px(ex,ey,0xeee0bc);
         }
     }
     if (sc == 1 && a->hitFlash > 0) {
@@ -916,6 +933,8 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
 #undef R
 #undef L
 #undef Q
+#undef RX
+#undef RY
 }
 typedef struct {
     float depth;
@@ -1106,7 +1125,11 @@ static void hud(void) {
             int x = 8 + shown++ * 72;
             rect(x, 219, 65, 33, i == g.selected ? 0x374640 : PANEL);
             frame(x, 219, 65, 33, i == g.selected ? TEAL : EDGE);
-            person(m, x + 12, 248, 1, 0);
+            Actor portrait = *m;
+            portrait.attackPhase=0; portrait.hitFlash=0; portrait.movedTimer=0;
+            clipLeft=x+1; clipTop=220; clipRight=x+23; clipBottom=251;
+            person(&portrait, x+12, 261, 1, 0);
+            clipLeft=clipTop=0; clipRight=480; clipBottom=272;
             char shortname[7];
             snprintf(shortname, sizeof(shortname), "%.6s", m->name);
             text(x + 24, 224, shortname, i == g.selected ? TEAL : TEXT, 1);
@@ -1251,7 +1274,7 @@ static void pack_screen(void) {
     Actor *a = &g.actors[g.selected];
     char b[100];
     overlay_header("PACK & EQUIPMENT", "X EQUIP / USE   TRI WORN GEAR   SQUARE PASS TO ALLY");
-    person(a, 101, 179, 3, 0);
+    person(a, 101, 179, 2, 0);
     int first = start_row(ui.selection, PACK, 8);
     for (int j = 0; j < 8; j++) {
         int k = first + j, y = 84 + j * 15, it = a->pack[k].item;
@@ -1294,7 +1317,7 @@ static void health_screen(void) {
     Actor *a = &g.actors[g.selected];
     char b[100];
     overlay_header("BODY & FIRST AID", "X USE A FIELD DRESSING. LOST LIMBS NEED PROSTHETICS.");
-    person(a, 99, 196, 3, 0);
+    person(a, 99, 196, 2, 0);
     for (int i = 0; i < LIMBS; i++) {
         int y = 88 + i * 18;
         text(185, y, limbNames[i], TEXT, 1);
@@ -1488,7 +1511,7 @@ static void creator_screen(void) {
         a.gear[4] = gear_id(69, 0, 0);
         a.gear[5] = gear_id(76, 0, 0);
     }
-    person(&a, 106, 196, 3, 0);
+    person(&a, 106, 196, 2, 0);
     center(105, 211, ui.createName, TEAL, 1);
     const char *labels[] = {
         "NAME", "ORIGIN",    "ANCESTRY", "BUILD", "SKIN",
@@ -1539,7 +1562,7 @@ static void name_screen(void) {
 static void equipped_screen(void) {
     Actor *a = &g.actors[g.selected];
     overlay_header("WORN EQUIPMENT", "X UNEQUIP   TRI PACK   SELECT GUIDE");
-    person(a, 100, 193, 3, 0);
+    person(a, 100, 193, 2, 0);
     for (int i = 0; i < GEARS; i++) {
         int y = 86 + i * 18;
         if (i == ui.selection)
@@ -1559,7 +1582,7 @@ static void forge_screen(void) {
     ItemDef *d = &itemDefs[it];
     Actor a = preview_actor();
     a.gear[d->slot] = it;
-    person(&a, 102, 184, 3, 0);
+    person(&a, 102, 184, 2, 0);
     const char *labels[] = {"SLOT", "DESIGN", "MATERIAL", "QUALITY", "FORGE THIS PIECE"};
     const char *values[] = {slotNames[ui.forgeSlot], familyNames[ui.forgeFamily],
                             materialNames[ui.forgeMaterial], qualityNames[ui.forgeQuality], "X"};
@@ -1794,7 +1817,7 @@ void render_game(uint32_t *pixels, int stride) {
     case SCREEN_RECRUIT: {
         Actor *r = &g.actors[ui.selection];
         overlay_header("A FELLOW WANDERER", "X RECRUIT FOR 300 SILVER   /   O LEAVE");
-        person(r, 103, 201, 3, 0);
+        person(r, 103, 201, 2, 0);
         text(186, 92, r->name, TEAL, 2);
         wrap(186, 118, 39,
              "I can work, fight, and carry my share. Three hundred silver settles my debts. After that, we "

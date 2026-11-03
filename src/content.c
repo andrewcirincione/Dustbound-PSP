@@ -74,8 +74,8 @@ void content_init(void) {
         itemDefs[i].cooldown = i == CROSSBOW ? 2.3f : 1.2f + itemDefs[i].weight * .025f;
         itemDefs[i].trim = 0xb8a272;
     }
-    static const uint32_t metals[6] = {0x78614a, 0x56615f, 0x94713f, 0x9da6a4, 0x303939, 0x617f82};
-    static const uint32_t cloth[6] = {0x77634f, 0x615a4e, 0x8e653f, 0x75756b, 0x333f3e, 0x55676b};
+    static const uint32_t metals[6] = {0x78614a, 0x555250, 0x80613e, 0x858582, 0x292b2c, 0x626977};
+    static const uint32_t cloth[6] = {0x77634f, 0x615a4e, 0x8e653f, 0x666058, 0x302e2b, 0x4e535b};
     static const int wpower[32] = {18, 13, 27, 9,  23, 17, 26, 16, 17, 11, 16, 28, 22, 21, 29, 32,
                                    12, 19, 18, 24, 35, 22, 15, 23, 20, 23, 33, 15, 24, 38, 27, 34};
     static const int weights[32] = {5, 3, 10, 1, 8,  6, 9, 5, 5, 2, 4,  9, 7, 7, 11, 13,
@@ -96,7 +96,7 @@ void content_init(void) {
                 d->effect = s == 0 ? (f + m + q) % 6 : 4 + (f + m + q) % 8;
                 d->potency = 2 + q * 2 + m;
                 d->color = s == 0 || f == 34 || f == 38 || s == 2 ? metals[m] : cloth[m];
-                d->trim = q == 3 ? 0xc9a452 : q == 2 ? 0xadb5a6 : q == 1 ? 0x866747 : 0x574839;
+                d->trim = q == 3 ? 0xc9a452 : q == 2 ? 0x9c978a : q == 1 ? 0x866747 : 0x574839;
                 if (s == 0) {
                     d->power = wpower[f] + m * 2 + q * 4 - 5;
                     d->weight = weights[f] + (m == 1 ? 2 : 0) - (m == 4 ? 1 : 0);

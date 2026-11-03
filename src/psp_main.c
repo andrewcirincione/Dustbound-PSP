@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
     if (q)
         fclose(q);
     FILE *recordFlag = fopen("DUST_RECORD", "r");
-    int record = recordFlag != NULL, recorded = 0, recordTick = 0;
+    int record = recordFlag != NULL, recorded = 0;
     if (recordFlag)
         fclose(recordFlag);
     SceCtrlData pad;
@@ -112,11 +112,12 @@ int main(int argc, char *argv[]) {
             ax = 0;
         if (fabsf(ay) < .22f)
             ay = 0;
+        if (record) dt = 1.0f / 30; /* Deterministic QA pacing despite capture I/O. */
         game_tick(dt, (Input){held, press, ax, ay});
         render_game(buffers[draw], 512);
         /* Optional QA readback of frames produced by this PSP executable.
            Marker absent in release packages; no recording cost in normal play. */
-        if (record && ui.screen == SCREEN_WORLD && recorded < 120 && ++recordTick % 2 == 0) {
+        if (record && ui.screen == SCREEN_WORLD && recorded < 240) {
             char path[64];
             snprintf(path, sizeof(path), "QA_FRAME_%03d.rgba", recorded);
             FILE *out = fopen(path, "wb");

@@ -19,6 +19,16 @@ static void ppm(const char *path) {
 }
 int main(int argc, char **argv) {
     game_new(73819, 0);
+    if (argc > 1 && strcmp(argv[1], "--pose-frame") == 0) {
+        load_game("build/emu/DUST_2.sav");
+        Actor *a=&g.actors[g.selected];
+        a->attackWeapon=a->gear[0]=gear_id(atoi(argv[3]),1,1);
+        a->attackPhase=atoi(argv[4]);
+        a->attackDuration=1; a->attackClock=1-atof(argv[5]);
+        a->attackAngle=.35f; a->facing=1;
+        g.time=8*3600; ui.screen=SCREEN_WORLD;
+        render_game(pixels,480); ppm(argv[2]); return 0;
+    }
     if (argc > 1 && strcmp(argv[1], "--catalog") == 0) {
         FILE *f = fopen(argc > 2 ? argv[2] : "build/catalog.csv", "w");
         if (!f)
