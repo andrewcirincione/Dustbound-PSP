@@ -1,0 +1,190 @@
+[
+  {
+    "capture": "01-title",
+    "screen": 13,
+    "expected": 13
+  },
+  {
+    "capture": "02-dusk-haven",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "03-starting-equipment",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "04-skills",
+    "screen": 2,
+    "expected": 2
+  },
+  {
+    "capture": "05-body",
+    "screen": 3,
+    "expected": 3
+  },
+  {
+    "capture": "06-world-map",
+    "screen": 5,
+    "expected": 5
+  },
+  {
+    "capture": "13-recruit-dialogue",
+    "screen": 7,
+    "expected": 7
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "assert": "money",
+    "actual": [
+      350
+    ],
+    "expected": [
+      350
+    ]
+  },
+  {
+    "capture": "14-trading-supplies",
+    "screen": 6,
+    "expected": 6
+  },
+  {
+    "assert": "money",
+    "actual": [
+      315
+    ],
+    "expected": [
+      315
+    ]
+  },
+  {
+    "assert": "gear",
+    "actual": [
+      11,
+      18,
+      21,
+      25
+    ],
+    "expected": [
+      11,
+      18,
+      21,
+      25
+    ]
+  },
+  {
+    "capture": "15-looted-leather-equipped",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "16-exploring-with-companion",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "gathered iron ore",
+    "passed": true
+  },
+  {
+    "capture": "17-resource-gathering",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "07-expedition-menu",
+    "screen": 11,
+    "expected": 11
+  },
+  {
+    "assert": "money",
+    "actual": [
+      315
+    ],
+    "expected": [
+      315
+    ]
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "assert": "gear",
+    "actual": [
+      11,
+      18,
+      21,
+      25
+    ],
+    "expected": [
+      11,
+      18,
+      21,
+      25
+    ]
+  },
+  {
+    "capture": "08-squad-combat",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      3
+    ],
+    "expected": [
+      3
+    ]
+  },
+  {
+    "capture": "09-visible-plate-armor",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "assert": "gear",
+    "actual": [
+      12,
+      19,
+      23,
+      24
+    ],
+    "expected": [
+      12,
+      19,
+      23,
+      24
+    ]
+  },
+  {
+    "capture": "10-player-outpost",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "11-build-menu",
+    "screen": 8,
+    "expected": 8
+  },
+  {
+    "capture": "12-research",
+    "screen": 10,
+    "expected": 10
+  }
+]

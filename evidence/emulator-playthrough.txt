@@ -1,0 +1,112 @@
+RUN /workspace/scratch/f91171b6dca9/Dustbound/build/emulator-run-t0r5uyev
+{'event': 'version', 'ticket': '1', 'name': 'PPSSPP', 'version': '1.20.4'}
+{'event': 'cpu.status', 'ticket': '3', 'stepping': True, 'paused': False, 'pc': 142622956, 'ticks': 0}
+{'event': 'game.status', 'ticket': '5', 'game': {'id': 'EBOO00649', 'version': '', 'title': 'Dustbound 0.1.0'}, 'paused': False}
+SCREENSHOT 01-title 480x272 screen 13 VRAM 0x4088000
+SCREENSHOT 02-dusk-haven 480x272 screen 0 VRAM 0x4088000
+SCREENSHOT 03-starting-equipment 480x272 screen 1 VRAM 0x4088000
+SCREENSHOT 04-skills 480x272 screen 2 VRAM 0x4088000
+SCREENSHOT 05-body 480x272 screen 3 VRAM 0x4088000
+SCREENSHOT 06-world-map 480x272 screen 5 VRAM 0x4088000
+STEP 0 26.0 29.5 left 6
+STEP 1 25.72 29.78 left 4
+STEP 2 25.49 30.01 left 3
+STEP 3 25.28 30.22 left 3
+STEP 4 25.09 30.41 left 2
+STEP 5 24.95 30.55 up 2
+STEP 6 24.76 30.36 left 1
+STEP 7 24.67 30.46 left 1
+STEP 8 24.53 30.6 up 1
+MOVE 24.43 30.5
+SCREENSHOT 13-recruit-dialogue 480x272 screen 7 VRAM 0x4088000
+ASSERT squad (2,)
+ASSERT money (350,)
+STEP 0 24.43 30.5 right 8
+STEP 1 24.85 30.08 right 8
+STEP 2 25.3 29.64 right 8
+STEP 3 25.72 29.22 right 8
+STEP 4 26.16 28.78 right 8
+STEP 5 26.58 28.35 right 8
+STEP 6 26.98 27.96 right 6
+STEP 7 27.26 27.68 right 5
+STEP 8 27.52 27.42 right 4
+STEP 9 27.75 27.19 right 3
+STEP 10 27.94 27.0 right 3
+STEP 11 28.15 26.79 up 2
+STEP 12 28.01 26.65 up 2
+STEP 13 27.87 26.51 right 2
+STEP 14 27.96 26.42 right 1
+STEP 15 28.06 26.32 up 1
+STEP 16 27.96 26.23 right 1
+STEP 17 28.06 26.13 up 1
+STEP 18 27.96 26.04 right 1
+MOVE 28.01 25.99
+SCREENSHOT 14-trading-supplies 480x272 screen 6 VRAM 0x4000000
+ASSERT money (315,)
+STEP 0 28.01 25.99 down 8
+STEP 1 28.34 26.33 down 8
+STEP 2 28.78 26.77 down 8
+STEP 3 29.15 27.14 down 8
+STEP 4 29.58 27.56 down 7
+STEP 5 29.97 27.96 down 6
+STEP 6 30.25 28.24 down 5
+STEP 7 30.58 28.57 down 3
+STEP 8 30.74 28.72 down 3
+STEP 9 30.92 28.72 down 2
+STEP 10 31.11 28.72 down 2
+STEP 11 31.3 28.82 down 1
+STEP 12 31.41 28.92 down 1
+STEP 13 31.45 28.97 down 1
+MOVE 31.55 29.07
+PACK AFTER LOOT (1, 3, 2, 4, 5, 8, 6, 5, 28, 1, 18, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+ASSERT gear (11, 18, 21, 25)
+SCREENSHOT 15-looted-leather-equipped 480x272 screen 1 VRAM 0x4088000
+SCREENSHOT 16-exploring-with-companion 480x272 screen 0 VRAM 0x4000000
+STEP 0 31.55 29.07 left 8
+STEP 1 31.28 29.55 left 8
+STEP 2 31.28 29.95 left 8
+STEP 3 31.28 30.3 left 8
+STEP 4 31.28 30.73 left 8
+STEP 5 31.28 31.12 left 8
+STEP 6 30.99 31.54 left 8
+STEP 7 30.55 31.99 left 8
+STEP 8 30.06 32.47 left 8
+STEP 9 29.67 32.87 left 8
+STEP 10 29.26 33.28 left 8
+STEP 11 28.9 33.64 left 8
+STEP 12 28.5 34.04 up 8
+STEP 13 28.0 33.54 left 8
+STEP 14 27.54 33.99 left 7
+STEP 15 27.17 34.36 up 7
+STEP 16 26.86 34.05 up 5
+STEP 17 26.6 33.79 left 5
+STEP 18 26.33 34.05 up 4
+STEP 19 26.02 33.74 left 4
+STEP 20 25.8 33.96 left 3
+STEP 21 25.67 34.1 up 3
+STEP 22 25.49 33.92 left 3
+STEP 23 25.31 34.1 up 2
+STEP 24 25.22 34.01 up 2
+STEP 25 25.09 33.88 left 2
+STEP 26 25.0 33.96 left 2
+STEP 27 24.94 34.02 up 1
+STEP 28 24.89 33.97 left 1
+STEP 29 24.85 34.02 up 1
+STEP 30 24.76 33.93 left 1
+STEP 31 24.62 34.06 up 1
+STEP 32 24.58 34.02 up 1
+STEP 33 24.54 33.97 left 1
+MOVE 24.45 34.06
+SCREENSHOT 17-resource-gathering 480x272 screen 0 VRAM 0x4088000
+SCREENSHOT 07-expedition-menu 480x272 screen 11 VRAM 0x4088000
+ASSERT money (315,)
+ASSERT squad (2,)
+ASSERT gear (11, 18, 21, 25)
+SCREENSHOT 08-squad-combat 480x272 screen 0 VRAM 0x4000000
+ASSERT squad (3,)
+SCREENSHOT 09-visible-plate-armor 480x272 screen 1 VRAM 0x4088000
+ASSERT gear (12, 19, 23, 24)
+SCREENSHOT 10-player-outpost 480x272 screen 0 VRAM 0x4000000
+SCREENSHOT 11-build-menu 480x272 screen 8 VRAM 0x4088000
+SCREENSHOT 12-research 480x272 screen 10 VRAM 0x4088000
+EMULATOR INPUT / SCREENSHOT PASS
