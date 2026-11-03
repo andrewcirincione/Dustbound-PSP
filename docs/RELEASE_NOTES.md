@@ -1,13 +1,15 @@
-# Dustbound 0.2.0 — Frontier expansion
+# Dustbound 0.2.1 — Dust and steel
 
-A playable original PSP alpha with a grittier western–samurai world, character creation, 16 settlements across nine regions, 2,016 modular gear variants in six visible slots, and eight-member squads.
+A focused combat and character-art revision for the original PSP sandbox.
 
-Combat now has windup/contact/recovery animation, directional weapon motion, recoil, stagger, hit stop, projectile traces and procedural effects. Six limb health values affect survival, movement and weapon use; bleeding, knockout, limb loss, prosthetics and rescue persist.
+- Taller, narrower figures, shaded faces, darker steel and leather, worn seams and asymmetric cloak folds.
+- Bent knees, planted feet, hip loading, articulated elbows and two-handed grips.
+- Separate sword cuts, thrusts, heavy overhead attacks and firearm recoil; continuous preparation/strike/recovery transitions.
+- Damage, blocks and hit reactions resolve at visible contact, rather than the start of the swing. Bright circular melee trails removed.
+- Menu portraits fitted to the taller silhouettes; squad portraits clipped to their cards.
 
-Added custom forging, NPC dialogue, contracts/journal, factions, weather exposure, custody, storage, expanded jobs, a world atlas, six manual save slots, v0.1 migration and 18 contextual guide chapters.
+111 simulation checks, 243 render cases, sanitizer checks and all 2,016 unique gear renders passed. The final EBOOT was driven through normal and prepared-scenario PPSSPP playthroughs. The combat recording comes from the PSP executable using a developer-only fixed 30 Hz simulation step; it does not measure hardware frame rate.
 
-Validation: 107 simulation checks; 243 render cases; 2,016 unique gear drawings at gameplay and portrait scale; normal and prepared-scenario EBOOT playthroughs in PPSSPP. Combat GIF and gameplay screenshots are included in the evidence download.
+Extract `Dustbound-0.2.1-PSP.zip` to the memory stick root on a homebrew-capable PSP. Save format remains compatible with v0.2.0; back up valuable saves before upgrading. No test saves or QA markers are included.
 
-Install: extract `Dustbound-0.2.0-PSP.zip` to the memory stick root. Launch `PSP/GAME/DUSTBOUND/EBOOT.PBP` on a PSP already able to run homebrew. Back up old saves before upgrading. Test fixtures and QA markers are excluded.
-
-**Still an alpha:** physical PSP testing is outstanding. This is an original Kenshi-inspired game, not a Kenshi port or a recreation of every Kenshi mechanic. The repository roadmap lists the remaining depth and hardware qualification work.
+Still a playable alpha. Physical PSP performance and full Kenshi-scale mechanics remain unverified or unfinished.
