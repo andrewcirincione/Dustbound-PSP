@@ -80,6 +80,10 @@ int main(int argc, char *argv[]) {
     int trace = q != NULL;
     if (q)
         fclose(q);
+    FILE *recordFlag = fopen("DUST_RECORD", "r");
+    int record = recordFlag != NULL, recorded = 0, recordTick = 0;
+    if (recordFlag)
+        fclose(recordFlag);
     SceCtrlData pad;
     uint64_t last, now;
     sceRtcGetCurrentTick(&last);
@@ -110,6 +114,25 @@ int main(int argc, char *argv[]) {
             ay = 0;
         game_tick(dt, (Input){held, press, ax, ay});
         render_game(buffers[draw], 512);
+        /* Optional QA readback of frames produced by this PSP executable.
+           Marker absent in release packages; no recording cost in normal play. */
+        if (record && ui.screen == SCREEN_WORLD && recorded < 120 && ++recordTick % 2 == 0) {
+            char path[64];
+            snprintf(path, sizeof(path), "QA_FRAME_%03d.rgba", recorded);
+            FILE *out = fopen(path, "wb");
+            if (out) {
+                fwrite(buffers[draw], 512 * 272 * 4, 1, out);
+                fclose(out);
+            }
+            out = fopen("QA_FRAMES.csv", recorded ? "a" : "w");
+            if (out) {
+                if (!recorded)
+                    fprintf(out, "frame,time,attack_phase\n");
+                fprintf(out, "%d,%.4f,%d\n", recorded, g.time, g.actors[g.selected].attackPhase);
+                fclose(out);
+            }
+            recorded++;
+        }
         sceDisplayWaitVblankStart();
         sceDisplaySetFrameBuf((void *)(0x04000000 + draw * 512 * 272 * 4), 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
                               PSP_DISPLAY_SETBUF_NEXTFRAME);

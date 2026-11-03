@@ -273,6 +273,11 @@ int expansion_input(float dt, Input in) {
             a->squad = 0;
             g.squadCount--;
             for (int n = 0; n < g.actorCount; n++)
+                if (g.actors[n].squad) {
+                    g.selected = n;
+                    break;
+                }
+            for (int n = 0; n < g.actorCount; n++)
                 if (g.actors[n].squad && !g.actors[n].dead) {
                     g.selected = n;
                     break;

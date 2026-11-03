@@ -690,6 +690,9 @@ void tick_expansion(float dt) {
                 for (int i = 0; i < g.actorCount; i++)
                     if (!g.actors[i].squad && g.actors[i].homeTown == t)
                         g.actors[i].faction = g.townOwner[t];
+                for (int i = 0; i < g.buildingCount; i++)
+                    if (g.buildings[i].owner < 0 && town_near(g.buildings[i].x, g.buildings[i].y, 13) == t)
+                        g.buildings[i].faction = g.townOwner[t];
             }
         }
     }
