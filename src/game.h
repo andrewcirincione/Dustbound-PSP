@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.2.1"
+#define VERSION "0.3.0"
 #define WORLD 384
 #define MAX_ACTORS 192
 #define MAX_BUILDINGS 320
@@ -17,7 +17,7 @@
 #define GEARS 6
 #define FACTIONS 8
 #define CONTRACTS 24
-#define GUIDE_PAGES 18
+#define GUIDE_PAGES 19
 #define SAVE_SLOTS 7
 #define TOWNS 16
 #define SQUAD 8
@@ -199,7 +199,21 @@ typedef struct {
     int factionWar[FACTIONS], storyStage, playOrigin, unlocks, difficulty;
     float eventTimer, weatherTimer, worldPulse, hitstop, shake;
     char worldNews[96];
+    /* Version 3 extension. Version 2 ends immediately before these fields. */
+    int interiorBuilding, interiorActor;
+    float interiorX, interiorY;
 } Game;
+enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
+typedef struct {float x,y,w,d; int art,action;} InteriorProp;
+int building_has_interior(int type);
+int interior_enter(int building);
+void interior_leave(void);
+int actor_inside(const Actor *a);
+int interior_props(int building,InteriorProp *props);
+int interior_context(void);
+const char *interior_prompt(void);
+void interior_interact(void);
+void interior_move(float dx,float dy,float dt);
 typedef struct {
     int screen, selection, scroll, tab, paused, speed, contextKind, contextIndex, tradeTown, sell, slot,
         confirmAction, titleChoice, waypoint;

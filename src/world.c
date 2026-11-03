@@ -619,7 +619,7 @@ int pickpocket(int n) {
     return 1;
 }
 static void worker_production(Actor *a, float dt) {
-    if (a->job < JOB_SMELT || a->taskKind || !conscious(a))
+    if (actor_inside(a) || a->job < JOB_SMELT || a->taskKind || !conscious(a))
         return;
     a->action -= dt;
     if (a->action > 0)
@@ -726,7 +726,7 @@ void tick_expansion(float dt) {
             }
             continue;
         }
-        if (a->unconscious > 0 && a->bounty >= 80) {
+        if (!actor_inside(a) && a->unconscious > 0 && a->bounty >= 80) {
             for (int j = 0; j < g.actorCount; j++) {
                 Actor *b = &g.actors[j];
                 if (b->kind == GUARD && b->faction != HOSTILE && conscious(b) &&
@@ -748,7 +748,7 @@ void tick_expansion(float dt) {
                 }
             }
         }
-        int sheltered = a->taskKind == 3 || town_near(a->x, a->y, 8) >= 0;
+        int sheltered = actor_inside(a) || a->taskKind == 3 || town_near(a->x, a->y, 8) >= 0;
         if ((g.weather == 3 || g.weather == 4) && !sheltered)
             a->exposure = fminf(100, a->exposure + dt * fmaxf(0, .20f - gear_bonus(a, 4) * .002f));
         else

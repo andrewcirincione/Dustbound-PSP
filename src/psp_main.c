@@ -9,10 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-PSP_MODULE_INFO("Dustbound", 0, 0, 2);
+PSP_MODULE_INFO("Dustbound", 0, 0, 3);
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU);
 PSP_HEAP_SIZE_KB(12 * 1024);
 static volatile int running = 1;
+static uint32_t stage[512*272] __attribute__((aligned(64)));
 static int exit_callback(int a, int b, void *c) {
     (void)a;
     (void)b;
@@ -114,7 +115,8 @@ int main(int argc, char *argv[]) {
             ay = 0;
         if (record) dt = 1.0f / 30; /* Deterministic QA pacing despite capture I/O. */
         game_tick(dt, (Input){held, press, ax, ay});
-        render_game(buffers[draw], 512);
+        render_game(stage, 512);
+        memcpy(buffers[draw],stage,sizeof(stage));
         /* Optional QA readback of frames produced by this PSP executable.
            Marker absent in release packages; no recording cost in normal play. */
         if (record && ui.screen == SCREEN_WORLD && recorded < 240) {

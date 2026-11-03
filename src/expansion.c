@@ -270,6 +270,7 @@ int expansion_input(float dt, Input in) {
     }
     if (ui.screen == SCREEN_SQUAD && (p & KEY_SQUARE)) {
         if (a->dead && g.squadCount > 1) {
+            if(g.interiorBuilding)interior_leave();
             a->squad = 0;
             g.squadCount--;
             for (int n = 0; n < g.actorCount; n++)
@@ -285,7 +286,7 @@ int expansion_input(float dt, Input in) {
             open_view(SCREEN_WORLD);
             log_msg("Fallen companion released from the squad roster.");
         } else
-            log_msg("Square dismisses a fallen companion only.");
+            log_msg("\003 dismisses a fallen companion only.");
         return 1;
     }
     if (ui.screen == SCREEN_MAP && (p & (KEY_L | KEY_R | KEY_SQUARE))) {

@@ -19,6 +19,18 @@ static void ppm(const char *path) {
 }
 int main(int argc, char **argv) {
     game_new(73819, 0);
+    if(argc>1 && !strcmp(argv[1],"--launcher-art")) {
+        render_title_art(pixels,480);ppm(argv[2]);return 0;
+    }
+    if(argc>1 && !strcmp(argv[1],"--room-frame")) {
+        int type=argc>3?atoi(argv[3]):SHOP;
+        for(int i=0;i<g.buildingCount;i++)if(g.buildings[i].type==type){
+            g.actors[0].x=g.buildings[i].x+1.45f;g.actors[0].y=g.buildings[i].y+.65f;g.actors[0].target=-1;
+            interior_enter(i);break;
+        }
+        ui.screen=SCREEN_WORLD;ui.noticeTime=0;g.interiorX=3.5f;g.interiorY=4.8f;
+        render_game(pixels,480);ppm(argv[2]);return 0;
+    }
     if (argc > 1 && strcmp(argv[1], "--pose-frame") == 0) {
         load_game("build/emu/DUST_2.sav");
         Actor *a=&g.actors[g.selected];
