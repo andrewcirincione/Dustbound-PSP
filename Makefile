@@ -13,3 +13,8 @@ PSP_LARGE_MEMORY = 0
 BUILD_PRX = 1
 PSP_FW_VERSION = 660
 include $(PSPSDK)/lib/build.mak
+
+# Keep incremental builds correct after header or launcher artwork changes.
+$(OBJS): src/game.h
+src/game.o: src/legacy.h
+EBOOT.PBP: assets/ICON0.png assets/PIC1.png
