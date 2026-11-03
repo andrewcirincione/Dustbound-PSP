@@ -19,6 +19,8 @@ async def main():
                 except (FileNotFoundError,json.JSONDecodeError):await asyncio.sleep(.1)
             print('BOOT',e.state,flush=True)
             await e.shot('v02-01-title',13)
+            if '--boot-only' in sys.argv:
+                print('FINAL EBOOT BOOT PASS',run,flush=True);return
             await e.press('cross');await asyncio.sleep(.2)
             await e.shot('v02-02-character-creator',15)
             for _ in range(9):await e.press('down',2)
