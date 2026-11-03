@@ -1,0 +1,145 @@
+[
+  {
+    "eboot_sha256": "72e48dd77dbda25dffa8811f1cdc3ef4dfe7ca2bdad99913900d1600d8f8fc7a",
+    "version": "0.3.0"
+  },
+  {
+    "capture": "v030-01-title",
+    "screen": 13,
+    "expected": 13
+  },
+  {
+    "capture": "v030-08-name-keyboard",
+    "screen": 16,
+    "expected": 16
+  },
+  {
+    "capture": "v030-02-character-creator",
+    "screen": 15,
+    "expected": 15
+  },
+  {
+    "assert": "money",
+    "actual": [
+      420
+    ],
+    "expected": [
+      420
+    ]
+  },
+  {
+    "capture": "v030-03-dusk-haven",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v030-04-layered-equipment",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v030-05-six-equipment-slots",
+    "screen": 23,
+    "expected": 23
+  },
+  {
+    "capture": "v030-09-companion-dialogue",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "assert": "money",
+    "actual": [
+      120
+    ],
+    "expected": [
+      120
+    ]
+  },
+  {
+    "capture": "v030-10-market-dialogue",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "assert": "money",
+    "actual": [
+      85
+    ],
+    "expected": [
+      85
+    ]
+  },
+  {
+    "capture": "v030-11-weapon-market",
+    "screen": 6,
+    "expected": 6
+  },
+  {
+    "capture": "v030-12-looted-armor-equipped",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v030-13-mining",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v030-14-save-ledger",
+    "screen": 22,
+    "expected": 22
+  },
+  {
+    "assert": "money",
+    "actual": [
+      85
+    ],
+    "expected": [
+      85
+    ]
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "capture": "v030-06-frontier-atlas",
+    "screen": 5,
+    "expected": 5
+  },
+  {
+    "capture": "v030-07-contextual-guide",
+    "screen": 12,
+    "expected": 12
+  },
+  {
+    "assert": "selection",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "normal_run_saved_reloaded": true,
+    "starting_origin": "Ronin",
+    "ending_silver": 85,
+    "ending_squad": 2
+  }
+]

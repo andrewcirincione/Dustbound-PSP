@@ -1,0 +1,2 @@
+PASS: 272 screen/biome/guide renders; 480x272 bounds and 512-pixel stride preserved.
+PASS: 26649 interior, save migration and rigid grip checks.
