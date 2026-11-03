@@ -1,0 +1,141 @@
+[
+  {
+    "capture": "v021-01-title",
+    "screen": 13,
+    "expected": 13
+  },
+  {
+    "capture": "v021-08-name-keyboard",
+    "screen": 16,
+    "expected": 16
+  },
+  {
+    "capture": "v021-02-character-creator",
+    "screen": 15,
+    "expected": 15
+  },
+  {
+    "assert": "money",
+    "actual": [
+      420
+    ],
+    "expected": [
+      420
+    ]
+  },
+  {
+    "capture": "v021-03-dusk-haven",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v021-04-layered-equipment",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v021-05-six-equipment-slots",
+    "screen": 23,
+    "expected": 23
+  },
+  {
+    "capture": "v021-09-companion-dialogue",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "assert": "money",
+    "actual": [
+      120
+    ],
+    "expected": [
+      120
+    ]
+  },
+  {
+    "capture": "v021-10-market-dialogue",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "assert": "money",
+    "actual": [
+      85
+    ],
+    "expected": [
+      85
+    ]
+  },
+  {
+    "capture": "v021-11-weapon-market",
+    "screen": 6,
+    "expected": 6
+  },
+  {
+    "capture": "v021-12-looted-armor-equipped",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v021-13-mining",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v021-14-save-ledger",
+    "screen": 22,
+    "expected": 22
+  },
+  {
+    "assert": "money",
+    "actual": [
+      85
+    ],
+    "expected": [
+      85
+    ]
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "capture": "v021-06-frontier-atlas",
+    "screen": 5,
+    "expected": 5
+  },
+  {
+    "capture": "v021-07-contextual-guide",
+    "screen": 12,
+    "expected": 12
+  },
+  {
+    "assert": "selection",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "normal_run_saved_reloaded": true,
+    "starting_origin": "Ronin",
+    "ending_silver": 85,
+    "ending_squad": 2
+  }
+]

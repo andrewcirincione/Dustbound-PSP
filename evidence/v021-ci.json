@@ -1,0 +1,11 @@
+{
+  "run_url": "https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/41719157323",
+  "source_commit": "511d41962d7e385d767a67f42d6a049495df77ba",
+  "eboot_matches_final": true,
+  "checks": [
+    "2026-11-03T21:09:28.6563448Z 61/61 passed",
+    "2026-11-03T21:09:30.0317755Z 50/50 expansion checks passed",
+    "2026-11-03T21:09:32.6363071Z PASS: 243 screen/biome/guide renders; 480x272 bounds and 512-pixel stride preserved.",
+    "2026-11-03T21:09:40.7712692Z SHA-256: 36695824914f634c21d528e71f703d666e315eb71367a20372326d2e9e55b3d3"
+  ]
+}

@@ -1,0 +1,3 @@
+BOOT {'version': '0.2.1', 'screen': 13, 'frames': 30, 'display_pointer': 142977052, 'screen_pointer': 142979804, 'money_pointer': 142980896, 'squad_pointer': 142980904, 'position_pointer': 143130816, 'gear_pointer': 143131168, 'pack_pointer': 143130976, 'health_pointer': 143130840, 'attack_pointer': 143131652, 'time_pointer': 142980876, 'framecount_pointer': 142979800, 'selected_pointer': 142980900, 'selection_pointer': 142979808, 'weather_pointer': 143385136, 'bounty_pointer': 143131252, 'contracts_pointer': 143385144, 'game_pointer': 142980868}
+SCREENSHOT v02-01-title 480x272 screen 13 VRAM 0x4088000
+FINAL EBOOT BOOT PASS /workspace/scratch/f91171b6dca9/Dustbound/build/milestone-efpyvvg5

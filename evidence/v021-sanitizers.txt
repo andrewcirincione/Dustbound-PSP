@@ -1,0 +1,53 @@
+PASS: 243 screen/biome/guide renders; 480x272 bounds and 512-pixel stride preserved.
+PASS 01: all 2,016 gear variants have valid slots, effects and prices
+PASS 02: catalog boundaries are checked
+PASS 03: creator applies appearance, ancestry and ronin origin
+PASS 04: barber preserves expedition progress
+PASS 05: context guide opens the forging chapter
+PASS 06: guide returns to originating screen
+PASS 07: master relic armor consumes exact forging ingredients
+PASS 08: forged armor equips into its visible body slot
+PASS 09: locked forging is atomic
+PASS 10: depot construction succeeds with materials outside town
+PASS 11: depot deposits inventory resources
+PASS 12: depot withdrawal restores inventory
+PASS 13: stolen goods cannot lose ownership through storage
+PASS 14: journal rejects a duplicate active contract
+PASS 15: supply contract consumes goods and pays silver and reputation
+PASS 16: completed contract cannot pay twice
+PASS 17: delivery contract can be accepted
+PASS 18: delivery records reaching the destination
+PASS 19: delivery requires returning to the issuer
+PASS 20: delivery pays on returning to the issuing town
+PASS 21: local prosperity affects displayed market prices
+PASS 22: weapon market filter maps to available stock
+PASS 23: stolen ownership survives equipping and removing gear
+PASS 24: selling to the victim faction is rejected
+PASS 25: Black Mesa can fence stolen gear
+PASS 26: doctor treats wounds for the stated fee
+PASS 27: inn dialogue starts paid rest
+PASS 28: sleep restores wounds and fatigue
+PASS 29: snow exposure rises outside shelter
+PASS 30: sealed equipment reduces environmental exposure
+PASS 31: nearby law guards take defeated wanted survivors into custody
+PASS 32: custody prevents walking out of the holding area
+PASS 33: custody dialogue accepts bail and clears bounty
+PASS 34: starting an attack winds up without instant damage
+PASS 35: short blades wind up faster than heavy nodachi
+PASS 36: leaving reach before contact avoids the strike
+PASS 37: a missing weapon arm forces unarmed attacks
+PASS 38: no hit before the blade reaches the contact marker
+PASS 39: hit or block resolves at visible blade contact
+PASS 40: follow-through cannot resolve the same strike twice
+PASS 41: all 32 weapon families join preparation, strike and recovery without pose snapping
+PASS 42: expanded expedition writes successfully
+PASS 43: save roundtrip preserves appearance, gear, custody, weather, contracts and ownership
+PASS 44: legacy layout matches the shipped v0.1 save payload
+PASS 45: real v0.1 outpost fixture migrates equipment, buildings and research
+PASS 46: migrated expedition can be saved and reloaded as v0.2
+PASS 47: invalid legacy data cannot alter the live expedition
+PASS 48: dismissing a fallen leader selects another roster member even when all are dead
+PASS 49: last fallen survivor remains a valid saveable expedition
+PASS 50: town ownership events update settlement faction banners
+
+50/50 expansion checks passed
