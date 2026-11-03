@@ -1,0 +1,18 @@
+{
+  "release": "v0.2.0",
+  "commit": "f82489d368b787ce54f78c02625af4d98b1353bd",
+  "run_url": "https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/41713863750",
+  "job_id": 126188644425,
+  "conclusion": "success",
+  "eboot_sha256": "c6b89513b71e9614e759ba8cf53f9de92182109a4befcd4906624f6170ab6587",
+  "matches_playtested_release": true,
+  "selected_log_lines": [
+    "2026-11-03T20:35:09.2972898Z 61/61 passed",
+    "2026-11-03T20:35:10.6504859Z 46/46 expansion checks passed",
+    "2026-11-03T20:35:12.8442587Z PASS: 243 screen/biome/guide renders; 480x272 bounds and 512-pixel stride preserved.",
+    "2026-11-03T20:35:13.7131430Z     \"distinct_renders\": 2016",
+    "2026-11-03T20:35:13.7132781Z     \"distinct_renders\": 2016",
+    "2026-11-03T20:35:20.4296760Z PBP valid: 461927 bytes",
+    "2026-11-03T20:35:20.4298126Z SHA-256: c6b89513b71e9614e759ba8cf53f9de92182109a4befcd4906624f6170ab6587"
+  ]
+}
