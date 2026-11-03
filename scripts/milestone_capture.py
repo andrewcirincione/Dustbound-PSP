@@ -17,24 +17,25 @@ async def main():
             for _ in range(600):
                 try:e.state=json.loads((run/'DUST_STATE.json').read_text());break
                 except (FileNotFoundError,json.JSONDecodeError):await asyncio.sleep(.1)
+            prefix='v'+e.state['version'].replace('.','')
             print('BOOT',e.state,flush=True)
-            await e.shot('v02-01-title',13)
+            await e.shot(prefix+'-01-title',13)
             if '--boot-only' in sys.argv:
                 print('FINAL EBOOT BOOT PASS',run,flush=True);return
             await e.press('cross');await asyncio.sleep(.2)
-            await e.shot('v02-02-character-creator',15)
+            await e.shot(prefix+'-02-character-creator',15)
             for _ in range(9):await e.press('down',2)
             await e.press('cross');await asyncio.sleep(.4)
-            await e.shot('v02-03-dusk-haven',0)
+            await e.shot(prefix+'-03-dusk-haven',0)
             await e.press('triangle');await asyncio.sleep(.2)
-            await e.shot('v02-04-layered-equipment',1)
+            await e.shot(prefix+'-04-layered-equipment',1)
             await e.press('triangle');await asyncio.sleep(.2)
-            await e.shot('v02-05-six-equipment-slots',23)
+            await e.shot(prefix+'-05-six-equipment-slots',23)
             await e.press('circle');await e.press('select');await asyncio.sleep(.2)
-            await e.shot('v02-06-frontier-atlas',5)
+            await e.shot(prefix+'-06-frontier-atlas',5)
             await e.press('select');await asyncio.sleep(.2)
-            await e.shot('v02-07-contextual-guide',12)
-            (ROOT/'evidence'/'v02-milestone-checks.json').write_text(json.dumps(e.events,indent=2))
+            await e.shot(prefix+'-07-contextual-guide',12)
+            (ROOT/'evidence'/(prefix+'-milestone-checks.json')).write_text(json.dumps(e.events,indent=2))
             print('MILESTONE PASS',run,flush=True)
     finally:
         proc.terminate()

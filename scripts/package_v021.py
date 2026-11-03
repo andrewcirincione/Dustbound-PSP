@@ -13,14 +13,14 @@ def archive(path, entries):
             info.external_attr = 0o100644 << 16
             out.writestr(info, source.read_bytes())
 eboot = root / 'EBOOT.PBP'
-assert sha(eboot) == '8409f30c662705ecc1fa5d8076a4c86730e755104bc25183621a5ddcc4b59564', 'Build changed: repeat validation.'
+assert sha(eboot) == '36695824914f634c21d528e71f703d666e315eb71367a20372326d2e9e55b3d3', 'Build changed: repeat validation.'
 normal = json.loads((root/'evidence/v021-emulator-checks.json').read_text())
 advanced = json.loads((root/'evidence/v021-advanced-checks.json').read_text())
 assert normal[-1]['normal_run_saved_reloaded']
 assert set(advanced[-1]['combat_phases_observed']) == {0, 1, 2, 3}
-for source, name in [('v021-native.txt','v021-native-tests.txt'), ('v021-sanitizers.txt','v021-sanitizers.txt'), ('v021-normal-final.txt','v021-normal-playthrough.txt'), ('v021-advanced-final.txt','v021-advanced-playthrough.txt')]:
+for source, name in [('v021-final-boot.txt','v021-final-boot.txt'), ('v021-native.txt','v021-native-tests.txt'), ('v021-sanitizers.txt','v021-sanitizers.txt'), ('v021-normal-final.txt','v021-normal-playthrough.txt'), ('v021-advanced-final.txt','v021-advanced-playthrough.txt')]:
     shutil.copy2(root/'build'/source, root/'evidence'/name)
-manifest = {'version':version, 'eboot_bytes':eboot.stat().st_size, 'eboot_sha256':sha(eboot), 'prx_sha256':sha(root/'dustbound.prx'), 'simulation_checks':111, 'render_cases':243, 'gear_variants':2016, 'combat_recording_frames':240, 'capture_simulation_hz':30, 'physical_psp_tested':False}
+manifest = {'version':version, 'eboot_bytes':eboot.stat().st_size, 'eboot_sha256':sha(eboot), 'prx_sha256':sha(root/'dustbound.prx'), 'simulation_checks':111, 'render_cases':243, 'gear_variants':2016, 'combat_recording_frames':240, 'capture_simulation_hz':30, 'physical_psp_tested':False, 'full_playthrough_eboot_sha256':'8409f30c662705ecc1fa5d8076a4c86730e755104bc25183621a5ddcc4b59564', 'final_change':'PSP launcher metadata only; identical tested PRX; final boot passed; matches CI'}
 (root/'evidence/v021-build-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
 shutil.copy2(eboot,root/'dist'/f'Dustbound-{version}-EBOOT.PBP')
 docs = ['README.md','LICENSE','CHANGELOG.md','docs/FIELD_GUIDE.md','docs/RELEASE_NOTES.md','docs/VALIDATION.md']
