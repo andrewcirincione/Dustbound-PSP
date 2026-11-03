@@ -1,6 +1,6 @@
 # 0.2.1 validation record
 
-The release EBOOT is 504,047 bytes. SHA-256: `8409f30c662705ecc1fa5d8076a4c86730e755104bc25183621a5ddcc4b59564`.
+The release EBOOT is 504,047 bytes. SHA-256: `36695824914f634c21d528e71f703d666e315eb71367a20372326d2e9e55b3d3`.
 
 ## Checks
 
@@ -19,3 +19,5 @@ The combat GIF uses 240 frames read back inside the PSP executable, from the sam
 Normal play uses the real clock and records no frames. Neither `DUST_RECORD`, `DUST_QA`, nor scenario saves are included in the release. Headless PPSSPP is unthrottled: neither the GIF nor host throughput proves physical PSP performance. Hardware frame rate, suspend/resume, battery, audio and long campaign qualification are still outstanding. This remains procedural pixel art with more anatomical proportions, not a realistic 3D renderer.
 
 See `evidence/v021-*-checks.json`, `v021-native-tests.txt`, `v021-sanitizers.txt`, `v021-combat-frames.csv` and `catalog-audit.json`. v0.2.0's historical evidence is retained in its tagged release.
+
+The final launcher metadata was rebuilt after CI exposed a stale title. The PRX runtime is byte-identical to the full-playthrough build; the final EBOOT received another passing boot check and matches the independent GitHub build.
