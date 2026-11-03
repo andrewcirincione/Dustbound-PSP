@@ -41,6 +41,16 @@ int main(void) {
         render_game(pixels, 512);
         frames++;
     }
+    ui.screen=SCREEN_WORLD;
+    const int roomTypes[]={HOUSE,SHOP,BAR,TOWER,FORGE,BENCH,STORE};
+    for(int i=0;i<7;i++)for(int pose=0;pose<4;pose++) {
+        g.buildings[0].type=roomTypes[i];g.interiorBuilding=1;g.interiorActor=g.selected;
+        g.interiorX=3.5f;g.interiorY=4.8f;g.actors[g.selected].taskKind=pose==3?3:0;
+        for(unsigned z=0;z<sizeof(pixels)/sizeof(*pixels);z++)pixels[z]=0xdeadbeef;
+        render_game(pixels,512);frames++;
+        for(int y=0;y<272;y++)for(int x=480;x<512;x++)if(pixels[y*512+x]!=0xdeadbeef)return 1;
+        for(int z=512*272;z<512*272+32;z++)if(pixels[z]!=0xdeadbeef)return 1;
+    }
     printf("PASS: %d screen/biome/guide renders; 480x272 bounds and 512-pixel stride preserved.\n", frames);
     return 0;
 }
