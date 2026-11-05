@@ -24,7 +24,7 @@ def archive(path,entries):
 shutil.copy2(eboot,root/'dist'/f'Dustbound-{version}-EBOOT.PBP')
 docs=['README.md','LICENSE','CHANGELOG.md','docs/FIELD_GUIDE.md','docs/RELEASE_NOTES.md','docs/VALIDATION.md','docs/MECHANICS_AUDIT.md','docs/ITERATION_LOG.md']
 docs += [p.relative_to(root).as_posix() for p in sorted((root/'assets/ui').glob('*.svg'))]
-docs += ['evidence/'+n for n in ['v040-03-dusk-haven.png','v040-27-shop-interior.png','v040-33-gear-comparison.png','v040-39-wilderness-travel.png','v040-15-combat.gif']]
+docs += ['evidence/'+n for n in ['v040-03-dusk-haven.png','v040-27-shop-interior.png','v040-33-gear-comparison.png','v040-39-wilderness-travel.png']]
 archive(root/'dist'/f'Dustbound-{version}-PSP.zip',[(eboot,'PSP/GAME/DUSTBOUND/EBOOT.PBP')]+[(root/p,f'Dustbound-{version}/{p}') for p in docs])
 evidence=[p for p in sorted((root/'evidence').iterdir()) if (p.name.startswith('v040-') or p.name.startswith('catalog')) and p.suffix!='.log' and 'debug' not in p.name]
 archive(root/'dist'/f'Dustbound-{version}-Evidence.zip',[(p,'evidence/'+p.name) for p in evidence]+[(root/'docs/VALIDATION.md','VALIDATION.md')])
