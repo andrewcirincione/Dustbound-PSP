@@ -270,7 +270,8 @@ int expansion_input(float dt, Input in) {
     }
     if (ui.screen == SCREEN_SQUAD && (p & KEY_SQUARE)) {
         if (a->dead && g.squadCount > 1) {
-            if(g.interiorBuilding)interior_leave();
+            if (g.interiorBuilding)
+                interior_leave();
             a->squad = 0;
             g.squadCount--;
             for (int n = 0; n < g.actorCount; n++)
@@ -289,8 +290,10 @@ int expansion_input(float dt, Input in) {
             log_msg("\003 dismisses a fallen companion only.");
         return 1;
     }
-    if (ui.screen == SCREEN_MAP && (p & (KEY_L | KEY_R | KEY_SQUARE))) {
-        if (p & KEY_SQUARE) {
+    if (ui.screen == SCREEN_MAP && (p & (KEY_L | KEY_R | KEY_SQUARE | KEY_TRIANGLE))) {
+        if (p & KEY_TRIANGLE)
+            ui.mapZoom = !ui.mapZoom;
+        else if (p & KEY_SQUARE) {
             if (inventory_remove(a, MAPSCROLL, 1)) {
                 for (int i = 0; i < TOWNS; i++)
                     g.discovered[i] = 1;
@@ -438,7 +441,7 @@ int expansion_input(float dt, Input in) {
         int town = town_near(a->x, a->y, 14), prison = a->prisonTime > 0 && n == g.selected,
             count = prison               ? 3
                     : ui.dialogPage == 1 ? 5
-                                         : 9;
+                                         : dialogue_count(n);
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(SCREEN_WORLD);
             return 1;
@@ -483,7 +486,7 @@ int expansion_input(float dt, Input in) {
                     ui.selection = 0;
                 }
             } else
-                switch (choice) {
+                switch (dialogue_action(n, choice)) {
                 case 0:
                     if (town >= 0) {
                         ui.tradeTown = town;

@@ -23,6 +23,10 @@ static unsigned whash(int x, int y) {
 }
 static float limit(float v, float lo, float hi) { return v < lo ? lo : v > hi ? hi : v; }
 int biome(float x, float y) {
+    if (world_is_expanded()) {
+        x = (x + 78) / 4;
+        y = (y + 81) / 4;
+    }
     if (x < 128 && y < 128) {
         if (x > 74 && y > 62)
             return 3;
@@ -93,13 +97,19 @@ int terrain_height(float x, float y) {
     return (int)((a * (1 - v) + c * v) * (b == 5 || b == 8 ? 1.6f : .7f));
 }
 int terrain_water(float x, float y) {
+    float wx = x, wy = y;
+    if (world_is_expanded()) {
+        x = (x + 78) / 4;
+        y = (y + 81) / 4;
+    }
     if (x < 128 && y < 128)
         return 0;
     float r = 194 + 12 * sinf(y * .025f), s = 139 + 9 * sinf(x * .025f);
     int wet = fabsf(x - r) < 2.2f || (x < 210 && fabsf(y - s) < 1.6f) || distance(x, y, 107, 242) < 12;
     if (!wet)
         return 0;
-    if (town_near(x, y, 12) >= 0 || terrain_road(x, y) || terrain_road(x + 1, y) || terrain_road(x - 1, y))
+    if (town_near(wx, wy, 12) >= 0 || terrain_road(wx, wy) || terrain_road(wx + 1, wy) ||
+        terrain_road(wx - 1, wy))
         return 0;
     return 1;
 }
@@ -236,8 +246,31 @@ void init_expansion(void) {
     for (int n = 1; n < g.actorCount; n++)
         if (!g.actors[n].squad)
             outfit(&g.actors[n], n);
+    for (int n = 1; n < g.actorCount; n++) {
+        Actor *a = &g.actors[n];
+        if (a->squad || a->faction == HOSTILE)
+            continue;
+        int t = town_near(a->x, a->y, 14);
+        if (t < 0)
+            continue;
+        if (!strcmp(a->name, "Gate guard") || !strcmp(a->name, "Gate warden")) {
+            a->kind = SETTLER;
+            a->voice = ROLE_MEDIC;
+            snprintf(a->name, 16, "Town medic");
+        } else if (a->kind == CARAVAN) {
+            a->kind = SETTLER;
+            a->voice = ROLE_SMITH;
+            snprintf(a->name, 16, "Frontier smith");
+            a->x = a->homeX = towns[t].x + 7;
+            a->y = a->homeY = towns[t].y + 7;
+        } else if (!strcmp(a->name, "Wayfarer")) {
+            a->voice = ROLE_BARBER;
+            snprintf(a->name, 16, "Trail barber");
+        }
+    }
+
     for (int i = 0; i < 370; i++) {
-        float x = 8 + wrand() % 366, y = 8 + wrand() % 366;
+        float x = 24 + wrand() % 350, y = 25 + wrand() % 350;
         if (town_near(x, y, 11) >= 0 || !can_walk(x, y))
             continue;
         int type = i % 11 == 0 ? NODE_RUIN : i % 3;
@@ -246,7 +279,21 @@ void init_expansion(void) {
                  type == NODE_RUIN ? 1 : 0);
     }
     for (int i = 0; i < 44 && g.actorCount < MAX_ACTORS - 8; i++) {
-        float x = 12 + wrand() % 360, y = 12 + wrand() % 360;
+        float x = 24 + wrand() % 348, y = 25 + wrand() % 348;
+        if (i < 30) {
+            int t = 1 + i / 2, near = 0;
+            float best = 1e9f;
+            for (int j = 0; j < t; j++) {
+                float d = distance(towns[t].x, towns[t].y, towns[j].x, towns[j].y);
+                if (d < best) {
+                    best = d;
+                    near = j;
+                }
+            }
+            float u = i % 2 ? .7f : .35f;
+            x = towns[t].x * (1 - u) + towns[near].x * u;
+            y = towns[t].y * (1 - u) + towns[near].y * u + (i % 2 ? 1.0f : -1.0f);
+        }
         if (town_near(x, y, 15) >= 0 || !can_walk(x, y))
             continue;
         int b = biome(x, y), beast = i % 4 == 0;
@@ -526,6 +573,31 @@ const char *dialogue_line(int n, int page) {
                "relic. Read the terms in your journal.";
     if (page == 2)
         return g.worldNews;
+    switch (npc_role(a)) {
+    case ROLE_MERCHANT:
+        return "I sell supplies and equipment. Bring salvage to trade. The innkeeper has beds; the town "
+               "medic treats wounds.";
+    case ROLE_INNKEEPER:
+        return "A bed costs 25 silver. Step inside the inn to rest. Patch bleeding wounds before you sleep.";
+    case ROLE_MEDIC:
+        return "Eighty silver for wound care. I can stop bleeding and restore health, but lost limbs need "
+               "mechanical replacements.";
+    case ROLE_SMITH:
+        return "The forge is here. Bring iron, cloth and fuel. Your smithing skill and research determine "
+               "what you can make.";
+    case ROLE_BARBER:
+        return "Sit down and tell me how you want to look. I can change hair, beard and appearance without "
+               "changing your skills.";
+    case ROLE_RECRUIT:
+        return "Three hundred silver buys my supplies and my sword. We share the road, the work and the "
+               "danger.";
+    case ROLE_MARSHAL:
+        return "The board has paying work. I also handle bounties. The roads between settlements are long; "
+               "buy food before leaving.";
+    case ROLE_SCOUT:
+        return "Mark a destination on your atlas. Watch for raiders between towns, and keep enough food for "
+               "the return trip.";
+    }
     static const char *factionLines[FACTIONS] = {
         "No lord owns the road. Find honest work if you can, and keep one hand near your blade.",
         "The Compact keeps the wells open. Do your share, pay your debts, and our gates will shelter you.",

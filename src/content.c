@@ -149,9 +149,9 @@ const char *guideBodies[GUIDE_PAGES] = {
     "color, beard and scars. \014 adjusts each choice; \001 edits your name or begins.\nOrigins change "
     "equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Ancestry "
     "changes starting strengths. A town barber can change your appearance later.",
-    "The 384 by 384 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. "
+    "The 1536 by 1536 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. "
     "Rivers have fords near roads; hills rise into mesas and snowfields.\n\010 opens the atlas. Move the "
-    "cursor; \001 orders travel. \005/\006 selects known towns. \003 reveals surveyed geography after buying a "
+    "cursor; \001 orders travel. \004 switches local/world views. \005/\006 selects known towns. \003 reveals surveyed geography after buying a "
     "chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits "
     "persist.",
     "\003 toggles fighting. Move into weapon reach to attack automatically; followers engage nearby "
@@ -164,15 +164,15 @@ const char *guideBodies[GUIDE_PAGES] = {
     "ally treats or carries them.\nDressings stop bleeding and restore some health. Sleeping restores the "
     "rest. A doctor charges for full treatment. Lost limbs require a mechanical replacement. Death is "
     "permanent; dismiss the body from Squad to free its slot.",
-    "Rations are eaten automatically below forty hunger. Carry food on each squad member. Water supports "
+    "Rations are eaten below forty hunger: first your pack, then a companion backpack or owned depot within three meters. Water supports "
     "farms; tonics restore blood and treat exposure. Starvation damages the chest.\nAn inn bed costs 25 "
     "silver and starts safe rest. Camp shelters are free. Sleeping reduces fatigue and restores wounds once "
-    "bleeding stops. Move to wake. The sun completes a day in thirty minutes of simulation; menus and "
+    "bleeding stops and hunger is above twenty. Move to wake. The sun completes a day in thirty minutes of simulation; menus and "
     "tactical pause stop time.",
     "Six visible slots: weapon, torso, head, boots, legs and back. The catalog has 2,016 combinations across "
     "84 silhouettes, six materials and four quality grades. Every variant has visible material/quality "
     "details and mechanical differences.\nPack \001 equips or uses; \003 passes one item to an ally. \004 "
-    "switches between carried items and worn equipment. Inspect shows damage, armor and effects; \001 on worn "
+    "switches between carried items and worn equipment. Highlight gear to compare WORN and TRY ON, stat changes and effects; \001 on worn "
     "gear removes it if space allows. Weight above capacity slows movement.",
     "Talk to a trader and choose Trade. \014 switches buying and selling; \005/\006 filters supplies, "
     "weapons or armor. \001 trades one item. Shops have finite stocks and refresh daily with different "
