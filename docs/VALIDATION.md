@@ -10,6 +10,8 @@ The packaged EBOOT is the executable used by all four controller playthroughs. T
 - PSP user-mode PRX, 333 MHz, 12 MiB heap; no expanded-memory flag.
 - Physical PSP-3000 testing: **not performed**. Emulator playthroughs and memory budgets do not prove hardware frame rate, battery use or memory-stick reliability.
 
+Independent [GitHub Actions run 41972937220](https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/41972937220), source commit `68bc9ca`, passed and printed the identical EBOOT size and SHA-256 above. Its native checks and PSP compile ran on a separate GitHub runner.
+
 ## Checks
 
 | Check | Result / scope |
