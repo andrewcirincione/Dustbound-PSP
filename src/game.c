@@ -1,4 +1,5 @@
 #include "game.h"
+#include <stddef.h>
 #include "combat_pose.h"
 #include "legacy.h"
 #include <math.h>
@@ -27,7 +28,7 @@ const int recipeCount = 8, buildCount = 8;
 const ItemDef baseDefs[BASE_ITEMS] = {
     {"Empty", "", 0, 0, -1, 0, 0, 0},
     {"Trail ration", "Restores 48 hunger. Eaten automatically below 40.", 35, 1, -1, 0, 0, 0xc39e65},
-    {"Field dressing", "Stops bleeding; restores injured limbs. X to treat.", 65, 1, -1, 0, 0, 0xd8d2ad},
+    {"Field dressing", "Stops bleeding; restores injured limbs. \001 to treat.", 65, 1, -1, 0, 0, 0xd8d2ad},
     {"Iron ore", "Mine, sell or smelt at a forge.", 18, 4, -1, 0, 0, 0x77817a},
     {"Copper ore", "Valuable trade metal. Heavy to carry.", 30, 3, -1, 0, 0, 0xb87f55},
     {"Timber", "Construction material for camp structures.", 12, 2, -1, 0, 0, 0x97795c},
@@ -61,14 +62,14 @@ const ItemDef baseDefs[BASE_ITEMS] = {
     {"Machine parts", "Salvage for advanced equipment.", 90, 2, -1, 0, 0, 0x698078},
     {"Blood tonic", "Restores blood and reduces exposure.", 110, 1, -1, 0, 0, 0x9c5141},
     {"Survey chart", "Reveals settlement positions and terrain.", 180, 0, -1, 0, 0, 0xbea777}};
-const Town towns[TOWNS] = {{"DUSK HAVEN", 26, 27, UNION},       {"COPPER CROSS", 76, 32, SCAVENGERS},
-                           {"SALTWATCH", 32, 83, UNION},        {"THE DRY MARKET", 91, 88, SCAVENGERS},
-                           {"BROKEN SPIRE", 61, 62, HOSTILE},   {"RED GULCH", 155, 42, UNION},
-                           {"IRON GATE", 235, 71, SHOGUN},      {"ASH MONASTERY", 322, 36, MONKS},
-                           {"BLACK MESA", 165, 150, OUTLAWS},   {"REED CROSSING", 65, 215, SCAVENGERS},
-                           {"CINDER PORT", 138, 294, UNION},    {"SHOGUN'S REST", 278, 198, SHOGUN},
-                           {"PALE PASS", 307, 322, MONKS},      {"DUSK FERRY", 228, 281, SCAVENGERS},
-                           {"VULTURE NEST", 338, 135, HOSTILE}, {"PINE REFUGE", 48, 333, MONKS}};
+Town towns[TOWNS] = {{"DUSK HAVEN", 26, 27, UNION},       {"COPPER CROSS", 76, 32, SCAVENGERS},
+                     {"SALTWATCH", 32, 83, UNION},        {"THE DRY MARKET", 91, 88, SCAVENGERS},
+                     {"BROKEN SPIRE", 61, 62, HOSTILE},   {"RED GULCH", 155, 42, UNION},
+                     {"IRON GATE", 235, 71, SHOGUN},      {"ASH MONASTERY", 322, 36, MONKS},
+                     {"BLACK MESA", 165, 150, OUTLAWS},   {"REED CROSSING", 65, 215, SCAVENGERS},
+                     {"CINDER PORT", 138, 294, UNION},    {"SHOGUN'S REST", 278, 198, SHOGUN},
+                     {"PALE PASS", 307, 322, MONKS},      {"DUSK FERRY", 228, 281, SCAVENGERS},
+                     {"VULTURE NEST", 338, 135, HOSTILE}, {"PINE REFUGE", 48, 333, MONKS}};
 
 static uint32_t rnd(void) {
     uint32_t x = g.rng;
@@ -291,6 +292,7 @@ void game_new(uint32_t seed, int scenario) {
     content_init();
     memset(&g, 0, sizeof(g));
     memset(&ui, 0, sizeof(ui));
+    world_layout(0);
     g.seed = g.rng = seed ? seed : 73819;
     g.day = 1;
     g.dayTime = 8;
@@ -353,7 +355,7 @@ void game_new(uint32_t seed, int scenario) {
         add_node(x + 3, y - 4.5f, NODE_LOCKED, f, RELIC, 1);
     }
     for (int i = 0; i < 110; i++) {
-        float x = 5 + rf() * 116, y = 5 + rf() * 116;
+        float x = 24 + rf() * 112, y = 25 + rf() * 112;
         if (town_near(x, y, 9) >= 0)
             continue;
         int t = i % 9 == 0 ? NODE_RUIN : i % 3;
@@ -364,7 +366,7 @@ void game_new(uint32_t seed, int scenario) {
     add_node(32, 29, NODE_LOOT, 0, LEATHER, 1);
     add_node(32, 32, NODE_LOOT, 0, MEDKIT, 2);
     for (int i = 0; i < 18; i++) {
-        float x = 9 + rf() * 108, y = 9 + rf() * 108;
+        float x = 24 + rf() * 110, y = 25 + rf() * 110;
         if (town_near(x, y, 12) >= 0) {
             x += 12;
             y += 12;
@@ -379,9 +381,19 @@ void game_new(uint32_t seed, int scenario) {
     ui.camY = a->y;
     log_msg("Dusk Haven. Find supplies, allies, and a way out.");
     init_expansion();
+    spread_frontier(&g);
+    place_wilderness_encounters();
+    ui.camX = a->x;
+    ui.camY = a->y;
+    ui.mapX = a->x;
+    ui.mapY = a->y;
+    g.discovered[1] = g.discovered[2] = 1;
+    find_context();
 }
 
 int hostile(const Actor *a, const Actor *b) {
+    if (actor_inside(a) || actor_inside(b))
+        return 0;
     if (a->faction == b->faction)
         return 0;
     if (a->faction == HOSTILE || b->faction == HOSTILE || a->faction == WILDLIFE || b->faction == WILDLIFE)
@@ -400,7 +412,8 @@ void strike(int ai, int bi) {
     if (ai < 0 || bi < 0 || ai >= g.actorCount || bi >= g.actorCount || ai == bi)
         return;
     Actor *a = &g.actors[ai], *b = &g.actors[bi];
-    if (!conscious(a) || !conscious(b) || a->cooldown > 0 || a->attackPhase || a->prisonTime > 0)
+    if (actor_inside(a) || actor_inside(b) || !conscious(a) || !conscious(b) || a->cooldown > 0 ||
+        a->attackPhase || a->prisonTime > 0)
         return;
     int w = a->gear[0], ranged = weapon_ranged(w);
     if (distance(a->x, a->y, b->x, b->y) > (w ? itemDefs[w].range : 1.55f))
@@ -432,7 +445,7 @@ static void resolve_strike(int ai, int bi) {
     if (ai < 0 || bi < 0 || ai >= g.actorCount || bi >= g.actorCount)
         return;
     Actor *a = &g.actors[ai], *b = &g.actors[bi];
-    if (!conscious(a) || b->dead || b->unconscious > 0)
+    if (actor_inside(a) || actor_inside(b) || !conscious(a) || b->dead || b->unconscious > 0)
         return;
     int w = a->attackWeapon, ranged = weapon_ranged(w);
     if (distance(a->x, a->y, b->x, b->y) > (w ? itemDefs[w].range : 1.55f) + .3f)
@@ -730,6 +743,10 @@ static const Recipe recipes[] = {{IRONBAR, 1, ORE, 3, NONE, 0, FORGE, SMITHING, 
                                  {LEG, 1, IRONBAR, 5, RELIC, 1, FORGE, ENGINEERING, 3},
                                  {BOLTS, 10, IRONBAR, 1, WOOD, 1, FORGE, SMITHING, 0}};
 int nearby_station(int type, float r) {
+    if (g.interiorBuilding && g.selected == g.interiorActor) {
+        int id = g.interiorBuilding - 1;
+        return g.buildings[id].type == type ? id : -1;
+    }
     Actor *a = &g.actors[g.selected];
     for (int i = 0; i < g.buildingCount; i++)
         if (g.buildings[i].type == type && distance(a->x, a->y, g.buildings[i].x, g.buildings[i].y) < r)
@@ -799,7 +816,7 @@ int research_tech(void) {
 
 void find_context(void) {
     Actor *a = &g.actors[g.selected];
-    float best = 3;
+    float best = 4.5f;
     ui.contextKind = ui.contextIndex = -1;
     for (int i = 0; i < g.actorCount; i++) {
         Actor *b = &g.actors[i];
@@ -837,6 +854,14 @@ void find_context(void) {
     }
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
+        if (building_has_interior(b->type)) {
+            float d = distance(a->x, a->y, b->x + 1.45f, b->y + .65f);
+            if (d < 3.2f && d < best) {
+                best = d;
+                ui.contextKind = 3;
+                ui.contextIndex = i;
+            }
+        }
         if (b->type < WELL || b->type == WALL || b->type == WINDMILL)
             continue;
         float d = distance(a->x, a->y, b->x, b->y);
@@ -866,13 +891,21 @@ static void theft(Actor *a, Node *n) {
 void interact(void) {
     Actor *a = &g.actors[g.selected];
     if (!conscious(a)) {
-        log_msg("Choose a conscious squad member with L.");
+        log_msg("Choose a conscious squad member with \005.");
         return;
     }
     find_context();
     int n = ui.contextIndex;
     if (n < 0) {
         log_msg("Nothing nearby. Move closer to a person or object.");
+        return;
+    }
+    if (context_distance() > context_reach()) {
+        log_msg("Move closer to %s before you %s.", context_name(), context_action());
+        return;
+    }
+    if (ui.contextKind == 3) {
+        interior_enter(n);
         return;
     }
     if (ui.contextKind == 0) {
@@ -989,7 +1022,7 @@ static void complete_task(Actor *a) {
     int n = a->taskIndex;
     if (a->taskKind == 1 && n >= 0 && n < g.nodeCount) {
         Node *b = &g.nodes[n];
-        if (distance(a->x, a->y, b->x, b->y) > 3 || !b->remaining) {
+        if (distance(a->x, a->y, b->x, b->y) > WORK_REACH || !b->remaining) {
             a->taskKind = 0;
             return;
         }
@@ -1010,7 +1043,7 @@ static void complete_task(Actor *a) {
         }
     } else if (a->taskKind == 2 && n >= 0 && n < g.nodeCount) {
         Node *b = &g.nodes[n];
-        if (distance(a->x, a->y, b->x, b->y) > 3) {
+        if (distance(a->x, a->y, b->x, b->y) > WORK_REACH) {
             a->taskKind = 0;
             return;
         }
@@ -1036,7 +1069,7 @@ static void reveal(Actor *a) {
     for (int yy = y - 6; yy <= y + 6; yy++)
         for (int xx = x - 6; xx <= x + 6; xx++)
             if (xx >= 0 && yy >= 0 && xx < WORLD && yy < WORLD) {
-                int k = yy * WORLD + xx;
+                int k = (yy / 4) * FOG_SIZE + xx / 4;
                 g.seen[k >> 3] |= 1 << (k & 7);
             }
     for (int t = 0; t < TOWNS; t++)
@@ -1065,7 +1098,7 @@ static void squad_job(Actor *a, float dt) {
                 }
             }
         if (n >= 0) {
-            if (d > 2)
+            if (d > WORK_REACH * .9f)
                 route_toward(a, g.nodes[n].x, g.nodes[n].y, dt);
             else {
                 a->taskKind = 1;
@@ -1099,6 +1132,31 @@ static void squad_job(Actor *a, float dt) {
             break;
         }
     }
+}
+static int take_ration(Actor *a) {
+    if (inventory_remove(a, RATION, 1))
+        return 1;
+    for (int i = 0; i < g.actorCount; i++) {
+        Actor *b = &g.actors[i];
+        if (b == a || !b->active || !b->squad || b->dead || !b->gear[5] ||
+            actor_inside(a) != actor_inside(b) || distance(a->x, a->y, b->x, b->y) > 3)
+            continue;
+        if (inventory_remove(b, RATION, 1))
+            return 1;
+    }
+    if (!actor_inside(a))
+        for (int i = 0; i < g.buildingCount; i++) {
+            Building *b = &g.buildings[i];
+            if (b->type != STORE || b->owner < 0 || distance(a->x, a->y, b->x, b->y) > 3)
+                continue;
+            for (int j = 0; j < 16; j++)
+                if (b->storage[j].item == RATION && b->storage[j].qty > 0) {
+                    if (--b->storage[j].qty == 0)
+                        b->storage[j].item = NONE;
+                    return 1;
+                }
+        }
+    return 0;
 }
 void simulate(float dt) {
     g.shake = fmaxf(0, g.shake - dt);
@@ -1147,8 +1205,8 @@ void simulate(float dt) {
             else {
                 float before = a->attackClock;
                 a->attackClock -= dt;
-                if (a->attackPhase == 2 && before > a->attackDuration*(1-STRIKE_CONTACT) &&
-                    a->attackClock <= a->attackDuration*(1-STRIKE_CONTACT))
+                if (a->attackPhase == 2 && before > a->attackDuration * (1 - STRIKE_CONTACT) &&
+                    a->attackClock <= a->attackDuration * (1 - STRIKE_CONTACT))
                     resolve_strike(i, a->attackTarget);
                 if (a->attackClock <= 0) {
                     if (a->attackPhase == 1) {
@@ -1200,7 +1258,7 @@ void simulate(float dt) {
         if (a->squad) {
             a->hunger = fmaxf(0, a->hunger - dt * .045f);
             a->fatigue = fminf(100, a->fatigue + dt * .008f);
-            if (a->hunger < 40 && inventory_remove(a, RATION, 1)) {
+            if (a->hunger < 40 && take_ration(a)) {
                 a->hunger = fminf(100, a->hunger + 48);
                 if (i == g.selected)
                     log_msg("%s ate a trail ration.", a->name);
@@ -1212,10 +1270,14 @@ void simulate(float dt) {
             }
             reveal(a);
         }
+        if ((a->taskKind == 1 || a->taskKind == 2) &&
+            (a->taskIndex < 0 || a->taskIndex >= g.nodeCount ||
+             distance(a->x, a->y, g.nodes[a->taskIndex].x, g.nodes[a->taskIndex].y) > WORK_REACH))
+            a->taskKind = 0;
         if (a->taskKind) {
             if (a->taskKind == 3) {
                 a->fatigue = fmaxf(0, a->fatigue - dt * 1.8f);
-                if (a->bleed <= 0)
+                if (a->bleed <= 0 && a->hunger >= 20)
                     for (int l = 0; l < LIMBS; l++)
                         if (!(a->lostMask & (1 << l)) || (a->prostheticMask & (1 << l)))
                             a->health[l] = fminf(100, a->health[l] + dt * (.6f + gear_bonus(a, 6) * .015f));
@@ -1224,7 +1286,7 @@ void simulate(float dt) {
             if (a->action <= 0)
                 complete_task(a);
         }
-        if (!conscious(a))
+        if (actor_inside(a) || !conscious(a))
             continue;
         int target = -1;
         float best = weapon_ranged(a->gear[0]) ? itemDefs[a->gear[0]].range + 1 : 6.0f;
@@ -1336,7 +1398,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 2, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 4, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1357,6 +1419,13 @@ static int validate_game(const Game *t) {
         t->buildingCount > MAX_BUILDINGS || t->nodeCount < 0 || t->nodeCount > MAX_NODES || t->selected < 0 ||
         t->selected >= t->actorCount || !t->actors[t->selected].squad || t->tech < 0 || t->tech > 3 ||
         t->squadCount < 1 || t->squadCount > SQUAD)
+        return 0;
+    if (t->interiorBuilding < 0 || t->interiorBuilding > t->buildingCount)
+        return 0;
+    if (t->interiorBuilding && (t->interiorActor != t->selected ||
+                                !building_has_interior(t->buildings[t->interiorBuilding - 1].type) ||
+                                !isfinite(t->interiorX) || !isfinite(t->interiorY) || t->interiorX < .4f ||
+                                t->interiorY < .4f || t->interiorX > 6.6f || t->interiorY > 6.6f))
         return 0;
     if (!isfinite(t->time) || !isfinite(t->dayTime) || t->weather < 0 || t->weather > 4 || t->day < 1 ||
         t->money < 0)
@@ -1431,6 +1500,7 @@ static int migrate_legacy(const LegacyGame *old) {
         return 0;
     game_new(old->seed, 0);
     *expanded = g;
+    world_layout(0);
     g.seed = old->seed;
     g.rng = old->rng;
     g.time = old->time;
@@ -1459,7 +1529,7 @@ static int migrate_legacy(const LegacyGame *old) {
     for (int y = 0; y < 128; y++)
         for (int x = 0; x < 128; x++)
             if (old->seen[(y * 128 + x) >> 3] & (1 << ((y * 128 + x) & 7))) {
-                int z = y * WORLD + x;
+                int z = y * FOG_SIZE + x;
                 g.seen[z >> 3] |= 1 << (z & 7);
             }
     for (int i = 0; i < old->actorCount; i++) {
@@ -1479,15 +1549,16 @@ static int migrate_legacy(const LegacyGame *old) {
         if (a->squad)
             a->gear[5] = gear_id(76, 0, 0);
     }
-    for (int i = 46; i < expanded->actorCount && g.actorCount < MAX_ACTORS; i++)
-        g.actors[g.actorCount++] = expanded->actors[i];
     for (int i = 0; i < old->buildingCount; i++) {
         memset(&g.buildings[i], 0, sizeof(Building));
         memcpy(&g.buildings[i], &old->buildings[i], sizeof(LegacyBuilding));
     }
+    memcpy(g.nodes, old->nodes, sizeof(LegacyNode) * old->nodeCount);
+    spread_frontier(&g);
+    for (int i = 46; i < expanded->actorCount && g.actorCount < MAX_ACTORS; i++)
+        g.actors[g.actorCount++] = expanded->actors[i];
     for (int i = 35; i < expanded->buildingCount && g.buildingCount < MAX_BUILDINGS; i++)
         g.buildings[g.buildingCount++] = expanded->buildings[i];
-    memcpy(g.nodes, old->nodes, sizeof(LegacyNode) * old->nodeCount);
     for (int i = 0; i < expanded->nodeCount && g.nodeCount < MAX_NODES; i++)
         if (expanded->nodes[i].x >= 128 || expanded->nodes[i].y >= 128)
             g.nodes[g.nodeCount++] = expanded->nodes[i];
@@ -1505,18 +1576,24 @@ int load_game(const char *path) {
         return 0;
     }
     int ok = 0;
-    if (h.version == 2 && h.size == sizeof(Game)) {
-        Game *t = malloc(sizeof(Game));
+    if (((h.version == 3 || h.version == 4) && h.size == sizeof(Game)) ||
+        (h.version == 2 && h.size == offsetof(Game, interiorBuilding))) {
+        Game *t = calloc(1, sizeof(Game));
         if (t) {
-            ok = fread(t, sizeof(*t), 1, f) == 1 && h.hash == checksum(t, sizeof(*t)) && validate_game(t);
-            if (ok)
+            ok = fread(t, h.size, 1, f) == 1 && h.hash == checksum(t, h.size) && validate_game(t);
+            if (ok) {
+                if (h.version < 4)
+                    spread_frontier(t);
+                else
+                    world_layout(1);
                 g = *t;
+            }
             free(t);
         }
     } else if (h.version == 1 && h.size == sizeof(LegacyGame)) {
         LegacyGame *t = malloc(sizeof(LegacyGame));
         if (t) {
-            ok = fread(t, sizeof(*t), 1, f) == 1 && h.hash == checksum(t, sizeof(*t));
+            ok = fread(t, h.size, 1, f) == 1 && h.hash == checksum(t, h.size);
             if (ok) {
                 Game *before = malloc(sizeof(Game));
                 UI oldui = ui;
@@ -1559,12 +1636,13 @@ int save_inspect(int slot, SaveInfo *info) {
         return 0;
     }
     info->version = h.version;
-    info->valid =
-        (h.version == 2 && h.size == sizeof(Game)) || (h.version == 1 && h.size == sizeof(LegacyGame));
+    info->valid = ((h.version == 3 || h.version == 4) && h.size == sizeof(Game)) ||
+                  (h.version == 2 && h.size == offsetof(Game, interiorBuilding)) ||
+                  (h.version == 1 && h.size == sizeof(LegacyGame));
     if (info->valid) {
-        unsigned char *buf = malloc(h.size);
+        unsigned char *buf = calloc(1, sizeof(Game) > h.size ? sizeof(Game) : h.size);
         if (buf && fread(buf, h.size, 1, f) == 1 && checksum(buf, h.size) == h.hash) {
-            if (h.version == 2) {
+            if (h.version == 2 || h.version == 3 || h.version == 4) {
                 Game *v = (Game *)buf;
                 if (validate_game(v)) {
                     info->day = v->day;
@@ -1614,6 +1692,8 @@ static void open_screen(int s) {
     ui.selection = ui.scroll = 0;
 }
 static void cycle_squad(int direction) {
+    if (g.interiorBuilding)
+        interior_leave();
     int n = g.selected;
     for (int i = 0; i < g.actorCount; i++) {
         n = (n + direction + g.actorCount) % g.actorCount;
@@ -1731,6 +1811,9 @@ void game_tick(float dt, Input in) {
                         }
                     }
                     if (recipient >= 0 && inventory_add(&g.actors[recipient], s->item, 1)) {
+                        for (int k = 0; k < PACK; k++)
+                            if (g.actors[recipient].pack[k].item == s->item && a->stolen[ui.selection])
+                                g.actors[recipient].stolen[k] = a->stolen[ui.selection];
                         log_msg("Passed %s to %s.", itemDefs[s->item].name, g.actors[recipient].name);
                         inventory_remove(a, s->item, 1);
                     } else
@@ -1751,7 +1834,7 @@ void game_tick(float dt, Input in) {
                 log_msg("%s: %s.", a->name, jobNames[a->job]);
             }
         } else if (ui.screen == SCREEN_MAP) {
-            float sp = 65 * dt;
+            float sp = (ui.mapZoom ? 384 : WORLD) * .17f * dt;
             if (in.held & KEY_LEFT)
                 ui.mapX -= sp;
             if (in.held & KEY_RIGHT)
@@ -1764,6 +1847,8 @@ void game_tick(float dt, Input in) {
             ui.mapY = clamp(ui.mapY, 3, WORLD - 4);
             if (p & KEY_CROSS) {
                 ui.waypoint = 1;
+                ui.travelX = ui.mapX;
+                ui.travelY = ui.mapY;
                 open_screen(SCREEN_WORLD);
                 log_msg("Route set. Move manually to cancel.");
             }
@@ -1875,6 +1960,7 @@ void game_tick(float dt, Input in) {
     if (p & KEY_SELECT) {
         ui.mapX = a->x;
         ui.mapY = a->y;
+        ui.mapZoom = 1;
         open_screen(SCREEN_MAP);
         return;
     }
@@ -1894,6 +1980,10 @@ void game_tick(float dt, Input in) {
                               : "Passive stance: flee or move freely.");
     }
     if (p & KEY_CROSS) {
+        if (g.interiorBuilding) {
+            interior_interact();
+            return;
+        }
         if (a->carrying >= 0) {
             g.actors[a->carrying].carriedBy = -1;
             a->carrying = -1;
@@ -1913,16 +2003,26 @@ void game_tick(float dt, Input in) {
     if (in.held & KEY_DOWN)
         dy = 1;
     float step = dt * ui.speed;
+    if (g.interiorBuilding) {
+        interior_move(dx, dy, step);
+        simulate(step);
+        g.autosave += step;
+        if (g.autosave > 90) {
+            g.autosave = 0;
+            save_slot(0);
+        }
+        return;
+    }
     if (fabsf(dx) + fabsf(dy) > .15f) {
         ui.waypoint = 0;
         a->taskKind = 0;
         move_actor(a, (dx + dy) * .7071f, (dy - dx) * .7071f, step);
     } else if (ui.waypoint) {
-        if (distance(a->x, a->y, ui.mapX, ui.mapY) < .7f) {
+        if (distance(a->x, a->y, ui.travelX, ui.travelY) < .7f) {
             ui.waypoint = 0;
             log_msg("Waypoint reached.");
         } else
-            route_toward(a, ui.mapX, ui.mapY, step);
+            route_toward(a, ui.travelX, ui.travelY, step);
     }
     simulate(step);
     g.autosave += step;
@@ -1957,6 +2057,13 @@ void debug_snapshot(const char *path) {
     PTR("bounty", &a->bounty);
     PTR("contracts", &g.contractsDone);
     PTR("game", &g);
+    PTR("interior", &g.interiorBuilding);
+    PTR("roompos", &g.interiorX);
+    PTR("context", &ui.contextKind);
+    PTR("task", &a->taskKind);
+    PTR("mapzoom", &ui.mapZoom);
+    PTR("waypoint", &ui.waypoint);
+    PTR("travel", &ui.travelX);
 #undef PTR
     fprintf(f, "}\n");
     fclose(f);

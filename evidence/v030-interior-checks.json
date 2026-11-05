@@ -1,0 +1,138 @@
+[
+  {
+    "eboot_sha256": "72e48dd77dbda25dffa8811f1cdc3ef4dfe7ca2bdad99913900d1600d8f8fc7a",
+    "version": "0.3.0"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      3
+    ],
+    "expected": [
+      3
+    ]
+  },
+  {
+    "capture": "v030-26-shop-entry",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v030-27-shop-interior",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      6
+    ],
+    "expected": [
+      6
+    ]
+  },
+  {
+    "capture": "v030-28-indoor-trade",
+    "screen": 6,
+    "expected": 6
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      3
+    ],
+    "expected": [
+      3
+    ]
+  },
+  {
+    "assert": "money",
+    "actual": [
+      615
+    ],
+    "expected": [
+      615
+    ]
+  },
+  {
+    "capture": "v030-29-indoor-save-reloaded",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      4
+    ],
+    "expected": [
+      4
+    ]
+  },
+  {
+    "assert": "money",
+    "actual": [
+      590
+    ],
+    "expected": [
+      590
+    ]
+  },
+  {
+    "capture": "v030-30-inn-rest",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v030-31-left-inn",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "selection",
+    "actual": [
+      18
+    ],
+    "expected": [
+      18
+    ]
+  },
+  {
+    "capture": "v030-32-interior-guide",
+    "screen": 12,
+    "expected": 12
+  },
+  {
+    "indoor_trade": true,
+    "indoor_save_reload": true,
+    "bed_paid_once": true,
+    "doors_enter_exit": true,
+    "input_method": "PSP buttons, no memory writes"
+  }
+]

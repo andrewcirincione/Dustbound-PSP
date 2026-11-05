@@ -47,6 +47,10 @@ void character_finish(void) {
     a->race = race;
     a->origin = origin;
     if (!editing) {
+        /* Starting loadouts should leave room for supplies instead of applying
+           an unexplained movement penalty on the first step. */
+        const int strength[5] = {8, 11, 15, 2, 6};
+        a->xp[STRENGTH] = 12 * strength[origin] * strength[origin];
         const int weapons[5] = {8, 0, 12, 9, 24}, torsos[5] = {32, 34, 35, 46, 45},
                   heads[5] = {49, 48, 56, 51, 54};
         a->gear[0] = gear_id(weapons[origin], origin == 1 ? 1 : 0, 1);
@@ -270,6 +274,8 @@ int expansion_input(float dt, Input in) {
     }
     if (ui.screen == SCREEN_SQUAD && (p & KEY_SQUARE)) {
         if (a->dead && g.squadCount > 1) {
+            if (g.interiorBuilding)
+                interior_leave();
             a->squad = 0;
             g.squadCount--;
             for (int n = 0; n < g.actorCount; n++)
@@ -285,11 +291,13 @@ int expansion_input(float dt, Input in) {
             open_view(SCREEN_WORLD);
             log_msg("Fallen companion released from the squad roster.");
         } else
-            log_msg("Square dismisses a fallen companion only.");
+            log_msg("\003 dismisses a fallen companion only.");
         return 1;
     }
-    if (ui.screen == SCREEN_MAP && (p & (KEY_L | KEY_R | KEY_SQUARE))) {
-        if (p & KEY_SQUARE) {
+    if (ui.screen == SCREEN_MAP && (p & (KEY_L | KEY_R | KEY_SQUARE | KEY_TRIANGLE))) {
+        if (p & KEY_TRIANGLE)
+            ui.mapZoom = !ui.mapZoom;
+        else if (p & KEY_SQUARE) {
             if (inventory_remove(a, MAPSCROLL, 1)) {
                 for (int i = 0; i < TOWNS; i++)
                     g.discovered[i] = 1;
@@ -437,7 +445,7 @@ int expansion_input(float dt, Input in) {
         int town = town_near(a->x, a->y, 14), prison = a->prisonTime > 0 && n == g.selected,
             count = prison               ? 3
                     : ui.dialogPage == 1 ? 5
-                                         : 9;
+                                         : dialogue_count(n);
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(SCREEN_WORLD);
             return 1;
@@ -482,7 +490,7 @@ int expansion_input(float dt, Input in) {
                     ui.selection = 0;
                 }
             } else
-                switch (choice) {
+                switch (dialogue_action(n, choice)) {
                 case 0:
                     if (town >= 0) {
                         ui.tradeTown = town;

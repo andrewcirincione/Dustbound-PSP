@@ -1,8 +1,11 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.2.1"
-#define WORLD 384
+#define VERSION "0.4.0"
+#define WORLD 1536
+#define FOG_SIZE 384
+#define WORK_REACH 1.15f
+#define TALK_REACH 1.6f
 #define MAX_ACTORS 192
 #define MAX_BUILDINGS 320
 #define MAX_NODES 640
@@ -17,7 +20,7 @@
 #define GEARS 6
 #define FACTIONS 8
 #define CONTRACTS 24
-#define GUIDE_PAGES 18
+#define GUIDE_PAGES 19
 #define SAVE_SLOTS 7
 #define TOWNS 16
 #define SQUAD 8
@@ -190,7 +193,7 @@ typedef struct {
         lastRestock;
     int actorCount, buildingCount, nodeCount, baseExists;
     float baseX, baseY;
-    uint8_t seen[WORLD * WORLD / 8];
+    uint8_t seen[FOG_SIZE * FOG_SIZE / 8];
     Actor actors[MAX_ACTORS];
     Building buildings[MAX_BUILDINGS];
     Node nodes[MAX_NODES];
@@ -199,11 +202,28 @@ typedef struct {
     int factionWar[FACTIONS], storyStage, playOrigin, unlocks, difficulty;
     float eventTimer, weatherTimer, worldPulse, hitstop, shake;
     char worldNews[96];
+    /* Version 3 extension. Version 2 ends immediately before these fields. */
+    int interiorBuilding, interiorActor;
+    float interiorX, interiorY;
 } Game;
+enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
+typedef struct {
+    float x, y, w, d;
+    int art, action;
+} InteriorProp;
+int building_has_interior(int type);
+int interior_enter(int building);
+void interior_leave(void);
+int actor_inside(const Actor *a);
+int interior_props(int building, InteriorProp *props);
+int interior_context(void);
+const char *interior_prompt(void);
+void interior_interact(void);
+void interior_move(float dx, float dy, float dt);
 typedef struct {
     int screen, selection, scroll, tab, paused, speed, contextKind, contextIndex, tradeTown, sell, slot,
         confirmAction, titleChoice, waypoint;
-    float mapX, mapY, camX, camY, noticeTime, repeat;
+    float mapX, mapY, camX, camY, noticeTime, repeat, travelX, travelY;
     char logs[LOGS][80], notice[100];
     int logCount;
     int helpReturn, helpTopic, dialogActor, dialogPage, forgeSlot, forgeFamily, forgeMaterial, forgeQuality;
@@ -222,7 +242,31 @@ extern UI ui;
 extern volatile uint32_t display_buffer;
 extern volatile uint32_t rendered_frames;
 extern ItemDef itemDefs[ITEMS];
-extern const Town towns[TOWNS];
+extern Town towns[TOWNS];
+void world_layout(int expanded);
+int world_is_expanded(void);
+enum {
+    ROLE_CITIZEN,
+    ROLE_MERCHANT,
+    ROLE_RECRUIT,
+    ROLE_MARSHAL,
+    ROLE_INNKEEPER,
+    ROLE_MEDIC,
+    ROLE_SMITH,
+    ROLE_BARBER,
+    ROLE_SCOUT
+};
+int npc_role(const Actor *a);
+const char *npc_role_name(const Actor *a);
+int dialogue_count(int actor);
+int dialogue_action(int actor, int row);
+const char *dialogue_option(int actor, int row);
+float context_distance(void);
+float context_reach(void);
+const char *context_name(void);
+const char *context_action(void);
+void spread_frontier(Game *game);
+void place_wilderness_encounters(void);
 extern const char *skillNames[SKILLS], *limbNames[LIMBS], *buildNames[], *jobNames[];
 int level(const Actor *a, int skill);
 void gain(Actor *a, int skill, float xp);

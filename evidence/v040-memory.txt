@@ -1,0 +1,2 @@
+   text	   data	    bss	    dec	    hex	filename
+ 796504	   3340	3378732	4178576	 3fc290	dustbound.elf

@@ -139,48 +139,48 @@ void content_init(void) {
 const char *guideTitles[GUIDE_PAGES] = {
     "CONTROLS",        "YOUR DRIFTER", "THE BORDERLANDS", "COMBAT",   "WOUNDS & RESCUE", "FOOD & SLEEP",
     "EQUIPMENT",       "MERCHANTS",    "FORGING GEAR",    "CRAFTING", "YOUR OUTPOST",    "SQUAD JOBS",
-    "CRIME & STEALTH", "FACTIONS",     "CONTRACTS",       "SAVES",    "WEATHER",         "CAPTIVITY"};
+    "CRIME & STEALTH", "FACTIONS",     "CONTRACTS",       "SAVES",    "WEATHER",         "CAPTIVITY", "BUILDING INTERIORS"};
 const char *guideBodies[GUIDE_PAGES] = {
-    "D-pad or analog: move in screen direction. X: nearby interaction. Triangle: pack. Square: "
-    "fight/passive. Circle: sneak. L: next squad member. R: tactical pause. Select: world atlas. Start: "
-    "expedition menu.\nMenus pause the world. Select inside a menu opens its guide. L/R switch inventory "
+    "\011 or analog: move in screen direction. \001: nearby interaction. \004: pack. \003: "
+    "fight/passive. \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
+    "expedition menu.\nMenus pause the world. \010 inside a menu opens its guide. \005/\006 switch inventory "
     "tabs or guide pages. Move to cancel a work order or travel route.",
     "New expedition opens character creation. Choose a name, origin, ancestry, body, skin, hairstyle, hair "
-    "color, beard and scars. Left/right adjusts each choice; X edits your name or begins.\nOrigins change "
+    "color, beard and scars. \014 adjusts each choice; \001 edits your name or begins.\nOrigins change "
     "equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Ancestry "
     "changes starting strengths. A town barber can change your appearance later.",
-    "The 384 by 384 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. "
-    "Rivers have fords near roads; hills rise into mesas and snowfields.\nSelect opens the atlas. Move the "
-    "cursor; X orders travel. L/R selects known towns. Square reveals surveyed geography after buying a "
+    "The 1536 by 1536 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. "
+    "Rivers have fords near roads; hills rise into mesas and snowfields.\n\010 opens the atlas. Move the "
+    "cursor; \001 orders travel. \004 switches local/world views. \005/\006 selects known towns. \003 reveals surveyed geography after buying a "
     "chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits "
     "persist.",
-    "Square toggles fighting. Move into weapon reach to attack automatically; followers engage nearby "
-    "threats. R pauses combat for orders. Heavy weapons hit harder but recover slowly. Guns use cartridges; "
+    "\003 toggles fighting. Move into weapon reach to attack automatically; followers engage nearby "
+    "threats. \006 pauses combat for orders. Heavy weapons hit harder but recover slowly. Guns use cartridges; "
     "bows use bolts.\nArmor protects specific body locations. Piercing weapons ignore some armor; serrated "
     "blades bleed; staggering hits interrupt. Skills improve through use. Retreat from stronger opponents "
     "and use terrain.",
     "Six body parts, blood and fatigue are separate. Head or chest failure knocks a survivor out. Bleeding "
-    "can kill an unconscious character. Triangle, Body, X treats the selected survivor; X near an injured "
+    "can kill an unconscious character. \004, Body, \001 treats the selected survivor; \001 near an injured "
     "ally treats or carries them.\nDressings stop bleeding and restore some health. Sleeping restores the "
     "rest. A doctor charges for full treatment. Lost limbs require a mechanical replacement. Death is "
     "permanent; dismiss the body from Squad to free its slot.",
-    "Rations are eaten automatically below forty hunger. Carry food on each squad member. Water supports "
+    "Rations are eaten below forty hunger: first your pack, then a companion backpack or owned depot within three meters. Water supports "
     "farms; tonics restore blood and treat exposure. Starvation damages the chest.\nAn inn bed costs 25 "
     "silver and starts safe rest. Camp shelters are free. Sleeping reduces fatigue and restores wounds once "
-    "bleeding stops. Move to wake. The sun completes a day in thirty minutes of simulation; menus and "
+    "bleeding stops and hunger is above twenty. Move to wake. The sun completes a day in thirty minutes of simulation; menus and "
     "tactical pause stop time.",
     "Six visible slots: weapon, torso, head, boots, legs and back. The catalog has 2,016 combinations across "
     "84 silhouettes, six materials and four quality grades. Every variant has visible material/quality "
-    "details and mechanical differences.\nPack X equips or uses; Square passes one item to an ally. Triangle "
-    "switches between carried items and worn equipment. Inspect shows damage, armor and effects; X on worn "
+    "details and mechanical differences.\nPack \001 equips or uses; \003 passes one item to an ally. \004 "
+    "switches between carried items and worn equipment. Highlight gear to compare WORN and TRY ON, stat changes and effects; \001 on worn "
     "gear removes it if space allows. Weight above capacity slows movement.",
-    "Talk to a trader and choose Trade. Left/right switches buying and selling; L/R filters supplies, "
-    "weapons or armor. X trades one item. Shops have finite stocks and refresh daily with different "
+    "Talk to a trader and choose Trade. \014 switches buying and selling; \005/\006 filters supplies, "
+    "weapons or armor. \001 trades one item. Shops have finite stocks and refresh daily with different "
     "gear.\nPrices depend on quality, faction relations, local prosperity. Hostile factions refuse trade. "
     "Selling stolen goods back to their owner can expose you; Black Mesa fences accept them. The item "
     "details show its stats and effects before purchase.",
     "Visit a forge, then choose Gear forge from the expedition menu or smith dialogue. Choose slot, design, "
-    "material and quality with left/right. The preview updates before you spend anything.\nX on Forge makes "
+    "material and quality with \014. The preview updates before you spend anything.\n\001 on Forge makes "
     "the selected design. Metal, cloth and timber costs scale with material and grade; relic gear also needs "
     "a relic. Higher grades require smithing experience and research. Missing materials or a full pack "
     "cancel the transaction without charging you.",
@@ -192,14 +192,14 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Build outside settlement boundaries. Choose a structure and place it beside the selected character. "
     "Buildings cannot overlap; materials are charged only after validation.\nShelters heal; farms need water "
     "and yield grain; wind pumps irrigate nearby crops. Forges and benches unlock production. Depots hold "
-    "sixteen item stacks of any type. X opens storage; left/right switches deposit/withdraw. Camps attract "
+    "sixteen item stacks of any type. \001 opens storage; \014 switches deposit/withdraw. Camps attract "
     "raiders, so keep medicine and a retreat route.",
-    "Triangle, Squad: choose a survivor with left/right, then assign a job with X. Follow trails the "
+    "\004, Squad: choose a survivor with \014, then assign a job with \001. Follow trails the "
     "selected leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats "
     "injured allies.\nSmelt and Cook use nearby stations and can collect ingredients from a nearby depot. "
     "Haul moves pack resources into storage. Each worker needs supplies and food. Select a worker and move "
     "to interrupt their current action. Up to eight living members may join.",
-    "Circle sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and X near a "
+    "\002 sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and \001 near a "
     "civilian to attempt pickpocketing. Owned salvage also counts as theft; locked containers require tools "
     "and time.\nWitnesses create a faction penalty and bounty. A theft can fail, drawing guards. Stolen "
     "stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a "
@@ -212,12 +212,12 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Town residents offer delivery, supply, hunt and relic contracts. Accept through dialogue; track "
     "objectives in the Journal. Deliveries require reaching another town. Supplies require the listed items. "
     "Hunts count victories after acceptance.\nReturn to the issuing settlement and claim in the Journal with "
-    "X. Rewards grant silver, reputation and experience. Contracts persist in saves. Complete contracts, "
+    "\001. Rewards grant silver, reputation and experience. Contracts persist in saves. Complete contracts, "
     "research relic technology and survey the frontier to advance the expedition legacy.",
-    "Six manual slots plus autosave. Start, Save or Load opens a ledger with name, day, party size and "
-    "silver. Choose a slot; X asks for confirmation. Save-and-title uses the selected manual slot.\nSaves "
+    "Six manual slots plus autosave. \007, Save or Load opens a ledger with name, day, party size and "
+    "silver. Choose a slot; \001 asks for confirmation. Save-and-title uses the selected manual slot.\nSaves "
     "use version, size and checksum validation and preserve a previous .bak file. Invalid files never "
-    "replace your running expedition. Version 0.1 saves migrate on load. Back them up before overwriting. "
+    "replace your running expedition. Version 0.1 and 0.2 saves migrate on load. Back them up before overwriting. "
     "Autosave is slot zero and is never used for manual saving.",
     "Dust, rain, acid mist and snow change visibility, terrain colors and survival pressure. Storms reduce "
     "detection and ranged accuracy. Acid and cold build exposure outdoors; shelters and sealed gear protect "
@@ -226,6 +226,12 @@ const char *guideBodies[GUIDE_PAGES] = {
     "events so you can plan supplies and routes.",
     "Wanted survivors defeated by lawful guards may wake in town custody. They lose stolen cargo and must "
     "serve time, pay bail or attempt an escape. A conscious free companion can still be selected.\nWhen "
-    "imprisoned, movement is restricted to the holding area. X opens the custody dialogue. Paying clears the "
+    "imprisoned, movement is restricted to the holding area. \001 opens the custody dialogue. Paying clears the "
     "local bounty. Escape attempts use lockpicking, may fail and raise the bounty. The prison timer, "
-    "injuries and inventory persist through saving."};
+    "injuries and inventory persist through saving.",
+    "Approach a house, inn, shop, tower or workshop door and press \001 to enter. Walk around the room with "
+    "\011 or analog. Furniture blocks movement; use the aisles. \001 near the door returns outside.\n"
+    "Counters open local trade. Beds cost 25 silver in town; owned beds are free. Workshop stations open "
+    "forging, research or storage. Indoor time passes: hunger, bleeding and healing continue. The rest of "
+    "your squad remains outside.\nSave games preserve the building and indoor position. Switching squad "
+    "members leaves the room. Interiors shelter you from weather; hostile occupants refuse entry."};

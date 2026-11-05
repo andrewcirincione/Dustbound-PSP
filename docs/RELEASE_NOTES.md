@@ -1,15 +1,14 @@
-# Dustbound 0.2.1 — Dust and steel
+# Dustbound 0.4.0 — Frontier playability
 
-A focused combat and character-art revision for the original PSP sandbox.
+This alpha addresses unclear interactions, excessive mining reach, universal NPC menus, cramped settlement spacing and missing equipment comparisons. It also replaces mismatched flat artwork with articulated painted characters, frontier props, calibrated building foundations, projected shadows and textured interiors.
 
-- Taller, narrower figures, shaded faces, darker steel and leather, worn seams and asymmetric cloak folds.
-- Bent knees, planted feet, hip loading, articulated elbows and two-handed grips.
-- Separate sword cuts, thrusts, heavy overhead attacks and firearm recoil; continuous preparation/strike/recovery transitions.
-- Damage, blocks and hit reactions resolve at visible contact, rather than the start of the swing. Bright circular melee trails removed.
-- Menu portraits fitted to the taller silhouettes; squad portraits clipped to their cards.
+- See the target and its action before interacting. Mining and locks require remaining within 1.15 world meters.
+- Seek merchants, medics, innkeepers, marshals, smiths, barbers and recruits for their own services.
+- Compare WORN and TRY ON gear, numeric differences and effects in the pack or market.
+- Travel between compact towns separated by larger wilderness areas. Use the local/world atlas toggle, town selection and destination distance.
+- Share food from nearby companion backpacks and owned depots. Wounds require food and stopped bleeding to recover during sleep.
+- Keep indoor positions, equipment, exploration and expedition progress when saving. Version 4 migrates older coordinate systems.
 
-111 simulation checks, 243 render cases, sanitizer checks and all 2,016 unique gear renders passed. The final EBOOT was driven through normal and prepared-scenario PPSSPP playthroughs. The combat recording comes from the PSP executable using a developer-only fixed 30 Hz simulation step; it does not measure hardware frame rate.
+Extract `Dustbound-0.4.0-PSP.zip` to the memory-stick root on a PSP already configured for homebrew. Launch `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Back up older saves and use a new slot after migration. Test markers and prepared saves are excluded from the package.
 
-Extract `Dustbound-0.2.1-PSP.zip` to the memory stick root on a homebrew-capable PSP. Save format remains compatible with v0.2.0; back up valuable saves before upgrading. No test saves or QA markers are included.
-
-Still a playable alpha. Physical PSP performance and full Kenshi-scale mechanics remain unverified or unfinished.
+The 2,016 equipment entries are modular design/material/quality combinations, not thousands of separately authored models. Interiors are single rooms. The [mechanics audit](MECHANICS_AUDIT.md) lists missing and simplified systems. PPSSPP testing does not establish physical PSP-3000 performance.

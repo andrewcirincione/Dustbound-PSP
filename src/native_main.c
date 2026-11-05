@@ -19,15 +19,86 @@ static void ppm(const char *path) {
 }
 int main(int argc, char **argv) {
     game_new(73819, 0);
+    if (argc > 1 && !strcmp(argv[1], "--review")) {
+        const char *mode = argc > 3 ? argv[3] : "world";
+        Actor *a = &g.actors[0];
+        ui.screen = SCREEN_WORLD;
+        ui.noticeTime = 0;
+        if (!strcmp(mode, "compare")) {
+            inventory_add(a, gear_id(38, 3, 2), 1);
+            ui.screen = SCREEN_PACK;
+            for (int j = 0; j < PACK; j++)
+                if (a->pack[j].item == gear_id(38, 3, 2))
+                    ui.selection = j;
+        }
+        if (!strcmp(mode, "map")) {
+            ui.screen = SCREEN_MAP;
+            ui.mapZoom = 1;
+            ui.mapTown = 1;
+            ui.mapX = towns[1].x;
+            ui.mapY = towns[1].y;
+        }
+        if (!strcmp(mode, "medic") || !strcmp(mode, "merchant") || !strcmp(mode, "recruit")) {
+            int role = !strcmp(mode, "medic")      ? ROLE_MEDIC
+                       : !strcmp(mode, "merchant") ? ROLE_MERCHANT
+                                                   : ROLE_RECRUIT;
+            for (int i = 0; i < g.actorCount; i++)
+                if (npc_role(&g.actors[i]) == role) {
+                    dialogue_open(i);
+                    break;
+                }
+        }
+        if (!strcmp(mode, "far") || !strcmp(mode, "near")) {
+            a->x = 24 + (!strcmp(mode, "far") ? 2.4f : .75f);
+            a->y = 34;
+            find_context();
+        }
+        if (!strcmp(mode, "road")) {
+            a->x = (towns[0].x + towns[1].x) * .5f;
+            a->y = (towns[0].y + towns[1].y) * .5f;
+            find_context();
+        }
+        render_game(pixels, 480);
+        ppm(argv[2]);
+        return 0;
+    }
+    if (argc > 1 && !strcmp(argv[1], "--launcher-art")) {
+        render_title_art(pixels, 480);
+        ppm(argv[2]);
+        return 0;
+    }
+    if (argc > 1 && !strcmp(argv[1], "--room-frame")) {
+        int type = argc > 3 ? atoi(argv[3]) : SHOP;
+        for (int i = 0; i < g.buildingCount; i++)
+            if (g.buildings[i].type == type) {
+                g.actors[0].x = g.buildings[i].x + 1.45f;
+                g.actors[0].y = g.buildings[i].y + .65f;
+                g.actors[0].target = -1;
+                interior_enter(i);
+                break;
+            }
+        ui.screen = SCREEN_WORLD;
+        ui.noticeTime = 0;
+        g.interiorX = 3.5f;
+        g.interiorY = 4.8f;
+        render_game(pixels, 480);
+        ppm(argv[2]);
+        return 0;
+    }
     if (argc > 1 && strcmp(argv[1], "--pose-frame") == 0) {
         load_game("build/emu/DUST_2.sav");
-        Actor *a=&g.actors[g.selected];
-        a->attackWeapon=a->gear[0]=gear_id(atoi(argv[3]),1,1);
-        a->attackPhase=atoi(argv[4]);
-        a->attackDuration=1; a->attackClock=1-atof(argv[5]);
-        a->attackAngle=.35f; a->facing=1;
-        g.time=8*3600; ui.screen=SCREEN_WORLD;
-        render_game(pixels,480); ppm(argv[2]); return 0;
+        Actor *a = &g.actors[g.selected];
+        a->attackWeapon = a->gear[0] = gear_id(atoi(argv[3]), 1, 1);
+        a->attackPhase = atoi(argv[4]);
+        a->attackDuration = 1;
+        a->attackClock = 1 - atof(argv[5]);
+        a->attackAngle = .35f;
+        a->facing = 1;
+        g.time = 8 * 3600;
+        ui.screen = SCREEN_WORLD;
+        render_game(pixels, 480);
+        ppm(argv[2]);
+        return 0;
     }
     if (argc > 1 && strcmp(argv[1], "--catalog") == 0) {
         FILE *f = fopen(argc > 2 ? argv[2] : "build/catalog.csv", "w");
@@ -161,8 +232,8 @@ int main(int argc, char **argv) {
         save_slot(3);
         game_new(73819, 0);
         a = &g.actors[0];
-        a->x = 280;
-        a->y = 201;
+        a->x = towns[11].x;
+        a->y = towns[11].y + 1;
         g.money = 5000;
         g.tech = 3;
         g.discovered[11] = 1;
@@ -176,16 +247,16 @@ int main(int argc, char **argv) {
         for (int t = 0; t < TOWNS; t++)
             g.discovered[t] = 1;
         save_slot(4);
-        a->x = 302;
-        a->y = 310;
+        a->x = 302 * 4 - 78;
+        a->y = 310 * 4 - 81;
         g.weather = 4;
         g.weatherTimer = 600;
         a->gear[1] = gear_id(40, 5, 3);
         a->gear[2] = gear_id(54, 5, 3);
         a->gear[5] = gear_id(83, 5, 3);
         save_slot(5);
-        a->x = 54;
-        a->y = 322;
+        a->x = 54 * 4 - 78;
+        a->y = 322 * 4 - 81;
         g.weather = 2;
         g.weatherTimer = 600;
         save_slot(6);

@@ -1,18 +1,19 @@
 #include "game.h"
 #include "combat_pose.h"
+#include "art_data.h"
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* Shared, allocation-free software rasterizer. PSP writes to uncached VRAM.
+/* Shared, allocation-free software rasterizer. PSP stages in cached main RAM.
    No external asset files are required at runtime. */
 static uint32_t *fb;
 static int pitch;
-static int clipLeft=0, clipTop=0, clipRight=480, clipBottom=272;
-static const uint32_t INK = 0x171e21, PANEL = 0x252b2c, EDGE = 0x6e715e, GOLD = 0xd8ba78, TEXT = 0xe4dbc0,
-                      MUTED = 0xa5aa99, TEAL = 0x8abeb1, RED = 0xcb7560;
+static int clipLeft = 0, clipTop = 0, clipRight = 480, clipBottom = 272;
+static const uint32_t INK = 0x1b1916, PANEL = 0x302a23, EDGE = 0x74624b, GOLD = 0xc5a26d, TEXT = 0xe1d3b8,
+                      MUTED = 0xa89a83, TEAL = 0xa6b3a0, RED = 0xc07459;
 static uint32_t abgr(uint32_t c) { return 0xff000000 | ((c & 255) << 16) | (c & 0xff00) | ((c >> 16) & 255); }
 static uint32_t shade(uint32_t c, float f) {
     int r = (int)((c >> 16) * f), g0 = (int)(((c >> 8) & 255) * f), b = (int)((c & 255) * f);
@@ -29,6 +30,52 @@ static uint32_t blend(uint32_t a, uint32_t b, float f) {
         c = (a & 255) * (1 - f) + (b & 255) * f;
     return (r << 16) | (v << 8) | c;
 }
+/* Indexed row spans skip transparent margins. Only edge texels need blending.
+   A lighting change updates 256 palette entries, not every sprite pixel. */
+static uint32_t artPalette[ART_COUNT][256];
+static int artLight[ART_COUNT];
+static void art(int id, int x, int y, float brightness, int fade) {
+    const ArtSprite *s = &artSprites[id];
+    int lum = (int)(brightness * 128) + 1;
+    if (artLight[id] != lum) {
+        for (int i = 0; i < 256; i++) {
+            uint32_t c = s->palette[i];
+            unsigned r = (c & 255) * (lum - 1) / 128, g0 = ((c >> 8) & 255) * (lum - 1) / 128,
+                     b = ((c >> 16) & 255) * (lum - 1) / 128;
+            artPalette[id][i] = (c & 0xff000000) | (r > 255 ? 255 : r) | ((g0 > 255 ? 255 : g0) << 8) |
+                                ((b > 255 ? 255 : b) << 16);
+        }
+        artLight[id] = lum;
+    }
+    x -= s->ax;
+    y -= s->ay;
+    int top = y < clipTop ? clipTop - y : 0, bottom = y + s->h > clipBottom ? clipBottom - y : s->h;
+    for (int yy = top; yy < bottom; yy++) {
+        int start = s->rows[yy * 3 + 1], end = s->rows[yy * 3 + 2];
+        if (x + start < clipLeft)
+            start = clipLeft - x;
+        if (x + end > clipRight)
+            end = clipRight - x;
+        if (start >= end)
+            continue;
+        const uint8_t *p = s->pixels + s->rows[yy * 3] + start - s->rows[yy * 3 + 1];
+        uint32_t *dst = fb + (y + yy) * pitch + x + start;
+        for (int xx = start; xx < end; xx++, dst++) {
+            uint32_t c = artPalette[id][*p++];
+            unsigned a = c >> 24;
+            if (fade && ((xx + yy) & 1))
+                continue;
+            if (a == 255)
+                *dst = c;
+            else if (a) {
+                uint32_t d = *dst;
+                uint32_t rb = (((c & 0xff00ff) * a + (d & 0xff00ff) * (256 - a)) >> 8) & 0xff00ff;
+                uint32_t gg = (((c & 0xff00) * a + (d & 0xff00) * (256 - a)) >> 8) & 0xff00;
+                *dst = 0xff000000 | rb | gg;
+            }
+        }
+    }
+}
 static unsigned hash(int x, int y) {
     unsigned v = x * 374761393u + y * 668265263u + g.seed;
     v = (v ^ (v >> 13)) * 1274126177u;
@@ -40,11 +87,11 @@ static void px(int x, int y, uint32_t c) {
 }
 static void rect(int x, int y, int w, int h, uint32_t c) {
     if (x < clipLeft) {
-        w += x-clipLeft;
+        w += x - clipLeft;
         x = clipLeft;
     }
     if (y < clipTop) {
-        h += y-clipTop;
+        h += y - clipTop;
         y = clipTop;
     }
     if (x + w > clipRight)
@@ -102,9 +149,9 @@ static void triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t c)
         x0 = x1;
         x1 = t;
     }
-    if (y2 < 0 || y0 >= 272 || y2 == y0)
+    if (y2 < clipTop || y0 >= clipBottom || y2 == y0)
         return;
-    int from = y0 < 0 ? 0 : y0, to = y2 > 271 ? 271 : y2;
+    int from = y0 < clipTop ? clipTop : y0, to = y2 >= clipBottom ? clipBottom - 1 : y2;
     for (int y = from; y <= to; y++) {
         int a = x0 + (int)((float)(x2 - x0) * (y - y0) / (y2 - y0));
         int b = y < y1 ? (y1 == y0 ? x1 : x0 + (int)((float)(x1 - x0) * (y - y0) / (y1 - y0)))
@@ -154,44 +201,117 @@ static const uint8_t font[64][5] = {
     {1, 1, 127, 1, 1},     {63, 64, 64, 64, 63},   {31, 32, 64, 32, 31},  {63, 64, 56, 64, 63},
     {99, 20, 8, 20, 99},   {7, 8, 112, 8, 7},      {97, 81, 73, 69, 67},  {0, 127, 65, 65, 0},
     {2, 4, 8, 16, 32},     {0, 65, 65, 127, 0},    {4, 2, 1, 2, 4},       {64, 64, 64, 64, 64}};
-static void text(int x, int y, const char *s, uint32_t c, int scale) {
-    for (int j = 0; s[j]; j++) {
-        int k = toupper((unsigned char)s[j]);
-        if (k < 32 || k > 95)
-            k = '?';
-        for (int i = 0; i < 5; i++) {
-            int v = font[k - 32][i];
+/* PSP controls: shape glyphs and keycaps, shared by all prompts and guides.
+   1 cross,2 circle,3 square,4 triangle,5/6 shoulders,7 start,8 select,
+   9 d-pad,12 horizontal arrows,13 vertical arrows. */
+static int glyph_width(unsigned k) { return k < 16 ? (k == 7 ? 24 : k == 8 ? 28 : 10) : 6; }
+static int text_width(const char *s) {
+    int n = 0;
+    for (; *s; s++)
+        n += glyph_width((unsigned char)*s);
+    return n;
+}
+static void button_icon(int x, int y, unsigned k, int sc, uint32_t color) {
+#define BX(a) (x + (a) * sc)
+#define BY(a) (y + (a) * sc)
+#define BL(a, b, c, d, col) line(BX(a), BY(b), BX(c), BY(d), col)
+    uint32_t c = k == 1 ? 0xa8bfca : k == 2 ? 0xcd8b78 : k == 3 ? 0xbfa3ba : k == 4 ? 0xa6b99b : color;
+    if (k == 1) {
+        BL(1, 0, 7, 6, c);
+        BL(7, 0, 1, 6, c);
+    } else if (k == 2) {
+        BL(2, 0, 6, 0, c);
+        BL(2, 6, 6, 6, c);
+        BL(1, 1, 1, 5, c);
+        BL(7, 1, 7, 5, c);
+    } else if (k == 3)
+        frame(x + sc, y, 7 * sc, 7 * sc, c);
+    else if (k == 4) {
+        BL(4, 0, 0, 6, c);
+        BL(0, 6, 8, 6, c);
+        BL(8, 6, 4, 0, c);
+    } else if (k == 5 || k == 6) {
+        frame(x, y - sc, 9 * sc, 9 * sc, c);
+        int v = k == 5 ? 'L' : 'R';
+        for (int i = 0; i < 5; i++)
             for (int yy = 0; yy < 7; yy++)
-                if (v & (1 << yy))
-                    rect(x + j * 6 * scale + i * scale, y + yy * scale, scale, scale, c);
+                if (font[v - 32][i] & (1 << yy))
+                    rect(BX(i + 2), BY(yy), sc, sc, c);
+    } else if (k == 7 || k == 8) {
+        /* Full labels inside the long physical keycaps; no ST/SE abbreviations. */
+        frame(x, y - sc, (k == 7 ? 23 : 27) * sc, 9 * sc, c);
+        const char *label = k == 7 ? "START" : "SELECT";
+        static const uint16_t tiny[] = {0x5bea, 0x5aeb, 0x72cf, 0x2497, 0x7249, 0x724f, 0x79cf};
+        const char *letters = "ARETLCS";
+        for (int j = 0; label[j]; j++) {
+            const char *found = strchr(letters, label[j]);
+            uint16_t bits = found ? tiny[found - letters] : 0;
+            for (int yy = 0; yy < 5; yy++)
+                for (int xx = 0; xx < 3; xx++)
+                    if (bits & (1 << (yy * 3 + xx)))
+                        rect(BX(2 + j * 4 + xx), BY(1 + yy), sc, sc, c);
         }
+    } else if (k == 12) {
+        BL(0, 3, 8, 3, c);
+        BL(0, 3, 3, 0, c);
+        BL(0, 3, 3, 6, c);
+        BL(8, 3, 5, 0, c);
+        BL(8, 3, 5, 6, c);
+    } else if (k == 13) {
+        BL(4, 0, 4, 6, c);
+        BL(4, 0, 1, 3, c);
+        BL(4, 0, 7, 3, c);
+        BL(4, 6, 1, 3, c);
+        BL(4, 6, 7, 3, c);
+    } else {
+        rect(BX(3), BY(0), 3 * sc, 7 * sc, c);
+        rect(BX(1), BY(2), 7 * sc, 3 * sc, c);
+        rect(BX(4), BY(3), sc, sc, INK);
+    }
+#undef BX
+#undef BY
+#undef BL
+}
+static void text(int x, int y, const char *s, uint32_t c, int scale) {
+    for (; *s; s++) {
+        unsigned k = (unsigned char)*s;
+        if (k < 16)
+            button_icon(x, y, k, scale, c);
+        else {
+            k = toupper(k);
+            if (k < 32 || k > 95)
+                k = '?';
+            for (int i = 0; i < 5; i++)
+                for (int yy = 0; yy < 7; yy++)
+                    if (font[k - 32][i] & (1 << yy))
+                        rect(x + i * scale, y + yy * scale, scale, scale, c);
+        }
+        x += glyph_width((unsigned char)*s) * scale;
     }
 }
 static void center(int x, int y, const char *s, uint32_t c, int z) {
-    text(x - (int)strlen(s) * 3 * z, y, s, c, z);
+    text(x - text_width(s) * z / 2, y, s, c, z);
 }
 static void wrap(int x, int y, int cols, const char *s, uint32_t c) {
-    char b[100];
-    int n = 0;
     while (*s) {
-        while (*s && *s != '\n' && n < cols) {
-            b[n++] = *s++;
+        char b[128];
+        int n = 0, width = 0, lastSpace = -1;
+        while (s[n] && s[n] != '\n' && n < 126 && width + glyph_width((unsigned char)s[n]) <= cols * 6) {
+            b[n] = s[n];
+            if (s[n] == ' ')
+                lastSpace = n;
+            width += glyph_width((unsigned char)s[n]);
+            n++;
         }
-        if (*s && *s != '\n' && n == cols) {
-            int k = n;
-            while (k > 0 && b[k - 1] != ' ')
-                k--;
-            if (k > 0) {
-                s -= n - k;
-                n = k;
-            }
-        }
-        while (n && b[n - 1] == ' ')
-            n--;
+        if (s[n] && s[n] != '\n' && lastSpace > 0)
+            n = lastSpace;
+        if (!n && *s != '\n')
+            n = 1;
+        memcpy(b, s, n);
         b[n] = 0;
         text(x, y, b, c, 1);
+        s += n;
         y += 11;
-        n = 0;
         while (*s == ' ')
             s++;
         if (*s == '\n') {
@@ -203,6 +323,8 @@ static void wrap(int x, int y, int cols, const char *s, uint32_t c) {
 static void panel(int x, int y, int w, int h) {
     rect(x + 2, y + 3, w, h, 0x141a1b);
     rect(x, y, w, h, PANEL);
+    for (int yy = y + 3; yy < y + h - 2; yy += 4)
+        line(x + 2, yy, x + w - 3, yy, 0x332d25);
     frame(x, y, w, h, EDGE);
     line(x + 1, y + 1, x + w - 2, y + 1, 0x93927b);
 }
@@ -211,9 +333,10 @@ static void bar(int x, int y, int w, int h, float value, uint32_t c) {
     int v = (int)(fmaxf(0, fminf(100, value)) * w / 100);
     rect(x, y, v, h, c);
 }
+static int projectionX, projectionY;
 static void project(float x, float y, int *sx, int *sy) {
-    *sx = 240 + (int)((x - y - ui.camX + ui.camY) * 22);
-    *sy = 126 + (int)((x + y - ui.camX - ui.camY) * 11) - terrain_height(x, y);
+    *sx = 240 + projectionX + (int)((x - y - ui.camX + ui.camY) * 22);
+    *sy = 126 + projectionY + (int)((x + y - ui.camX - ui.camY) * 11) - terrain_height(x, y);
 }
 static uint32_t ground(int b) {
     static const uint32_t p[] = {0x998063, 0x98664b, 0xb1a58a, 0x646b50, 0x65625d,
@@ -227,22 +350,22 @@ static float light(void) {
                                                : .55f;
 }
 static int road(float x, float y) { return terrain_road(x, y); }
-static void terrain(void) {
+static void terrain_raw(void) {
     float li = light();
-    rect(0, 0, 480, 272, shade(ground(biome(ui.camX, ui.camY)), li));
+    rect(0, 0, clipRight, clipBottom, shade(ground(biome(ui.camX, ui.camY)), li));
     int cx = (int)ui.camX, cy = (int)ui.camY;
     for (int y = cy - 18; y <= cy + 18; y++)
         for (int x = cx - 18; x <= cx + 18; x++) {
             int sx, sy;
             project(x + .5f, y + .5f, &sx, &sy);
-            if (sx < -24 || sx > 504 || sy < -12 || sy > 227)
+            if (sx < -24 || sx > clipRight + 24 || sy < -12 || sy > clipBottom + 12)
                 continue;
             unsigned h = hash(x, y);
             int t = town_near(x, y, 7);
             uint32_t c = ground(biome(x, y));
             if (g.weather == 2 || g.weather == 3)
                 c = shade(c, .85f);
-            c = shade(c, (.965f + (h % 9) * .008f) * li);
+            c = shade(c, (.985f + (h % 5) * .005f) * li);
             if (x < 1 || y < 1 || x > WORLD - 2 || y > WORLD - 2)
                 c = shade(0x5c6867, li);
             else if (t >= 0)
@@ -252,16 +375,19 @@ static void terrain(void) {
             if (terrain_water(x, y)) {
                 c = shade(0x485f5b, li);
                 diamond(sx, sy, 22, 11, c);
-                int shift = ((int)(g.time * 3) + x + y) % 5;
+                int shift = (x + y) % 5;
                 line(sx - 9 + shift, sy - 3, sx + 6 + shift, sy - 3, shade(c, 1.25f));
                 line(sx - 8, sy + 3, sx + 8, sy + 3, shade(c, .8f));
                 continue;
             }
             diamond(sx, sy, 22, 11, c);
-            for (int grain = 0; grain < 7; grain++) {
+            for (int grain = 0; grain < 35; grain++) {
                 unsigned z = hash(x + grain * 9, y - grain * 7);
-                int gx = (int)(z % 25) - 12, gy = (int)((z >> 8) % 9) - 4;
-                px(sx + gx, sy + gy, shade(c, .72f + (z % 7) * .08f));
+                int gx = (int)(z % 31) - 15, gy = (int)((z >> 8) % 13) - 6;
+                if (abs(gx) + abs(gy) * 2 < 22) {
+                    uint32_t fleck = shade(c, .85f + (z % 5) * .06f);
+                    line(sx + gx, sy + gy, sx + gx + 1 + (z % 2), sy + gy, fleck);
+                }
             }
             if (h % 5 == 0) {
                 line(sx - 13, sy + 1, sx - 5, sy + 3, shade(c, .87f));
@@ -275,164 +401,108 @@ static void terrain(void) {
                 line(sx - 18, sy, sx - 2, sy + 8, shade(c, .92f));
             }
         }
+    const ArtSprite *tex = &artSprites[107];
+    for (int yy = 0; yy < clipBottom; yy++) {
+        float u = (ui.camX + (yy - 126 - projectionY) / 22.f + (-240 - projectionX) / 44.f) * 8;
+        float v = (ui.camY + (yy - 126 - projectionY) / 22.f - (-240 - projectionX) / 44.f) * 8;
+        for (int xx = 0; xx < clipRight; xx++, u += 8 / 44.f, v -= 8 / 44.f) {
+            int tx = ((int)u) & 63, ty = ((int)v) & 63;
+            uint32_t c = tex->palette[tex->pixels[tex->rows[ty * 3] + tx]];
+            unsigned m = 222 + ((c & 255) + ((c >> 8) & 255) + ((c >> 16) & 255)) / 14;
+            uint32_t d = fb[yy * pitch + xx];
+            fb[yy * pitch + xx] =
+                0xff000000 | (((d & 0xff00ff) * m >> 8) & 0xff00ff) | (((d & 0xff00) * m >> 8) & 0xff00);
+        }
+    }
 }
-static void box(int x, int y, int w, int d, int h, uint32_t c) {
-    quad(x - w, y, x, y + d, x, y + d - h, x - w, y - h, shade(c, .73f));
-    quad(x, y + d, x + w, y, x + w, y - h, x, y + d - h, shade(c, .9f));
-    diamond(x, y - h, w, d, shade(c, 1.08f));
-    line(x - w, y - h, x, y + d - h, shade(c, 1.2f));
-    line(x, y + d - h, x + w, y - h, shade(c, .93f));
+/* 32-pixel overscan: scrolling reuses terrain until the camera crosses a
+   cache margin. Buildings/actors/weather remain live and depth-sorted. */
+static uint32_t groundCache[544 * 336];
+static void terrain(void) {
+    static float cx, cy, lastLight;
+    static uint32_t seed;
+    static int valid, weather;
+    int dx = (int)((cx - cy - ui.camX + ui.camY) * 22), dy = (int)((cx + cy - ui.camX - ui.camY) * 11);
+    if (!valid || abs(dx) > 30 || abs(dy) > 30 || seed != g.seed || weather != g.weather ||
+        light() != lastLight) {
+        uint32_t *old = fb;
+        int oldPitch = pitch;
+        fb = groundCache;
+        pitch = 544;
+        clipRight = 544;
+        clipBottom = 336;
+        projectionX = projectionY = 32;
+        terrain_raw();
+        projectionX = projectionY = 0;
+        clipRight = 480;
+        clipBottom = 272;
+        fb = old;
+        pitch = oldPitch;
+        cx = ui.camX;
+        cy = ui.camY;
+        seed = g.seed;
+        weather = g.weather;
+        lastLight = light();
+        valid = 1;
+        dx = dy = 0;
+    }
+    for (int y = 0; y < 272; y++)
+        memcpy(fb + y * pitch, groundCache + (y + 32 - dy) * 544 + 32 - dx, 480 * 4);
 }
-static void banner(int x, int y, int f, int size) {
-    uint32_t c = factionColors[f % FACTIONS];
-    line(x, y, x, y - size, 0x514c40);
-    quad(x + 1, y - size, x + 12, y - size + 3, x + 12, y - size + 12, x + 1, y - size + 9, c);
-    line(x + 4, y - size + 4, x + 9, y - size + 5, 0xd6bd8b);
+static int building_sprite(int id) {
+    Building *b = &g.buildings[id];
+    if (b->type == HOUSE)
+        return b->faction == HOSTILE ? 5 : b->faction == SHOGUN ? 4 : id % 3 == 0 ? 7 : 0;
+    static const int ids[] = {0, 1, 2, 3, 24, 25, 27, 26, 28, 6, 29, 30, 7};
+    return ids[b->type];
+}
+static void art_shadow(int id, int x, int y) {
+    if (id < 0 || id >= 32)
+        return;
+    const ArtShadow *s = &artShadows[id];
+    x -= s->ax;
+    y -= s->ay;
+    for (int yy = 0; yy < s->h; yy++) {
+        if (y + yy < clipTop || y + yy >= clipBottom)
+            continue;
+        int lo = s->rows[yy * 3 + 1], hi = s->rows[yy * 3 + 2];
+        for (int xx = lo; xx < hi; xx++) {
+            if (x + xx < clipLeft || x + xx >= clipRight)
+                continue;
+            unsigned alpha = s->pixels[s->rows[yy * 3] + xx - lo];
+            if (!alpha)
+                continue;
+            uint32_t *dst = fb + (y + yy) * pitch + x + xx, c = *dst;
+            unsigned m = 256 - alpha;
+            *dst = 0xff000000 | (((c & 0xff00ff) * m >> 8) & 0xff00ff) | (((c & 0xff00) * m >> 8) & 0xff00);
+        }
+    }
 }
 static void building(int id) {
     Building *b = &g.buildings[id];
     int x, y;
     project(b->x, b->y, &x, &y);
-    if (x < -100 || x > 580 || y < -80 || y > 295)
+    if (x < -120 || x > 600 || y < -80 || y > 310)
         return;
-    float li = light();
-    uint32_t wall = shade(b->faction == HOSTILE  ? 0x625b50
-                          : b->faction == SHOGUN ? 0xa5997f
-                                                 : 0x958069,
-                          li),
-             dark = shade(0x766e5b, li);
-    int type = b->type;
-    if (type <= TOWER) {
-        int w = type == TOWER ? 19 : 34, d = type == TOWER ? 10 : 17, h = type == TOWER ? 65 : 39;
-        quad(x - w, y + 4, x + 1, y + 23, x + 58, y + 9, x + 24, y - 8,
-             shade(ground(biome(b->x, b->y)), li * .72f));
-        box(x, y, w, d, h, wall);
-        box(x, y - h, w + 2, d + 1, 5, dark);
-        if (type != TOWER) {
-            uint32_t roof = shade(b->faction == SHOGUN || b->faction == MONKS ? 0x495653 : 0x5d4a3d, li);
-            quad(x - w - 5, y - h, x, y - h - d - 14, x + w + 5, y - h, x, y - h + d, roof);
-            for (int z = -w; z <= w; z += 5)
-                line(x + z, y - h + abs(z) * 0.2f - d / 2, x + z, y - h + d - abs(z) * .5f,
-                     shade(roof, .65f));
-            line(x - w - 7, y - h - 3, x, y - h + d, shade(roof, 1.4f));
-            line(x, y - h + d, x + w + 7, y - h - 3, shade(roof, 1.25f));
-            line(x - 4, y - h - d - 14, x + 4, y - h - d - 14, shade(0x99836a, li));
-        } else
-            diamond(x, y - h - 5, w - 4, d - 3, shade(0x6c6657, li));
-        for (int j = 1; j < 4; j++) {
-            int yy = y - h + j * h / 4;
-            line(x - w + 2, yy, x - 1, yy + d - 2, shade(wall, .65f));
-            line(x + 2, yy + d - 2, x + w - 2, yy, shade(wall, .78f));
-        }
-        quad(x + 8, y + d - 4, x + 19, y + d - 10, x + 19, y + d - 29, x + 8, y + d - 23, 0x333b38);
-        quad(x + 10, y + d - 5, x + 16, y + d - 8, x + 16, y + d - 24, x + 10, y + d - 21,
-             shade(0x655a42, li));
-        line(x + 8, y + d - 23, x + 13, y + d - 29, shade(wall, .5f));
-        quad(x - w + 9, y - h + 10, x - w + 17, y - h + 14, x - w + 17, y - h + 24, x - w + 9, y - h + 20,
-             0x39423e);
-        line(x - w + 13, y - h + 12, x - w + 13, y - h + 22, dark);
-        if (type == TOWER) {
-            for (int i = -2; i <= 2; i++) {
-                box(x + i * 7, y - h + abs(i) * 2, 3, 2, 9, wall);
-            }
-            banner(x, y - h - 5, b->faction, 22);
-        } else {
-            box(x - 13, y - h - 8, 5, 3, 13, dark);
-            for (int i = 0; i < 3; i++) {
-                int p = (int)(g.time * 6 + i * 11) % 32;
-                ellipse(x - 9 + p / 3, y - h - 22 - p, 3 + p / 7, 2 + p / 8, shade(0xb7ac95, .8f));
-            }
-        }
-        if (type != TOWER) {
-            for (int plank = -w + 5; plank < w; plank += 7) {
-                int yy = y + abs(plank) * -.45f + d;
-                line(x + plank, yy - 3, x + plank, yy - h + 6, shade(wall, .76f));
-            }
-            line(x - w - 4, y + d + 4, x + w + 4, y - d + 4, shade(0x4b3e30, li));
-            ellipse(x + 21, y - 9, 3, 5, shade(0xcfaa70, li));
-            line(x + 21, y - 14, x + 21, y - 18, dark);
-        }
-        if (type == SHOP || type == BAR) {
-            uint32_t canvas = type == SHOP ? 0x668a83 : 0xb47953;
-            quad(x + 5, y - 21, x + 31, y - 34, x + 46, y - 19, x + 16, y - 3, shade(canvas, li));
-            for (int i = 0; i < 4; i++)
-                line(x + 8 + i * 6, y - 20 - i * 3, x + 19 + i * 7, y - 5 - i * 4, shade(canvas, .65f));
-            line(x + 17, y - 4, x + 17, y + 14, dark);
-            line(x + 46, y - 19, x + 46, y - 1, dark);
-            box(x + 25, y + 4, 7, 4, 6, 0x8e7150);
-            text(x - 27, y - h - 17, type == SHOP ? "TRADING POST" : "THE WAYWARD", TEXT, 1);
-        }
-    } else if (type == WINDMILL) {
-        box(x, y, 8, 4, 8, dark);
-        line(x - 7, y, x, y - 55, dark);
-        line(x + 7, y, x, y - 55, dark);
-        for (int i = 0; i < 4; i++)
-            line(x - 6 + i, y - i * 10, x + 6 - i, y - i * 10, dark);
-        float an = g.time * .7f;
-        for (int i = 0; i < 4; i++) {
-            float a = an + i * 1.5708f;
-            int ex = x + cosf(a) * 24, ey = y - 50 + sinf(a) * 24;
-            line(x, y - 50, ex, ey, 0x5c665d);
-            triangle(ex, ey, ex - (int)(sinf(a) * 8), ey + (int)(cosf(a) * 8), x + (int)(cosf(a) * 8),
-                     y - 50 + (int)(sinf(a) * 8), shade(0xc6bea2, li));
-        }
-        ellipse(x, y - 50, 3, 3, 0x4e574f);
-    } else if (type == WELL) {
-        box(x, y, 12, 6, 6, dark);
-        diamond(x, y - 6, 8, 4, 0x303f3e);
-        line(x - 10, y - 2, x - 10, y - 20, dark);
-        line(x + 10, y - 2, x + 10, y - 20, dark);
-        line(x - 10, y - 20, x + 10, y - 20, dark);
-        line(x, y - 20, x, y - 6, 0x5c5548);
-    } else if (type == CAMPFIRE) {
-        ellipse(x, y + 1, 12, 5, shade(0x72634d, li));
-        line(x - 8, y + 1, x + 7, y - 2, 0x4a4338);
-        line(x - 7, y - 4, x + 8, y + 2, 0x4a4338);
-        int f = (int)(g.time * 9) % 4;
-        triangle(x - 5, y, x + 5, y, x + f - 2, y - 14, 0xcf713c);
-        triangle(x - 2, y, x + 3, y, x + 1, y - 9, 0xf5c76f);
-        px(x + 4, y - 17 - f, 0xf7d68d);
-    } else if (type == BED) {
-        diamond(x, y, 24, 12, shade(0x655e4b, li));
-        quad(x - 18, y - 1, x + 1, y - 11, x + 20, y, x, y + 9, 0x78867c);
-        triangle(x - 26, y, x, y - 33, x + 26, y, shade(0xb9aa7e, li));
-        triangle(x, y - 33, x + 26, y, x + 2, y + 9, shade(0x968b68, li));
-        triangle(x, y - 24, x + 13, y + 2, x - 4, y + 5, 0x37413a);
-        line(x, y - 34, x, y + 3, dark);
-    } else if (type == FARM) {
-        diamond(x, y, 33, 16, shade(0x71674e, li));
-        for (int i = 0; i < 5; i++) {
-            line(x - 25 + i * 11, y - 3 + i * 4, x - 10 + i * 11, y - 10 + i * 4, 0x514f3d);
-            if (b->progress > 15) {
-                int h = 3 + b->progress / 12;
-                for (int j = 0; j < 3; j++) {
-                    int xx = x - 23 + i * 11 + j * 4, yy = y - 3 + i * 4 - j * 2;
-                    line(xx, yy, xx, yy - h, 0x60744e);
-                    line(xx, yy - 2, xx - 3, yy - h + 2, b->progress > 80 ? 0xd4bd70 : 0x98a76c);
-                }
-            }
-        }
-    } else if (type == FORGE) {
-        box(x, y, 15, 8, 12, shade(0x716d62, li));
-        box(x - 3, y - 7, 8, 4, 20, 0x555e5b);
-        rect(x + 4, y - 10, 7, 5, 0xe2a45c);
-        box(x + 19, y + 6, 7, 4, 7, 0x657674);
-    } else if (type == BENCH) {
-        box(x, y, 18, 9, 13, 0x82785e);
-        box(x - 5, y - 15, 8, 4, 4, 0xc0b88b);
-        line(x + 10, y - 15, x + 10, y - 28, 0x65766c);
-        ellipse(x + 10, y - 28, 3, 3, 0x8dc9b9);
-    } else if (type == WALL) {
-        for (int i = -3; i <= 3; i++) {
-            line(x + i * 5, y + abs(i) * 2, x + i * 5, y + abs(i) * 2 - 30, dark);
-            triangle(x + i * 5 - 2, y - 25 + abs(i) * 2, x + i * 5 + 2, y - 25 + abs(i) * 2, x + i * 5,
-                     y - 34 + abs(i) * 2, 0x8b7a56);
-        }
-    } else if (type == STORE) {
-        box(x, y, 17, 9, 15, 0x9c805b);
-        for (int j = -2; j < 3; j++)
-            line(x + j * 5, y - 14 + abs(j) * 2, x + j * 5, y + abs(j) * 2, 0x655b45);
+    int sprite = building_sprite(id), ax, ay;
+    project(g.actors[g.selected].x, g.actors[g.selected].y, &ax, &ay);
+    int fade = building_has_interior(b->type) && abs(ax - x) < artSprites[sprite].w / 2 && ay < y + 16 &&
+               ay > y - artSprites[sprite].ay;
+    art(sprite, x, y, light(), fade);
+    if (b->type == CAMPFIRE) {
+        int flicker = (int)(g.time * 10) % 3;
+        px(x - 2 + flicker, y - 13 - flicker, 0xe5b66a);
     }
+    if (b->type == SHOP || b->type == BAR) {
+        const char *name = b->type == SHOP ? "TRADING POST" : "THE WAYWARD";
+        int w = text_width(name) + 8;
+        rect(x - w / 2, y - artSprites[sprite].ay - 10, w, 11, INK);
+        center(x, y - artSprites[sprite].ay - 8, name, GOLD, 1);
+    }
+}
+static int resource_sprite(int n) {
+    int t = g.nodes[n].type;
+    return t <= NODE_COPPER ? 9 : t == NODE_WOOD ? 8 : t == NODE_RUIN ? 15 : 31;
 }
 static void resource(int n) {
     Node *b = &g.nodes[n];
@@ -440,35 +510,12 @@ static void resource(int n) {
         return;
     int x, y;
     project(b->x, b->y, &x, &y);
-    if (x < -25 || x > 505 || y < -30 || y > 240)
+    if (x < -40 || x > 520 || y < -30 || y > 245)
         return;
-    float li = light();
-    if (b->type == NODE_ORE || b->type == NODE_COPPER) {
-        uint32_t c = b->type == NODE_ORE ? 0x78817b : 0x9a6b50;
-        ellipse(x, y + 2, 16, 5, shade(0x766e53, li));
-        triangle(x - 14, y, x - 5, y - 17, x + 6, y + 2, shade(c, .75f * li));
-        triangle(x - 5, y - 17, x + 13, y - 5, x + 6, y + 2, shade(c, 1.2f * li));
-        triangle(x + 6, y + 2, x + 13, y - 5, x + 17, y + 2, shade(c, .9f * li));
-        line(x - 5, y - 15, x + 1, y - 4, shade(c, 1.6f * li));
-    } else if (b->type == NODE_WOOD) {
-        line(x, y, x - 2, y - 24, 0x675d46);
-        line(x - 2, y - 12, x - 12, y - 22, 0x675d46);
-        line(x - 1, y - 18, x + 6, y - 28, 0x675d46);
-        line(x - 10, y - 20, x - 13, y - 29, 0x675d46);
-        line(x + 3, y - 23, x + 11, y - 25, 0x675d46);
-    } else if (b->type == NODE_RUIN) {
-        box(x, y, 17, 9, 8, 0x7e8078);
-        box(x - 8, y - 5, 5, 3, 27, 0x868b80);
-        box(x + 9, y - 2, 5, 3, 18, 0x6f7770);
-        box(x, y - 8, 5, 3, 5, 0x68978c);
-        px(x, y - 15, TEAL);
-    } else {
-        box(x, y, 11, 6, 9, b->owner ? 0x92794e : 0x8b7860);
-        line(x - 8, y - 11, x + 2, y - 6, 0xbca275);
-        line(x, y - 3, x, y + 4, 0x363f3c);
-        if (b->locked) {
-            rect(x - 2, y - 5, 4, 4, GOLD);
-        }
+    int id = resource_sprite(n);
+    art(id, x, y + (id < 24 ? 5 : 0), light() * (b->type == NODE_ORE ? .82f : 1), 0);
+    if (b->locked) {
+        frame(x - 2, y - 5, 4, 4, GOLD);
     }
 }
 static void thickline(int x, int y, int xx, int yy, int width, uint32_t c) {
@@ -596,346 +643,7 @@ static void weapon_sprite(int id, int x, int y, int sc, float angle, float li) {
 #undef WL
 #undef WQ
 }
-static void person(Actor *a, int x, int y, int sc, int chosen) {
-    static const uint32_t skins[] = {0xe0b78a, 0xc39971, 0xad7d58, 0x956645,
-                                     0x744c36, 0x553d30, 0xc5b69b, 0x817a68};
-    static const uint32_t hairs[] = {0x211e1b, 0x433026, 0x776047, 0xa4835c, 0xc1b5a0, 0x713e32};
-    float li = sc == 1 ? light() : 1;
-    uint32_t skin = shade(skins[a->skin % 8], li), hair = shade(hairs[a->hairColor % 6], li);
-    int torso = a->gear[1], head = a->gear[2], legs = a->gear[4], back = a->gear[5];
-    int tf = gear_family(torso), hf = gear_family(head), lf = gear_family(legs), bf = gear_family(back);
-    if (tf < 0)
-        tf = torso == DUSTER ? 32 : torso == PLATE ? 38 : 35;
-    if (hf < 0)
-        hf = head == STRAW ? 48 : head == HELM ? 50 : head == HAT ? 51 : -1;
-    uint32_t cloth = shade(torso ? itemDefs[torso].color : 0x8a7358, li),
-             trim = shade(itemDefs[torso].trim, li), hc = shade(itemDefs[head].color, li);
-    uint32_t lc = shade(legs ? itemDefs[legs].color : 0x484239, li), bc = shade(itemDefs[back].color, li),
-             boot = shade(a->gear[3] ? itemDefs[a->gear[3]].color : skins[a->skin % 8], li);
-    int face = a->facing ? 1 : -1, pose = a->movedTimer > 0 ? (int)(sinf(a->anim * 2) * 2.8f) : 0;
-    int missing = a->lostMask & ~a->prostheticMask;
-    float progress = a->attackDuration > 0 ? 1 - a->attackClock / a->attackDuration : 0;
-    int weapon = a->attackPhase ? a->attackWeapon : a->gear[0];
-    CombatPose rig = combat_pose(weapon, a->attackPhase, progress);
-    float aim = a->attackPhase ? a->attackAngle : (face > 0 ? 0 : 3.14159265f);
-    float forward = cosf(aim), depth = sinf(aim);
-    float lean = rig.shift * forward;
-    if (a->hitFlash > 0 && a->impactKind == 1)
-        lean -= (a->recoilX-a->recoilY)*4*pose_ease(a->hitFlash/.38f);
-    float crouch = rig.crouch + (a->sneaking ? 3 : 0);
-    /* Longer legs and a narrow torso. Grounded feet stay fixed while the hips load. */
-#define RX(xx, yy) (x + (int)lroundf(((xx)*(1+rig.twist) + lean*fminf(1,fmaxf(0,-(yy)/24.f)))*sc))
-#define RY(yy) (y + (int)lroundf(((yy)*1.25f + crouch*fminf(1,fmaxf(0,-(yy)/13.f)))*sc))
-#define Q(xx, yy, xx1, yy1, xx2, yy2, xx3, yy3, c) quad(RX(xx,yy),RY(yy),RX(xx1,yy1),RY(yy1),RX(xx2,yy2),RY(yy2),RX(xx3,yy3),RY(yy3),c)
-#define R(xx, yy, w, h, c) Q(xx,yy,(xx)+(w),yy,(xx)+(w),(yy)+(h),xx,(yy)+(h),c)
-#define L(xx, yy, xx1, yy1, c) thickline(RX(xx,yy),RY(yy),RX(xx1,yy1),RY(yy1),sc,c)
-    ellipse(x + 2 * sc, y + 2 * sc, 10 * sc, 3 * sc, shade(0x39342c, li));
-    if (chosen && sc == 1) {
-        diamond(x, y + 2, 13, 6, 0x665948);
-        line(x - 13, y + 2, x, y + 8, TEAL);
-        line(x, y + 8, x + 13, y + 2, TEAL);
-    }
-    if (a->kind == BEAST) {
-        ellipse(x, y - 7, 12, 5, shade(0x695547, li));
-        for (int j = -1; j <= 1; j += 2) {
-            L(j * 8, -6, j * 10 + pose, 1, 0x302a26);
-            L(j * 6, -5, j * 6 - pose, 2, 0x40372d);
-        }
-        Q(6, -11, 13, -15, 18, -9, 8, -5, shade(0x99806a, li));
-        L(-10, -8, -18, -14, 0x695547);
-        R(13, -11, 1, 1, RED);
-        return;
-    }
-    if (a->dead || a->unconscious > 0 || a->taskKind == 3) {
-        if (a->bleed > 0 || a->dead)
-            ellipse(x + 2 * sc, y + 2 * sc, 10 * sc, 3 * sc, 0x552f26);
-        R(-11, -5, 16, 6, cloth);
-        R(-17, -4, 7, 3, lc);
-        ellipse(x + 8 * sc, y - 3 * sc, 3 * sc, 3 * sc, skin);
-        L(-10, -4, 2, -1, trim);
-        weapon_sprite(a->gear[0], x - 4 * sc, y + 4 * sc, sc, .1f, li);
-        return;
-    }
-    if (back) {
-        if (bf == 80 || bf == 83) {
-            int hem = bf == 83 ? -7 : -3;
-            Q(-7, -23, 6, -24, 9 + pose, hem, -9, hem - 1, bc);
-            L(-9, hem - 1, 9, hem, itemDefs[back].trim);
-            for (int j = 0; j <= itemDefs[back].quality; j++)
-                R(-9 + j, hem - 3, 1, 1, itemDefs[back].trim);
-        } else {
-            R(-9, -25, 7 + (bf % 3), 17, shade(bc, .65f));
-            R(-9, -25, 7 + (bf % 3), 4, bc);
-            L(-8, -23, -8, -10, itemDefs[back].trim);
-        }
-        if (bf == 77) {
-            L(-7, -16, -7, -44, 0x514536);
-            Q(-7, -44, 3, -42, 3, -31, -7, -33, bc);
-            L(-5, -41, 1, -36, itemDefs[back].trim);
-        }
-        if (bf == 81) {
-            weapon_sprite(gear_id(0, itemDefs[back].material, itemDefs[back].quality), x - 7 * sc,
-                          y - 18 * sc, sc, -2.f, li);
-        }
-        if (bf == 82) {
-            R(-10, -27, 15, 5, bc);
-            L(-7, -27, -7, -22, trim);
-            L(1, -27, 1, -22, trim);
-        }
-        if (bf == 78) {
-            R(-9, -17, 5, 2, TEXT);
-            R(-7, -19, 1, 6, TEXT);
-        }
-        if (bf == 79) {
-            R(-12, -20, 4, 10, shade(bc, .8f));
-            L(-12, -20, -9, -15, itemDefs[back].trim);
-        }
-    }
-    for (int i = 0; i < 2; i++) {
-        int limb = i ? RLEG : LLEG;
-        if (missing & (1 << limb))
-            continue;
-        int xx = i ? 1 : -5, off = i ? pose : -pose;
-        if (a->health[limb] < 20) off /= 2;
-        float foot = xx + (i ? 1 : -1)*rig.step*forward;
-        float knee = xx + rig.shift*forward + (i ? 1 : -1);
-        float lift = a->attackPhase ? 0 : fmaxf(0,off)*.5f;
-        uint32_t c = a->prostheticMask & (1 << limb) ? 0x777b78 : lc;
-        Q(xx,-13,xx+3,-13,knee+3,-7,knee,-7,shade(c,.8f));
-        Q(knee,-8,knee+3,-8,foot+3,-2-lift,foot,-2-lift,c);
-        L(xx,-12,knee,-7,shade(c,1.12f));
-        L(knee,-7,foot,-3-lift,shade(c,1.12f));
-        R(foot-1,-3-lift,5,2,shade(boot,.65f));
-        R(foot+face,-2-lift,4,1,boot);
-        if (lf == 68) {
-            R(xx - 1, -13, 6, 7, lc);
-            L(xx, -13, xx, -6, itemDefs[legs].trim);
-        } else if (lf == 70) {
-            for (int j = 0; j < 3; j++)
-                R(xx - 1, -13 + j * 2, 5, 1, shade(itemDefs[legs].trim, li));
-        } else if (lf == 72) {
-            R(xx, -12, 2, 7, shade(lc, .5f));
-            R(xx, -8, 4, 2, itemDefs[legs].trim);
-        } else if (lf == 75) {
-            for (int j = 0; j < 4; j++)
-                R(xx + j % 2, -12 + j * 2, 3, 1, shade(itemDefs[legs].trim, li));
-        } else if (lf == 71)
-            R(xx, -12, 2, 6, shade(c, .6f));
-        else if (lf == 74)
-            for (int j = 0; j < 3; j++)
-                L(xx, -12 + j * 3, xx + 3, -10 + j * 3, itemDefs[legs].trim);
-        else if (lf == 73)
-            R(-6, -13, 12, 8, lc);
-        if (legs)
-            for (int j = 0; j <= itemDefs[legs].quality; j++)
-                R(xx + j, -6 + off, 1, 1, itemDefs[legs].trim);
-        int bootf = gear_family(a->gear[3]);
-        if (bootf >= 60) {
-            R(xx, -5 + off - (bootf - 60) % 4, 4, 2, shade(boot, 1.35f));
-            if (bootf == 64) {
-                L(xx, -7 + off, xx + 3, -5 + off, itemDefs[a->gear[3]].trim);
-                L(xx, -5 + off, xx + 3, -4 + off, itemDefs[a->gear[3]].trim);
-            }
-            if (bootf == 66)
-                R(xx - 2, -2 + off, 2, 1, itemDefs[a->gear[3]].trim);
-            if (bootf == 65)
-                R(xx + 3, -3 + off, 3, 1, shade(boot, .5f));
-            if (bootf == 67) {
-                L(xx, -8 + off, xx + 3, -6 + off, itemDefs[a->gear[3]].trim);
-            }
-            if (bootf == 63)
-                R(xx + 2, -3 + off, 1, 2, INK);
-            for (int j = 0; j <= itemDefs[a->gear[3]].quality; j++)
-                R(xx + j, -3 + off, 1, 1, itemDefs[a->gear[3]].trim);
-        }
-    }
-
-    int bw = a->body == 1 ? 5 : a->body == 2 ? 3 : 4;
-    int coat = tf == 32 || tf == 33 || tf == 39 || tf == 40 || tf == 42 || tf == 44 || tf == 47;
-    if (coat) {
-        Q(-bw, -23, bw, -23, bw + 2 + pose - rig.shift, -5, -bw - 2 - rig.shift, -6, cloth);
-        L(0, -17, 0, -5, shade(cloth, .48f));
-    }
-    Q(-bw, -24, bw, -24, bw - 1, -12, -bw + 1, -12, cloth);
-    L(-bw, -23, -bw + 1, -13, shade(cloth, 1.18f));
-    if (tf == 34 || tf == 36 || tf == 38 || tf == 42 || tf == 44 || tf == 47) {
-        R(-bw - 2, -24, 4, 5, shade(cloth, 1.15f));
-        R(bw - 1, -24, 4, 5, shade(cloth, .78f));
-        for (int j = 0; j < 4; j++) {
-            L(-bw + 1, -22 + j * 3, bw - 1, -22 + j * 3, trim);
-            for (int z = -bw + 2; z < bw; z += 3)
-                R(z, -21 + j * 3, 1, 1, shade(cloth, .5f));
-        }
-    } else if (tf == 37) {
-        for (int j = -1; j <= 1; j++)
-            L(j * 3, -23, j * 3 + 1, -15, 0xbbad8c);
-    } else {
-        L(-bw, -23, bw - 1, -12, trim);
-        if (tf == 45) {
-            for (int j = 0; j < 5; j++)
-                R(-3 + j, -23 + j * 2, 2, 2, 0xb59a6c);
-        }
-        if (tf == 41 || tf == 43)
-            for (int j = -3; j < 4; j += 3)
-                L(j, -22, j, -13, shade(cloth, .75f));
-    }
-    if (tf == 40) { /* ash cloak: asymmetric weather-beaten overlap */
-        Q(-bw,-23,1,-22,bw+2,-7,-2,-9,shade(cloth,.66f));
-        L(1,-22,-2,-9,shade(trim,.7f));
-    }
-    if (coat) {
-        L(-bw+1,-14,-bw-1-rig.shift,-7,shade(cloth,.62f));
-        L(bw-1,-16,bw+1+pose-rig.shift,-7,shade(cloth,1.1f));
-    }
-    R(-bw, -13, bw * 2, 2, 0x3c3027);
-    R(0, -13, 2, 2, trim);
-    L(-bw,-14,bw,-14,shade(trim,.65f));
-    if (torso) { /* irregular seam wear, subdued against the fabric */
-        R(-bw+1,-20,1,2,shade(cloth,.6f));
-        R(bw-2,-17,1,1,shade(cloth,1.2f));
-    }
-    if (torso) {
-        for (int j = 0; j < itemDefs[torso].quality + 1; j++)
-            R(-bw + 1 + j * 2, -15, 1, 1, trim);
-        R(tf % 7 - 3, -21, 1 + (tf % 2), 2, shade(cloth, .65f));
-    }
-    float angle = aim + face * rig.blade;
-    float handx = forward * rig.handX, handy = rig.handY + depth*rig.handX*.4f;
-    for (int i = 0; i < 2; i++) {
-        int limb = i ? RARM : LARM;
-        if (missing & (1 << limb)) continue;
-        float sx = i ? bw : -bw;
-        float hx = handx, hy = handy;
-        if (!i) {
-            if (combat_two_hands(weapon)) {
-                hx -= cosf(angle)*4; hy -= sinf(angle)*3.2f;
-            } else { hx = -face*5; hy = -17 + rig.crouch; }
-        }
-        /* Two bone arm: elbows bend outward, hands remain attached to the grip. */
-        float dx=hx-sx, dy=hy+23, d=sqrtf(dx*dx+dy*dy);
-        float bend=sqrtf(fmaxf(0,49-d*d*.25f));
-        float ex=(sx+hx)*.5f-(d>.01f ? dy/d : 0)*bend*(i?1:-1);
-        float ey=(-23+hy)*.5f+(d>.01f ? dx/d : 1)*bend*(i?1:-1);
-        uint32_t c = a->prostheticMask & (1 << limb) ? 0x858982 : skin;
-        thickline(RX(sx,-23),RY(-23),RX(ex,ey),RY(ey),3*sc,shade(cloth,.65f));
-        thickline(RX(ex,ey),RY(ey),RX(hx,hy),RY(hy),2*sc,shade(c,.8f));
-        L(ex,ey,hx,hy,c);
-        R(hx-1,hy-1,2,2,c);
-    }
-    Q(-2,-30,2,-30,3,-26,1,-24,skin);
-    Q(-2,-30,-3,-26,-1,-24,1,-24,shade(skin,.68f));
-    L(-2,-29,2,-29,shade(skin,.5f));
-    R(-2, -23, 4, 2, skin);
-    if (a->hair) {
-        R(-3, -30, 6, 2, hair);
-        if (a->hair == 2 || a->hair == 4)
-            R(-4, -29, 2, 8, hair);
-        if (a->hair == 3)
-            R(-1, -34, 3, 5, hair);
-        if (a->hair == 5)
-            L(-3, -28, -5, -21, hair);
-        if (a->hair == 6) {
-            R(2, -30, 3, 3, hair);
-            R(3, -27, 2, 6, hair);
-        }
-    }
-    R(face > 0 ? 1 : -2, -27, 1, 1, INK);
-    if (a->beard) {
-        R(-2, -24, 4, 1 + a->beard, hair);
-    }
-    if (a->scar) {
-        L(a->scar % 3 - 1, -27, a->scar % 3, -24, 0x8a4837);
-    }
-    if (a->race == 2) {
-        R(-3, -27, 2, 2, 0x89a6a1);
-        R(-3, -27, 1, 1, 0xd2e0b8);
-    }
-    if (head) {
-        if (hf == 48 || hf == 58) {
-            Q(-9, -28, 0, hf == 48 ? -35 : -32, 9, -28, 0, -27, hc);
-            L(-9, -28, 9, -28, shade(hc, .6f));
-            for (int j = -6; j < 8; j += 3)
-                L(0, -33, j, -28, itemDefs[head].trim);
-        } else if (hf == 49 || hf == 56) {
-            R(-5, -33, 9, 6, hc);
-            L(-9, -28, 9, -28, shade(hc, 1.3f));
-            R(-4, -29, 8, 1, itemDefs[head].trim);
-            if (hf == 56)
-                R(-3, -27, 6, 2, 0x2d3432);
-        } else if (hf == 50 || hf == 53 || hf == 59) {
-            Q(-5, -29, -4, -33, 3, -34, 5, -29, hc);
-            R(-6, -29, 12, 2, hc);
-            R(-5, -27, 2, 6, hc);
-            R(3, -27, 2, 6, hc);
-            if (hf != 53) {
-                L(-5, -31, -8, -36, itemDefs[head].trim);
-                L(5, -31, 8, -36, itemDefs[head].trim);
-            }
-            if (hf == 59)
-                R(-1, -37, 2, 5, 0x87422f);
-        } else {
-            R(-4, -31, 8, 4, hc);
-            R(-5, -28, 2, 7, hc);
-            R(3, -28, 2, 7, hc);
-            if (hf == 51 || hf == 55) {
-                R(-3, -25, 7, 3, hc);
-                R(2, -25, 1, 1, trim);
-                if (hf == 55) {
-                    R(-4, -26, 2, 4, 0xd1b784);
-                    R(3, -26, 2, 4, 0xd1b784);
-                    L(-4, -31, -6, -35, hc);
-                }
-            }
-            if (hf == 57) {
-                Q(-6, -29, 0, -35, 6, -29, 0, -31, hc);
-            }
-            if (hf == 52) {
-                L(-4, -29, 4, -31, itemDefs[head].trim);
-                L(-4, -27, 4, -29, itemDefs[head].trim);
-            }
-        }
-        for (int j = 0; j <= itemDefs[head].quality; j++)
-            R(-2 + j * 2, -30, 1, 1, itemDefs[head].trim);
-    }
-    if (!(missing & (1 << RARM)))
-        weapon_sprite(a->attackPhase ? a->attackWeapon : a->gear[0], RX(handx,handy), RY(handy), sc,
-                      angle, li);
-    if (a->carrying >= 0) {
-        R(-9, -25, 18, 5, 0x7c6852);
-        ellipse(x + 10 * sc, y - 23 * sc, 3 * sc, 3 * sc, skin);
-    }
-    /* Brief, restrained muzzle flash. No luminous circular melee trails. */
-    if (sc == 1 && a->attackPhase == 2 && weapon_ranged(weapon) &&
-        progress >= STRIKE_CONTACT && progress < STRIKE_CONTACT+.18f) {
-        int ex=RX(handx,handy)+(int)(cosf(angle)*27);
-        int ey=RY(handy)+(int)(sinf(angle)*27);
-        if (gear_family(weapon)>=29) {
-            line(ex,ey,ex+(int)(cosf(angle)*6),ey+(int)(sinf(angle)*6),0xd7b98a);
-            px(ex,ey,0xeee0bc);
-        }
-    }
-    if (sc == 1 && a->hitFlash > 0) {
-        uint32_t c = a->impactKind == 2 ? 0xe6d3a3 : a->impactKind == 3 ? MUTED : 0x9a4934;
-        float t = (.38f - a->hitFlash) * 24;
-        for (int j = 0; j < 6; j++) {
-            float an = j * 1.0472f;
-            line(x + cosf(an) * t, y - 19 + sinf(an) * t, x + cosf(an) * (t + 3), y - 19 + sinf(an) * (t + 3),
-                 c);
-        }
-        char b[16];
-        snprintf(b, sizeof(b), "-%d", a->impactDamage);
-        text(x - 6, y - 43 - (int)t,
-             a->impactKind == 2   ? "CLANG"
-             : a->impactKind == 3 ? "DODGE"
-                                  : b,
-             a->impactKind == 1 ? RED : GOLD, 1);
-    }
-#undef R
-#undef L
-#undef Q
-#undef RX
-#undef RY
-}
+#include "painted_actor.h"
 typedef struct {
     float depth;
     int kind, index, x, y;
@@ -978,6 +686,50 @@ static void objects_draw(void) {
                 continue;
             objects[n++] = (Object){x + y + .7f, 3, biome(x, y) * 4 + (int)(h % 4), sx, sy};
         }
+    for (int i = 0; i < n; i++) {
+        Object *o = &objects[i];
+        int x = o->x, y = o->y;
+        if (o->kind == 1) {
+            Building *b = &g.buildings[o->index];
+            project(b->x, b->y, &x, &y);
+            art_shadow(building_sprite(o->index), x, y);
+        }
+        if (o->kind == 0 && g.nodes[o->index].remaining) {
+            Node *b = &g.nodes[o->index];
+            project(b->x, b->y, &x, &y);
+            int id = resource_sprite(o->index);
+            art_shadow(id, x, y + (id < 24 ? 5 : 0));
+        }
+        if (o->kind == 3) {
+            int region = o->index / 4, variant = o->index % 4;
+            int id = region == 7                    ? 10
+                     : region == 3                  ? 13
+                     : region == 6                  ? 14
+                     : (region == 8 || region == 5) ? 11
+                     : variant < 2                  ? 9
+                                                    : 12;
+            art_shadow(id, x, y + 4);
+        }
+    }
+    if (ui.contextIndex >= 0 && !g.interiorBuilding) {
+        int x, y;
+        float wx, wy;
+        int id = ui.contextIndex;
+        if (ui.contextKind == 0) {
+            wx = g.actors[id].x;
+            wy = g.actors[id].y;
+        } else if (ui.contextKind == 1) {
+            wx = g.nodes[id].x;
+            wy = g.nodes[id].y;
+        } else {
+            wx = g.buildings[id].x + (ui.contextKind == 3 ? 1.45f : 0);
+            wy = g.buildings[id].y + (ui.contextKind == 3 ? .65f : 0);
+        }
+        project(wx, wy, &x, &y);
+        uint32_t color = context_distance() <= context_reach() ? TEAL : MUTED;
+        line(x - 12, y, x, y + 6, color);
+        line(x, y + 6, x + 12, y, color);
+    }
     qsort(objects, n, sizeof(Object), compare_obj);
     for (int i = 0; i < n; i++) {
         Object *o = &objects[i];
@@ -990,43 +742,25 @@ static void objects_draw(void) {
             person(a, o->x, o->y, 1, o->index == g.selected);
             if (a->target >= 0 || a->unconscious > 0 || a->squad) {
                 float hp = (a->health[HEAD] + a->health[CHEST]) * .5f;
-                bar(o->x - 10, o->y - 38, 21, 2, hp, a->squad ? TEAL : RED);
+                bar(o->x - 10, o->y - 43, 21, 2, hp, a->squad ? TEAL : RED);
             }
-            if (a->kind == TRADER || a->kind == RECRUIT) {
-                center(o->x, o->y - 40, a->kind == TRADER ? "TRADE" : "RECRUIT",
-                       a->kind == TRADER ? GOLD : TEAL, 1);
+            if (!a->squad && a->kind != BEAST && a->kind != RAIDER && ui.contextKind == 0 &&
+                ui.contextIndex == o->index) {
+                center(o->x, o->y - 52, npc_role_name(a), a->kind == RECRUIT ? TEAL : GOLD, 1);
             }
             if (a->squad && o->index == g.selected) {
-                triangle(o->x - 3, o->y - 46, o->x + 3, o->y - 46, o->x, o->y - 42, TEAL);
+                triangle(o->x - 3, o->y - 49, o->x + 3, o->y - 49, o->x, o->y - 45, TEAL);
             }
         } else {
             int x = o->x, y = o->y;
             int region = o->index / 4, variant = o->index % 4;
-            if (region == 7) {
-                line(x, y, x, y - 43, shade(0x443a2b, light()));
-                for (int z = 0; z < 3; z++) {
-                    int yy = y - 12 - z * 10;
-                    triangle(x - 13 + z * 3, yy, x, yy - 23, x + 13 - z * 3, yy,
-                             shade(z % 2 ? 0x344b3b : 0x435540, light()));
-                }
-            } else if (region == 3) {
-                for (int j = 0; j < 5; j++) {
-                    line(x - 7 + j * 3, y, x - 10 + j * 4, y - 15 - j % 3 * 4, shade(0x747b4c, light()));
-                    rect(x - 11 + j * 4, y - 18 - j % 3 * 4, 2, 6, shade(0x4b4837, light()));
-                }
-            } else if (region == 8 || region == 5) {
-                int h = 18 + variant * 9;
-                triangle(x - 10, y, x - 5, y - h, x + 12, y, shade(0x6b4d3c, light()));
-                triangle(x - 5, y - h, x + 2, y - h + 2, x + 12, y, shade(0xa77e58, light()));
-                for (int z = 5; z < h; z += 7)
-                    line(x - 5, y - z, x + 7 - z / 6, y - z + 2, shade(0x47382d, light()));
-            } else if (variant < 2) {
-                triangle(x - 6, y, x - 2, y - 6, x + 7, y, shade(0x8b8369, light()));
-                line(x - 2, y - 6, x + 7, y, shade(0xb5a886, light()));
-            } else {
-                for (int j = 0; j < 4; j++)
-                    line(x, y, x - 5 + j * 3, y - 4 - (j % 2) * 3, shade(0x757954, light()));
-            }
+            int sprite = region == 7                    ? 10
+                         : region == 3                  ? 13
+                         : region == 6                  ? 14
+                         : (region == 8 || region == 5) ? 11
+                         : variant < 2                  ? 9
+                                                        : 12;
+            art(sprite, x, y + 4, light(), 0);
         }
     }
 }
@@ -1068,6 +802,135 @@ static void speech_bubbles(void) {
     wrap(x + 6, y + 5, (w - 12) / 6, words, TEXT);
 }
 
+static void texture_plane(int id, float x, float y, float ux, float uy, float vx, float vy, float repeatU,
+                          float repeatV, float li) {
+    const ArtSprite *s = &artSprites[id];
+    float det = ux * vy - uy * vx;
+    if (fabsf(det) < .1f)
+        return;
+    int left = floorf(fminf(fminf(x, x + ux), fminf(x + vx, x + ux + vx))),
+        right = ceilf(fmaxf(fmaxf(x, x + ux), fmaxf(x + vx, x + ux + vx)));
+    int top = floorf(fminf(fminf(y, y + uy), fminf(y + vy, y + uy + vy))),
+        bottom = ceilf(fmaxf(fmaxf(y, y + uy), fmaxf(y + vy, y + uy + vy)));
+    if (left < clipLeft)
+        left = clipLeft;
+    if (right > clipRight)
+        right = clipRight;
+    if (top < clipTop)
+        top = clipTop;
+    if (bottom > clipBottom)
+        bottom = clipBottom;
+    part_palette(id, 0x808080, li, 0);
+    for (int yy = top; yy < bottom; yy++)
+        for (int xx = left; xx < right; xx++) {
+            float dx = xx + .5f - x, dy = yy + .5f - y, u = (dx * vy - dy * vx) / det,
+                  v = (dy * ux - dx * uy) / det;
+            if (u < 0 || v < 0 || u >= 1 || v >= 1)
+                continue;
+            int sx = (int)(u * repeatU * s->w) % s->w, sy = (int)(v * repeatV * s->h) % s->h;
+            int lo = s->rows[sy * 3 + 1];
+            if (sx < lo || sx >= s->rows[sy * 3 + 2])
+                continue;
+            fb[yy * pitch + xx] = artPalette[id][s->pixels[s->rows[sy * 3] + sx - lo]];
+        }
+}
+static void room_project(float x, float y, int *sx, int *sy) {
+    *sx = 240 + (int)((x - y) * 22);
+    *sy = 61 + (int)((x + y) * 11);
+}
+static void interior_draw(void) {
+    int id = g.interiorBuilding - 1;
+    Building *b = &g.buildings[id];
+    rect(0, 0, 480, 272, 0x211d18);
+    texture_plane(105, 86, 138, 154, -77, 0, -44, 3, 1.2f, .92f);
+    texture_plane(105, 240, 61, 154, 77, 0, -44, 3, 1.2f, .68f);
+    texture_plane(104, 240, 61, 154, 77, -154, 77, 2, 3, .96f);
+    for (int j = 0; j <= 7; j++) {
+        int x = 86 + j * 22, y = 138 - j * 11;
+        texture_plane(106, x, y, 0, -44, 3, -1.5f, 1, 1, .8f);
+        x = 240 + j * 22;
+        y = 61 + j * 11;
+        texture_plane(106, x, y, 0, -44, 3, 1.5f, 1, 1, .62f);
+    }
+    line(86, 94, 240, 17, 0x51402f);
+    line(240, 17, 394, 94, 0x382f25);
+    /* Door threshold remains visible on the removed front wall. */
+    int x, y;
+    room_project(3.5f, 6.8f, &x, &y);
+    diamond(x, y, 22, 10, 0xb3986b);
+    line(x - 22, y, x, y + 10, GOLD);
+    text(x - 15, y + 12, "EXIT", GOLD, 1);
+    room_project(3.8f, 3.6f, &x, &y);
+    art(23, x, y + 10, .8f, 0);
+    InteriorProp props[8];
+    int count = interior_props(id, props), order[10];
+    float depth[10];
+    for (int i = 0; i < count; i++) {
+        order[i] = i;
+        depth[i] = props[i].x + props[i].y;
+    }
+    int player = count;
+    order[count] = count;
+    depth[count++] = g.interiorX + g.interiorY;
+    int sleepProp = -1;
+    if (g.actors[g.selected].taskKind == 3)
+        for (int i = 0; i < player; i++)
+            if (props[i].action == ROOM_REST) {
+                sleepProp = i;
+                depth[player] = props[i].x + props[i].y + .01f;
+                break;
+            }
+    int keeper = -1;
+    if (b->type == SHOP || b->type == BAR) {
+        keeper = count;
+        order[count] = count;
+        depth[count++] = b->type == SHOP ? 3.8f : 4.1f;
+    }
+    for (int i = 1; i < count; i++) {
+        int a = order[i], j = i;
+        while (j > 0 && depth[order[j - 1]] > depth[a]) {
+            order[j] = order[j - 1];
+            j--;
+        }
+        order[j] = a;
+    }
+    for (int k = 0; k < count; k++) {
+        int i = order[k];
+        if (i == player) {
+            if (sleepProp >= 0) {
+                room_project(props[sleepProp].x, props[sleepProp].y, &x, &y);
+                y -= 12;
+            } else
+                room_project(g.interiorX, g.interiorY, &x, &y);
+            person(&g.actors[g.selected], x, y, 1, sleepProp < 0);
+        } else if (i == keeper) {
+            Actor resident = g.actors[g.selected];
+            resident.attackPhase = resident.movedTimer = resident.hitFlash = 0;
+            resident.gear[0] = 0;
+            resident.gear[1] = gear_id(35, 0, 1);
+            resident.gear[2] = HAT;
+            resident.gear[5] = 0;
+            resident.skin = 3;
+            resident.sneaking = 0;
+            resident.taskKind = 0;
+            resident.dead = 0;
+            resident.unconscious = 0;
+            room_project(b->type == SHOP ? 3.f : 4.f, b->type == SHOP ? .8f : .4f, &x, &y);
+            person(&resident, x, y, 1, 0);
+        } else {
+            room_project(props[i].x, props[i].y, &x, &y);
+            art(props[i].art, x, y + 5, 1, 0);
+        }
+    }
+    const char *name = b->type == SHOP    ? "TRADING POST / INTERIOR"
+                       : b->type == BAR   ? "THE WAYWARD / ROOMS"
+                       : b->type == FORGE ? "SMITHY / INTERIOR"
+                       : b->type == STORE ? "DEPOT / INTERIOR"
+                       : b->type == BENCH ? "WORKSHOP / INTERIOR"
+                       : b->type == TOWER ? "WATCH HOUSE / INTERIOR"
+                                          : "FRONTIER HOME / INTERIOR";
+    text(12, 32, name, GOLD, 1);
+}
 static void mini_map(void) {
     int ox = 402, oy = 31;
     rect(ox - 3, oy - 3, 72, 67, PANEL);
@@ -1104,7 +967,15 @@ static void hud(void) {
     text(220, 8, b, MUTED, 1);
     snprintf(b, 120, "%d SILVER", g.money);
     text(397 - strlen(b) * 2, 8, b, TEXT, 1);
-    mini_map();
+    if (!g.interiorBuilding)
+        mini_map();
+    else {
+        panel(408, 30, 64, 60);
+        text(414, 36, "INDOORS", GOLD, 1);
+        frame(418, 49, 43, 32, EDGE);
+        rect(420 + (int)(g.interiorX * 5), 51 + (int)(g.interiorY * 4), 3, 3, TEAL);
+    }
+
     if (ui.paused) {
         panel(192, 31, 94, 20);
         center(239, 38, "TACTICAL PAUSE", GOLD, 1);
@@ -1123,13 +994,20 @@ static void hud(void) {
             if (k++ / 4 != page)
                 continue;
             int x = 8 + shown++ * 72;
-            rect(x, 219, 65, 33, i == g.selected ? 0x374640 : PANEL);
+            rect(x, 219, 65, 33, i == g.selected ? 0x494132 : PANEL);
             frame(x, 219, 65, 33, i == g.selected ? TEAL : EDGE);
             Actor portrait = *m;
-            portrait.attackPhase=0; portrait.hitFlash=0; portrait.movedTimer=0;
-            clipLeft=x+1; clipTop=220; clipRight=x+23; clipBottom=251;
-            person(&portrait, x+12, 261, 1, 0);
-            clipLeft=clipTop=0; clipRight=480; clipBottom=272;
+            portrait.attackPhase = 0;
+            portrait.hitFlash = 0;
+            portrait.movedTimer = 0;
+            clipLeft = x + 1;
+            clipTop = 220;
+            clipRight = x + 23;
+            clipBottom = 251;
+            person(&portrait, x + 12, 261, 1, 0);
+            clipLeft = clipTop = 0;
+            clipRight = 480;
+            clipBottom = 272;
             char shortname[7];
             snprintf(shortname, sizeof(shortname), "%.6s", m->name);
             text(x + 24, 224, shortname, i == g.selected ? TEAL : TEXT, 1);
@@ -1154,43 +1032,41 @@ static void hud(void) {
         text(430, 221, "SNEAK", TEAL, 1);
     else
         text(430, 221, a->autoattack ? "FIGHT" : "FLEE", GOLD, 1);
-    text(8, 261, "X ACT TRI PACK SQ FIGHT O SNEAK L SQUAD R PAUSE", MUTED, 1);
-    text(355, 261, "SEL MAP START MENU", MUTED, 1);
+    text(8, 261, "\001 ACT  \004 PACK  \003 FIGHT  \002 SNEAK  \005 SQUAD  \006 PAUSE", MUTED, 1);
+    text(352, 261, "\010 MAP \007 MENU", MUTED, 1);
     if (ui.noticeTime > 0) {
-        rect(7, 191, 466, 15, PANEL);
-        text(13, 195, ui.notice, TEXT, 1);
+        rect(7, 26, 386, 14, PANEL);
+        char notice[64];
+        snprintf(notice, sizeof(notice), "%.62s", ui.notice);
+        text(12, 30, notice, TEXT, 1);
+    }
+    panel(67, 177, 346, 32);
+    if (g.interiorBuilding) {
+        center(240, 182, "INDOOR SERVICE", GOLD, 1);
+        text(80, 195, "\001", TEAL, 1);
+        text(96, 195, interior_prompt(), TEXT, 1);
     } else if (ui.contextIndex >= 0) {
-        const char *s = "INTERACT";
-        int id = ui.contextIndex;
-        if (ui.contextKind == 0) {
-            Actor *m = &g.actors[id];
-            s = m->squad                        ? "FIRST AID / CARRY"
-                : m->dead || m->unconscious > 0 ? "LOOT BODY"
-                : m->kind == TRADER             ? "TRADE SUPPLIES"
-                                                : "TALK / SERVICES";
-        } else if (ui.contextKind == 1) {
-            Node *m = &g.nodes[id];
-            s = m->locked                ? "PICK LOCK"
-                : m->type <= NODE_COPPER ? "MINE RESOURCE"
-                : m->type == NODE_WOOD   ? "GATHER TIMBER"
-                                         : "TAKE LOOT";
+        center(240, 182, context_name(), GOLD, 1);
+        float d = context_distance();
+        if (ui.contextKind == 3 && (a->target >= 0 || a->attackPhase)) {
+            center(240, 195, "BREAK AWAY FROM COMBAT TO ENTER", MUTED, 1);
+        } else if (d > context_reach()) {
+            char action[72];
+            snprintf(action, sizeof(action), "MOVE CLOSER  %.2fm / %.2fm", d, context_reach());
+            center(240, 195, action, MUTED, 1);
         } else {
-            Building *m = &g.buildings[id];
-            s = m->type == WELL                         ? "DRAW WATER"
-                : m->type == BED || m->type == CAMPFIRE ? "REST"
-                : m->type == FARM                       ? "WATER / HARVEST"
-                : m->type == FORGE                      ? "CRAFT"
-                : m->type == BENCH                      ? "RESEARCH"
-                                                        : "STORAGE";
+            char action[72];
+            snprintf(action, sizeof(action), "\001 %s%s", context_action(),
+                     a->taskKind == 1 ? "  /  MOVE TO STOP" : "");
+            center(240, 195, action, TEXT, 1);
         }
-        int w = strlen(s) * 6 + 28;
-        panel(240 - w / 2, 186, w, 20);
-        text(240 - w / 2 + 7, 193, "X", TEAL, 1);
-        text(240 - w / 2 + 20, 193, s, TEXT, 1);
+    } else {
+        center(240, 182, "FIND SUPPLIES, WORK OR A ROAD OUT", GOLD, 1);
+        center(240, 195, "\010 ATLAS   \007 SERVICES & FIELD GUIDE", MUTED, 1);
     }
     if (a->taskKind) {
         int w = 120;
-        bar(180, 178, w, 4,
+        bar(180, 172, w, 3,
             (1 - fminf(1, a->action / (a->taskKind == 3   ? 20
                                        : a->taskKind == 2 ? 4.5f
                                                           : 2.8f))) *
@@ -1218,21 +1094,21 @@ static void title(void) {
     for (int i = 0; i < 4; i++) {
         int y = 148 + i * 23;
         if (i == ui.selection) {
-            rect(25, y - 5, 255, 20, 0x374640);
+            rect(25, y - 5, 255, 20, 0x494132);
             text(32, y, ">", TEAL, 1);
         }
         text(47, y, opts[i], i == ui.selection ? TEXT : MUTED, 1);
     }
-    text(31, 251, "X BEGIN    VERSION " VERSION " / ALPHA", GOLD, 1);
+    text(31, 251, "\001 BEGIN    VERSION " VERSION " / ALPHA", GOLD, 1);
 }
 static void overlay_header(const char *name, const char *sub) {
     panel(14, 28, 452, 224);
     text(27, 40, name, GOLD, 2);
     text(28, 61, sub, MUTED, 1);
     line(27, 75, 451, 75, EDGE);
-    text(28, 237, "O CLOSE   SELECT GUIDE", MUTED, 1);
+    text(28, 237, "\002 CLOSE   \010 GUIDE", MUTED, 1);
     if (ui.screen >= SCREEN_PACK && ui.screen <= SCREEN_SQUAD)
-        text(249, 237, "L / R: PACK  SKILLS  BODY  SQUAD", MUTED, 1);
+        text(249, 237, "\005 / \006: PACK  SKILLS  BODY  SQUAD", MUTED, 1);
 }
 static int start_row(int selected, int max, int visible) {
     int first = selected - visible / 2;
@@ -1244,7 +1120,7 @@ static int start_row(int selected, int max, int visible) {
 }
 static void row(int y, int selected, const char *label, const char *value) {
     if (selected) {
-        rect(25, y - 3, 425, 14, 0x3c4a43);
+        rect(25, y - 3, 425, 14, 0x4a4030);
         rect(25, y - 3, 2, 14, TEAL);
     }
     text(32, y, label, selected ? TEXT : MUTED, 1);
@@ -1270,33 +1146,74 @@ static Actor preview_actor(void) {
     a.facing = 1;
     return a;
 }
+static void compare_number(int x, int y, const char *label, float old, float next, int decimals, int lower) {
+    char b[80];
+    float delta = next - old;
+    if (decimals)
+        snprintf(b, sizeof(b), "%s %.1f > %.1f (%+.1f)", label, old, next, delta);
+    else
+        snprintf(b, sizeof(b), "%s %d > %d (%+d)", label, (int)old, (int)next, (int)delta);
+    text(x, y, b, fabsf(delta) < .01f ? MUTED : ((delta > 0) != lower ? TEAL : RED), 1);
+}
+static void equipment_comparison(int it, int y) {
+    Actor *a = &g.actors[g.selected];
+    ItemDef *d = &itemDefs[it];
+    char b[110];
+    if (!it) {
+        text(31, y + 12, "SELECT AN ITEM TO INSPECT OR COMPARE.", MUTED, 1);
+        return;
+    }
+    if (d->slot < 0) {
+        snprintf(b, sizeof(b), "%s  /  WEIGHT %d", d->name, d->weight);
+        clipped(31, y, b, 68, TEXT);
+        wrap(31, y + 14, 67, d->desc, MUTED);
+        return;
+    }
+    int worn = a->gear[d->slot];
+    ItemDef *old = &itemDefs[worn];
+    snprintf(b, sizeof(b), "TRY  %s", d->name);
+    clipped(31, y, b, 68, TEXT);
+    snprintf(b, sizeof(b), "WORN %s", worn ? old->name : "EMPTY SLOT");
+    clipped(31, y + 12, b, 68, MUTED);
+    compare_number(31, y + 26, d->slot == 0 ? "DMG" : "ARM", d->slot == 0 ? old->power : old->armor,
+                   d->slot == 0 ? d->power : d->armor, 0, 0);
+    compare_number(229, y + 26, "WT", old->weight, d->weight, 0, 1);
+    if (d->slot == 0) {
+        compare_number(31, y + 38, "REACH", worn ? old->range : 1.55f, d->range, 1, 0);
+        compare_number(229, y + 38, "DELAY", worn ? old->cooldown : 1.2f, d->cooldown, 1, 1);
+    } else {
+        compare_number(31, y + 38, "CARRY", old->capacity, d->capacity, 0, 0);
+        compare_number(229, y + 38, "SPEED", old->speed, d->speed, 0, 0);
+    }
+    snprintf(b, sizeof(b), "EFFECT: %s +%d > %s +%d", old->effect < 0 ? "NONE" : effectNames[old->effect],
+             old->potency, d->effect < 0 ? "NONE" : effectNames[d->effect], d->potency);
+    clipped(31, y + 50, b, 68, GOLD);
+}
 static void pack_screen(void) {
     Actor *a = &g.actors[g.selected];
     char b[100];
-    overlay_header("PACK & EQUIPMENT", "X EQUIP / USE   TRI WORN GEAR   SQUARE PASS TO ALLY");
-    person(a, 101, 179, 2, 0);
-    int first = start_row(ui.selection, PACK, 8);
-    for (int j = 0; j < 8; j++) {
-        int k = first + j, y = 84 + j * 15, it = a->pack[k].item;
+    int it = a->pack[ui.selection].item;
+    overlay_header("PACK & EQUIPMENT", "\001 EQUIP / USE   \004 WORN GEAR   \003 PASS TO ALLY");
+    int first = start_row(ui.selection, PACK, 6);
+    for (int j = 0; j < 6; j++) {
+        int k = first + j, y = 84 + j * 14, id = a->pack[k].item;
         if (k == ui.selection)
-            rect(199, y - 3, 250, 14, 0x3c4034);
-        snprintf(b, 100, "%02d %.30s", k + 1, it ? itemDefs[it].name : "--");
-        text(207, y, b, k == ui.selection ? TEXT : MUTED, 1);
-        if (it) {
-            snprintf(b, 100, "%d", a->pack[k].qty);
-            text(443 - strlen(b) * 6, y, b, GOLD, 1);
+            rect(25, y - 3, 244, 13, 0x4a4030);
+        snprintf(b, sizeof(b), "%02d %.32s", k + 1, id ? itemDefs[id].name : "--");
+        text(31, y, b, k == ui.selection ? TEXT : MUTED, 1);
+        if (id) {
+            snprintf(b, sizeof(b), "%d", a->pack[k].qty);
+            text(262 - strlen(b) * 6, y, b, GOLD, 1);
         }
     }
-    int it = a->pack[ui.selection].item;
-    snprintf(b, 100, "LOAD %.0f/%d", encumbrance(a), 30 + level(a, STRENGTH) * 2 + gear_bonus(a, 3));
-    text(31, 188, b, TEAL, 1);
-    if (it) {
-        snprintf(b, 100, "DMG %d  ARM %d  WT %d   %s", itemDefs[it].power, itemDefs[it].armor,
-                 itemDefs[it].weight, a->stolen[ui.selection] ? "STOLEN" : "");
-        text(31, 210, b, TEXT, 1);
-        clipped(31, 222, itemDefs[it].desc, 68, MUTED);
-    } else
-        text(31, 220, "24 STACKS. EQUIPMENT HAS SIX VISIBLE SLOTS.", MUTED, 1);
+    Actor current = preview_actor(), preview = current;
+    if (it && itemDefs[it].slot >= 0)
+        preview.gear[itemDefs[it].slot] = it;
+    person(&current, 310, 160, 2, 0);
+    person(&preview, 409, 160, 2, 0);
+    text(287, 82, "WORN", MUTED, 1);
+    text(386, 82, "TRY ON", GOLD, 1);
+    equipment_comparison(it, 173);
 }
 
 static void skills_screen(void) {
@@ -1316,7 +1233,7 @@ static void skills_screen(void) {
 static void health_screen(void) {
     Actor *a = &g.actors[g.selected];
     char b[100];
-    overlay_header("BODY & FIRST AID", "X USE A FIELD DRESSING. LOST LIMBS NEED PROSTHETICS.");
+    overlay_header("BODY & FIRST AID", "\001 USE A FIELD DRESSING. LOST LIMBS NEED PROSTHETICS.");
     person(a, 99, 196, 2, 0);
     for (int i = 0; i < LIMBS; i++) {
         int y = 88 + i * 18;
@@ -1337,7 +1254,7 @@ static void health_screen(void) {
 }
 static void squad_screen(void) {
     Actor *a = &g.actors[g.selected];
-    overlay_header("SQUAD ORDERS", "LEFT / RIGHT MEMBER   X JOB   SQUARE DISMISS FALLEN");
+    overlay_header("SQUAD ORDERS", "\014 MEMBER   \001 JOB   \003 DISMISS FALLEN");
     clipped(31, 85, a->name, 16, TEAL);
     char b[60];
     snprintf(b, 60, "%d / 8 SURVIVORS", g.squadCount);
@@ -1347,17 +1264,34 @@ static void squad_screen(void) {
 }
 
 static void map_screen(void) {
-    overlay_header("ATLAS OF THE FRONTIER", "D-PAD CURSOR   X TRAVEL   L/R TOWNS   SQUARE CHART");
+    overlay_header(ui.mapZoom ? "LOCAL ROUTES / FRONTIER" : "WORLD ATLAS / FRONTIER",
+                   "\011 CURSOR  \001 TRAVEL  \005/\006 TOWNS  \004 ZOOM  \003 CHART");
     int ox = 29, oy = 82, mw = 256, mh = 136;
+    int spanX = ui.mapZoom ? 384 : WORLD, spanY = ui.mapZoom ? 204 : WORLD;
+    int left = ui.mapZoom ? (int)ui.mapX - spanX / 2 : 0, top = ui.mapZoom ? (int)ui.mapY - spanY / 2 : 0;
+    if (left < 0)
+        left = 0;
+    if (top < 0)
+        top = 0;
+    if (left > WORLD - spanX)
+        left = WORLD - spanX;
+    if (top > WORLD - spanY)
+        top = WORLD - spanY;
+#define MAPX(wx) (ox + (int)(((wx) - left) * mw / spanX))
+#define MAPY(wy) (oy + (int)(((wy) - top) * mh / spanY))
+#define INMAP(wx, wy) ((wx) >= left && (wx) < left + spanX && (wy) >= top && (wy) < top + spanY)
     static uint32_t atlas[256 * 136], cachedHash;
     static int ready;
     uint32_t h = g.seed;
+    h = (h ^ (unsigned)left) * 16777619u;
+    h = (h ^ (unsigned)top) * 16777619u;
+    h = (h ^ (unsigned)spanX) * 16777619u;
     for (unsigned i = 0; i < sizeof(g.seen); i++)
         h = (h ^ g.seen[i]) * 16777619u;
     if (!ready || h != cachedHash) {
         for (int y = 0; y < mh; y++)
             for (int x = 0; x < mw; x++) {
-                int wx = x * WORLD / mw, wy = y * WORLD / mh, k = wy * WORLD + wx,
+                int wx = left + x * spanX / mw, wy = top + y * spanY / mh, k = (wy / 4) * FOG_SIZE + wx / 4,
                     known = g.seen[k >> 3] & (1 << (k & 7));
                 uint32_t c = ground(biome(wx, wy));
                 if (terrain_water(wx, wy))
@@ -1372,17 +1306,46 @@ static void map_screen(void) {
     for (int y = 0; y < mh; y++)
         memcpy(fb + (oy + y) * pitch + ox, atlas + y * mw, mw * sizeof(uint32_t));
     for (int t = 0; t < TOWNS; t++)
-        if (g.discovered[t]) {
-            int x = ox + towns[t].x * mw / WORLD, y = oy + towns[t].y * mh / WORLD;
+        if (g.discovered[t] && INMAP(towns[t].x, towns[t].y)) {
+            int x = MAPX(towns[t].x), y = MAPY(towns[t].y);
             rect(x - 2, y - 2, 5, 5, factionColors[g.townOwner[t]]);
             frame(x - 2, y - 2, 5, 5, GOLD);
+            if (ui.mapZoom && y > oy + 16) {
+                int lx = x < ox + 130 ? x + 5 : x - 76, ly = y - 8;
+                int px = MAPX(g.actors[g.selected].x), py = MAPY(g.actors[g.selected].y);
+                /* Keep the player marker and YOU label readable. Nearby town
+                   names remain available in the settlement list. */
+                if (lx + 72 < px - 8 || lx > px + 34 || ly + 8 < py - 10 || ly > py + 18)
+                    clipped(lx, ly, towns[t].name, 12, GOLD);
+            }
         }
     for (int i = 0; i < g.actorCount; i++)
-        if (g.actors[i].squad && !g.actors[i].dead)
-            rect(ox + g.actors[i].x * mw / WORLD - 1, oy + g.actors[i].y * mh / WORLD - 1, 3, 3, TEAL);
-    if (g.baseExists)
-        frame(ox + g.baseX * mw / WORLD - 3, oy + g.baseY * mh / WORLD - 3, 7, 7, TEAL);
-    int x = ox + ui.mapX * mw / WORLD, y = oy + ui.mapY * mh / WORLD;
+        if (g.actors[i].squad && !g.actors[i].dead && INMAP(g.actors[i].x, g.actors[i].y))
+            rect(MAPX(g.actors[i].x) - 1, MAPY(g.actors[i].y) - 1, 3, 3, TEAL);
+    if (g.baseExists && INMAP(g.baseX, g.baseY))
+        frame(MAPX(g.baseX) - 3, MAPY(g.baseY) - 3, 7, 7, TEAL);
+    Actor *leader = &g.actors[g.selected];
+    int youx = MAPX(leader->x), youy = MAPY(leader->y);
+    int x = MAPX(ui.mapX), y = MAPY(ui.mapY);
+    if (INMAP(leader->x, leader->y)) {
+        if (ui.waypoint) {
+            int dx = MAPX(ui.travelX), dy = MAPY(ui.travelY);
+            /* Clip the route to the visible map rectangle. */
+            float vx = dx - youx, vy = dy - youy, t = 1;
+            if (vx > 0)
+                t = fminf(t, (ox + mw - 1 - youx) / vx);
+            else if (vx < 0)
+                t = fminf(t, (ox - youx) / vx);
+            if (vy > 0)
+                t = fminf(t, (oy + mh - 1 - youy) / vy);
+            else if (vy < 0)
+                t = fminf(t, (oy - youy) / vy);
+            line(youx, youy, youx + vx * t, youy + vy * t, TEAL);
+        }
+        diamond(youx, youy, 5, 4, TEAL);
+        frame(youx - 5, youy - 5, 11, 11, TEXT);
+        text(youx < 235 ? youx + 8 : youx - 25, youy < oy + 12 ? youy + 8 : youy - 8, "YOU", TEXT, 1);
+    }
     line(x - 5, y, x + 5, y, TEXT);
     line(x, y - 5, x, y + 5, TEXT);
     frame(ox - 1, oy - 1, mw + 2, mh + 2, EDGE);
@@ -1396,33 +1359,37 @@ static void map_screen(void) {
                 g.discovered[t] ? TEXT : MUTED);
     }
     char b[90];
-    snprintf(b, 90, "%03d / %03d  %s", (int)ui.mapX, (int)ui.mapY, regionNames[biome(ui.mapX, ui.mapY)]);
+    snprintf(b, 90, "YOU %d,%d  DEST %.0fm  %s", (int)leader->x, (int)leader->y,
+             distance(leader->x, leader->y, ui.waypoint ? ui.travelX : ui.mapX,
+                      ui.waypoint ? ui.travelY : ui.mapY),
+             regionNames[biome(ui.mapX, ui.mapY)]);
     text(31, 222, b, TEAL, 1);
+#undef MAPX
+#undef MAPY
+#undef INMAP
 }
 
 static void trade_screen(void) {
     char b[100], v[70];
-    const char *filters[] = {"ALL", "SUPPLIES", "WEAPONS", "ARMOR"};
     overlay_header(ui.sell ? "THE MARKET / SELL" : "THE MARKET / BUY",
-                   "LEFT / RIGHT BUY-SELL   L/R FILTER   X TRADE ONE");
-    int count = ui.sell ? PACK : shop_count(), first = start_row(ui.selection, count, 8);
-    for (int j = 0; j < 8 && first + j < count; j++) {
+                   "\014 BUY-SELL   \005/\006 FILTER   \001 TRADE ONE");
+    int count = ui.sell ? PACK : shop_count(), first = start_row(ui.selection, count, 6);
+    for (int j = 0; j < 6 && first + j < count; j++) {
         int i = first + j, it = ui.sell ? g.actors[g.selected].pack[i].item : shop_item(i);
         snprintf(b, 100, "%.39s", it ? itemDefs[it].name : "--");
-        snprintf(v, 70, "%d S  X%d", item_price(ui.tradeTown, it, ui.sell),
+        snprintf(v, 70, "%d S  \001%d", item_price(ui.tradeTown, it, ui.sell),
                  ui.sell ? g.actors[g.selected].pack[i].qty : g.stock[ui.tradeTown][it]);
         row(85 + j * 16, i == ui.selection, b, it ? v : "");
     }
     int it = ui.sell ? g.actors[g.selected].pack[ui.selection].item : shop_item(ui.selection);
-    if (it)
-        clipped(31, 210, itemDefs[it].desc, 68, TEAL);
-    snprintf(b, 100, "%s  /  %d SILVER  /  %s", towns[ui.tradeTown].name, g.money, filters[ui.shopFilter]);
-    text(31, 221, b, GOLD, 1);
+    equipment_comparison(it, 173);
+    snprintf(b, sizeof(b), "%d SILVER", g.money);
+    text(360, 45, b, GOLD, 1);
 }
 
 static void build_screen(void) {
     char b[100];
-    overlay_header("BUILD AN OUTPOST", "X PLACE BESIDE SELECTED MEMBER. OUTSIDE VILLAGES ONLY.");
+    overlay_header("BUILD AN OUTPOST", "\001 PLACE BESIDE SELECTED MEMBER. OUTSIDE VILLAGES ONLY.");
     static const int wood[] = {3, 5, 6, 8, 6, 3, 5, 8}, iron[] = {0, 0, 0, 3, 1, 0, 0, 3};
     for (int i = 0; i < buildCount; i++) {
         snprintf(b, 100, "%d TIMBER  %d IRON", wood[i], iron[i]);
@@ -1431,7 +1398,7 @@ static void build_screen(void) {
     text(31, 225, "BUILDINGS ATTRACT RAIDS. KEEP SUPPLIES AND A RETREAT ROUTE.", MUTED, 1);
 }
 static void craft_screen(void) {
-    overlay_header("WORKSHOP", "X CRAFT. STAND NEAR THE CORRECT CAMP WORKSTATION.");
+    overlay_header("WORKSHOP", "\001 CRAFT. STAND NEAR THE CORRECT CAMP WORKSTATION.");
     const char *cost[] = {"3 ORE / FORGE",
                           "3 GRAIN OR 2 MEAT + 1 WATER",
                           "2 CLOTH + 1 WATER / BENCH",
@@ -1455,10 +1422,10 @@ static void research_screen(void) {
     }
     snprintf(b, 100, "NEXT: 1 RELIC + %d SILVER", (g.tech + 1) * 150);
     text(33, 194, g.tech < 3 ? b : "RESEARCH COMPLETE", GOLD, 1);
-    text(33, 214, "X RESEARCH THE NEXT TIER", TEXT, 1);
+    text(33, 214, "\001 RESEARCH THE NEXT TIER", TEXT, 1);
 }
 static void menu_screen(void) {
-    overlay_header("EXPEDITION", "UP / DOWN CHOOSE   X OPEN   SELECT GUIDE");
+    overlay_header("EXPEDITION", "\015 CHOOSE   \001 OPEN   \010 GUIDE");
     const char *opts[] = {"Return to the wasteland",
                           "Build an outpost",
                           "Crafting recipes",
@@ -1485,7 +1452,7 @@ static void menu_screen(void) {
 }
 
 static void help_screen(void) {
-    overlay_header("FIELD GUIDE", "L/R OR UP/DOWN CHAPTER   O RETURN TO PREVIOUS SCREEN");
+    overlay_header("FIELD GUIDE", "\005/\006 OR \015 CHAPTER   \002 RETURN TO PREVIOUS SCREEN");
     char b[100];
     snprintf(b, 100, "%02d / %02d   %s", ui.selection + 1, GUIDE_PAGES, guideTitles[ui.selection]);
     text(31, 86, b, TEAL, 1);
@@ -1493,7 +1460,7 @@ static void help_screen(void) {
 }
 static void creator_screen(void) {
     overlay_header(ui.titleChoice ? "THE BARBER" : "A NAME IN THE DUST",
-                   "LEFT / RIGHT CHANGE   X CHOOSE   SELECT GUIDE");
+                   "\014 CHANGE   \001 CHOOSE   \010 GUIDE");
     Actor a = preview_actor();
     a.body = ui.createBody;
     a.skin = ui.createSkin;
@@ -1548,7 +1515,7 @@ static void creator_screen(void) {
     }
 }
 static void name_screen(void) {
-    overlay_header("NAME YOUR DRIFTER", "D-PAD SELECT   X LETTER   SQUARE ERASE   START DONE");
+    overlay_header("NAME YOUR DRIFTER", "\011 SELECT   \001 LETTER   \003 ERASE   \007 DONE");
     center(240, 91, ui.createName, TEAL, 2);
     const char *keys = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -";
     for (int j = 0; j < 40; j++) {
@@ -1561,7 +1528,7 @@ static void name_screen(void) {
 }
 static void equipped_screen(void) {
     Actor *a = &g.actors[g.selected];
-    overlay_header("WORN EQUIPMENT", "X UNEQUIP   TRI PACK   SELECT GUIDE");
+    overlay_header("WORN EQUIPMENT", "\001 UNEQUIP   \004 PACK   \010 GUIDE");
     person(a, 100, 193, 2, 0);
     for (int i = 0; i < GEARS; i++) {
         int y = 86 + i * 18;
@@ -1577,7 +1544,7 @@ static void equipped_screen(void) {
     clipped(30, 212, b, 68, TEAL);
 }
 static void forge_screen(void) {
-    overlay_header("THE IRON TRADE", "LEFT / RIGHT CONFIGURE   X FORGE   SELECT GUIDE");
+    overlay_header("THE IRON TRADE", "\014 CONFIGURE   \001 FORGE   \010 GUIDE");
     int it = gear_id(ui.forgeFamily, ui.forgeMaterial, ui.forgeQuality);
     ItemDef *d = &itemDefs[it];
     Actor a = preview_actor();
@@ -1585,7 +1552,7 @@ static void forge_screen(void) {
     person(&a, 102, 184, 2, 0);
     const char *labels[] = {"SLOT", "DESIGN", "MATERIAL", "QUALITY", "FORGE THIS PIECE"};
     const char *values[] = {slotNames[ui.forgeSlot], familyNames[ui.forgeFamily],
-                            materialNames[ui.forgeMaterial], qualityNames[ui.forgeQuality], "X"};
+                            materialNames[ui.forgeMaterial], qualityNames[ui.forgeQuality], "\001"};
     for (int i = 0; i < 5; i++) {
         int y = 85 + i * 20;
         if (i == ui.selection)
@@ -1611,26 +1578,18 @@ static void dialogue_screen(void) {
     if (n < 0 || n >= g.actorCount)
         return;
     Actor *a = &g.actors[n];
-    overlay_header(a->name, "X REPLY   UP / DOWN CHOOSE   O LEAVE   SELECT GUIDE");
+    overlay_header(a->name, "\001 REPLY   \015 CHOOSE   \002 LEAVE   \010 GUIDE");
     person(a, 76, 178, 2, 0);
-    clipped(30, 204, factionNames[a->faction], 23, TEAL);
+    clipped(30, 204, npc_role_name(a), 16, TEAL);
+    clipped(30, 218, factionNames[a->faction], 16, MUTED);
     wrap(134, 85, 50, dialogue_line(n, ui.dialogPage), TEXT);
-    const char *opts[] = {"Show me the market.",
-                          "Any paying work?",
-                          "A bed for the night. (25)",
-                          "Treat my wounds. (80)",
-                          "Bounties and news.",
-                          "Change my appearance.",
-                          a->kind == RECRUIT ? "Travel with us. (300)" : "What have you heard?",
-                          "Let me use the forge.",
-                          "Safe travels."};
     const char *work[] = {"Carry a dispatch - 220 silver", "Bring eight ore - 240 silver",
                           "Defeat three foes - 420 silver", "Recover a relic - 550 silver", "Back"};
     const char *prison[] = {"Pay my bail.", "Try the lock. Requires tools.", "Wait out the sentence."};
     int jailed = a->prisonTime > 0 && n == g.selected,
         count = jailed               ? 3
                 : ui.dialogPage == 1 ? 5
-                                     : 9,
+                                     : dialogue_count(n),
         first = start_row(ui.selection, count, 5);
     for (int j = 0; j < 5 && first + j < count; j++) {
         int k = first + j, y = 153 + j * 15;
@@ -1639,13 +1598,13 @@ static void dialogue_screen(void) {
         text(137, y,
              jailed               ? prison[k]
              : ui.dialogPage == 1 ? work[k]
-                                  : opts[k],
+                                  : dialogue_option(n, k),
              k == ui.selection ? GOLD : MUTED, 1);
     }
 }
 static void save_screen(void) {
     overlay_header(ui.saveMode ? "SAVE EXPEDITION" : "LOAD EXPEDITION",
-                   "X SELECT SLOT   SLOT ZERO AUTOSAVES   SELECT GUIDE");
+                   "\001 SELECT SLOT   SLOT ZERO AUTOSAVES   \010 GUIDE");
     char b[100], v[100];
     for (int i = 0; i < SAVE_SLOTS; i++) {
         SaveInfo *z = &ui.saves[i];
@@ -1657,7 +1616,7 @@ static void save_screen(void) {
     text(31, 221, "CHECKSUM VERIFIED. PREVIOUS SAVE KEPT AS .BAK.", TEAL, 1);
 }
 static void journal_screen(void) {
-    overlay_header("THE ROAD JOURNAL", "X CLAIM AT THE ISSUING TOWN   SELECT GUIDE");
+    overlay_header("THE ROAD JOURNAL", "\001 CLAIM AT THE ISSUING TOWN   \010 GUIDE");
     char b[180], v[40];
     int first = start_row(ui.selection, CONTRACTS, 6);
     for (int j = 0; j < 6; j++) {
@@ -1694,26 +1653,26 @@ static void storage_screen(void) {
     Actor *a = &g.actors[g.selected];
     Building *z = &g.buildings[ui.storageIndex];
     overlay_header(ui.storageSide ? "DEPOT / WITHDRAW" : "DEPOT / DEPOSIT",
-                   "LEFT / RIGHT CHOOSE SIDE   X MOVE ONE   SELECT GUIDE");
+                   "\014 CHOOSE SIDE   \001 MOVE ONE   \010 GUIDE");
     int count = ui.storageSide ? 16 : PACK, first = start_row(ui.selection, count, 9);
     char b[30];
     for (int j = 0; j < 9 && first + j < count; j++) {
         int k = first + j;
         Stack st = ui.storageSide ? z->storage[k] : a->pack[k];
-        snprintf(b, 30, "X%d", st.qty);
+        snprintf(b, 30, "\001%d", st.qty);
         row(86 + j * 15, k == ui.selection, st.item ? itemDefs[st.item].name : "EMPTY", st.item ? b : "");
     }
 }
 static void loot_screen(void) {
     Actor *a = &g.actors[ui.lootActor];
-    overlay_header("SALVAGE THE FALLEN", "X TAKE ONE   UP / DOWN PACK AND WORN GEAR");
+    overlay_header("SALVAGE THE FALLEN", "\001 TAKE ONE   \015 PACK AND WORN GEAR");
     int first = start_row(ui.selection, PACK + GEARS, 9);
     char b[80], v[30];
     for (int j = 0; j < 9; j++) {
         int k = first + j, it = k < PACK ? a->pack[k].item : a->gear[k - PACK];
         snprintf(b, 80, "%s %.34s", k < PACK ? "PACK" : slotNames[k - PACK],
                  it ? itemDefs[it].name : "EMPTY");
-        snprintf(v, 30, "X%d", k < PACK ? a->pack[k].qty : 1);
+        snprintf(v, 30, "\001%d", k < PACK ? a->pack[k].qty : 1);
         row(85 + j * 15, k == ui.selection, b, it ? v : "");
     }
     clipped(31, 223, a->name, 30, TEAL);
@@ -1736,9 +1695,13 @@ void render_game(uint32_t *pixels, int stride) {
     Actor *a = &g.actors[g.selected];
     ui.camX = a->x + (g.shake > 0 ? sinf(g.time * 97) * g.shake * .12f : 0);
     ui.camY = a->y + (g.shake > 0 ? cosf(g.time * 83) * g.shake * .12f : 0);
-    terrain();
-    objects_draw();
-    if (g.weather) {
+    if (g.interiorBuilding)
+        interior_draw();
+    else {
+        terrain();
+        objects_draw();
+    }
+    if (!g.interiorBuilding && g.weather) {
         for (int i = 0; i < 25; i++) {
             int x = ((int)(g.time * 63) + i * 79) % 520 - 20, y = (i * 37) % 210;
             line(x, y, x + (g.weather == 1 ? 14 : 3), y + (g.weather == 1 ? 3 : 9),
@@ -1747,7 +1710,7 @@ void render_game(uint32_t *pixels, int stride) {
                                   : shade(0xc7ba92, .85f));
         }
     }
-    if (ui.screen == SCREEN_WORLD)
+    if (ui.screen == SCREEN_WORLD && !g.interiorBuilding)
         speech_bubbles();
     hud();
     switch (ui.screen) {
@@ -1816,18 +1779,18 @@ void render_game(uint32_t *pixels, int stride) {
         break;
     case SCREEN_RECRUIT: {
         Actor *r = &g.actors[ui.selection];
-        overlay_header("A FELLOW WANDERER", "X RECRUIT FOR 300 SILVER   /   O LEAVE");
+        overlay_header("A FELLOW WANDERER", "\001 RECRUIT FOR 300 SILVER   /   \002 LEAVE");
         person(r, 103, 201, 2, 0);
         text(186, 92, r->name, TEAL, 2);
         wrap(186, 118, 39,
              "I can work, fight, and carry my share. Three hundred silver settles my debts. After that, we "
              "look out for each other.",
              TEXT);
-        text(186, 185, "SQUAD LIMIT: FOUR", GOLD, 1);
+        text(186, 185, "SQUAD LIMIT: EIGHT", GOLD, 1);
         break;
     }
     case SCREEN_CONFIRM:
-        overlay_header("CONFIRM EXPEDITION CHANGE", "X CONFIRM    O CANCEL");
+        overlay_header("CONFIRM EXPEDITION CHANGE", "\001 CONFIRM    \002 CANCEL");
         wrap(31, 100, 65,
              ui.confirmAction == 1   ? "Start a new expedition? Unsaved progress will be discarded. Existing "
                                        "saves remain available."
@@ -1840,8 +1803,10 @@ void render_game(uint32_t *pixels, int stride) {
         break;
     }
     if (ui.screen != SCREEN_WORLD && ui.noticeTime > 0) {
-        rect(25, 254, 431, 13, INK);
-        text(28, 257, ui.notice, GOLD, 1);
+        rect(0, 253, 480, 19, INK);
+        char message[76];
+        snprintf(message, sizeof(message), "%.74s", ui.notice);
+        text(14, 258, message, GOLD, 1);
     }
 }
 
