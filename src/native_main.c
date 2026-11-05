@@ -62,6 +62,24 @@ int main(int argc, char **argv) {
         ppm(argv[2]);
         return 0;
     }
+    if (argc > 1 && !strcmp(argv[1], "--weapon-review")) {
+        Actor *a = &g.actors[0];
+        a->gear[0] = gear_id(0, 1, 1);
+        a->gear[1] = gear_id(34, 1, 1);
+        a->gear[2] = gear_id(49, 0, 1);
+        a->gear[3] = gear_id(60, 0, 1);
+        a->gear[4] = gear_id(68, 0, 1);
+        int candidate = gear_id(argc > 3 ? atoi(argv[3]) : 8, 3, 2);
+        inventory_add(a, candidate, 1);
+        ui.screen = SCREEN_PACK;
+        ui.noticeTime = 0;
+        for (int i = 0; i < PACK; i++)
+            if (a->pack[i].item == candidate)
+                ui.selection = i;
+        render_game(pixels, 480);
+        ppm(argv[2]);
+        return 0;
+    }
     if (argc > 1 && !strcmp(argv[1], "--launcher-art")) {
         render_title_art(pixels, 480);
         ppm(argv[2]);

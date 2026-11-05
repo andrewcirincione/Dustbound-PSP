@@ -21,6 +21,24 @@ static inline void grip_hand(WeaponGrip g0, int secondary, float *x, float *y) {
     *x = g0.x + g0.ux * along;
     *y = g0.y + g0.uy * along;
 }
+/* Support hands follow the painted fore-end/string, never the torso transform. */
+static inline float weapon_support_distance(int weapon) {
+    int f = gear_family(weapon);
+    if (f == 29 || f == 31)
+        return 7.f;
+    if (f == 25 || f == 26 || weapon == CROSSBOW)
+        return 5.f;
+    if (f == 24)
+        return -6.f;
+    if (f == 28)
+        return -11.5f;
+    return -4.f;
+}
+static inline void weapon_hand(WeaponGrip g0, int weapon, int secondary, float *x, float *y) {
+    float along = secondary ? weapon_support_distance(weapon) : 0;
+    *x = g0.x + g0.ux * along;
+    *y = g0.y + g0.uy * along;
+}
 static inline float pose_ease(float t) {
     t = fmaxf(0, fminf(1, t));
     return t * t * (3 - 2 * t);
