@@ -1,0 +1,635 @@
+[
+  {
+    "eboot_sha256": "34a577821da3730b56f2cc969fdafe273926482569227d97da20e1b1b8554ade",
+    "version": "0.5.1"
+  },
+  {
+    "capture": "v051-79-clothing-compare-48",
+    "screen": 1,
+    "expected": 1,
+    "frame": 381,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-48-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 524,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-48-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 578,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-49",
+    "screen": 1,
+    "expected": 1,
+    "frame": 624,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-49-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 754,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-49-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 802,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-50",
+    "screen": 1,
+    "expected": 1,
+    "frame": 872,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-50-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 980,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-50-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1035,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-51",
+    "screen": 1,
+    "expected": 1,
+    "frame": 1141,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-51-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1276,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-51-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1337,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-52",
+    "screen": 1,
+    "expected": 1,
+    "frame": 1533,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-52-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1671,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-52-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1726,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-53",
+    "screen": 1,
+    "expected": 1,
+    "frame": 1898,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-53-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2026,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-53-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2073,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-54",
+    "screen": 1,
+    "expected": 1,
+    "frame": 2312,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-54-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2426,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-54-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2481,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-55",
+    "screen": 1,
+    "expected": 1,
+    "frame": 2792,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-55-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2918,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-55-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2974,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-56",
+    "screen": 1,
+    "expected": 1,
+    "frame": 3333,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-56-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3428,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-56-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3479,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-57",
+    "screen": 1,
+    "expected": 1,
+    "frame": 3818,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-57-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3951,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-57-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4002,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-58",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4358,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-58-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4490,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-58-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4547,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-59",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4921,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-59-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 5064,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-59-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 5122,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-60",
+    "screen": 1,
+    "expected": 1,
+    "frame": 5491,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-60-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 5619,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-60-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 5670,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-61",
+    "screen": 1,
+    "expected": 1,
+    "frame": 6047,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-61-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6176,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-61-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6230,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-62",
+    "screen": 1,
+    "expected": 1,
+    "frame": 6606,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-62-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6745,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-62-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6801,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-79-clothing-compare-63",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7132,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-63-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7264,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-80-clothing-63-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7311,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "scenario": "clothing1",
+    "completed": true,
+    "prepared_fixture": true
+  }
+]

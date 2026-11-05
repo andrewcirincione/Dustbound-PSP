@@ -1,0 +1,288 @@
+[
+  {
+    "eboot_sha256": "34a577821da3730b56f2cc969fdafe273926482569227d97da20e1b1b8554ade",
+    "version": "0.5.1"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      650
+    ],
+    "expected": [
+      650
+    ]
+  },
+  {
+    "assert": "shop_filter",
+    "actual": [
+      4
+    ],
+    "expected": [
+      4
+    ]
+  },
+  {
+    "capture": "v051-70-backpack-market",
+    "screen": 6,
+    "expected": 6,
+    "frame": 456,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "selection",
+    "actual": [
+      19
+    ],
+    "expected": [
+      19
+    ]
+  },
+  {
+    "capture": "v051-71-backpack-guide",
+    "screen": 12,
+    "expected": 12,
+    "frame": 478,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-72-purchase-78",
+    "screen": 6,
+    "expected": 6,
+    "frame": 536,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      470
+    ],
+    "expected": [
+      470
+    ]
+  },
+  {
+    "capture": "v051-72-purchase-79",
+    "screen": 6,
+    "expected": 6,
+    "frame": 575,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      240
+    ],
+    "expected": [
+      240
+    ]
+  },
+  {
+    "capture": "v051-72-purchase-82",
+    "screen": 6,
+    "expected": 6,
+    "frame": 770,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      40
+    ],
+    "expected": [
+      40
+    ]
+  },
+  {
+    "capture": "v051-73-pack-compare-78",
+    "screen": 1,
+    "expected": 1,
+    "frame": 992,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-74-bought-pack-78-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1110,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-74-bought-pack-78-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1156,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-73-pack-compare-79",
+    "screen": 1,
+    "expected": 1,
+    "frame": 1397,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-74-bought-pack-79-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1524,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-74-bought-pack-79-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1576,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-73-pack-compare-82",
+    "screen": 1,
+    "expected": 1,
+    "frame": 1790,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-74-bought-pack-82-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1921,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-74-bought-pack-82-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1980,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-73-pack-compare-76",
+    "screen": 1,
+    "expected": 1,
+    "frame": 2184,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-74-bought-pack-76-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2317,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-74-bought-pack-76-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2372,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      17
+    ],
+    "expected": [
+      17
+    ]
+  },
+  {
+    "capture": "v051-75-contract-journal",
+    "screen": 19,
+    "expected": 19,
+    "frame": 3330,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-76-contract-destination",
+    "screen": 5,
+    "expected": 5,
+    "frame": 3353,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      40
+    ],
+    "expected": [
+      40
+    ]
+  },
+  {
+    "scenario": "shopping",
+    "completed": true,
+    "prepared_fixture": false
+  }
+]

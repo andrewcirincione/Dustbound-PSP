@@ -1,0 +1,237 @@
+[
+  {
+    "eboot_sha256": "34a577821da3730b56f2cc969fdafe273926482569227d97da20e1b1b8554ade",
+    "version": "0.5.1"
+  },
+  {
+    "capture": "v051-01-title",
+    "screen": 13,
+    "expected": 13,
+    "frame": 36,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-08-name-keyboard",
+    "screen": 16,
+    "expected": 16,
+    "frame": 99,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-02-character-creator",
+    "screen": 15,
+    "expected": 15,
+    "frame": 196,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      420
+    ],
+    "expected": [
+      420
+    ]
+  },
+  {
+    "capture": "v051-03-dusk-haven",
+    "screen": 0,
+    "expected": 0,
+    "frame": 287,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-34-mining-too-far",
+    "screen": 0,
+    "expected": 0,
+    "frame": 671,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "task",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-34-mining-too-far",
+    "screen": 0,
+    "expected": 0,
+    "frame": 746,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "task",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-13-mining",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1092,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-04-layered-equipment",
+    "screen": 1,
+    "expected": 1,
+    "frame": 1163,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-05-six-equipment-slots",
+    "screen": 23,
+    "expected": 23,
+    "frame": 1186,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-09-companion-dialogue",
+    "screen": 17,
+    "expected": 17,
+    "frame": 1402,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "assert": "money",
+    "actual": [
+      120
+    ],
+    "expected": [
+      120
+    ]
+  },
+  {
+    "capture": "v051-10-market-dialogue",
+    "screen": 17,
+    "expected": 17,
+    "frame": 1621,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      85
+    ],
+    "expected": [
+      85
+    ]
+  },
+  {
+    "capture": "v051-11-weapon-market",
+    "screen": 6,
+    "expected": 6,
+    "frame": 1740,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-33-gear-comparison",
+    "screen": 1,
+    "expected": 1,
+    "frame": 2984,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-12-looted-armor-equipped",
+    "screen": 1,
+    "expected": 1,
+    "frame": 3005,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-14-save-ledger",
+    "screen": 22,
+    "expected": 22,
+    "frame": 3306,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      85
+    ],
+    "expected": [
+      85
+    ]
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "capture": "v051-06-frontier-atlas",
+    "screen": 5,
+    "expected": 5,
+    "frame": 3827,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "mapzoom",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "assert": "mapzoom",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-35-world-atlas",
+    "screen": 5,
+    "expected": 5,
+    "frame": 3839,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v051-07-contextual-guide",
+    "screen": 12,
+    "expected": 12,
+    "frame": 3860,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "selection",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "normal_run_saved_reloaded": true,
+    "starting_origin": "Ronin",
+    "ending_silver": 85,
+    "ending_squad": 2
+  }
+]

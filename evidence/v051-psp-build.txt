@@ -1,0 +1,24 @@
+rm -f dustbound.prx dustbound.elf src/psp_main.o src/game.o src/render.o src/content.o src/world.o src/expansion.o src/interior.o src/playability.o src/audio.o PARAM.SFO EBOOT.PBP EBOOT.PBP
+psp-gcc -Isrc -I. -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/include -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/include -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation -D_PSP_FW_VERSION=660   -c -o src/psp_main.o src/psp_main.c
+psp-gcc -Isrc -I. -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/include -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/include -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation -D_PSP_FW_VERSION=660   -c -o src/game.o src/game.c
+psp-gcc -Isrc -I. -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/include -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/include -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation -D_PSP_FW_VERSION=660   -c -o src/render.o src/render.c
+psp-gcc -Isrc -I. -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/include -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/include -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation -D_PSP_FW_VERSION=660   -c -o src/content.o src/content.c
+psp-gcc -Isrc -I. -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/include -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/include -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation -D_PSP_FW_VERSION=660   -c -o src/world.o src/world.c
+psp-gcc -Isrc -I. -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/include -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/include -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation -D_PSP_FW_VERSION=660   -c -o src/expansion.o src/expansion.c
+psp-gcc -Isrc -I. -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/include -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/include -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation -D_PSP_FW_VERSION=660   -c -o src/interior.o src/interior.c
+psp-gcc -Isrc -I. -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/include -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/include -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation -D_PSP_FW_VERSION=660   -c -o src/playability.o src/playability.c
+psp-gcc -Isrc -I. -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/include -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/include -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation -D_PSP_FW_VERSION=660   -c -o src/audio.o src/audio.c
+psp-gcc -Isrc -I. -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/include -I/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/include -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation -D_PSP_FW_VERSION=660  -L. -L/workspace/scratch/f91171b6dca9/tools/pspdev/psp/lib -L/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/lib -specs=/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/lib/prxspecs -Wl,-q,-T/workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/lib/linkfile.prx  -Wl,-zmax-page-size=128  src/psp_main.o src/game.o src/render.o src/content.o src/world.o src/expansion.o src/interior.o src/playability.o src/audio.o /workspace/scratch/f91171b6dca9/tools/pspdev/psp/sdk/lib/prxexports.o -lm -lpsppower -lpspaudio -lpspdebug -lpspdisplay -lpspge -lpspctrl -lpspnet -lpspnet_apctl -o dustbound.elf
+psp-fixup-imports dustbound.elf
+psp-prxgen dustbound.elf dustbound.prx
+pack-pbp EBOOT.PBP PARAM.SFO assets/ICON0.png  \
+	NULL NULL assets/PIC1.png  \
+	NULL  dustbound.prx NULL
+[0]        320 bytes | PARAM.SFO
+[1]      24028 bytes | assets/ICON0.png
+[2]          0 bytes | NULL
+[3]          0 bytes | NULL
+[4]     242436 bytes | assets/PIC1.png
+[5]          0 bytes | NULL
+[6]    1056506 bytes | dustbound.prx
+[7]          0 bytes | NULL

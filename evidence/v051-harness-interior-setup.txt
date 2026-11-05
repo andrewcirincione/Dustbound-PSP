@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_interiors_v051.py", line 61, in <module>
+    if __name__=='__main__':asyncio.run(main())
+                            ^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_interiors_v051.py", line 32, in main
+    await e.key('cross');await e.key('up');await e.key('cross');await e.expect('screen',0)
+    ^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_v051.py", line 48, in key
+    before=(await self.read('selection'))[0];screen=(await self.read('screen'))[0]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_v051.py", line 15, in read
+    snapshot=json.loads((self.run/'DUST_STATE.json').read_text())
+                         ^^^^^^^^
+AttributeError: 'Play' object has no attribute 'run'
