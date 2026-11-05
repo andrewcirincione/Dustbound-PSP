@@ -35,19 +35,21 @@ int main(void) {
         assert(px0 >= lo && px0 < s->rows[py0 * 3 + 2]);
         assert(s->palette[s->pixels[s->rows[py0 * 3] + px0 - lo]] >> 24 >= 128);
         for (int sc = 1; sc <= 5; sc++)
-            for (int dir = 0; dir < 16; dir++) {
-                memset(canvas, 0, sizeof(canvas));
-                weapon_sprite(gear_id(weapon_family_index(family), 3, 2), 240, 136, sc, dir * .39269908f, 1);
-                int near = 0;
-                for (int y = 135; y <= 137; y++)
-                    for (int x = 239; x <= 241; x++)
-                        near += (canvas[y * 512 + x] >> 24) >= 64;
-                if (!near) {
-                    fprintf(stderr, "Detached grip family %d scale %d dir %d\n", family, sc, dir);
-                    return 1;
+            for (int dir = 0; dir < 16; dir++)
+                for (int face = -1; face <= 1; face += 2) {
+                    memset(canvas, 0, sizeof(canvas));
+                    weapon_sprite(gear_id(weapon_family_index(family), 3, 2), 240, 136, sc, dir * .39269908f,
+                                  face, 1);
+                    int near = 0;
+                    for (int y = 135; y <= 137; y++)
+                        for (int x = 239; x <= 241; x++)
+                            near += (canvas[y * 512 + x] >> 24) >= 64;
+                    if (!near) {
+                        fprintf(stderr, "Detached grip family %d scale %d dir %d\n", family, sc, dir);
+                        return 1;
+                    }
+                    grips++;
                 }
-                grips++;
-            }
         a.gear[0] = a.attackWeapon = gear_id(weapon_family_index(family), 3, 2);
         for (int phase = 0; phase < 4; phase++)
             for (int dir = 0; dir < 8; dir++)

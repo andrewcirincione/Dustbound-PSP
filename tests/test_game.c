@@ -171,6 +171,9 @@ int main(void) {
     a->cooldown = 0;
     a->attackPhase = 0;
     inventory_remove(a, BOLTS, 1);
+    // Test ammo fallback against a valid standing target, independently of
+    // whether the preceding shot stunned it under the current armor balance.
+    e->stun = e->unconscious = 0;
     strike(0, enemy);
     CHECK(a->gear[0] == NONE && inventory_count(a, CROSSBOW) == 1,
           "empty crossbow is retained and switches to unarmed");
