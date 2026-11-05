@@ -60,9 +60,9 @@ static inline int combat_style(int weapon) {
     int f = gear_family(weapon);
     if (weapon_ranged(weapon))
         return 3;
-    if (f == 5 || f == 16 || weapon == STAFF || weapon == NONE || f == 3 || f == 9)
+    if (f == 86 || f == 5 || f == 16 || weapon == STAFF || weapon == NONE || f == 3 || f == 9)
         return 1;
-    if (f == 11 || f == 12 || f == 13 || f == 14 || f == 15 || f == 20 || f == 23 || weapon == CLEAVER)
+    if (f >= 84 || f == 11 || f == 12 || f == 13 || f == 14 || f == 15 || f == 20 || f == 23 || weapon == CLEAVER)
         return 2;
     return 0;
 }

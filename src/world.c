@@ -326,7 +326,11 @@ int item_price(int town, int it, int selling) {
 int shop_item(int index) {
     if (ui.tradeTown < 0 || ui.tradeTown >= TOWNS)
         return NONE;
-    for (int i = 1; i < ITEMS; i++)
+    /* Regional designs lead the weapon tab; shared starter goods go last. */
+    for (int step = 1; step < ITEMS; step++) {
+        int i = ui.shopFilter == 2 ? BASE_ITEMS + step - 1 : step;
+        if (i >= ITEMS)
+            i = i - ITEMS + 1;
         if (g.stock[ui.tradeTown][i] > 0) {
             int slot = itemDefs[i].slot;
             if (ui.shopFilter == 1 && slot >= 0)
@@ -338,6 +342,7 @@ int shop_item(int index) {
             if (index-- == 0)
                 return i;
         }
+    }
     return NONE;
 }
 int shop_count(void) {
@@ -572,7 +577,21 @@ const char *dialogue_line(int n, int page) {
         return "Work keeps this town alive. Carry a dispatch, bring ore, clear the roads, or recover a "
                "relic. Read the terms in your journal.";
     if (page == 2)
-        return g.worldNews;
+        return npc_rumor(a);
+    if (page == 3)
+        return faction_identity(a->faction);
+    if (npc_role(a) == ROLE_MERCENARY) {
+        static char terms[190];
+        int s = merc_slot(a);
+        if (s < 0)
+            return "I sell protection, not allegiance. One guard for one day. I keep my own gear and fight "
+                   "independently. Escort or camp duty?";
+        snprintf(terms, sizeof(terms),
+                 "ON CONTRACT: %s. %.1f minutes remain. I fight independently and wait outside interiors. "
+                 "Dismissal gives no refund.",
+                 g.mercMode[s] ? "CAMP WATCH" : "ESCORT", (g.mercUntil[s] - g.time) / 60.f);
+        return terms;
+    }
     switch (npc_role(a)) {
     case ROLE_MERCHANT:
         return "I sell supplies and equipment. Bring salvage to trade. The innkeeper has beds; the town "
@@ -614,6 +633,25 @@ const char *dialogue_line(int n, int page) {
     return factionLines[a->faction % FACTIONS];
 }
 const char *ambient_line(int n) {
+    if (n >= 0 && n < g.actorCount) {
+        switch (npc_role(&g.actors[n])) {
+        case ROLE_MERCHANT:
+            return "Stock follows our flag. Inspect before buying.";
+        case ROLE_MEDIC:
+            return "Bleeding? Find me before finding a bed.";
+        case ROLE_MARSHAL:
+            return "Contracts here. Guards hold this town.";
+        case ROLE_SMITH:
+            return "Heavy steel needs strong, healthy arms.";
+        case ROLE_MERCENARY:
+            return merc_slot(&g.actors[n]) >= 0 ? "Stay close. My contract is running."
+                                                : "Hired protection. One day, no allegiance.";
+        case ROLE_RECRUIT:
+            return "Looking for a permanent crew.";
+        case ROLE_INNKEEPER:
+            return "Beds inside. Patch your wounds first.";
+        }
+    }
     static const char *lines[24] = {"Storm's coming. Cover your eyes.",
                                     "Fresh iron. Fair prices.",
                                     "Keep your blade sheathed here.",

@@ -1,5 +1,6 @@
 #include "game.h"
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 
 extern const ItemDef baseDefs[BASE_ITEMS];
@@ -37,8 +38,11 @@ const char *familyNames[FAMILIES] = {
     "Scout shoes",    "Spurred boots",   "Ash gaiters",    "Hakama",         "Trail trousers",
     "Plated tassets", "Reed leggings",   "Armored chaps",  "Monk skirt",     "Bandit wraps",
     "Scale guards",   "Travel pack",     "Banner frame",   "Medicine roll",  "Ore harness",
-    "Ranger cape",    "Sword rack",      "Bedroll pack",   "Pilgrim mantle"};
-static int family_slot(int f) { return f < 32 ? 0 : f < 48 ? 1 : f < 60 ? 2 : f < 68 ? 3 : f < 76 ? 4 : 5; }
+    "Ranger cape",    "Sword rack",      "Bedroll pack",   "Pilgrim mantle", "Greatsword",
+    "Railway maul",   "Crescent glaive", "Anchor cleaver"};
+static int family_slot(int f) {
+    return f < 32 || f >= 84 ? 0 : f < 48 ? 1 : f < 60 ? 2 : f < 68 ? 3 : f < 76 ? 4 : 5;
+}
 int gear_id(int f, int m, int q) {
     if (f < 0 || f >= FAMILIES || m < 0 || m >= MATERIALS || q < 0 || q >= QUALITIES)
         return NONE;
@@ -61,6 +65,16 @@ int gear_bonus(const Actor *a, int stat) {
     }
     return v;
 }
+int weapon_family_index(int i) { return i < 32 ? i : 84 + i - 32; }
+int weapon_strength(int it) {
+    if (!it || weapon_ranged(it) || itemDefs[it].slot != 0)
+        return 0;
+    return itemDefs[it].weight * 2;
+}
+float weapon_handling(const Actor *a, int it) {
+    float effective = level(a, STRENGTH) * (.35f + .65f * fminf(a->health[LARM], a->health[RARM]) / 100.f);
+    return 1 + fminf(1.4f, fmaxf(0, weapon_strength(it) - effective) * .035f);
+}
 void content_init(void) {
     static int initialized;
     if (initialized)
@@ -76,10 +90,10 @@ void content_init(void) {
     }
     static const uint32_t metals[6] = {0x78614a, 0x555250, 0x80613e, 0x858582, 0x292b2c, 0x626977};
     static const uint32_t cloth[6] = {0x77634f, 0x615a4e, 0x8e653f, 0x666058, 0x302e2b, 0x4e535b};
-    static const int wpower[32] = {18, 13, 27, 9,  23, 17, 26, 16, 17, 11, 16, 28, 22, 21, 29, 32,
-                                   12, 19, 18, 24, 35, 22, 15, 23, 20, 23, 33, 15, 24, 38, 27, 34};
-    static const int weights[32] = {5, 3, 10, 1, 8,  6, 9, 5, 5, 2, 4,  9, 7, 7, 11, 13,
-                                    3, 5, 5,  8, 14, 7, 3, 8, 4, 6, 10, 3, 4, 9, 4,  8};
+    static const int wpower[36] = {18, 13, 27, 9,  23, 17, 26, 16, 17, 11, 16, 28, 22, 21, 29, 32, 12, 19,
+                                   18, 24, 35, 22, 15, 23, 20, 23, 33, 15, 24, 38, 27, 34, 39, 34, 27, 44};
+    static const int weights[36] = {5, 3, 10, 1, 8, 6, 9, 5, 5,  2, 4, 9, 7, 7, 11, 13, 3,  5,
+                                    5, 8, 14, 7, 3, 8, 4, 6, 10, 3, 4, 9, 4, 8, 16, 19, 11, 22};
     for (int f = 0; f < FAMILIES; f++)
         for (int m = 0; m < MATERIALS; m++)
             for (int q = 0; q < QUALITIES; q++) {
@@ -98,18 +112,28 @@ void content_init(void) {
                 d->color = s == 0 || f == 34 || f == 38 || s == 2 ? metals[m] : cloth[m];
                 d->trim = q == 3 ? 0xc9a452 : q == 2 ? 0x9c978a : q == 1 ? 0x866747 : 0x574839;
                 if (s == 0) {
-                    d->power = wpower[f] + m * 2 + q * 4 - 5;
-                    d->weight = weights[f] + (m == 1 ? 2 : 0) - (m == 4 ? 1 : 0);
+                    int wf = f >= 84 ? f - 52 : f;
+                    d->power = wpower[wf] + m * 2 + q * 4 - 5;
+                    d->weight = weights[wf] + (m == 1 ? 2 : 0) - (m == 4 ? 1 : 0);
                     if (d->weight < 1)
                         d->weight = 1;
-                    d->range = f >= 24                                              ? 6 + (f % 4) + m * .25f
+                    d->range = (f >= 24 && f < 32)                                  ? 6 + (f % 4) + m * .25f
                                : (f == 4 || f == 5 || f == 6 || f == 16 || f == 20) ? 2.2f
                                                                                     : 1.55f;
-                    d->cooldown = f >= 24 ? 1.8f + (f % 4) * .35f : 1.05f + d->weight * .045f;
+                    d->cooldown = (f >= 24 && f < 32) ? 1.8f + (f % 4) * .35f : 1.05f + d->weight * .045f;
                     d->penetration = d->effect == 1 ? 8 + d->potency : 0;
                     d->accuracy = d->effect == 2 ? 3 + d->potency : 0;
                     if (d->effect == 5)
                         d->cooldown *= .79f;
+                    if (f >= 84) {
+                        static const float reach[] = {2.25f, 1.7f, 2.65f, 1.95f};
+                        static const int effects[] = {2, 3, 1, 0};
+                        d->range = reach[f - 84];
+                        d->effect = effects[f - 84];
+                        d->accuracy = f == 84 ? 3 + d->potency : 0;
+                        d->penetration = f == 85 ? 20 + d->potency : f == 86 ? 12 + d->potency : 0;
+                        d->cooldown = 1.3f + d->weight * .055f;
+                    }
                     d->price = 70 + f * 4 + m * 55 + q * q * 110 + d->power * 5;
                 } else {
                     d->armor = 2 + (f % 8) * 2 + m * 2 + q * 3;
@@ -136,10 +160,11 @@ void content_init(void) {
             }
 }
 
-const char *guideTitles[GUIDE_PAGES] = {
-    "CONTROLS",        "YOUR DRIFTER", "THE BORDERLANDS", "COMBAT",   "WOUNDS & RESCUE", "FOOD & SLEEP",
-    "EQUIPMENT",       "MERCHANTS",    "FORGING GEAR",    "CRAFTING", "YOUR OUTPOST",    "SQUAD JOBS",
-    "CRIME & STEALTH", "FACTIONS",     "CONTRACTS",       "SAVES",    "WEATHER",         "CAPTIVITY", "BUILDING INTERIORS"};
+const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE BORDERLANDS",   "COMBAT",
+                                        "WOUNDS & RESCUE", "FOOD & SLEEP", "EQUIPMENT",         "MERCHANTS",
+                                        "FORGING GEAR",    "CRAFTING",     "YOUR OUTPOST",      "SQUAD JOBS",
+                                        "CRIME & STEALTH", "FACTIONS",     "CONTRACTS",         "SAVES",
+                                        "WEATHER",         "CAPTIVITY",    "BUILDING INTERIORS"};
 const char *guideBodies[GUIDE_PAGES] = {
     "\011 or analog: move in screen direction. \001: nearby interaction. \004: pack. \003: "
     "fight/passive. \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
@@ -151,11 +176,14 @@ const char *guideBodies[GUIDE_PAGES] = {
     "changes starting strengths. A town barber can change your appearance later.",
     "The 1536 by 1536 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. "
     "Rivers have fords near roads; hills rise into mesas and snowfields.\n\010 opens the atlas. Move the "
-    "cursor; \001 orders travel. \004 switches local/world views. \005/\006 selects known towns. \003 reveals surveyed geography after buying a "
+    "cursor; \001 orders travel. \004 switches local/world views. \005/\006 selects known towns. \003 "
+    "reveals surveyed geography after buying a "
     "chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits "
     "persist.",
     "\003 toggles fighting. Move into weapon reach to attack automatically; followers engage nearby "
-    "threats. \006 pauses combat for orders. Heavy weapons hit harder but recover slowly. Guns use cartridges; "
+    "threats. \006 pauses combat for orders. Heavy steel needs strength equal to twice its weight. Weak or "
+    "injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords "
+    "hit hard; anchor cleavers bleed. Guns use cartridges; "
     "bows use bolts.\nArmor protects specific body locations. Piercing weapons ignore some armor; serrated "
     "blades bleed; staggering hits interrupt. Skills improve through use. Retreat from stronger opponents "
     "and use terrain.",
@@ -164,15 +192,18 @@ const char *guideBodies[GUIDE_PAGES] = {
     "ally treats or carries them.\nDressings stop bleeding and restore some health. Sleeping restores the "
     "rest. A doctor charges for full treatment. Lost limbs require a mechanical replacement. Death is "
     "permanent; dismiss the body from Squad to free its slot.",
-    "Rations are eaten below forty hunger: first your pack, then a companion backpack or owned depot within three meters. Water supports "
+    "Rations are eaten below forty hunger: first your pack, then a companion backpack or owned depot within "
+    "three meters. Water supports "
     "farms; tonics restore blood and treat exposure. Starvation damages the chest.\nAn inn bed costs 25 "
     "silver and starts safe rest. Camp shelters are free. Sleeping reduces fatigue and restores wounds once "
-    "bleeding stops and hunger is above twenty. Move to wake. The sun completes a day in thirty minutes of simulation; menus and "
+    "bleeding stops and hunger is above twenty. Move to wake. The sun completes a day in thirty minutes of "
+    "simulation; menus and "
     "tactical pause stop time.",
-    "Six visible slots: weapon, torso, head, boots, legs and back. The catalog has 2,016 combinations across "
-    "84 silhouettes, six materials and four quality grades. Every variant has visible material/quality "
+    "Six visible slots: weapon, torso, head, boots, legs and back. The catalog has 2,112 combinations across "
+    "88 silhouettes, six materials and four quality grades. Every variant has visible material/quality "
     "details and mechanical differences.\nPack \001 equips or uses; \003 passes one item to an ally. \004 "
-    "switches between carried items and worn equipment. Highlight gear to compare WORN and TRY ON, stat changes and effects; \001 on worn "
+    "switches between carried items and worn equipment. Highlight gear to compare WORN and TRY ON, stat "
+    "changes and effects; \001 on worn "
     "gear removes it if space allows. Weight above capacity slows movement.",
     "Talk to a trader and choose Trade. \014 switches buying and selling; \005/\006 filters supplies, "
     "weapons or armor. \001 trades one item. Shops have finite stocks and refresh daily with different "
@@ -204,12 +235,12 @@ const char *guideBodies[GUIDE_PAGES] = {
     "and time.\nWitnesses create a faction penalty and bounty. A theft can fail, drawing guards. Stolen "
     "stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a "
     "defeated wanted survivor; breaking out or paying bail is possible.",
-    "The Frontier Compact guards the old roads. Rust Caravans trade salvage. The Iron Shogunate rules the "
-    "east; Ash monks shelter pilgrims. Black Mesa fences stolen goods. Red Vultures raid; wild packs "
-    "hunt.\nCompleted contracts improve standing. Theft worsens it. The Factions ledger shows standing and "
-    "controlled towns. Settlement unrest affects prosperity and prices. Fighting a faction can close its "
-    "shops; peaceful jobs offer a way back.",
-    "Town residents offer delivery, supply, hunt and relic contracts. Accept through dialogue; track "
+    "Compact guards roads and wells; Rust Caravans trade salvage. Shogunate markets sell lamellar and "
+    "glaives. Ash monks sell medicine; Black Mesa fences stolen goods. Vultures raid; wild packs hunt.\n"
+    "Contracts raise standing; theft lowers it. The Factions ledger shows specialties and controlled towns. "
+    "Hired guards cost 240 silver for escort or 180 for camp duty: one simulated day. They fight and "
+    "bandage independently, keep their gear, wait outside interiors and return home on expiry.",
+    "Marshals offer delivery, supply, hunt and relic contracts. Accept through dialogue; track "
     "objectives in the Journal. Deliveries require reaching another town. Supplies require the listed items. "
     "Hunts count victories after acceptance.\nReturn to the issuing settlement and claim in the Journal with "
     "\001. Rewards grant silver, reputation and experience. Contracts persist in saves. Complete contracts, "
@@ -217,7 +248,8 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Six manual slots plus autosave. \007, Save or Load opens a ledger with name, day, party size and "
     "silver. Choose a slot; \001 asks for confirmation. Save-and-title uses the selected manual slot.\nSaves "
     "use version, size and checksum validation and preserve a previous .bak file. Invalid files never "
-    "replace your running expedition. Version 0.1 and 0.2 saves migrate on load. Back them up before overwriting. "
+    "replace your running expedition. Older saves through 0.4.1 migrate on load. Back them up before "
+    "overwriting. "
     "Autosave is slot zero and is never used for manual saving.",
     "Dust, rain, acid mist and snow change visibility, terrain colors and survival pressure. Storms reduce "
     "detection and ranged accuracy. Acid and cold build exposure outdoors; shelters and sealed gear protect "
@@ -226,7 +258,8 @@ const char *guideBodies[GUIDE_PAGES] = {
     "events so you can plan supplies and routes.",
     "Wanted survivors defeated by lawful guards may wake in town custody. They lose stolen cargo and must "
     "serve time, pay bail or attempt an escape. A conscious free companion can still be selected.\nWhen "
-    "imprisoned, movement is restricted to the holding area. \001 opens the custody dialogue. Paying clears the "
+    "imprisoned, movement is restricted to the holding area. \001 opens the custody dialogue. Paying clears "
+    "the "
     "local bounty. Escape attempts use lockpicking, may fail and raise the bounty. The prison timer, "
     "injuries and inventory persist through saving.",
     "Approach a house, inn, shop, tower or workshop door and press \001 to enter. Walk around the room with "

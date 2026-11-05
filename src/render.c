@@ -915,7 +915,13 @@ static void hud(void) {
         text(80, 195, "\001", TEAL, 1);
         text(96, 195, interior_prompt(), TEXT, 1);
     } else if (ui.contextIndex >= 0) {
-        center(240, 182, context_name(), GOLD, 1);
+        char identity[80];
+        if (ui.contextKind == 0)
+            snprintf(identity, sizeof(identity), "%s / %.20s", npc_role_name(&g.actors[ui.contextIndex]),
+                     factionNames[g.actors[ui.contextIndex].faction]);
+        else
+            snprintf(identity, sizeof(identity), "%s", context_name());
+        center(240, 182, identity, GOLD, 1);
         float d = context_distance();
         if (ui.contextKind == 3 && (a->target >= 0 || a->attackPhase)) {
             center(240, 195, "BREAK AWAY FROM COMBAT TO ENTER", MUTED, 1);
@@ -1050,13 +1056,17 @@ static void equipment_comparison(int it, int y) {
     if (d->slot == 0) {
         compare_number(31, y + 38, "REACH", worn ? old->range : 1.55f, d->range, 1, 0);
         compare_number(229, y + 38, "DELAY", worn ? old->cooldown : 1.2f, d->cooldown, 1, 1);
+        char handling[60];
+        snprintf(handling, sizeof(handling), "STR %d/%d  DELAY x%.2f", level(&g.actors[g.selected], STRENGTH),
+                 weapon_strength(it), weapon_handling(&g.actors[g.selected], it));
+        text(229, y + 50, handling, weapon_handling(&g.actors[g.selected], it) > 1.05f ? RED : TEAL, 1);
     } else {
         compare_number(31, y + 38, "CARRY", old->capacity, d->capacity, 0, 0);
         compare_number(229, y + 38, "SPEED", old->speed, d->speed, 0, 0);
     }
-    snprintf(b, sizeof(b), "EFFECT: %s +%d > %s +%d", old->effect < 0 ? "NONE" : effectNames[old->effect],
+    snprintf(b, sizeof(b), "%.6s %d > %.6s %d", old->effect < 0 ? "NONE" : effectNames[old->effect],
              old->potency, d->effect < 0 ? "NONE" : effectNames[d->effect], d->potency);
-    clipped(31, y + 50, b, 68, GOLD);
+    clipped(31, y + 50, b, 30, GOLD);
 }
 static void pack_screen(void) {
     Actor *a = &g.actors[g.selected];
@@ -1449,7 +1459,7 @@ static void dialogue_screen(void) {
     overlay_header(a->name, "\001 REPLY   \015 CHOOSE   \002 LEAVE   \010 GUIDE");
     portrait_scale(a, 94, 108, 28, 83, 1);
     clipped(30, 204, npc_role_name(a), 16, TEAL);
-    clipped(30, 218, factionNames[a->faction], 16, MUTED);
+    clipped(30, 218, factionNames[a->faction], 16, factionColors[a->faction]);
     wrap(134, 85, 50, dialogue_line(n, ui.dialogPage), TEXT);
     const char *work[] = {"Carry a dispatch - 220 silver", "Bring eight ore - 240 silver",
                           "Defeat three foes - 420 silver", "Recover a relic - 550 silver", "Back"};
@@ -1513,9 +1523,21 @@ static void factions_screen(void) {
             if (g.townOwner[t] == f)
                 townsHeld++;
         snprintf(b, 100, "%+d REP  %d TOWNS", g.rep[f], townsHeld);
-        row(85 + f * 16, ui.selection == f, factionNames[f], b);
+        row(80 + f * 12, ui.selection == f, factionNames[f], b);
     }
-    clipped(31, 220, g.worldNews, 68, GOLD);
+    wrap(31, 183, 68, faction_identity(ui.selection), TEXT);
+    int active = 0;
+    float left = 1800;
+    for (int j = 0; j < 4; j++)
+        if (g.mercActor[j] && g.mercUntil[j] > g.time) {
+            active++;
+            left = fminf(left, g.mercUntil[j] - g.time);
+        }
+    if (active) {
+        snprintf(b, sizeof(b), "HIRED GUARDS %d   NEXT EXPIRY %.1f MIN", active, left / 60);
+        text(31, 220, b, TEAL, 1);
+    } else
+        clipped(31, 220, g.worldNews, 68, GOLD);
 }
 static void storage_screen(void) {
     Actor *a = &g.actors[g.selected];

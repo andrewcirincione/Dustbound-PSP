@@ -165,7 +165,7 @@ int main(int argc, char **argv) {
         for (int i = 1; i < g.actorCount; i++)
             if (!g.actors[i].squad)
                 g.actors[i].active = 0;
-        const int full[6] = {2, 34, 50, 62, 68, 77};
+        const int full[6] = {84, 34, 50, 62, 68, 77};
         for (int j = 0; j < GEARS; j++)
             a->gear[j] = gear_id(full[j], 3, 2);
         for (int j = 0; j < SKILLS; j++)

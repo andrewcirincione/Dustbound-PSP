@@ -130,7 +130,7 @@ static int weapon_family(int item) {
     int f = gear_family(item);
     if (f < 0)
         f = item == STAFF ? 16 : item == CROSSBOW ? 25 : item == CLEAVER ? 11 : item == SABRE ? 8 : 0;
-    return f < 32 ? f : 0;
+    return f >= 84 && f < FAMILIES ? f - 52 : f < 32 ? f : 0;
 }
 static void weapon_sprite(int item, float x, float y, int sc, float angle, float li) {
     if (!item)

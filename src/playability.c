@@ -4,6 +4,8 @@
 #include <string.h>
 
 int npc_role(const Actor *a) {
+    if (a->voice == ROLE_MERCENARY)
+        return ROLE_MERCENARY;
     if (a->kind == TRADER)
         return ROLE_MERCHANT;
     if (a->kind == RECRUIT)
@@ -20,12 +22,12 @@ int npc_role(const Actor *a) {
 }
 const char *npc_role_name(const Actor *a) {
     static const char *names[] = {"RESIDENT", "MERCHANT", "RECRUIT", "MARSHAL", "INNKEEPER",
-                                  "MEDIC",    "SMITH",    "BARBER",  "SCOUT"};
+                                  "MEDIC",    "SMITH",    "BARBER",  "SCOUT",   "CONTRACT GUARD"};
     return names[npc_role(a)];
 }
-static const int services[][5] = {{6, 8, -1},       {0, 6, 8, -1}, {6, 8, -1},
-                                  {1, 4, 6, 8, -1}, {2, 6, 8, -1}, {3, 6, 8, -1},
-                                  {7, 6, 8, -1},    {5, 6, 8, -1}, {6, 8, -1}};
+static const int services[][6] = {{6, 12, 8, -1},    {0, 6, 12, 8, -1}, {6, 12, 8, -1},    {1, 4, 6, 8, -1},
+                                  {2, 6, 12, 8, -1}, {3, 6, 12, 8, -1}, {7, 6, 12, 8, -1}, {5, 6, 12, 8, -1},
+                                  {6, 12, 8, -1},    {9, 10, 6, 12, 8}};
 int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
         return 0;
@@ -37,13 +39,24 @@ int dialogue_count(int actor) {
 int dialogue_action(int actor, int row) {
     if (row < 0 || row >= dialogue_count(actor))
         return 8;
+    if (npc_role(&g.actors[actor]) == ROLE_MERCENARY && merc_slot(&g.actors[actor]) >= 0 && row == 0)
+        return 11;
     return services[npc_role(&g.actors[actor])][row];
 }
 const char *dialogue_option(int actor, int row) {
-    static const char *labels[] = {
-        "Show me your stock.",        "Any paying work?",         "Rent a bed. 25 silver",
-        "Treat my wounds. 80 silver", "Bounties and local news.", "Change my appearance.",
-        "What have you heard?",       "Use the smithy.",          "Safe travels."};
+    static const char *labels[] = {"Show me your stock.",
+                                   "Any paying work?",
+                                   "Rent a bed. 25 silver",
+                                   "Treat my wounds. 80 silver",
+                                   "Bounties and local news.",
+                                   "Change my appearance.",
+                                   "What have you heard?",
+                                   "Use the smithy.",
+                                   "Safe travels.",
+                                   "Escort me. 240 silver / day",
+                                   "Guard my camp. 180 silver / day",
+                                   "End contract. No refund.",
+                                   "Tell me about your faction."};
     int action = dialogue_action(actor, row);
     if (action == 6 && npc_role(&g.actors[actor]) == ROLE_RECRUIT)
         return "Join my expedition. 300 silver";
@@ -246,6 +259,226 @@ void spread_frontier(Game *save) {
             a->kind = SETTLER;
             a->voice = ROLE_SMITH;
             snprintf(a->name, 16, "Frontier smith");
+        }
+    }
+}
+
+/* Frontier identity and contracts. All storage is fixed-size and saved in v5. */
+extern int add_actor(const char *, int, int, float, float, int);
+extern int conscious(const Actor *);
+static const int doctrine[FACTIONS][4] = {{8, 9, 16, 19},   {29, 8, 84, 30}, {85, 12, 21, 11},
+                                          {87, 11, 23, 20}, {0, 2, 86, 5},   {16, 5, 14, 86},
+                                          {30, 7, 87, 9},   {23, 14, 15, 20}};
+const char *faction_identity(int f) {
+    static const char *l[] = {
+        "FREE DRIFTERS: independent recruits and hired blades. No ruler, no uniform law.",
+        "COMPACT: rifle wardens and greatswords. Protects wells; arrests wanted drifters.",
+        "RUST CARAVANS: salvage, mauls and work gear. Bring ore; leave with tools.",
+        "RED VULTURES: heavy scavenged blades. Attacks outsiders. Avoid their settlements.",
+        "SHOGUNATE: lamellar patrols, katanas and glaives. Honor buys trade; infamy draws steel.",
+        "ASH MONASTERY: robes, staves and medicine. Recovery supplies and pilgrim equipment.",
+        "BLACK MESA: pistols, hooks and contraband. Fences accept stolen goods.",
+        "WILD PACKS: territorial predators. No trade, contracts or diplomatic protection."};
+    return l[f >= 0 && f < FACTIONS ? f : 0];
+}
+const char *npc_rumor(const Actor *a) {
+    switch (npc_role(a)) {
+    case ROLE_MERCHANT:
+        return a->faction == UNION ? "Compact stock includes greatswords and rifles. Copper Cross sells "
+                                     "heavy salvage tools. Save silver for food before steel."
+               : a->faction == SCAVENGERS ? "Railway mauls punch through armor, but weak arms swing slowly. "
+                                            "Look for our field-grade stock; masterwork rotates daily."
+               : a->faction == SHOGUN  ? "Our glaives outrange swords. Heavy armor slows a wounded traveler. "
+                                         "Black Mesa trades stranger weapons, if you survive the road."
+               : a->faction == OUTLAWS ? "Stolen goods move here. Anchor cleavers bleed enemies, but their "
+                                         "weight can leave you open. No refunds for dead clients."
+                                       : "Stock follows our faction's craft. Your standing affects prices. "
+                                         "Inspect weight, reach and strength before buying.";
+    case ROLE_MARSHAL:
+        return "Bring contracts back to the journal for payment. Guards protect this town, not the whole "
+               "road. Hire an escort before leaving alone.";
+    case ROLE_MEDIC:
+        return "First aid stops bleeding; a bed finishes recovery. Injured arms slow heavy weapons even when "
+               "your strength is high.";
+    case ROLE_SMITH:
+        return "Greatswords need strength; mauls defeat armor; glaives trade impact for reach. Choose a "
+               "weapon your injured arms can still lift.";
+    case ROLE_INNKEEPER:
+        return "Recruits join for good. Contract guards work one day and then return home. They wait outside "
+               "when you enter buildings.";
+    case ROLE_RECRUIT:
+        return "I join permanently and take your orders. A hired guard keeps their own gear, fights "
+               "independently and leaves when the contract ends.";
+    case ROLE_MERCENARY:
+        return "One guard, one day: 1800 seconds of moving world time. Escort follows your selected "
+               "survivor; camp duty requires an outpost. No refunds.";
+    case ROLE_SCOUT:
+        return "Copper Cross has mauls. Shogunate markets carry glaives. Survey the atlas before choosing a "
+               "long route; towns are islands of safety.";
+    default:
+        return faction_identity(a->faction);
+    }
+}
+void frontier_restock(int t) {
+    int f = g.townOwner[t];
+    if (f < 0 || f >= FACTIONS)
+        f = towns[t].faction;
+    for (int it = BASE_ITEMS; it < ITEMS; it++)
+        g.stock[t][it] = 0;
+    for (int j = 0; j < 4; j++) {
+        g.stock[t][gear_id(doctrine[f][j], 1, 1)] = 2;
+        g.stock[t][gear_id(doctrine[f][j], (t + g.day + j) % MATERIALS, 2 + (g.day + j) % 2)] = 1;
+    }
+    static const int torso[] = {33, 44, 46, 37, 34, 39, 45, 37}, head[] = {48, 49, 56, 55, 50, 57, 52, 55};
+    for (int j = 0; j < 18; j++) {
+        int family = j % 6 == 0   ? torso[f]
+                     : j % 6 == 1 ? head[f]
+                     : j % 6 == 2 ? 60 + (f + j) % 8
+                     : j % 6 == 3 ? 68 + (f + j) % 8
+                                  : 76 + (f + j) % 8;
+        g.stock[t][gear_id(family, (j / 6 + t + g.day) % 6, (j + g.day) % 3)] = 1;
+    }
+    if (f == MONKS) {
+        g.stock[t][MEDKIT] = 30;
+        g.stock[t][TONIC] = 12;
+    }
+    if (f == SCAVENGERS) {
+        g.stock[t][IRONBAR] = 20;
+        g.stock[t][TOOLS] = 8;
+    }
+}
+static void identity_outfit(Actor *a) {
+    int f = a->faction, role = npc_role(a), m = f == SHOGUN ? 4 : f == OUTLAWS ? 0 : 1;
+    static const int torso[] = {33, 44, 46, 37, 34, 39, 45, 37}, head[] = {48, 49, 56, 55, 50, 57, 52, 55};
+    int combat = role == ROLE_MARSHAL || role == ROLE_MERCENARY;
+    a->gear[0] = gear_id(combat               ? doctrine[f][(a->homeTown + f) % 4]
+                         : role == ROLE_SMITH ? 85
+                         : role == ROLE_MEDIC ? 16
+                                              : 3,
+                         m, combat ? 2 : 1);
+    a->gear[1] = gear_id(role == ROLE_MEDIC      ? 39
+                         : role == ROLE_SMITH    ? 35
+                         : role == ROLE_MERCHANT ? 32
+                                                 : torso[f],
+                         m, combat ? 2 : 1);
+    a->gear[2] = gear_id(role == ROLE_MEDIC ? 57 : role == ROLE_MERCHANT ? 56 : head[f], m, 1);
+    a->gear[3] = gear_id(f == SHOGUN ? 63 : f == MONKS ? 61 : 60, m, 1);
+    a->gear[4] = gear_id(f == SHOGUN ? 68 : f == MONKS ? 73 : 69, m, 1);
+    a->gear[5] = gear_id(role == ROLE_MEDIC       ? 78
+                         : role == ROLE_MERCHANT  ? 79
+                         : role == ROLE_MERCENARY ? 82
+                                                  : 77,
+                         m, 1);
+    if (weapon_ranged(a->gear[0]))
+        inventory_add(a, gear_family(a->gear[0]) >= 29 ? CARTRIDGE : BOLTS, 60);
+}
+void frontier_identity(void) {
+    if (g.identityVersion)
+        return;
+    for (int i = 0; i < g.actorCount; i++) {
+        Actor *a = &g.actors[i];
+        if (a->squad || a->dead || a->kind == BEAST || a->kind == RAIDER)
+            continue;
+        identity_outfit(a);
+        /* A service must have its own approach, not overlap the market keeper. */
+        if (npc_role(a) == ROLE_MEDIC) {
+            int t = town_near(a->homeX, a->homeY, 14);
+            if (t >= 0) {
+                a->x = a->homeX = towns[t].x - 7;
+                a->y = a->homeY = towns[t].y + 3;
+                a->routeLen = a->routePos = 0;
+            }
+        }
+    }
+    const int hubs[] = {0, 1, 5, 8};
+    for (int k = 0; k < 4; k++) {
+        int t = hubs[k], n = add_actor("Contract guard", GUARD, FREE, towns[t].x + 4, towns[t].y + 7, 22);
+        if (n < 0)
+            break;
+        Actor *a = &g.actors[n];
+        a->voice = ROLE_MERCENARY;
+        a->homeTown = t;
+        identity_outfit(a);
+        a->gear[0] = gear_id(84 + k, 1, 1);
+        inventory_add(a, MEDKIT, 4);
+    }
+    for (int t = 0; t < TOWNS; t++)
+        frontier_restock(t);
+    g.identityVersion = 1;
+}
+int merc_slot(const Actor *a) {
+    for (int j = 0; j < 4; j++)
+        if (g.mercActor[j] > 0 && g.mercActor[j] <= g.actorCount && &g.actors[g.mercActor[j] - 1] == a &&
+            g.mercUntil[j] > g.time)
+            return j;
+    return -1;
+}
+int merc_hire(int n, int mode) {
+    if (n < 0 || n >= g.actorCount || mode < 0 || mode > 1)
+        return 0;
+    Actor *a = &g.actors[n], *p = &g.actors[g.selected];
+    if (npc_role(a) != ROLE_MERCENARY || !conscious(a) || distance(a->x, a->y, p->x, p->y) > TALK_REACH ||
+        actor_inside(p))
+        return 0;
+    if (merc_slot(a) >= 0) {
+        log_msg("Already under contract. No extra payment taken.");
+        return 0;
+    }
+    if (mode && !g.baseExists) {
+        log_msg("Build an outpost before hiring a camp guard.");
+        return 0;
+    }
+    int cost = mode ? 180 : 240, slot = -1;
+    for (int i = 0; i < 4; i++)
+        if (!g.mercActor[i] || g.mercUntil[i] <= g.time) {
+            slot = i;
+            break;
+        }
+    if (slot < 0 || g.money < cost) {
+        log_msg("Need %d silver and a free contract slot.", cost);
+        return 0;
+    }
+    g.money -= cost;
+    g.mercActor[slot] = n + 1;
+    g.mercUntil[slot] = g.time + 1800;
+    g.mercMode[slot] = mode;
+    log_msg(mode ? "Camp guard hired for one day." : "Escort hired for one day. Independent, not a recruit.");
+    return 1;
+}
+void merc_dismiss(int n) {
+    if (n < 0 || n >= g.actorCount)
+        return;
+    int s = merc_slot(&g.actors[n]);
+    if (s >= 0) {
+        g.mercActor[s] = 0;
+        g.mercUntil[s] = 0;
+        log_msg("Contract ended. Guard returns home; no refund.");
+    }
+}
+void frontier_tick(float dt) {
+    (void)dt;
+    for (int j = 0; j < 4; j++) {
+        int n = g.mercActor[j] - 1;
+        if (n < 0 || n >= g.actorCount)
+            continue;
+        Actor *a = &g.actors[n];
+        if (g.time >= g.mercUntil[j] || a->dead) {
+            g.mercActor[j] = 0;
+            g.mercUntil[j] = 0;
+            log_msg(a->dead ? "A hired guard has died." : "Guard contract expired. Returning home.");
+        } else if (a->target < 0 && conscious(a)) {
+            if (a->bleed > 0 && inventory_remove(a, MEDKIT, 1))
+                a->bleed = 0;
+            for (int i = 0; i < g.actorCount; i++) {
+                Actor *ally = &g.actors[i];
+                if (ally->squad && !ally->dead && ally->bleed > 0 && !actor_inside(ally) &&
+                    distance(a->x, a->y, ally->x, ally->y) < 2.5f && inventory_remove(a, MEDKIT, 1)) {
+                    ally->bleed = 0;
+                    gain(a, MEDICINE, 8);
+                    log_msg("Hired guard bandaged %s.", ally->name);
+                    break;
+                }
+            }
         }
     }
 }

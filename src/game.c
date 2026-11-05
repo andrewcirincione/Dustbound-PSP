@@ -286,6 +286,8 @@ void restock(void) {
             g.stock[t][gear_id(f, m, q)] = 1 + (j % 3);
         }
     }
+    for (int t = 0; t < TOWNS; t++)
+        frontier_restock(t);
     g.lastRestock = g.day;
 }
 void game_new(uint32_t seed, int scenario) {
@@ -383,6 +385,7 @@ void game_new(uint32_t seed, int scenario) {
     init_expansion();
     spread_frontier(&g);
     place_wilderness_encounters();
+    frontier_identity();
     ui.camX = a->x;
     ui.camY = a->y;
     ui.mapX = a->x;
@@ -398,9 +401,9 @@ int hostile(const Actor *a, const Actor *b) {
         return 0;
     if (a->faction == HOSTILE || b->faction == HOSTILE || a->faction == WILDLIFE || b->faction == WILDLIFE)
         return 1;
-    if (a->squad && b->kind == GUARD && g.rep[b->faction] < -25)
+    if ((a->squad || merc_slot(a) >= 0) && b->kind == GUARD && g.rep[b->faction] < -25)
         return 1;
-    if (b->squad && a->kind == GUARD && g.rep[a->faction] < -25)
+    if ((b->squad || merc_slot(b) >= 0) && a->kind == GUARD && g.rep[a->faction] < -25)
         return 1;
     return 0;
 }
@@ -429,7 +432,8 @@ void strike(int ai, int bi) {
     }
     if ((a->lostMask & (1 << RARM)) && !(a->prostheticMask & (1 << RARM)))
         w = NONE;
-    float cadence = fmaxf(.55f, (w ? itemDefs[w].cooldown : 1.0f) - level(a, DEXTERITY) * .003f);
+    float cadence =
+        weapon_handling(a, w) * fmaxf(.55f, (w ? itemDefs[w].cooldown : 1.0f) - level(a, DEXTERITY) * .003f);
     a->attackPhase = 1;
     a->attackTarget = bi;
     a->attackWeapon = w;
@@ -465,6 +469,8 @@ static void resolve_strike(int ai, int bi) {
         atk -= 15;
     gain(a, sk, 8);
     gain(a, DEXTERITY, 3);
+    if (w && !ranged)
+        gain(a, STRENGTH, fminf(8, itemDefs[w].weight * .35f));
     if (rf() > clamp(.71f + (atk - def) * .008f, .22f, .95f)) {
         gain(b, b->gear[0] ? DEFENCE : DODGE, 9);
         if (distance(b->x, b->y, g.actors[g.selected].x, g.actors[g.selected].y) < 12 && b->gear[0])
@@ -1159,6 +1165,7 @@ static int take_ration(Actor *a) {
     return 0;
 }
 void simulate(float dt) {
+    frontier_tick(dt);
     g.shake = fmaxf(0, g.shake - dt);
     if (g.hitstop > 0) {
         g.hitstop = fmaxf(0, g.hitstop - dt);
@@ -1319,11 +1326,27 @@ void simulate(float dt) {
                 strike(i, target);
             continue;
         }
+        if (target >= 0 && !a->squad && (npc_role(a) == ROLE_MERCHANT || npc_role(a) == ROLE_MEDIC)) {
+            Actor *foe = &g.actors[target];
+            move_actor(a, a->x - foe->x, a->y - foe->y, dt);
+            continue;
+        }
         a->target = -1;
-        if (a->squad) {
+        int hired = merc_slot(a);
+        if (hired >= 0) {
+            Actor *leader = &g.actors[g.selected];
+            float x = g.mercMode[hired] ? g.baseX : leader->x;
+            float y = g.mercMode[hired] ? g.baseY : leader->y;
+            if (distance(a->x, a->y, x, y) > 2.5f)
+                route_toward(a, x, y, dt);
+        } else if (a->squad) {
             if (i != g.selected || a->job != JOB_FOLLOW)
                 squad_job(a, dt);
-        } else if (a->kind == RAIDER || a->kind == BEAST || a->kind == SETTLER || a->kind == CARAVAN) {
+        } else if (npc_role(a) == ROLE_MERCENARY || a->kind == GUARD) {
+            if (distance(a->x, a->y, a->homeX, a->homeY) > 1)
+                route_toward(a, a->homeX, a->homeY, dt * .6f);
+        } else if (a->kind == RAIDER || a->kind == BEAST ||
+                   (a->kind == SETTLER && npc_role(a) == ROLE_CITIZEN) || a->kind == CARAVAN) {
             if (distance(a->x, a->y, a->tx, a->ty) < .8f || !can_walk(a->tx, a->ty)) {
                 if (a->kind == CARAVAN) {
                     int t = (i + g.day + (int)(g.time / 65)) % 4;
@@ -1398,7 +1421,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 4, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 5, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1415,11 +1438,24 @@ int save_game(const char *path) {
     return 1;
 }
 static int validate_game(const Game *t) {
+
     if (t->actorCount < 1 || t->actorCount > MAX_ACTORS || t->buildingCount < 0 ||
         t->buildingCount > MAX_BUILDINGS || t->nodeCount < 0 || t->nodeCount > MAX_NODES || t->selected < 0 ||
         t->selected >= t->actorCount || !t->actors[t->selected].squad || t->tech < 0 || t->tech > 3 ||
         t->squadCount < 1 || t->squadCount > SQUAD)
         return 0;
+    for (int j = 0; j < 4; j++) {
+        if (t->mercActor[j] < 0 || t->mercActor[j] > t->actorCount || !isfinite(t->mercUntil[j]) ||
+            t->mercUntil[j] < 0 || t->mercMode[j] < 0 || t->mercMode[j] > 1)
+            return 0;
+        if (t->mercActor[j] &&
+            (t->actors[t->mercActor[j] - 1].voice != ROLE_MERCENARY || t->actors[t->mercActor[j] - 1].squad))
+            return 0;
+        for (int k = 0; k < j; k++)
+            if (t->mercActor[j] && t->mercActor[j] == t->mercActor[k])
+                return 0;
+    }
+
     if (t->interiorBuilding < 0 || t->interiorBuilding > t->buildingCount)
         return 0;
     if (t->interiorBuilding && (t->interiorActor != t->selected ||
@@ -1565,6 +1601,23 @@ static int migrate_legacy(const LegacyGame *old) {
     free(expanded);
     return validate_game(&g);
 }
+static int save_shape(uint32_t version, uint32_t size) {
+    return (version == 5 && size == sizeof(Game)) || ((version == 3 || version == 4) && size == 404460) ||
+           (version == 2 && size == 404444);
+}
+static int decode_modern(Game *out, const void *data, uint32_t version, uint32_t size) {
+    memset(out, 0, sizeof(*out));
+    if (version == 5)
+        memcpy(out, data, size);
+    else {
+        const unsigned char *src = data;
+        memcpy(out, src, 144);
+        for (int t = 0; t < TOWNS; t++)
+            memcpy(out->stock[t], src + 144 + t * 2052 * 4, 2052 * 4);
+        memcpy((unsigned char *)out + offsetof(Game, lastRestock), src + 131472, size - 131472);
+    }
+    return validate_game(out);
+}
 int load_game(const char *path) {
     content_init();
     FILE *f = fopen(path, "rb");
@@ -1576,11 +1629,12 @@ int load_game(const char *path) {
         return 0;
     }
     int ok = 0;
-    if (((h.version == 3 || h.version == 4) && h.size == sizeof(Game)) ||
-        (h.version == 2 && h.size == offsetof(Game, interiorBuilding))) {
+    if (save_shape(h.version, h.size)) {
         Game *t = calloc(1, sizeof(Game));
-        if (t) {
-            ok = fread(t, h.size, 1, f) == 1 && h.hash == checksum(t, h.size) && validate_game(t);
+        void *raw = malloc(h.size);
+        if (t && raw) {
+            ok = fread(raw, h.size, 1, f) == 1 && h.hash == checksum(raw, h.size) &&
+                 decode_modern(t, raw, h.version, h.size);
             if (ok) {
                 if (h.version < 4)
                     spread_frontier(t);
@@ -1588,8 +1642,9 @@ int load_game(const char *path) {
                     world_layout(1);
                 g = *t;
             }
-            free(t);
         }
+        free(raw);
+        free(t);
     } else if (h.version == 1 && h.size == sizeof(LegacyGame)) {
         LegacyGame *t = malloc(sizeof(LegacyGame));
         if (t) {
@@ -1613,6 +1668,7 @@ int load_game(const char *path) {
     }
     fclose(f);
     if (ok) {
+        frontier_identity();
         memset(&ui, 0, sizeof(ui));
         ui.speed = 1;
         ui.slot = 1;
@@ -1636,21 +1692,20 @@ int save_inspect(int slot, SaveInfo *info) {
         return 0;
     }
     info->version = h.version;
-    info->valid = ((h.version == 3 || h.version == 4) && h.size == sizeof(Game)) ||
-                  (h.version == 2 && h.size == offsetof(Game, interiorBuilding)) ||
-                  (h.version == 1 && h.size == sizeof(LegacyGame));
+    info->valid = save_shape(h.version, h.size) || (h.version == 1 && h.size == sizeof(LegacyGame));
     if (info->valid) {
         unsigned char *buf = calloc(1, sizeof(Game) > h.size ? sizeof(Game) : h.size);
         if (buf && fread(buf, h.size, 1, f) == 1 && checksum(buf, h.size) == h.hash) {
-            if (h.version == 2 || h.version == 3 || h.version == 4) {
-                Game *v = (Game *)buf;
-                if (validate_game(v)) {
+            if (h.version >= 2) {
+                Game *v = malloc(sizeof(Game));
+                if (v && decode_modern(v, buf, h.version, h.size)) {
                     info->day = v->day;
                     info->money = v->money;
                     info->squad = v->squadCount;
                     snprintf(info->name, 16, "%.15s", v->actors[v->selected].name);
                 } else
                     info->valid = 0;
+                free(v);
             } else {
                 LegacyGame *v = (LegacyGame *)buf;
                 if (v->selected >= 0 && v->selected < v->actorCount && v->actorCount <= 80) {
@@ -2057,6 +2112,9 @@ void debug_snapshot(const char *path) {
     PTR("bounty", &a->bounty);
     PTR("contracts", &g.contractsDone);
     PTR("game", &g);
+    PTR("mercs", g.mercActor);
+    PTR("mercuntil", g.mercUntil);
+    PTR("identity", &g.identityVersion);
     PTR("interior", &g.interiorBuilding);
     PTR("roompos", &g.interiorX);
     PTR("context", &ui.contextKind);

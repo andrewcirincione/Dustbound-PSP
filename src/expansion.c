@@ -317,7 +317,7 @@ int expansion_input(float dt, Input in) {
         return 1;
     }
     if (ui.screen == SCREEN_FORGE) {
-        static const int first[GEARS] = {0, 32, 48, 60, 68, 76}, counts[GEARS] = {32, 16, 12, 8, 8, 8};
+        static const int first[GEARS] = {0, 32, 48, 60, 68, 76}, counts[GEARS] = {36, 16, 12, 8, 8, 8};
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(SCREEN_WORLD);
             return 1;
@@ -332,9 +332,11 @@ int expansion_input(float dt, Input in) {
                 ui.forgeSlot = wrapi(ui.forgeSlot + d, GEARS);
                 ui.forgeFamily = first[ui.forgeSlot];
             }
-            if (ui.selection == 1)
-                ui.forgeFamily = first[ui.forgeSlot] +
-                                 wrapi(ui.forgeFamily - first[ui.forgeSlot] + d, counts[ui.forgeSlot]);
+            if (ui.selection == 1) {
+                int index = ui.forgeFamily >= 84 ? ui.forgeFamily - 52 : ui.forgeFamily - first[ui.forgeSlot];
+                index = wrapi(index + d, counts[ui.forgeSlot]);
+                ui.forgeFamily = ui.forgeSlot == 0 ? weapon_family_index(index) : first[ui.forgeSlot] + index;
+            }
             if (ui.selection == 2)
                 ui.forgeMaterial = wrapi(ui.forgeMaterial + d, MATERIALS);
             if (ui.selection == 3)
@@ -536,6 +538,18 @@ int expansion_input(float dt, Input in) {
                     break;
                 case 7:
                     open_view(SCREEN_FORGE);
+                    break;
+                case 9:
+                    merc_hire(n, 0);
+                    break;
+                case 10:
+                    merc_hire(n, 1);
+                    break;
+                case 11:
+                    merc_dismiss(n);
+                    break;
+                case 12:
+                    ui.dialogPage = 3;
                     break;
                 case 8:
                     open_view(SCREEN_WORLD);
