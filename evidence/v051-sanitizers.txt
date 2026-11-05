@@ -1,0 +1,9 @@
+World actors 160, contract guards 4
+PASS: frontier roles, 4 new families, regional stock, strength/injury penalties, hire/range/payment/follow/expiry/dismissal and genuine v4 migration.
+PASS: 5760 painted grip samples; 14976 attack poses fit actor cache; 36 bounded, cache-stable comparison pairs. Bounds x=-111..110 y=-122..49 at 2x.
+PASS: 192 real backpack swaps match load preview; 16 stocked markets; cargo/speed/medical effects; one-time and genuine v5 migration; journal target/return tracking preserves travel.
+PASS: 288 asymmetric weapon raster reflections preserve edge orientation.
+PASS: 1152 backpack/body/torso/facing/pose renders keep visible loads on the upper back.
+PASS: 72 headwear/body/facing renders overlap the brow and stay within fitted head bounds.
+Attachment visual sheets rendered.
+PASS: 1056 clothing variants preserve quality progression, live bonuses and 96 heavy/light tradeoffs.

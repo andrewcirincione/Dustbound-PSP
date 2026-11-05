@@ -1,0 +1,45 @@
+family,name,slot,armor,weight,move_percent,stealth,capacity,weather,effect,value
+32,Trail duster,1,8,3,0.0,0,0,21,Dust sealed,21
+33,Ronin coat,1,10,4,0.0,0,0,0,Guarding,2
+34,Lamellar do,1,24,10,-4.5,-12,0,0,Guarding,2
+35,Patchwork vest,1,8,3,0.5,2,0,0,Recovery,2
+36,Brigandine,1,20,8,-3.0,-8,0,0,Guarding,2
+37,Bone harness,1,14,6,-1.5,-6,0,0,Guarding,2
+38,Iron cuirass,1,30,14,-6.0,-18,0,0,Guarding,2
+39,Monk robes,1,3,1,1.5,3,0,0,Field medic,2
+40,Ash cloak,1,5,2,0.5,2,0,21,Dust sealed,21
+41,Gambeson,1,12,5,-0.5,-1,0,0,Recovery,2
+42,Plated duster,1,22,10,-4.0,-10,0,21,Dust sealed,21
+43,Reed jacket,1,6,2,1.5,5,0,0,Quiet,5
+44,Scale haori,1,18,7,-2.5,-6,0,0,Guarding,2
+45,Bandolier coat,1,10,4,0.0,0,6,0,Load bearing,6
+46,Scavenger wraps,1,4,1,2.0,7,0,0,Quiet,7
+47,Captain armor,1,26,12,-5.0,-15,0,0,Guarding,2
+48,Sedge kasa,2,2,1,0.0,0,0,21,Dust sealed,21
+49,Frontier hat,2,2,1,0.0,0,0,21,Dust sealed,21
+50,Horned kabuto,2,18,5,-1.5,-7,0,0,Guarding,2
+51,Menpo hood,2,10,2,0.0,3,0,0,Quiet,3
+52,Dust turban,2,3,1,0.0,1,0,21,Dust sealed,21
+53,Bowl helm,2,16,4,-1.0,-5,0,0,Guarding,2
+54,Ranger hood,2,5,1,0.5,5,0,0,Quiet,5
+55,Oni mask,2,12,3,-0.5,-3,0,0,Guarding,2
+56,Goggle cap,2,4,1,0.0,0,0,21,Dust sealed,21
+57,Monk cowl,2,1,1,0.5,2,0,0,Field medic,2
+58,Iron jingasa,2,12,3,-0.5,-3,0,0,Guarding,2
+59,Crested helm,2,20,6,-2.0,-8,0,0,Guarding,2
+60,Riding boots,3,6,2,1.5,0,0,0,Striding,3
+61,Straw sandals,3,1,1,2.0,4,0,0,Quiet,4
+62,Plated greaves,3,16,5,-3.0,-7,0,0,Guarding,2
+63,Split tabi,3,3,1,1.5,6,0,0,Quiet,6
+64,Wrapped boots,3,4,1,0.5,2,0,0,Recovery,2
+65,Scout shoes,3,3,1,3.5,5,0,0,Striding,7
+66,Spurred boots,3,8,3,0.5,-3,0,0,Striding,1
+67,Ash gaiters,3,5,2,0.0,0,0,21,Dust sealed,21
+68,Hakama,4,5,2,1.0,3,0,0,Quiet,3
+69,Trail trousers,4,6,2,1.5,1,0,0,Striding,3
+70,Plated tassets,4,22,8,-4.0,-12,0,0,Guarding,2
+71,Reed leggings,4,4,1,1.5,6,0,0,Quiet,6
+72,Armored chaps,4,16,6,-2.5,-8,0,0,Guarding,2
+73,Monk skirt,4,3,1,1.0,3,0,0,Field medic,2
+74,Bandit wraps,4,4,1,2.0,7,0,0,Quiet,7
+75,Scale guards,4,18,7,-3.0,-10,0,0,Guarding,2

@@ -151,11 +151,25 @@ float encumbrance(const Actor *a) {
     float w = 0;
     for (int i = 0; i < PACK; i++)
         w += itemDefs[a->pack[i].item].weight * a->pack[i].qty;
+    w *= backpack_load_percent(a->gear[5]) * .01f;
     for (int i = 0; i < GEARS; i++)
         w += itemDefs[a->gear[i]].weight;
     if (a->carrying >= 0)
         w += 40;
     return w;
+}
+float backpack_load_preview(const Actor *a, int item) {
+    if (item == a->gear[5])
+        return encumbrance(a);
+    float cargo = 0, worn = itemDefs[item].weight + (a->carrying >= 0 ? 40 : 0);
+    for (int i = 0; i < PACK; i++)
+        cargo += itemDefs[a->pack[i].item].weight * a->pack[i].qty;
+    if (inventory_count(a, item))
+        cargo -= itemDefs[item].weight;
+    cargo += itemDefs[a->gear[5]].weight;
+    for (int i = 0; i < GEARS - 1; i++)
+        worn += itemDefs[a->gear[i]].weight;
+    return worn + cargo * backpack_load_percent(item) * .01f;
 }
 float movement_speed(const Actor *a) {
     float cap = 30 + level(a, STRENGTH) * 2 + gear_bonus(a, 3);
@@ -458,6 +472,9 @@ static void resolve_strike(int ai, int bi) {
         return;
     int sk = ranged ? CROSSBOWS : w ? MELEE : MARTIAL;
     float atk = level(a, sk) + gear_bonus(a, 0), def = level(b, b->gear[0] ? DEFENCE : DODGE);
+    if (!ranged)
+        atk -= backpack_combat_penalty(a->gear[5]);
+    def -= backpack_combat_penalty(b->gear[5]);
     for (int e = 0; e < GEARS; e++)
         if (itemDefs[b->gear[e]].effect == 4)
             def += itemDefs[b->gear[e]].potency;
@@ -2101,6 +2118,8 @@ void debug_snapshot(const char *path) {
     PTR("squad", &g.squadCount);
     PTR("position", &a->x);
     PTR("gear", a->gear);
+    PTR("facing", &a->facing);
+    PTR("shop_filter", &ui.shopFilter);
     PTR("pack", a->pack);
     PTR("health", a->health);
     PTR("attack", &a->attackPhase);
@@ -2123,6 +2142,44 @@ void debug_snapshot(const char *path) {
     PTR("waypoint", &ui.waypoint);
     PTR("travel", &ui.travelX);
 #undef PTR
+    /* Read-only QA values avoid racing PPSSPP's live-memory debugger against
+       its headless frame loop. No telemetry file can change simulation state. */
+#define VALUE(n, p, bytes)                                                                                   \
+    do {                                                                                                     \
+        const unsigned char *raw = (const unsigned char *)(p);                                               \
+        fprintf(f, ",\"%s_value\":\"", n);                                                                   \
+        for (unsigned k = 0; k < (bytes); k++)                                                               \
+            fprintf(f, "%02x", raw[k]);                                                                      \
+        fputc('"', f);                                                                                       \
+    } while (0)
+    VALUE("screen", &ui.screen, 4);
+    VALUE("money", &g.money, 4);
+    VALUE("squad", &g.squadCount, 4);
+    VALUE("position", &a->x, 8);
+    VALUE("gear", a->gear, sizeof(a->gear));
+    VALUE("facing", &a->facing, 4);
+    VALUE("shop_filter", &ui.shopFilter, 4);
+    VALUE("pack", a->pack, sizeof(a->pack));
+    VALUE("health", a->health, sizeof(a->health));
+    VALUE("attack", &a->attackPhase, 4);
+    VALUE("time", &g.time, 4);
+    VALUE("framecount", &rendered_frames, 4);
+    VALUE("selected", &g.selected, 4);
+    VALUE("selection", &ui.selection, 4);
+    VALUE("weather", &g.weather, 4);
+    VALUE("bounty", &a->bounty, 4);
+    VALUE("contracts", &g.contractsDone, 4);
+    VALUE("mercs", g.mercActor, sizeof(g.mercActor));
+    VALUE("mercuntil", g.mercUntil, sizeof(g.mercUntil));
+    VALUE("identity", &g.identityVersion, 4);
+    VALUE("interior", &g.interiorBuilding, 4);
+    VALUE("roompos", &g.interiorX, 8);
+    VALUE("context", &ui.contextKind, 8);
+    VALUE("task", &a->taskKind, 4);
+    VALUE("mapzoom", &ui.mapZoom, 4);
+    VALUE("waypoint", &ui.waypoint, 4);
+    VALUE("travel", &ui.travelX, 8);
+#undef VALUE
     fprintf(f, "}\n");
     fclose(f);
 }

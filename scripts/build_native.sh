@@ -22,3 +22,9 @@ cc -O2 -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-i
 python3 -c "import gzip,pathlib; pathlib.Path('build/v041-outpost.sav').write_bytes(gzip.open('tests/fixtures/v041-outpost.sav.gz','rb').read())"
 cc -O2 -std=gnu99 -Isrc src/game.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c tests/test_frontier.c -lm -o build/test-frontier
 ./build/test-frontier
+
+python3 -c "import gzip,pathlib; pathlib.Path('build/v050-expedition.sav').write_bytes(gzip.open('tests/fixtures/v050-expedition.sav.gz','rb').read())"
+for suite in backpacks attachments clothing; do
+    cc -O2 -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c tests/test_${suite}.c -lm -o build/test-${suite}
+    build/test-${suite}
+done

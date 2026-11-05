@@ -1,0 +1,382 @@
+KEY cross SCREEN 13 ROW 0 -> 0
+KEY up SCREEN 15 ROW 0 -> 9
+KEY cross SCREEN 15 ROW 9 -> 0
+ASSERT money (650,)
+KEY cross SCREEN 0 ROW 0 -> 0
+KEY cross SCREEN 17 ROW 0 -> 0
+KEY ltrigger SCREEN 6 ROW 0 -> 0
+ASSERT shop_filter (4,)
+SCREENSHOT v051-70-backpack-market 480x272 screen 6 VRAM 0x4000000
+KEY select SCREEN 6 ROW 0 -> 19
+ASSERT selection (19,)
+SCREENSHOT v051-71-backpack-guide 480x272 screen 12 VRAM 0x4000000
+KEY circle SCREEN 12 ROW 19 -> 0
+KEY down SCREEN 6 ROW 0 -> 1
+KEY down SCREEN 6 ROW 1 -> 2
+SCREENSHOT v051-72-purchase-78 480x272 screen 6 VRAM 0x4088000
+KEY cross SCREEN 6 ROW 2 -> 2
+ASSERT money (470,)
+KEY down SCREEN 6 ROW 2 -> 3
+KEY down SCREEN 6 ROW 3 -> 4
+SCREENSHOT v051-72-purchase-79 480x272 screen 6 VRAM 0x4000000
+KEY cross SCREEN 6 ROW 4 -> 4
+ASSERT money (240,)
+KEY down SCREEN 6 ROW 4 -> 5
+KEY down SCREEN 6 ROW 5 -> 6
+KEY down SCREEN 6 ROW 6 -> 7
+KEY down SCREEN 6 ROW 7 -> 8
+SCREENSHOT v051-72-purchase-82 480x272 screen 6 VRAM 0x4088000
+KEY cross SCREEN 6 ROW 8 -> 8
+ASSERT money (40,)
+KEY circle SCREEN 6 ROW 8 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+SCREENSHOT v051-73-pack-compare-78 480x272 screen 1 VRAM 0x4000000
+KEY cross SCREEN 1 ROW 5 -> 5
+KEY circle SCREEN 1 ROW 5 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-74-bought-pack-78-right 480x272 screen 0 VRAM 0x4000000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-74-bought-pack-78-left 480x272 screen 0 VRAM 0x4088000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+SCREENSHOT v051-73-pack-compare-79 480x272 screen 1 VRAM 0x4000000
+KEY cross SCREEN 1 ROW 6 -> 6
+KEY circle SCREEN 1 ROW 6 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-74-bought-pack-79-right 480x272 screen 0 VRAM 0x4088000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-74-bought-pack-79-left 480x272 screen 0 VRAM 0x4000000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+SCREENSHOT v051-73-pack-compare-82 480x272 screen 1 VRAM 0x4000000
+KEY cross SCREEN 1 ROW 7 -> 7
+KEY circle SCREEN 1 ROW 7 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-74-bought-pack-82-right 480x272 screen 0 VRAM 0x4088000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-74-bought-pack-82-left 480x272 screen 0 VRAM 0x4000000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+SCREENSHOT v051-73-pack-compare-76 480x272 screen 1 VRAM 0x4000000
+KEY cross SCREEN 1 ROW 5 -> 5
+KEY circle SCREEN 1 ROW 5 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-74-bought-pack-76-right 480x272 screen 0 VRAM 0x4000000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-74-bought-pack-76-left 480x272 screen 0 VRAM 0x4000000
+KEY cross SCREEN 0 ROW 0 -> 0
+KEY cross SCREEN 17 ROW 0 -> 0
+ASSERT screen (17,)
+KEY cross SCREEN 17 ROW 0 -> 0
+KEY circle SCREEN 17 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY down SCREEN 11 ROW 5 -> 6
+KEY down SCREEN 11 ROW 6 -> 7
+KEY down SCREEN 11 ROW 7 -> 8
+KEY down SCREEN 11 ROW 8 -> 9
+KEY down SCREEN 11 ROW 9 -> 10
+KEY down SCREEN 11 ROW 10 -> 11
+KEY down SCREEN 11 ROW 11 -> 12
+KEY cross SCREEN 11 ROW 12 -> 0
+SCREENSHOT v051-75-contract-journal 480x272 screen 19 VRAM 0x4088000
+KEY square SCREEN 19 ROW 0 -> 0
+SCREENSHOT v051-76-contract-destination 480x272 screen 5 VRAM 0x4088000
+KEY circle SCREEN 5 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY cross SCREEN 11 ROW 4 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY circle SCREEN 11 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+ASSERT money (40,)
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY cross SCREEN 22 ROW 2 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY cross SCREEN 1 ROW 0 -> 0
+KEY circle SCREEN 1 ROW 0 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-77-weapon-00-right 480x272 screen 0 VRAM 0x4000000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-77-weapon-00-left 480x272 screen 0 VRAM 0x4088000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY cross SCREEN 1 ROW 1 -> 1
+KEY circle SCREEN 1 ROW 1 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-77-weapon-01-right 480x272 screen 0 VRAM 0x4000000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-77-weapon-01-left 480x272 screen 0 VRAM 0x4088000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY cross SCREEN 1 ROW 2 -> 2
+KEY circle SCREEN 1 ROW 2 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-77-weapon-02-right 480x272 screen 0 VRAM 0x4000000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-77-weapon-02-left 480x272 screen 0 VRAM 0x4088000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY cross SCREEN 1 ROW 3 -> 3
+KEY circle SCREEN 1 ROW 3 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-77-weapon-03-right 480x272 screen 0 VRAM 0x4088000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-77-weapon-03-left 480x272 screen 0 VRAM 0x4088000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY cross SCREEN 1 ROW 4 -> 4
+KEY circle SCREEN 1 ROW 4 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-77-weapon-04-right 480x272 screen 0 VRAM 0x4000000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-77-weapon-04-left 480x272 screen 0 VRAM 0x4000000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY cross SCREEN 1 ROW 5 -> 5
+KEY circle SCREEN 1 ROW 5 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-77-weapon-05-right 480x272 screen 0 VRAM 0x4000000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-77-weapon-05-left 480x272 screen 0 VRAM 0x4088000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY cross SCREEN 1 ROW 6 -> 6
+KEY circle SCREEN 1 ROW 6 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-77-weapon-06-right 480x272 screen 0 VRAM 0x4088000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-77-weapon-06-left 480x272 screen 0 VRAM 0x4000000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY cross SCREEN 1 ROW 7 -> 7
+KEY circle SCREEN 1 ROW 7 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-77-weapon-07-right 480x272 screen 0 VRAM 0x4088000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-77-weapon-07-left 480x272 screen 0 VRAM 0x4088000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY cross SCREEN 1 ROW 8 -> 8
+KEY circle SCREEN 1 ROW 8 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-77-weapon-08-right 480x272 screen 0 VRAM 0x4000000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-77-weapon-08-left 480x272 screen 0 VRAM 0x4088000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY cross SCREEN 1 ROW 9 -> 9
+KEY circle SCREEN 1 ROW 9 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-77-weapon-09-right 480x272 screen 0 VRAM 0x4088000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-77-weapon-09-left 480x272 screen 0 VRAM 0x4000000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY cross SCREEN 1 ROW 10 -> 10
+KEY circle SCREEN 1 ROW 10 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-77-weapon-10-right 480x272 screen 0 VRAM 0x4000000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-77-weapon-10-left 480x272 screen 0 VRAM 0x4000000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY down SCREEN 1 ROW 10 -> 11
+KEY cross SCREEN 1 ROW 11 -> 11
+KEY circle SCREEN 1 ROW 11 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v051-77-weapon-11-right 480x272 screen 0 VRAM 0x4000000
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v051-77-weapon-11-left 480x272 screen 0 VRAM 0x4000000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY down SCREEN 1 ROW 10 -> 11
+KEY down SCREEN 1 ROW 11 -> 12
+KEY cross SCREEN 1 ROW 12 -> 12
+STATUS UNAVAILABLE ConnectionClosedError(None, Close(code=<CloseCode.INTERNAL_ERROR: 1011>, reason=''), None)
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/websockets/asyncio/connection.py", line 305, in recv
+    return await self.recv_messages.get(decode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/websockets/asyncio/messages.py", line 158, in get
+    frame = await self.frames.get(not self.closed)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/websockets/asyncio/messages.py", line 51, in get
+    await self.get_waiter
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_attachments_v051.py", line 80, in <module>
+    if __name__=='__main__':asyncio.run(main())
+                            ^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_attachments_v051.py", line 61, in main
+    await choose(e,i,24);await e.key('cross');assert (await e.read('gear','6I'))[0]==item
+                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_test.py", line 40, in read
+    result = await self.call('memory.read',address=state[field+'_pointer'],size=struct.calcsize('<'+fmt))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_test.py", line 27, in call
+    data = json.loads(await asyncio.wait_for(self.ws.recv(), 60))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/tasks.py", line 519, in wait_for
+    async with timeouts.timeout(timeout):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/timeouts.py", line 115, in __aexit__
+    raise TimeoutError from exc_val
+TimeoutError

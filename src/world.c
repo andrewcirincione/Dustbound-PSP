@@ -337,7 +337,9 @@ int shop_item(int index) {
                 continue;
             if (ui.shopFilter == 2 && slot != 0)
                 continue;
-            if (ui.shopFilter == 3 && slot < 1)
+            if (ui.shopFilter == 3 && (slot < 1 || slot == 5))
+                continue;
+            if (ui.shopFilter == 4 && slot != 5)
                 continue;
             if (index-- == 0)
                 return i;
@@ -356,7 +358,9 @@ int shop_count(void) {
                 continue;
             if (ui.shopFilter == 2 && s != 0)
                 continue;
-            if (ui.shopFilter == 3 && s < 1)
+            if (ui.shopFilter == 3 && (s < 1 || s == 5))
+                continue;
+            if (ui.shopFilter == 4 && s != 5)
                 continue;
             n++;
         }
@@ -534,8 +538,9 @@ void contract_description(int n, char *out, int size) {
         snprintf(out, size, "Defeat %d hostiles (%d/%d). Report to %s. %d silver.", c->needed, c->progress,
                  c->needed, towns[c->town].name, c->reward);
     else
-        snprintf(out, size, "Bring %d %s to %s. Reward %d silver and standing.", c->needed,
-                 itemDefs[c->item].name, towns[c->town].name, c->reward);
+        snprintf(out, size, "Bring %d %s (%d/%d held) to %s. %d silver and standing.", c->needed,
+                 itemDefs[c->item].name, inventory_count(&g.actors[g.selected], c->item), c->needed,
+                 towns[c->town].name, c->reward);
 }
 int complete_contract(int n) {
     if (n < 0 || n >= CONTRACTS || g.contracts[n].active != 1)
@@ -594,8 +599,8 @@ const char *dialogue_line(int n, int page) {
     }
     switch (npc_role(a)) {
     case ROLE_MERCHANT:
-        return "I sell supplies and equipment. Bring salvage to trade. The innkeeper has beds; the town "
-               "medic treats wounds.";
+        return "Travel, medicine, ore or bedroll pack? Look under Backpacks. Big loads cost you in a fight. "
+               "Bring salvage to trade, and save silver for food and a bed.";
     case ROLE_INNKEEPER:
         return "A bed costs 25 silver. Step inside the inn to rest. Patch bleeding wounds before you sleep.";
     case ROLE_MEDIC:

@@ -1,0 +1,205 @@
+KEY cross SCREEN 13 ROW 0 -> 0
+KEY up SCREEN 15 ROW 0 -> 9
+KEY cross SCREEN 15 ROW 9 -> 0
+ASSERT money (650,)
+SCREENSHOT v051-50-guard-identity 480x272 screen 0
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v051-51-guard-contract 480x272 screen 17
+KEY cross SCREEN 17 ROW 0 -> 0
+ASSERT money (410,)
+ASSERT squad (1,)
+SCREENSHOT v051-52-hired-guard 480x272 screen 17
+KEY down SCREEN 17 ROW 0 -> 1
+KEY cross SCREEN 17 ROW 1 -> 1
+ASSERT money (410,)
+KEY circle SCREEN 17 ROW 1 -> 0
+SCREENSHOT v051-53-escort-follows 480x272 screen 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY down SCREEN 11 ROW 5 -> 6
+KEY down SCREEN 11 ROW 6 -> 7
+KEY down SCREEN 11 ROW 7 -> 8
+KEY down SCREEN 11 ROW 8 -> 9
+KEY down SCREEN 11 ROW 9 -> 10
+KEY down SCREEN 11 ROW 10 -> 11
+KEY down SCREEN 11 ROW 11 -> 12
+KEY down SCREEN 11 ROW 12 -> 13
+KEY cross SCREEN 11 ROW 13 -> 0
+SCREENSHOT v051-54-faction-contract-ledger 480x272 screen 20
+KEY circle SCREEN 20 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY cross SCREEN 11 ROW 4 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY circle SCREEN 11 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+ASSERT money (410,)
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY cross SCREEN 22 ROW 2 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v051-55-shogunate-merchant 480x272 screen 17
+KEY down SCREEN 17 ROW 0 -> 1
+KEY cross SCREEN 17 ROW 1 -> 1
+SCREENSHOT v051-56-shogunate-advice 480x272 screen 17
+KEY up SCREEN 17 ROW 1 -> 0
+KEY cross SCREEN 17 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+SCREENSHOT v051-57-shogunate-stock 480x272 screen 6
+KEY circle SCREEN 6 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY cross SCREEN 22 ROW 3 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v051-55-rust-caravans-merchant 480x272 screen 17
+KEY down SCREEN 17 ROW 0 -> 1
+KEY cross SCREEN 17 ROW 1 -> 1
+SCREENSHOT v051-56-rust-caravans-advice 480x272 screen 17
+KEY up SCREEN 17 ROW 1 -> 0
+KEY cross SCREEN 17 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+SCREENSHOT v051-57-rust-caravans-stock 480x272 screen 6
+KEY circle SCREEN 6 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY down SCREEN 22 ROW 3 -> 4
+KEY cross SCREEN 22 ROW 4 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v051-55-black-mesa-merchant 480x272 screen 17
+KEY down SCREEN 17 ROW 0 -> 1
+KEY cross SCREEN 17 ROW 1 -> 1
+SCREENSHOT v051-56-black-mesa-advice 480x272 screen 17
+KEY up SCREEN 17 ROW 1 -> 0
+KEY cross SCREEN 17 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+SCREENSHOT v051-57-black-mesa-stock 480x272 screen 6
+KEY circle SCREEN 6 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY down SCREEN 22 ROW 3 -> 4
+KEY down SCREEN 22 ROW 4 -> 5
+KEY cross SCREEN 22 ROW 5 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+SCREENSHOT v051-58-new-weapon-0 480x272 screen 1
+KEY cross SCREEN 1 ROW 0 -> 0
+KEY circle SCREEN 1 ROW 0 -> 0
+SCREENSHOT v051-59-new-weapon-world-0 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+SCREENSHOT v051-58-new-weapon-1 480x272 screen 1
+KEY cross SCREEN 1 ROW 1 -> 1
+KEY circle SCREEN 1 ROW 1 -> 0
+SCREENSHOT v051-59-new-weapon-world-1 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+SCREENSHOT v051-58-new-weapon-2 480x272 screen 1
+KEY cross SCREEN 1 ROW 2 -> 2
+KEY circle SCREEN 1 ROW 2 -> 0
+SCREENSHOT v051-59-new-weapon-world-2 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+SCREENSHOT v051-58-new-weapon-3 480x272 screen 1
+KEY cross SCREEN 1 ROW 3 -> 3
+KEY circle SCREEN 1 ROW 3 -> 0
+SCREENSHOT v051-59-new-weapon-world-3 480x272 screen 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY down SCREEN 22 ROW 3 -> 4
+KEY down SCREEN 22 ROW 4 -> 5
+KEY down SCREEN 22 ROW 5 -> 6
+KEY cross SCREEN 22 ROW 6 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+ASSERT identity (2,)
+SCREENSHOT v051-60-v041-save-migrated 480x272 screen 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY down SCREEN 11 ROW 5 -> 6
+KEY down SCREEN 11 ROW 6 -> 7
+KEY cross SCREEN 11 ROW 7 -> 0
+KEY rtrigger SCREEN 12 ROW 0 -> 1
+KEY rtrigger SCREEN 12 ROW 1 -> 2
+KEY rtrigger SCREEN 12 ROW 2 -> 3
+SCREENSHOT v051-61-heavy-combat-guide 480x272 screen 12
+KEY rtrigger SCREEN 12 ROW 3 -> 4
+KEY rtrigger SCREEN 12 ROW 4 -> 5
+KEY rtrigger SCREEN 12 ROW 5 -> 6
+KEY rtrigger SCREEN 12 ROW 6 -> 7
+KEY rtrigger SCREEN 12 ROW 7 -> 8
+KEY rtrigger SCREEN 12 ROW 8 -> 9
+KEY rtrigger SCREEN 12 ROW 9 -> 10
+KEY rtrigger SCREEN 12 ROW 10 -> 11
+KEY rtrigger SCREEN 12 ROW 11 -> 12
+KEY rtrigger SCREEN 12 ROW 12 -> 13
+SCREENSHOT v051-62-faction-guide 480x272 screen 12
+PSP FRONTIER IDENTITY PLAYTHROUGH PASS

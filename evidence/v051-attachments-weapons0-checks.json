@@ -1,0 +1,523 @@
+[
+  {
+    "eboot_sha256": "34a577821da3730b56f2cc969fdafe273926482569227d97da20e1b1b8554ade",
+    "version": "0.5.1"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-00-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 523,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-00-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 577,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-01-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 780,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-01-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 828,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-02-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1058,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-02-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1111,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-03-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1370,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-03-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1419,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-04-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1732,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-04-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1784,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-05-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2124,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-05-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2182,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-06-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2575,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-06-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2628,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-07-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3114,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-07-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3173,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-08-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3687,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-08-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3740,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-09-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4216,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-09-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4272,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-10-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4726,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-10-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4783,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-11-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 5413,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-11-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 5472,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-12-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6096,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-12-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6153,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-13-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6691,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-13-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6751,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-14-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7230,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-14-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7290,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-15-right",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7774,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "facing",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v051-77-weapon-15-left",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7831,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "scenario": "weapons0",
+    "completed": true,
+    "prepared_fixture": true
+  }
+]

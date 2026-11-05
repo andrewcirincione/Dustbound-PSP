@@ -118,6 +118,35 @@ int main(int argc, char *argv[]) {
         game_tick(dt, (Input){held, press, ax, ay});
         render_game(stage, 512);
         memcpy(buffers[draw], stage, sizeof(stage));
+        /* QA-only screenshot requests copy this executable's completed frame.
+           They never alter game state, input, timing or render parameters. */
+        if (trace) {
+            FILE *request = fopen("DUST_CAPTURE_REQUEST", "r");
+            if (request) {
+                unsigned sequence = 0;
+                int valid = fscanf(request, "%u", &sequence) == 1 && sequence < 100000;
+                fclose(request);
+                remove("DUST_CAPTURE_REQUEST");
+                if (valid) {
+                    char path[64];
+                    snprintf(path, sizeof(path), "DUST_CAPTURE_%u.rgba", sequence);
+                    FILE *out = fopen(path, "wb");
+                    if (out) {
+                        int complete = fwrite(stage, sizeof(stage), 1, out) == 1;
+                        fclose(out);
+                        if (complete) {
+                            snprintf(path, sizeof(path), "DUST_CAPTURE_%u.json", sequence);
+                            out = fopen(path, "w");
+                            if (out) {
+                                fprintf(out, "{\"screen\":%d,\"frame\":%u}\n", ui.screen,
+                                        (unsigned)rendered_frames);
+                                fclose(out);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         /* Optional QA readback of frames produced by this PSP executable.
            Marker absent in release packages; no recording cost in normal play. */
         if (record && ui.screen == SCREEN_WORLD && recorded < 240) {
@@ -144,7 +173,7 @@ int main(int argc, char *argv[]) {
         sceDisplayWaitVblankStart();
         display_buffer = 0x04000000 + (1 - draw) * 512 * 272 * 4;
         rendered_frames++;
-        if (trace && ++frames % 30 == 0)
+        if (trace && ++frames % 2 == 0)
             debug_snapshot("DUST_STATE.json");
     }
     if (ui.screen != SCREEN_TITLE)

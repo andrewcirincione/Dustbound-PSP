@@ -106,7 +106,7 @@ static int guide_for(int s) {
     case SCREEN_LOOT:
         return 6;
     case SCREEN_TRADE:
-        return 7;
+        return ui.shopFilter == 4 && !ui.sell ? 19 : 7;
     case SCREEN_FORGE:
         return 8;
     case SCREEN_CRAFT:
@@ -268,7 +268,9 @@ int expansion_input(float dt, Input in) {
         return 1;
     }
     if (ui.screen == SCREEN_TRADE && (p & (KEY_L | KEY_R))) {
-        ui.shopFilter = wrapi(ui.shopFilter + (p & KEY_L ? -1 : 1), 4);
+        if (ui.sell)
+            return 1;
+        ui.shopFilter = wrapi(ui.shopFilter + (p & KEY_L ? -1 : 1), 5);
         ui.selection = 0;
         return 1;
     }
@@ -400,6 +402,19 @@ int expansion_input(float dt, Input in) {
             ui.selection = wrapi(ui.selection + 1, n);
         if (ui.screen == SCREEN_JOURNAL && (p & KEY_CROSS))
             complete_contract(ui.selection);
+        if (ui.screen == SCREEN_JOURNAL && (p & KEY_SQUARE)) {
+            Contract *c = &g.contracts[ui.selection];
+            if (c->active == 1) {
+                int town = c->type == 0 && c->progress < c->needed ? c->target : c->town;
+                open_view(SCREEN_MAP);
+                ui.mapTown = town;
+                ui.mapX = towns[town].x;
+                ui.mapY = towns[town].y;
+                ui.mapZoom = 0;
+                log_msg("Contract: %s. Choose travel on the map when ready.", towns[town].name);
+            } else
+                log_msg("Select an active contract to locate its destination.");
+        }
         return 1;
     }
     if (ui.screen == SCREEN_LOOT) {

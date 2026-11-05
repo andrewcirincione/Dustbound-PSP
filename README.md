@@ -2,11 +2,26 @@
 
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.5.0, playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.5.1, playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 
-![Actual PSP EBOOT gameplay in PPSSPP](evidence/v050-03-dusk-haven.png)
+![Actual PSP EBOOT gameplay in PPSSPP](evidence/v051-03-dusk-haven.png)
+
+## Equipment fit and useful choices
+
+0.5.1 corrects low/reversed backpacks, sword cutting-edge direction and left-facing shoulder/hand attachment. Per-design mounts place packs at the upper back, with separate shapes for flags, cloaks and scabbards. All twelve hats/hoods have smaller, aspect-correct silhouettes and individual brow anchors; necks meet collars. All 44 clothing designs receive native fit review and controller-driven equipment captures.
+
+Garment-specific profiles replace catalog-order armor values. Plate offers protection at a weight, movement and stealth cost; robes remain light, and travel clothes favor weather, recovery or movement. Comparisons show actual movement percentages, stealth, carrying/weather bonuses and effects. The [balance table](evidence/v051-clothing-balance.csv) lists every design at the same grade.
+
+Every trader now stocks four affordable bag types: travel pack, medicine roll, ore harness and bedroll pack. A dedicated BACKPACKS tab shows WORN / TRY ON portraits. Packs offer different cargo-weight relief, carrying allowance, combat/stealth penalties and medical/recovery benefits. The comparison predicts actual loaded weight after an equipment swap; all use the existing 24-slot inventory.
+
+The Journal can locate an active contract on the atlas without changing an existing travel order. Supply objectives show held/needed counts. A new contextual guide explains backpack choices. Existing v5 saves keep their item IDs and receive the new market stock once.
+
+The [updated whole-game critique](docs/DESIGN_REVIEW_V051.md) separates these shipped fixes from the remaining gaps in world consequences, wilderness encounters, defeat/recovery, independent squads and outpost logistics.
+
+![Backpack shop captured from the PSP EBOOT](evidence/v051-70-backpack-market.png)
+![Loaded backpack comparison captured from the PSP EBOOT](evidence/v051-73-pack-compare-79.png)
 
 ## Heavy steel and recognizable people
 
@@ -27,7 +42,7 @@ The [whole-game design review](docs/DESIGN_REVIEW_V050.md) evaluates 34 areas, r
 
 The renderer now compiles 144 original painted sprites and 32 projected shadow masks. Calibrated building foundations use the same 2:1 projection as the terrain. Articulated painted torsos, limbs, headwear, boots and packs replace flat character shapes; weapon hands share a rigid grip throughout a strike. Textured indoor floors and walls match the exterior materials. PSP controller pictograms identify every input.
 
-Walk through a door into a house, shop, inn, tower, smithy, workshop or depot. Counters trade, beds restore wounds, and workstations open forging, research or storage. Saves preserve the room and indoor position. Nineteen guide chapters explain the rules.
+Walk through a door into a house, shop, inn, tower, smithy, workshop or depot. Counters trade, beds restore wounds, and workstations open forging, research or storage. Saves preserve the room and indoor position. Twenty guide chapters explain the rules.
 
 ![Equipment comparison captured from the PSP executable](evidence/v050-33-gear-comparison.png)
 ![Walkable interior captured from the PSP executable](evidence/v050-27-shop-interior.png)
@@ -43,16 +58,16 @@ Walk through a door into a house, shop, inn, tower, smithy, workshop or depot. C
 - NPC speech and service dialogue, finite market stocks, rotating daily gear, reputation/prosperity prices, recruitment, looting, theft, fencing, lockpicking, bounty and custody/bail/escape.
 - Delivery, supply, hunt and relic contracts; persistent journal, faction ledger, town prosperity/ownership events and expedition legacy goals.
 - Construction, farming/irrigation, storage, eight supply recipes, custom equipment forging and three research tiers.
-- Six manual save slots plus autosave, checksums, backup files and v0.1 through v0.4.1 save migration. Nineteen contextual in-game guide chapters.
+- Six manual save slots plus autosave, checksums, backup files and v0.1 through v0.5.0 save migration. Twenty contextual in-game guide chapters.
 
 ![Combat captured from the EBOOT; prepared encounter](evidence/v050-15-combat.gif)
 
 ## Install on PSP
 
 1. Use a PSP already configured to run homebrew. This repository does not install or modify firmware.
-2. Download `Dustbound-0.5.0-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
+2. Download `Dustbound-0.5.1-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
 3. The executable should be at `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Launch it from **Game → Memory Stick**.
-4. Back up existing `DUST_*.sav` files before upgrading. v0.1 through v0.4.1 saves are migrated when loaded; save the migrated game to a different slot first. Version 5 saves cannot be loaded by older executables. Migration refreshes regional markets, town NPC outfits and medic positions once. Do not remove the memory stick during a save.
+4. Back up existing `DUST_*.sav` files before upgrading. v0.1 through v0.5.0 saves are migrated when loaded; save the migrated game to a different slot first. Version 5 saves cannot be loaded by older executables. Older-format migration refreshes regional markets, town NPC outfits and medic positions once; existing v5 saves only receive the new basic backpack stock once. Do not remove the memory stick during a save.
 
 The single EBOOT includes its art, catalog and sounds. No network access or external assets are needed. Release packages exclude developer test saves and `DUST_QA` telemetry markers.
 
@@ -86,9 +101,9 @@ The native build exercises the same simulation and renderer. `make` uses the PSP
 
 ```sh
 # Full release validation; requires PSPDEV, PPSSPPHeadless, Pillow and websockets:
-bash scripts/validate_v050.sh /path/to/PPSSPPHeadless
+bash scripts/validate_v051.sh /path/to/PPSSPPHeadless
 # Package only after every controller run verifies the exact executable:
-python3 scripts/package_v050.py
+python3 scripts/package_v051.py
 ```
 
 A desktop interactive build can define `USE_SDL` and link SDL2. Keyboard mapping: arrows, X/C/Z/V map to the four face-button pictograms; Q/E map to the shoulder keycaps; Enter and Tab map to the two system keycaps.

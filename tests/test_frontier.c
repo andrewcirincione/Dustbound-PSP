@@ -91,7 +91,7 @@ int main(void) {
             assert(shop_item(j) != item);
     }
     assert(load_game("build/v041-outpost.sav"));
-    assert(g.baseExists && g.identityVersion == 1);
+    assert(g.baseExists && g.identityVersion == 2);
     int n = g.actorCount;
     assert(save_game("build/v050-migrated.sav") && load_game("build/v050-migrated.sav") && g.actorCount == n);
     SaveInfo info;

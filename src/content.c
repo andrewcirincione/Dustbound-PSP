@@ -66,6 +66,28 @@ int gear_bonus(const Actor *a, int stat) {
     return v;
 }
 int weapon_family_index(int i) { return i < 32 ? i : 84 + i - 32; }
+int backpack_load_percent(int item) {
+    static const int percent[] = {80, 100, 85, 60, 100, 100, 70, 100};
+    int f = gear_family(item);
+    return f >= 76 && f <= 83 ? percent[f - 76] : 100;
+}
+int backpack_combat_penalty(int item) {
+    static const int penalty[] = {2, 3, 0, 7, 0, 1, 4, 0};
+    int f = gear_family(item);
+    return f >= 76 && f <= 83 ? penalty[f - 76] : 0;
+}
+int item_effect_value(int item) {
+    const ItemDef *d = &itemDefs[item];
+    if (d->effect < 0)
+        return 0;
+    if (d->slot <= 0)
+        return d->potency;
+    return d->effect == 6    ? d->stealth
+           : d->effect == 7  ? d->speed
+           : d->effect == 9  ? d->protection
+           : d->effect == 10 ? d->capacity
+                             : d->potency;
+}
 int weapon_strength(int it) {
     if (!it || weapon_ranged(it) || itemDefs[it].slot != 0)
         return 0;
@@ -75,6 +97,22 @@ float weapon_handling(const Actor *a, int it) {
     float effective = level(a, STRENGTH) * (.35f + .65f * fminf(a->health[LARM], a->health[RARM]) / 100.f);
     return 1 + fminf(1.4f, fmaxf(0, weapon_strength(it) - effective) * .035f);
 }
+/* Garment profiles follow their construction, not their catalog position. */
+typedef struct {
+    int armor, weight, speed, stealth, effect;
+} Garment;
+static const Garment garments[44] = {
+    {8, 3, 0, 0, 9},    {10, 4, 0, 0, 4},    {24, 10, -9, -12, 4},  {8, 3, 1, 2, 11},
+    {20, 8, -6, -8, 4}, {14, 6, -3, -6, 4},  {30, 14, -12, -18, 4}, {3, 1, 3, 3, 8},
+    {5, 2, 1, 2, 9},    {12, 5, -1, -1, 11}, {22, 10, -8, -10, 9},  {6, 2, 3, 5, 6},
+    {18, 7, -5, -6, 4}, {10, 4, 0, 0, 10},   {4, 1, 4, 7, 6},       {26, 12, -10, -15, 4},
+    {2, 1, 0, 0, 9},    {2, 1, 0, 0, 9},     {18, 5, -3, -7, 4},    {10, 2, 0, 3, 6},
+    {3, 1, 0, 1, 9},    {16, 4, -2, -5, 4},  {5, 1, 1, 5, 6},       {12, 3, -1, -3, 4},
+    {4, 1, 0, 0, 9},    {1, 1, 1, 2, 8},     {12, 3, -1, -3, 4},    {20, 6, -4, -8, 4},
+    {6, 2, 3, 0, 7},    {1, 1, 4, 4, 6},     {16, 5, -6, -7, 4},    {3, 1, 3, 6, 6},
+    {4, 1, 1, 2, 11},   {3, 1, 7, 5, 7},     {8, 3, 1, -3, 7},      {5, 2, 0, 0, 9},
+    {5, 2, 2, 3, 6},    {6, 2, 3, 1, 7},     {22, 8, -8, -12, 4},   {4, 1, 3, 6, 6},
+    {16, 6, -5, -8, 4}, {3, 1, 2, 3, 8},     {4, 1, 4, 7, 6},       {18, 7, -6, -10, 4}};
 void content_init(void) {
     static int initialized;
     if (initialized)
@@ -136,35 +174,65 @@ void content_init(void) {
                     }
                     d->price = 70 + f * 4 + m * 55 + q * q * 110 + d->power * 5;
                 } else {
-                    d->armor = 2 + (f % 8) * 2 + m * 2 + q * 3;
-                    d->weight = 1 + (f % 5) + (m == 1 ? 2 : 0) + (s == 1 ? 2 : 0);
-                    if (s == 5) {
-                        d->armor /= 2;
-                        d->capacity = 8 + (f - 76) * 2 + m + q * 4;
+                    if (s != 5) {
+                        const Garment *v = &garments[f - 32];
+                        static const int materialArmor[6] = {0, 2, 1, 4, 3, 6};
+                        int armorScale = v->armor / 10, gradeScale = v->armor / 12;
+                        if (armorScale < 1)
+                            armorScale = 1;
+                        if (gradeScale < 1)
+                            gradeScale = 1;
+                        d->armor = v->armor +
+                                   (v->armor < 8 ? materialArmor[m] / 2 : materialArmor[m] * armorScale) +
+                                   q * gradeScale;
+                        d->weight = v->weight + (m == 1 ? (v->weight + 3) / 4 : m == 2 ? v->weight / 5 : 0);
+                        if (m == 4)
+                            d->weight -= v->weight > 4 ? v->weight / 5 : 0;
+                        d->speed = v->speed;
+                        d->stealth = v->stealth + (m == 4 ? 2 : 0);
+                        d->effect = v->effect;
+                        if (d->effect == 9)
+                            d->protection = 15 + d->potency * 3;
+                        if (d->effect == 10)
+                            d->capacity = 6 + q * 2;
+                        if (d->effect == 7)
+                            d->speed += q;
+                        if (d->effect == 6)
+                            d->stealth += q;
+                        d->price = 45 + d->armor * 12 + m * 40 + q * q * 95 + (f % 12) * 8;
                     }
-                    if (d->effect == 6)
-                        d->stealth = 4 + d->potency;
-                    if (d->effect == 7)
-                        d->speed = 3 + d->potency;
-                    if (d->effect == 9)
-                        d->protection = 15 + d->potency * 3;
-                    if (d->effect == 10)
-                        d->capacity += 8 + d->potency * 2;
-                    if (m == 4)
-                        d->stealth += 3;
-                    d->price = 45 + d->armor * 12 + m * 40 + q * q * 95 + (f % 12) * 8;
+                    if (s == 5) {
+                        static const int carry[] = {16, 0, 10, 36, 0, 4, 24, 0};
+                        static const int weight[] = {2, 2, 1, 6, 1, 3, 4, 1};
+                        static const int stealth[] = {-3, -12, 0, -15, 6, -4, -8, 3};
+                        static const int effect[] = {10, 4, 8, 10, 9, 4, 11, 6};
+                        static const int price[] = {120, 90, 180, 230, 150, 170, 200, 120};
+                        int b = f - 76;
+                        d->weight = weight[b] + (m == 1);
+                        d->armor = d->speed = 0;
+                        d->capacity = carry[b] ? carry[b] + q * 2 : 0;
+                        d->stealth = stealth[b] + (m == 4 ? 2 : 0);
+                        d->effect = effect[b];
+                        d->protection = f == 80 ? 15 + d->potency * 3 : 0;
+                        d->price = price[b] + m * 20 + q * q * 90;
+                    }
                 }
                 snprintf(descriptions[id], 112, "%s +%d. %s %d. Weight %d. %s craft.", effectNames[d->effect],
-                         d->potency, s == 0 ? "Damage" : "Armor", s == 0 ? d->power : d->armor, d->weight,
-                         materialNames[m]);
+                         item_effect_value(id), s == 0 ? "Damage" : "Armor", s == 0 ? d->power : d->armor,
+                         d->weight, materialNames[m]);
+                if (s == 5)
+                    snprintf(descriptions[id], 112,
+                             "Carried load %d%%; melee/defence -%d; sneak %+d. %s +%d.",
+                             backpack_load_percent(id), backpack_combat_penalty(id), d->stealth,
+                             effectNames[d->effect], item_effect_value(id));
             }
 }
 
-const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE BORDERLANDS",   "COMBAT",
-                                        "WOUNDS & RESCUE", "FOOD & SLEEP", "EQUIPMENT",         "MERCHANTS",
-                                        "FORGING GEAR",    "CRAFTING",     "YOUR OUTPOST",      "SQUAD JOBS",
-                                        "CRIME & STEALTH", "FACTIONS",     "CONTRACTS",         "SAVES",
-                                        "WEATHER",         "CAPTIVITY",    "BUILDING INTERIORS"};
+const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE BORDERLANDS",    "COMBAT",
+                                        "WOUNDS & RESCUE", "FOOD & SLEEP", "EQUIPMENT",          "MERCHANTS",
+                                        "FORGING GEAR",    "CRAFTING",     "YOUR OUTPOST",       "SQUAD JOBS",
+                                        "CRIME & STEALTH", "FACTIONS",     "CONTRACTS",          "SAVES",
+                                        "WEATHER",         "CAPTIVITY",    "BUILDING INTERIORS", "BACKPACKS"};
 const char *guideBodies[GUIDE_PAGES] = {
     "\011 or analog: move in screen direction. \001: nearby interaction. \004: pack. \003: "
     "fight/passive. \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
@@ -199,14 +267,15 @@ const char *guideBodies[GUIDE_PAGES] = {
     "bleeding stops and hunger is above twenty. Move to wake. The sun completes a day in thirty minutes of "
     "simulation; menus and "
     "tactical pause stop time.",
-    "Six visible slots: weapon, torso, head, boots, legs and back. The catalog has 2,112 combinations across "
-    "88 silhouettes, six materials and four quality grades. Every variant has visible material/quality "
-    "details and mechanical differences.\nPack \001 equips or uses; \003 passes one item to an ally. \004 "
-    "switches between carried items and worn equipment. Highlight gear to compare WORN and TRY ON, stat "
-    "changes and effects; \001 on worn "
-    "gear removes it if space allows. Weight above capacity slows movement.",
+    "Six slots: weapon, torso, head, boots, legs, back. Pack \001 equips; \003 passes one to an ally; \004 "
+    "switches carried/worn gear. \001 on worn gear removes it if space allows. WORN / TRY ON compares fit "
+    "and actual bonuses.\nPlate protects more but slows movement and hinders stealth. Cloth is light; "
+    "travel gear favors weather or movement. Higher grades improve the same role. Torso armor covers "
+    "chest/arms; headgear covers head; legs gain leg armor plus half boot armor. MOVE% is the worn speed "
+    "bonus. Weight above capacity slows you further.",
     "Talk to a trader and choose Trade. \014 switches buying and selling; \005/\006 filters supplies, "
-    "weapons or armor. \001 trades one item. Shops have finite stocks and refresh daily with different "
+    "weapons, armor or backpacks. \001 trades one item. Shops have finite stocks and refresh daily with "
+    "different "
     "gear.\nPrices depend on quality, faction relations, local prosperity. Hostile factions refuse trade. "
     "Selling stolen goods back to their owner can expose you; Black Mesa fences accept them. The item "
     "details show its stats and effects before purchase.",
@@ -244,7 +313,8 @@ const char *guideBodies[GUIDE_PAGES] = {
     "objectives in the Journal. Deliveries require reaching another town. Supplies require the listed items. "
     "Hunts count victories after acceptance.\nReturn to the issuing settlement and claim in the Journal with "
     "\001. Rewards grant silver, reputation and experience. Contracts persist in saves. Complete contracts, "
-    "research relic technology and survey the frontier to advance the expedition legacy.",
+    "research relic technology and survey the frontier to advance the expedition legacy. \003 locates an "
+    "active contract on the atlas; \001 there starts travel when ready.",
     "Six manual slots plus autosave. \007, Save or Load opens a ledger with name, day, party size and "
     "silver. Choose a slot; \001 asks for confirmation. Save-and-title uses the selected manual slot.\nSaves "
     "use version, size and checksum validation and preserve a previous .bak file. Invalid files never "
@@ -267,4 +337,11 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Counters open local trade. Beds cost 25 silver in town; owned beds are free. Workshop stations open "
     "forging, research or storage. Indoor time passes: hunger, bleeding and healing continue. The rest of "
     "your squad remains outside.\nSave games preserve the building and indoor position. Switching squad "
-    "members leaves the room. Interiors shelter you from weather; hostile occupants refuse entry."};
+    "members leaves the room. Interiors shelter you from weather; hostile occupants refuse entry.",
+    "Buy travel packs, medicine rolls, ore harnesses and bedroll packs from the BACKPACKS shop tab. "
+    "Preview before buying. Other back gear rotates daily.\n"
+    "CARGO: travel 80%, medicine 85%, ore 60%, bedroll 70% of carried weight. Worn gear and carried "
+    "people keep full weight. CARRY adds load allowance; LOAD previews a swap. All packs use the same "
+    "24 inventory slots.\n"
+    "FIGHT reduces melee attack/defence: travel -2, medicine 0, ore -7, bedroll -4. Bulky packs hurt "
+    "stealth. Medicine aids first aid; bedrolls improve rest but are not beds. Unworn packs give no bonus."};
