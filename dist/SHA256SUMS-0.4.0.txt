@@ -1,3 +1,3 @@
 e15a942ed491845938727d082d97a5ff54df146986d0dd0543a02a5fc20ae0ab  Dustbound-0.4.0-EBOOT.PBP
-c292a0be655583992f3db06c99fd391c8c5c5f6888ddc23ed03ac4aef1eb347c  Dustbound-0.4.0-Evidence.zip
-73eac251a0420871a6390a52c58ed66efc649bb6608ff14bd3246cd52baeeb57  Dustbound-0.4.0-PSP.zip
+cf4a9676f8e832b918d3d67db3a87047d61af1d87025f929328a98e747cf468a  Dustbound-0.4.0-Evidence.zip
+c1bf19bfe91c48113e88c91bef3e4dabb3d118c2134a65ad6520cbd522c9f86a  Dustbound-0.4.0-PSP.zip
