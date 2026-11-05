@@ -43,3 +43,11 @@ Buildings, vegetation, rocks, furnishings, clothing and creature source art were
 The game is still an alpha. The larger wilderness needs more authored destinations and encounter variety, the two-state beast animations are limited, and conversations need richer consequences. Characters are small at 480×272 and equipment materials can be difficult to distinguish in motion. Building occlusion uses a dithered cutaway rather than full roof removal. Interiors are functional single rooms. Physical PSP-3000 frame pacing, controls and battery behavior remain untested. The mechanics audit records larger missing systems without disguising them as completed features.
 
 Native `iteration` images are renderer reviews. Numbered `v040` playthrough images and the combat GIF are captured from EBOOT VRAM in PPSSPP. Prepared combat/outpost/region fixtures are labeled separately from the fresh-start playthrough.
+
+## 0.5.0 — player critique and iteration
+
+The released 0.4.1 build was replayed before changes. The [full review](DESIGN_REVIEW_V050.md) covers 34 areas and distinguishes observed controller behavior, source audit and remaining design goals.
+
+The pass added four heavy weapon designs, strength/injury handling, role/faction identity and regional trade, plus independent timed guards. During review the anchor-cleaver pivot failed its opaque-handle check, a strength hint conflicted with the comparison layout, a medic overlapped the merchant, common starter goods hid regional stock, and save contract validation referenced actors before validating the actor count. The expanded faction-guide text also reached the footer in a PSP capture and was shortened. A defeated raider also inherited a resident label; raiders and beasts now have explicit context labels. All were corrected before the final runs. A separate controller-harness double-step was corrected by converging on the desired dialogue row.
+
+The final controller scenarios use the same EBOOT: fresh-start survival/save, prepared greatsword combat/outpost, shop/inn interiors, a fresh Dusk-to-Copper journey, and hire/save/three regional markets/four weapons/genuine v0.4.1 migration. The new combat recording is an actual prepared EBOOT encounter. Native checks cover all 36 weapon families and contract edge cases. Physical PSP qualification and full emergent-world depth remain open.
