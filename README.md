@@ -78,6 +78,7 @@ build/dustbound-native --fixtures build/emu
 python scripts/emulator_v040.py /path/to/PPSSPPHeadless
 python scripts/emulator_v040.py /path/to/PPSSPPHeadless --advanced
 python scripts/emulator_interiors_v040.py /path/to/PPSSPPHeadless
+python scripts/emulator_travel_v040.py /path/to/PPSSPPHeadless
 # Verify all equipment drawings:
 python scripts/audit_catalog.py
 ```
