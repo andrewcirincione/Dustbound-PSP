@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0 — Heavy steel, hired hands
+
+- Add greatsword, railway maul, crescent glaive and anchor cleaver: 36 weapon families and 2,112 modular gear variants.
+- Make melee windup/recovery depend on strength and arm wounds; show requirement and delay in equipment comparison.
+- Add faction/profession outfits, role/faction context labels, specialized advice and regional weapon stock shown before shared starter goods.
+- Add saved one-day escort/camp guard contracts, first aid, expiry/dismissal and ledger clocks, separate from permanent recruits.
+- Give merchants/medics retreat behavior, guards home posts and medics a separate walkable service location.
+- Migrate v1–v4 expeditions to save format 5 without changing old item IDs; refresh NPC identity and markets once.
+- Add a 34-area design critique, native contract/migration tests, 36-family art checks and five exact-EBOOT controller playthroughs.
+
+
 ## 0.4.1 — Worn steel
 
 - Replace all 32 geometric weapon designs with original painted art, retaining material and quality differences.

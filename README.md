@@ -2,48 +2,57 @@
 
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.4.1, playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.5.0, playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 
-![Actual PSP EBOOT gameplay in PPSSPP](evidence/v041-03-dusk-haven.png)
+![Actual PSP EBOOT gameplay in PPSSPP](evidence/v050-03-dusk-haven.png)
 
-## Cohesive weapons and complete previews
+## Heavy steel and recognizable people
 
-0.4.1 replaces the flat geometric weapons with 32 painted blade, polearm, blunt, bow, crossbow and firearm families. Authored handle pivots keep the art attached through each attack; support hands follow bow strings and firearm fore-ends. Larger actor cache bounds retain long weapons during downward swings. Inventory comparison figures share a scale and fit completely inside their cells. Other character preview screens use the same fitting rule. The old PSP launcher icon is replaced, and indoor thresholds use textured wood.
+0.5.0 adds painted greatswords, railway mauls, crescent glaives and anchor cleavers. All 36 weapon families use weathered steel, leather and wood artwork. Strength and arm health affect heavy-weapon windup/recovery; the comparison shows the current handling penalty.
+
+Profession and faction now shape NPC outfits, services, advice and behavior. Merchants and medics flee danger; guards fight and return to their posts. Medics have a separate approach beside town recovery areas. Regional weapon stock appears first in the weapon filter, giving different towns practical shopping specialties.
+
+Contract guards offer one simulated day of escort (240 silver) or outpost watch (180). They fight and provide nearby first aid independently, keep their own gear, wait outside interiors and return home when the contract ends. Contracts save their remaining time and do not use a permanent squad slot.
+
+The [whole-game design review](docs/DESIGN_REVIEW_V050.md) evaluates 34 areas, records what changed, and prioritizes what still falls short. Leader-driven world consequences, richer wilderness encounters, independent squads and deeper outpost logistics remain major gaps.
+
+![Greatsword comparison from the PSP executable](evidence/v050-58-new-weapon-0.png)
+![Hired guard dialogue from the PSP executable](evidence/v050-51-guard-contract.png)
 
 ## A more readable frontier
 
 0.4.0 adds a persistent target/action prompt, visible interaction reach, specialist NPC services, and equipment comparisons with WORN / TRY ON portraits, stat deltas and effects. Mining and lockpicking require staying within 1.15 world meters; automated miners walk into reach. Town spacing is four times greater while streets stay compact. The atlas has local and world views, player location, known towns, destination distance and travel orders.
 
-The renderer now compiles 140 original painted sprites and 32 projected shadow masks. Calibrated building foundations use the same 2:1 projection as the terrain. Articulated painted torsos, limbs, headwear, boots and packs replace flat character shapes; weapon hands share a rigid grip throughout a strike. Textured indoor floors and walls match the exterior materials. PSP controller pictograms identify every input.
+The renderer now compiles 144 original painted sprites and 32 projected shadow masks. Calibrated building foundations use the same 2:1 projection as the terrain. Articulated painted torsos, limbs, headwear, boots and packs replace flat character shapes; weapon hands share a rigid grip throughout a strike. Textured indoor floors and walls match the exterior materials. PSP controller pictograms identify every input.
 
 Walk through a door into a house, shop, inn, tower, smithy, workshop or depot. Counters trade, beds restore wounds, and workstations open forging, research or storage. Saves preserve the room and indoor position. Nineteen guide chapters explain the rules.
 
-![Equipment comparison captured from the PSP executable](evidence/v041-33-gear-comparison.png)
-![Walkable interior captured from the PSP executable](evidence/v041-27-shop-interior.png)
+![Equipment comparison captured from the PSP executable](evidence/v050-33-gear-comparison.png)
+![Walkable interior captured from the PSP executable](evidence/v050-27-shop-interior.png)
 
 ## What you can play
 
 - A persistent 1536 × 1536 world, sixteen settlements, nine terrain regions, rivers/road fords, ruins, resource deposits, day/night, storms and environmental exposure.
 - Up to eight controllable survivors; twenty skills improve through use. Followers, holding, mining, farming, medicine, smelting, cooking and depot hauling jobs.
 - Character naming, five starts, three original ancestries, body build, eight skin tones, hairstyles, hair colors, beards and scars. Town barbers edit appearance.
-- **2,016 generated gear variants:** 84 designs × 6 materials × 4 grades, plus base supplies and legacy equipment. Six visible slots. These are modular procedural variants, not 2,016 hand-drawn assets. Automated image hashes distinguish every variant at gameplay and portrait scale.
+- **2,112 generated gear variants:** 88 designs × 6 materials × 4 grades, plus base supplies and legacy equipment. Six visible slots. These are modular procedural variants, not 2,112 hand-drawn assets. Automated image hashes distinguish every variant at gameplay and portrait scale.
 - Melee, polearms, bows, crossbows and frontier firearms. Windup/contact/recovery animations, directional swings, stagger, recoil, hit stop, procedural sound effects. Weapon reach, weight, skill and injured arms affect attacks.
 - Six separate limb health values, armor coverage, bleeding, blood loss, knockout, permanent death, limb loss, prosthetics, first aid, carrying, paid doctors and sleep.
 - NPC speech and service dialogue, finite market stocks, rotating daily gear, reputation/prosperity prices, recruitment, looting, theft, fencing, lockpicking, bounty and custody/bail/escape.
 - Delivery, supply, hunt and relic contracts; persistent journal, faction ledger, town prosperity/ownership events and expedition legacy goals.
 - Construction, farming/irrigation, storage, eight supply recipes, custom equipment forging and three research tiers.
-- Six manual save slots plus autosave, checksums, backup files and v0.1/v0.2/v0.3 save migration. Nineteen contextual in-game guide chapters.
+- Six manual save slots plus autosave, checksums, backup files and v0.1 through v0.4.1 save migration. Nineteen contextual in-game guide chapters.
 
-![Combat captured from the EBOOT; prepared encounter](evidence/v041-15-combat.gif)
+![Combat captured from the EBOOT; prepared encounter](evidence/v050-15-combat.gif)
 
 ## Install on PSP
 
 1. Use a PSP already configured to run homebrew. This repository does not install or modify firmware.
-2. Download `Dustbound-0.4.1-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
+2. Download `Dustbound-0.5.0-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
 3. The executable should be at `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Launch it from **Game → Memory Stick**.
-4. Back up existing `DUST_*.sav` files before upgrading. v0.1 through v0.3 saves are migrated when loaded; save the migrated game to a different slot first. Do not remove the memory stick during a save.
+4. Back up existing `DUST_*.sav` files before upgrading. v0.1 through v0.4.1 saves are migrated when loaded; save the migrated game to a different slot first. Version 5 saves cannot be loaded by older executables. Migration refreshes regional markets, town NPC outfits and medic positions once. Do not remove the memory stick during a save.
 
 The single EBOOT includes its art, catalog and sounds. No network access or external assets are needed. Release packages exclude developer test saves and `DUST_QA` telemetry markers.
 
@@ -76,15 +85,10 @@ python scripts/validate_pbp.py EBOOT.PBP
 The native build exercises the same simulation and renderer. `make` uses the PSPDEV SDK to produce a real PSP PRX inside `EBOOT.PBP`; it is not a renamed desktop executable. The read-only GitHub Actions workflow runs native checks and compiles an EBOOT artifact using a pinned official PSPDEV toolchain.
 
 ```sh
-# Generate test-only scenarios, then drive the EBOOT through PPSSPP:
-mkdir -p build/emu
-build/dustbound-native --fixtures build/emu
-python scripts/emulator_v041.py /path/to/PPSSPPHeadless
-python scripts/emulator_v041.py /path/to/PPSSPPHeadless --advanced
-python scripts/emulator_interiors_v041.py /path/to/PPSSPPHeadless
-python scripts/emulator_travel_v041.py /path/to/PPSSPPHeadless
-# Verify all equipment drawings:
-python scripts/audit_catalog.py
+# Full release validation; requires PSPDEV, PPSSPPHeadless, Pillow and websockets:
+bash scripts/validate_v050.sh /path/to/PPSSPPHeadless
+# Package only after every controller run verifies the exact executable:
+python3 scripts/package_v050.py
 ```
 
 A desktop interactive build can define `USE_SDL` and link SDL2. Keyboard mapping: arrows, X/C/Z/V map to the four face-button pictograms; Q/E map to the shoulder keycaps; Enter and Tab map to the two system keycaps.
