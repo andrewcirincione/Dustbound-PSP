@@ -13,11 +13,11 @@ SPECS=[('buildings-v2.png',2,[(116,150),(120,150),(142,170),(92,190),(116,150),(
  ('props.png',2,[(60,104),(49,57),(62,52),(36,44),(72,46),(58,59),(62,63),(31,29)]),
  ('torsos.png',4,[(40,58)]*16),('heads.png',4,[(42,42)]*12+[(24,32)]*4),
  ('limbs.png',4,[(20,52)]*8+[(18,30)]*6+[(16,16)]*2),('boots-backs.png',4,[(22,26)]*8+[(36,48)]*8),('beasts.png',2,[(72,52)]*8),('materials.png',2,[(64,64)]*4),
- ('weapons-blades.png',4,[(96,112)]*16),('weapons-frontier.png',4,[(112,112)]*16)]
+ ('weapons-blades.png',4,[(96,112)]*16),('weapons-frontier.png',4,[(112,112)]*16),('weapons-heavy.png',1,[(100,112)]*4)]
 # Source-space hand anchors are authored against the painted handles, not the
 # alpha bounding-box centre. This keeps curved blades, chains and gun stocks
 # attached to the same rigid grip as the wrists through the whole attack.
-WEAPON_ROWS={'weapons-blades.png':[0,333,640,937,1263], 'weapons-frontier.png':[0,308,620,905,1247]}
+WEAPON_ROWS={'weapons-blades.png':[0,333,640,937,1263], 'weapons-frontier.png':[0,308,620,905,1247], 'weapons-heavy.png':[0,724]}
 WEAPON_GRIPS=[(164,273),(468,275),(756,273),(1075,275),
  (159,553),(467,554),(755,570),(1039,510),
  (165,885),(476,881),(761,882),(1090,876),
@@ -25,9 +25,9 @@ WEAPON_GRIPS=[(164,273),(468,275),(756,273),(1075,275),
  (185,210),(476,268),(794,268),(1102,267),
  (175,565),(479,575),(790,560),(1102,570),
  (174,755),(485,840),(788,840),(1114,836),
- (186,1013),(490,1127),(814,1169),(1119,1151)]
+ (186,1013),(490,1127),(814,1169),(1119,1151),(271,540),(812,566),(1358,567),(1875,558)]
 WEAPON_HEIGHT=[28,20,39,14,46,45,43,27,29,18,24,25,30,29,34,34,
- 44,28,30,26,39,30,31,30,27,30,32,22,27,33,21,29]
+ 44,28,30,26,39,30,31,30,27,30,32,22,27,33,21,29,41,39,47,36]
 def arr(name,typ,vals):
  return 'static const '+typ+' '+name+'[] = {\n'+',\n'.join(','.join(map(str,vals[i:i+24])) for i in range(0,len(vals),24))+'\n};\n'
 def spans(im,palette=None):
@@ -88,7 +88,7 @@ for filename,nrows,sizes in SPECS:
   lines += [arr(name+'_data','uint8_t',data),arr(name+'_rows','uint16_t',rows),arr(name+'_palette','uint32_t',[hex(p)+'u' for p in palette])]
   entries.append('{%d,%d,%d,%d,%s_data,%s_rows,%s_palette}'%(im.width,im.height,ax,ay,name,name,name));size=len(data)+len(rows)*2+1024;total+=size
   stats.append(dict(source=filename,cell=i,width=im.width,height=im.height,pivot=[ax,ay],bytes=size,calibration=cal,foundation=pts));im.convert('RGBA').save(ART/f'sprite-{idx:02d}.png')
-lines+=['#define ART_COUNT '+str(len(entries))+'\n#define WEAPON_ART_FIRST 108\nstatic const ArtSprite artSprites[ART_COUNT]={\n'+',\n'.join(entries)+'\n};\nstatic const ArtShadow artShadows[32]={\n'+',\n'.join(shadows)+'\n};\ntypedef struct {float gripX,gripY,scale;} WeaponArt;\nstatic const WeaponArt weaponArt[32]={\n'+',\n'.join('{%.5ff,%.5ff,%.6ff}'%p for p in weapons)+'\n};\n#endif\n']
+lines+=['#define ART_COUNT '+str(len(entries))+'\n#define WEAPON_ART_FIRST 108\nstatic const ArtSprite artSprites[ART_COUNT]={\n'+',\n'.join(entries)+'\n};\nstatic const ArtShadow artShadows[32]={\n'+',\n'.join(shadows)+'\n};\ntypedef struct {float gripX,gripY,scale;} WeaponArt;\nstatic const WeaponArt weaponArt[36]={\n'+',\n'.join('{%.5ff,%.5ff,%.6ff}'%p for p in weapons)+'\n};\n#endif\n']
 (ROOT/'src/art_data.h').write_text(''.join(lines));(ART/'budget.json').write_text(json.dumps(dict(rom_bytes=total+shadowbytes,shadow_bytes=shadowbytes,palette_cache_bytes=len(entries)*256*4,sprites=stats,weapon_grips=weapons),indent=2)+'\n');print('Packed',len(entries),'sprites;',total+shadowbytes,'bytes ROM;',len(entries)*256*4,'bytes palette RAM')
 # Launcher images are offline derivatives; they add no in-game texture RAM.
 launcher=Image.open(ART/'launcher-v041.png').convert('RGB')
