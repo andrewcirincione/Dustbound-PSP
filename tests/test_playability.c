@@ -177,6 +177,11 @@ int main(void) {
                 closest = d;
         }
     CHECK(closest > 100);
+    for (int i = 1; i < g.actorCount; i++)
+        if (g.actors[i].kind == RAIDER || g.actors[i].kind == BEAST)
+            for (int t = 0; t < TOWNS; t++)
+                if (towns[t].faction != HOSTILE)
+                    CHECK(distance(g.actors[i].x, g.actors[i].y, towns[t].x, towns[t].y) >= 32);
     int wilderness = 0;
     for (int i = 1; i < g.actorCount; i++)
         if ((g.actors[i].kind == RAIDER || g.actors[i].kind == BEAST) &&
