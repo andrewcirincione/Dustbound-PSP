@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Package the exact executable verified by all five controller playthroughs."""
-import hashlib,json,pathlib,shutil,zipfile
+import hashlib,json,pathlib,re,shutil,zipfile
 root=pathlib.Path(__file__).resolve().parents[1];version='0.5.0'
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 eboot=root/'EBOOT.PBP';digest=sha(eboot)
@@ -26,9 +26,10 @@ def archive(path,entries):
    out.writestr(info,source.read_bytes())
 (root/'dist').mkdir(exist_ok=True)
 shutil.copy2(eboot,root/'dist'/f'Dustbound-{version}-EBOOT.PBP')
-docs=['README.md','LICENSE','CHANGELOG.md','docs/FIELD_GUIDE.md','docs/RELEASE_NOTES.md','docs/VALIDATION.md','docs/MECHANICS_AUDIT.md','docs/ITERATION_LOG.md','docs/DESIGN_REVIEW_V050.md']
+docs=['README.md','LICENSE','CHANGELOG.md','docs/FIELD_GUIDE.md','docs/RELEASE_NOTES.md','docs/VALIDATION.md','docs/MECHANICS_AUDIT.md','docs/ITERATION_LOG.md','docs/DESIGN_REVIEW_V050.md','docs/ROADMAP.md']
 docs += [p.relative_to(root).as_posix() for p in sorted((root/'assets/ui').glob('*.svg'))]
-docs += ['evidence/'+n for n in ['v050-03-dusk-haven.png','v050-27-shop-interior.png','v050-58-new-weapon-0.png','v050-39-wilderness-travel.png']]
+docs += re.findall(r'!\[[^\]]*\]\((evidence/[^)]+)\)',(root/'README.md').read_text())
+docs = list(dict.fromkeys(docs))
 archive(root/'dist'/f'Dustbound-{version}-PSP.zip',[(eboot,'PSP/GAME/DUSTBOUND/EBOOT.PBP')]+[(root/p,f'Dustbound-{version}/{p}') for p in docs])
 evidence=[p for p in sorted((root/'evidence').iterdir()) if (p.name.startswith('v050-') or p.name.startswith('catalog')) and p.suffix!='.log' and 'route-debug' not in p.name]
 archive(root/'dist'/f'Dustbound-{version}-Evidence.zip',[(p,'evidence/'+p.name) for p in evidence]+[(root/'docs/VALIDATION.md','VALIDATION.md')])
