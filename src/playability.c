@@ -342,6 +342,10 @@ void frontier_restock(int t) {
                                   : 76 + (f + j) % 8;
         g.stock[t][gear_id(family, (j / 6 + t + g.day) % 6, (j + g.day) % 3)] = 1;
     }
+    // A usable choice must not depend on the rotating high-grade stock roll.
+    static const int packs[] = {76, 78, 79, 82};
+    for (int j = 0; j < 4; j++)
+        g.stock[t][gear_id(packs[j], 0, 0)] = 2;
     if (f == MONKS) {
         g.stock[t][MEDKIT] = 30;
         g.stock[t][TONIC] = 12;
@@ -377,8 +381,21 @@ static void identity_outfit(Actor *a) {
         inventory_add(a, gear_family(a->gear[0]) >= 29 ? CARTRIDGE : BOLTS, 60);
 }
 void frontier_identity(void) {
-    if (g.identityVersion)
+    if (g.identityVersion >= 2)
         return;
+    if (g.identityVersion == 1) {
+        // One-time 0.5.0 market supplement. Keep all other stock, purchases,
+        // outfits and contracts intact; loading again cannot restock goods.
+        static const int packs[] = {76, 78, 79, 82};
+        for (int t = 0; t < TOWNS; t++)
+            for (int j = 0; j < 4; j++) {
+                int it = gear_id(packs[j], 0, 0);
+                if (!g.stock[t][it])
+                    g.stock[t][it] = 2;
+            }
+        g.identityVersion = 2;
+        return;
+    }
     for (int i = 0; i < g.actorCount; i++) {
         Actor *a = &g.actors[i];
         if (a->squad || a->dead || a->kind == BEAST || a->kind == RAIDER)
@@ -408,7 +425,7 @@ void frontier_identity(void) {
     }
     for (int t = 0; t < TOWNS; t++)
         frontier_restock(t);
-    g.identityVersion = 1;
+    g.identityVersion = 2;
 }
 int merc_slot(const Actor *a) {
     for (int j = 0; j < 4; j++)

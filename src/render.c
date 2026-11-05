@@ -1050,6 +1050,17 @@ static void equipment_comparison(int it, int y) {
     clipped(31, y, b, 68, TEXT);
     snprintf(b, sizeof(b), "WORN %s", worn ? old->name : "EMPTY SLOT");
     clipped(31, y + 12, b, 68, MUTED);
+    if (d->slot == 5) {
+        compare_number(31, y + 26, "CARRY", old->capacity, d->capacity, 0, 0);
+        compare_number(229, y + 26, "WT", old->weight, d->weight, 0, 1);
+        compare_number(31, y + 38, "LOAD", encumbrance(a), backpack_load_preview(a, it), 0, 1);
+        compare_number(229, y + 38, "FIGHT", -backpack_combat_penalty(worn), -backpack_combat_penalty(it), 0,
+                       0);
+        snprintf(b, sizeof(b), "CARGO %d%% > %d%%", backpack_load_percent(worn), backpack_load_percent(it));
+        text(31, y + 50, b, GOLD, 1);
+        compare_number(229, y + 50, "SNEAK", old->stealth, d->stealth, 0, 0);
+        return;
+    }
     compare_number(31, y + 26, d->slot == 0 ? "DMG" : "ARM", d->slot == 0 ? old->power : old->armor,
                    d->slot == 0 ? d->power : d->armor, 0, 0);
     compare_number(229, y + 26, "WT", old->weight, d->weight, 0, 1);
@@ -1061,11 +1072,15 @@ static void equipment_comparison(int it, int y) {
                  weapon_strength(it), weapon_handling(&g.actors[g.selected], it));
         text(229, y + 50, handling, weapon_handling(&g.actors[g.selected], it) > 1.05f ? RED : TEAL, 1);
     } else {
-        compare_number(31, y + 38, "CARRY", old->capacity, d->capacity, 0, 0);
-        compare_number(229, y + 38, "SPEED", old->speed, d->speed, 0, 0);
+        compare_number(31, y + 38, "MOVE%", old->speed * .5f, d->speed * .5f, 1, 0);
+        compare_number(229, y + 38, "SNEAK", old->stealth, d->stealth, 0, 0);
+        if (old->capacity || d->capacity)
+            compare_number(229, y + 50, "CARRY", old->capacity, d->capacity, 0, 0);
+        else if (old->protection || d->protection)
+            compare_number(229, y + 50, "WEATHER", old->protection, d->protection, 0, 0);
     }
     snprintf(b, sizeof(b), "%.6s %d > %.6s %d", old->effect < 0 ? "NONE" : effectNames[old->effect],
-             old->potency, d->effect < 0 ? "NONE" : effectNames[d->effect], d->potency);
+             item_effect_value(worn), d->effect < 0 ? "NONE" : effectNames[d->effect], item_effect_value(it));
     clipped(31, y + 50, b, 30, GOLD);
 }
 static void pack_screen(void) {
@@ -1249,17 +1264,36 @@ static void map_screen(void) {
 
 static void trade_screen(void) {
     char b[100], v[70];
-    overlay_header(ui.sell ? "THE MARKET / SELL" : "THE MARKET / BUY",
-                   "\014 BUY-SELL   \005/\006 FILTER   \001 TRADE ONE");
+    static const char *titles[] = {"BUY / ALL STOCK", "BUY / SUPPLIES", "BUY / WEAPONS", "BUY / ARMOR",
+                                   "BUY / BACKPACKS"};
+    int bags = !ui.sell && ui.shopFilter == 4;
+    overlay_header(ui.sell ? "SELL / CARRIED" : titles[ui.shopFilter],
+                   ui.sell ? "\014 BUY-SELL   \001 SELL ONE"
+                           : "\014 BUY-SELL   \005/\006 FILTER   \001 BUY ONE");
     int count = ui.sell ? PACK : shop_count(), first = start_row(ui.selection, count, 6);
     for (int j = 0; j < 6 && first + j < count; j++) {
         int i = first + j, it = ui.sell ? g.actors[g.selected].pack[i].item : shop_item(i);
-        snprintf(b, 100, "%.39s", it ? itemDefs[it].name : "--");
+        snprintf(b, 100, "%.*s", bags ? 25 : 39, it ? itemDefs[it].name : "--");
         snprintf(v, 70, "%d S  \001%d", item_price(ui.tradeTown, it, ui.sell),
                  ui.sell ? g.actors[g.selected].pack[i].qty : g.stock[ui.tradeTown][it]);
-        row(85 + j * 16, i == ui.selection, b, it ? v : "");
+        if (bags) {
+            int y = 85 + j * 16;
+            if (i == ui.selection)
+                rect(25, y - 3, 244, 14, 0x4a4030);
+            text(31, y, b, i == ui.selection ? TEXT : MUTED, 1);
+            text(265 - strlen(v) * 6, y, v, GOLD, 1);
+        } else
+            row(85 + j * 16, i == ui.selection, b, it ? v : "");
     }
     int it = ui.sell ? g.actors[g.selected].pack[ui.selection].item : shop_item(ui.selection);
+    if (bags) {
+        Actor current = preview_actor(), preview = current;
+        if (it)
+            preview.gear[5] = it;
+        compare_portraits(&current, &preview);
+        text(287, 82, "WORN", MUTED, 1);
+        text(386, 82, "TRY ON", GOLD, 1);
+    }
     equipment_comparison(it, 173);
     snprintf(b, sizeof(b), "%d SILVER", g.money);
     text(360, 45, b, GOLD, 1);
@@ -1494,7 +1528,7 @@ static void save_screen(void) {
     text(31, 221, "CHECKSUM VERIFIED. PREVIOUS SAVE KEPT AS .BAK.", TEAL, 1);
 }
 static void journal_screen(void) {
-    overlay_header("THE ROAD JOURNAL", "\001 CLAIM AT THE ISSUING TOWN   \010 GUIDE");
+    overlay_header("THE ROAD JOURNAL", "\001 CLAIM AT TOWN   \003 LOCATE ON MAP   \010 GUIDE");
     char b[180], v[40];
     int first = start_row(ui.selection, CONTRACTS, 6);
     for (int j = 0; j < 6; j++) {

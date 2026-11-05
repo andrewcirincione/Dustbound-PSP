@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.5.0"
+#define VERSION "0.5.1"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -21,7 +21,7 @@
 #define GEARS 6
 #define FACTIONS 8
 #define CONTRACTS 24
-#define GUIDE_PAGES 19
+#define GUIDE_PAGES 20
 #define SAVE_SLOTS 7
 #define TOWNS 16
 #define SQUAD 8
@@ -290,6 +290,10 @@ int inventory_count(const Actor *a, int item);
 int inventory_add(Actor *a, int item, int qty);
 int inventory_remove(Actor *a, int item, int qty);
 float encumbrance(const Actor *a);
+float backpack_load_preview(const Actor *a, int item);
+int backpack_load_percent(int item);
+int backpack_combat_penalty(int item);
+int item_effect_value(int item);
 float movement_speed(const Actor *a);
 float distance(float x, float y, float u, float v);
 int can_walk(float x, float y);

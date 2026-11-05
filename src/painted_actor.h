@@ -132,17 +132,20 @@ static int weapon_family(int item) {
         f = item == STAFF ? 16 : item == CROSSBOW ? 25 : item == CLEAVER ? 11 : item == SABRE ? 8 : 0;
     return f >= 84 && f < FAMILIES ? f - 52 : f < 32 ? f : 0;
 }
-static void weapon_sprite(int item, float x, float y, int sc, float angle, float li) {
+static void weapon_sprite(int item, float x, float y, int sc, float angle, int face, float li) {
     if (!item)
         return;
     int f = weapon_family(item), id = WEAPON_ART_FIRST + f;
     const ArtSprite *s = &artSprites[id];
     const WeaponArt *w = &weaponArt[f];
     float scale = w->scale * sc, ca = cosf(angle), sa = sinf(angle);
+    // Reflect across the handle-to-tip axis, never around the image centre:
+    // the cutting edge leads the stroke and both hands retain their pivots.
+    int parity = w->edgeSide * face;
     float left = 1e6f, top = 1e6f, right = -1e6f, bottom = -1e6f;
     for (int j = 0; j < 4; j++) {
         float along = (w->gripY - ((j & 1) ? s->h : 0)) * scale;
-        float across = (((j & 2) ? s->w : 0) - w->gripX) * scale;
+        float across = (((j & 2) ? s->w : 0) - w->gripX) * scale * parity;
         float xx = x + ca * along - sa * across, yy = y + sa * along + ca * across;
         left = fminf(left, xx);
         right = fmaxf(right, xx);
@@ -152,9 +155,9 @@ static void weapon_sprite(int item, float x, float y, int sc, float angle, float
     int x0 = (int)fmaxf(clipLeft, floorf(left)), x1 = (int)fminf(clipRight, ceilf(right));
     int y0 = (int)fmaxf(clipTop, floorf(top)), y1 = (int)fminf(clipBottom, ceilf(bottom));
     weapon_palette(id, &itemDefs[item], li);
-    float du = -sa / scale, dv = -ca / scale;
+    float du = -sa / scale * parity, dv = -ca / scale;
     for (int yy = y0; yy < y1; yy++) {
-        float u = w->gripX + (-(x0 + .5f - x) * sa + (yy + .5f - y) * ca) / scale;
+        float u = w->gripX + (-(x0 + .5f - x) * sa + (yy + .5f - y) * ca) / scale * parity;
         float v = w->gripY - ((x0 + .5f - x) * ca + (yy + .5f - y) * sa) / scale;
         for (int xx = x0; xx < x1; xx++, u += du, v += dv) {
             if (u < 0 || v < 0 || u >= s->w || v >= s->h)
@@ -165,6 +168,36 @@ static void weapon_sprite(int item, float x, float y, int sc, float angle, float
             rgba_over(fb + yy * pitch + xx, artPalette[id][s->pixels[s->rows[sy * 3] + sx - lo]]);
         }
     }
+}
+typedef struct {
+    float offset, top, bottom, width;
+} BackAttachment;
+static BackAttachment back_attachment(int item) {
+    // Mount the load on the upper back, ending at the belt. Tall attachments
+    // have separate silhouettes; flags, scabbards and cloth are not packs.
+    static const BackAttachment mounts[8] = {
+        {1.2f, -27, -12, 12}, // Travel pack
+        {1.1f, -43, -12, 16}, // Banner above shoulder / roll at belt
+        {1.2f, -28, -12, 13}, // Medicine basket
+        {1.2f, -31, -12, 15}, // Ore pack with raised pick
+        {.5f, -30, -5, 16},   // Cape hangs from collar
+        {.6f, -35, -9, 17},   // Sword rack: hilts above shoulder
+        {1.2f, -28, -11, 13}, // Box and bedroll
+        {.45f, -30, -15, 16}, // Mantle surrounds shoulders
+    };
+    int f = gear_family(item);
+    return mounts[f >= 76 && f <= 83 ? f - 76 : 0];
+}
+static void head_attachment(int family, float *width, float *top, float *bottom) {
+    // Calibrated brow/brim rows in each cropped sprite. Chin straps, cheek
+    // guards and crests must not be treated as the hat's contact with the head.
+    static const float widths[12] = {11, 10.4f, 9.6f, 7.4f, 7.4f, 8.4f, 7.8f, 7.8f, 10.2f, 7.8f, 11, 9.2f};
+    static const float brow[12] = {.61f, .86f, .54f, .40f, .55f, .46f, .32f, .42f, .82f, .36f, .43f, .53f};
+    const ArtSprite *s = &artSprites[family];
+    *width = widths[family - 48];
+    float height = *width * s->h / s->w;
+    *top = -30.2f - brow[family - 48] * height;
+    *bottom = *top + height;
 }
 static void actor_painted(Actor *a, int x, int y, int sc, float li) {
     static const uint32_t skins[] = {0xe0b78a, 0xc39971, 0xad7d58, 0x956645,
@@ -209,13 +242,17 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
              0, 0, 1);
         part(64 + lf - 68, x - 9 * sc, y - 2 * sc, x - 18 * sc, y, 5 * sc, lc, li, 0, 0, 0, 1);
         part(60, x + 7 * sc, y - 5 * sc, x + 11 * sc, y, 5 * sc, skin, li, 0, 0, 0, 1);
-        weapon_sprite(weapon, x, y + 3 * sc, sc, .15f, li);
+        weapon_sprite(weapon, x, y + 3 * sc, sc, .15f, face, li);
         return;
     }
     if (back) {
         int bid = bf >= 76 && bf <= 83 ? 88 + bf - 76 : 88;
-        float height = bf == 77 ? 36 : bf == 80 ? 27 : bf == 83 ? 18 : 18;
-        PART(bid, -face * 4, -height - 4, -face * 4, -4, 12, itemDefs[back].color, itemDefs[back].quality);
+        BackAttachment mount = back_attachment(back);
+        float bx = -face * bw * mount.offset;
+        // The source shows straps on its left: mirror it for a right-facing
+        // wearer so straps meet the torso and the load projects behind it.
+        part(bid, RX(bx, mount.top), RY(mount.top), RX(bx, mount.bottom), RY(mount.bottom), mount.width * sc,
+             itemDefs[back].color, li, itemDefs[back].quality, face > 0, 0, 1);
     }
     for (int i = 0; i < 2; i++) {
         int limb = i ? RLEG : LLEG;
@@ -247,17 +284,20 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
         }
         if (missing & (1 << limb))
             continue;
-        float sx = RX(i ? bw - 1 : -bw + 1, -24), sy = RY(-24), hx = wrists[i][0], hy = wrists[i][1];
+        float sx = RX((i ? bw - 1 : -bw + 1) * face, -24), sy = RY(-24), hx = wrists[i][0], hy = wrists[i][1];
         float dx = hx - sx, dy = hy - sy, d = hypotf(dx, dy),
               bend = sqrtf(fmaxf(0, 49 * sc * sc - d * d * .25f));
-        float ex = (sx + hx) * .5f - (d > .01f ? dy / d : 0) * bend * (i ? 1 : -1),
-              ey = (sy + hy) * .5f + (d > .01f ? dx / d : 1) * bend * (i ? 1 : -1);
+        float ex = (sx + hx) * .5f - (d > .01f ? dy / d : 0) * bend * (i ? 1 : -1) * face,
+              ey = (sy + hy) * .5f + (d > .01f ? dx / d : 1) * bend * (i ? 1 : -1) * face;
         int mech = a->prostheticMask & (1 << limb);
-        part(mech ? 76 : 72, sx, sy, ex, ey, 4 * sc, cloth, li, 0, i, 0, 1);
-        part(mech ? 77 : 75, ex, ey, hx, hy, 3 * sc, mech ? 0x777b78 : skin, li, 0, i, 0, 1);
+        part(mech ? 76 : 72, sx, sy, ex, ey, 4 * sc, cloth, li, 0, i ^ (face < 0), 0, 1);
+        part(mech ? 77 : 75, ex, ey, hx, hy, 3 * sc, mech ? 0x777b78 : skin, li, 0, i ^ (face < 0), 0, 1);
     }
     int coat = tf == 32 || tf == 33 || tf == 39 || tf == 40 || tf == 42 || tf == 44 || tf == 47;
-    PART(tf, 0, -26, coat ? -rig.shift * .35f : 0, coat ? -5 : -12, bw * 2.8f, cloth,
+    // Join the chin to the collar; transparent face/collar edges otherwise
+    // leave a floating head, most visible with the smaller fitted hats.
+    PART(72, 0, -27.5f, 0, -24, 2.8f, skin, 0);
+    PART(tf, 0, -26, coat ? -rig.shift * .35f * forward : 0, coat ? -5 : -12, bw * 2.8f, cloth,
          itemDefs[torso].quality);
     // Painted face with independently tinted hair and visible creator details.
     int faceid = a->hair == 0 ? 61 : a->hair == 3 ? 62 : a->beard ? 63 : 60;
@@ -274,16 +314,16 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
     if (a->race == 2)
         px(RX(-face * 1.7f, -29), RY(-29), 0x8eae9e);
     if (head && hf >= 48) {
-        float wide = (hf == 48 || hf == 49 || hf == 56 || hf == 58) ? 14 : 10;
-        float bottom = (hf == 48 || hf == 49 || hf == 56 || hf == 58) ? -28 : -25;
-        PART(hf, 0, -37, 0, bottom, wide, itemDefs[head].color, itemDefs[head].quality);
+        float wide, top, bottom;
+        head_attachment(hf, &wide, &top, &bottom);
+        PART(hf, 0, top, 0, bottom, wide, itemDefs[head].color, itemDefs[head].quality);
     }
     if (!(missing & (1 << RARM)))
-        weapon_sprite(weapon, grip.x, grip.y, sc, angle, li);
+        weapon_sprite(weapon, grip.x, grip.y, sc, angle, face, li);
     for (int i = 0; i < 2; i++)
         if (!(missing & (1 << (i ? RARM : LARM)))) {
             float hx = wrists[i][0], hy = wrists[i][1];
-            part(78, hx, hy - 1.6f * sc, hx, hy + 1.6f * sc, 2.8f * sc, skin, li, 0, i, 0, 1);
+            part(78, hx, hy - 1.6f * sc, hx, hy + 1.6f * sc, 2.8f * sc, skin, li, 0, i ^ (face < 0), 0, 1);
         }
     if (a->carrying >= 0)
         part(33, x - 9 * sc, y - 24 * sc, x + 9 * sc, y - 24 * sc, 7 * sc, 0x7c6852, li, 0, 0, 0, 1);
