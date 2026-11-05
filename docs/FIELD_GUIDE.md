@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.3.0
+# Dustbound field guide — 0.4.0
 
 The nineteen chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -16,9 +16,9 @@ Origins change equipment, supplies and skills. Outlaws begin with a bounty. Cara
 
 ## 3. The Borderlands
 
-The 384 by 384 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. Rivers have fords near roads; hills rise into mesas and snowfields.
+The 1536 by 1536 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. Rivers have fords near roads; hills rise into mesas and snowfields.
 
-![select](../assets/ui/select.svg) opens the atlas. Move the cursor; ![cross](../assets/ui/cross.svg) orders travel. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist.
+![select](../assets/ui/select.svg) opens the atlas. Move the cursor; ![cross](../assets/ui/cross.svg) orders travel. ![triangle](../assets/ui/triangle.svg) switches local/world views. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist.
 
 ## 4. Combat
 
@@ -34,15 +34,15 @@ Dressings stop bleeding and restore some health. Sleeping restores the rest. A d
 
 ## 6. Food & Sleep
 
-Rations are eaten automatically below forty hunger. Carry food on each squad member. Water supports farms; tonics restore blood and treat exposure. Starvation damages the chest.
+Rations are eaten below forty hunger: first your pack, then a companion backpack or owned depot within three meters. Water supports farms; tonics restore blood and treat exposure. Starvation damages the chest.
 
-An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Sleeping reduces fatigue and restores wounds once bleeding stops. Move to wake. The sun completes a day in thirty minutes of simulation; menus and tactical pause stop time.
+An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Sleeping reduces fatigue and restores wounds once bleeding stops and hunger is above twenty. Move to wake. The sun completes a day in thirty minutes of simulation; menus and tactical pause stop time.
 
 ## 7. Equipment
 
 Six visible slots: weapon, torso, head, boots, legs and back. The catalog has 2,016 combinations across 84 silhouettes, six materials and four quality grades. Every variant has visible material/quality details and mechanical differences.
 
-Pack ![cross](../assets/ui/cross.svg) equips or uses; ![square](../assets/ui/square.svg) passes one item to an ally. ![triangle](../assets/ui/triangle.svg) switches between carried items and worn equipment. Inspect shows damage, armor and effects; ![cross](../assets/ui/cross.svg) on worn gear removes it if space allows. Weight above capacity slows movement.
+Pack ![cross](../assets/ui/cross.svg) equips or uses; ![square](../assets/ui/square.svg) passes one item to an ally. ![triangle](../assets/ui/triangle.svg) switches between carried items and worn equipment. Highlight gear to compare WORN and TRY ON, stat changes and effects; ![cross](../assets/ui/cross.svg) on worn gear removes it if space allows. Weight above capacity slows movement.
 
 ## 8. Merchants
 
