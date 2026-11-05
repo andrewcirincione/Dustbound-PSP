@@ -25,8 +25,7 @@ async def main():
     if not (await e.read('waypoint'))[0]:break
    pos=await e.read('position','ff');await e.shot('v040-41-copper-arrival',0)
    assert captured and math.dist(pos,goal)<.8,(pos,goal,await e.read('health','6f'))
-   elapsed=((await e.read('time','f'))[0]-t0)/48 # world clock advances 48 seconds per simulation second
-   e.events.append({'fresh_start_journey':True,'goal':goal,'arrival':pos,'map_browsing_preserved_route':True,'world_clock_elapsed':(await e.read('time','f'))[0]-t0,'input_method':'PSP buttons only; no memory writes'})
+   e.events.append({'fresh_start_journey':True,'goal':goal,'arrival':pos,'map_browsing_preserved_route':True,'simulation_seconds_elapsed':(await e.read('time','f'))[0]-t0,'input_method':'PSP buttons only; no memory writes'})
    (ROOT/'evidence/v040-travel-checks.json').write_text(json.dumps(e.events,indent=2)+'\n');print('PSP FRONTIER JOURNEY PASS',run,flush=True)
  finally:
   proc.terminate()

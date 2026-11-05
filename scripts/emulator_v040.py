@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """v0.4 PSP button-driven playthrough; all images are EBOOT VRAM captures."""
-import asyncio, base64, json, pathlib, shutil, subprocess, tempfile, sys, time, hashlib
+import asyncio, base64, json, pathlib, shutil, subprocess, tempfile, sys, time, hashlib, math
 import websockets
 from PIL import Image
 import emulator_test as base
@@ -31,6 +31,17 @@ class Play(Emulator):
     await self.call('input.buttons.send',buttons={k:True});await self.waitframes(2)
     await self.call('input.buttons.send',buttons={k:False});await self.waitframes(2)
    print('KEY',k,'SCREEN',screen,'ROW',before,'->',(await self.read('selection'))[0],flush=True)
+ async def move_to(self,x,y):
+  for attempt in range(400):
+   px,py=await self.read('position','ff')
+   if math.hypot(x-px,y-py)<.3:return
+   sx,sy=x-px-y+py,x-px+y-py
+   horizontal=abs(sx)>abs(sy);v=sx if horizontal else sy
+   key=('right' if v>0 else 'left') if horizontal else ('down' if v>0 else 'up')
+   await self.call('input.buttons.send',buttons={key:True});await self.waitframes(2)
+   await self.call('input.buttons.send',buttons={key:False});await self.waitframes(1)
+  await self.shot('v040-route-debug')
+  raise AssertionError(('route blocked',x,y,px,py,await self.read('health','6f')))
  async def menu(self,index):
   await self.key('start');await self.key('down',index);await self.key('cross');await asyncio.sleep(.1)
  async def load(self,slot):
@@ -62,6 +73,12 @@ async def main():
     await e.shot('v040-02-character-creator',15)
     await e.key('up',2);await e.key('cross');await e.expect('money',420)
     await e.shot('v040-03-dusk-haven',0)
+    for fx,fy in [(24,36),(23,36),(22,34),(25.8,34.8)]:
+     await e.move_to(fx,fy)
+     if (await e.read('context','ii'))[0]==1:break
+    assert (await e.read('context','ii'))[0]==1
+    ore_before=await e.read('pack','48I');await e.key('cross');await e.expect('task',0);await e.shot('v040-34-mining-too-far',0);await e.waitframes(100);assert await e.read('pack','48I')==ore_before
+    await e.move_to(24,34);await e.key('cross');await e.expect('task',1);await e.waitframes(120);pack=await e.read('pack','48I');assert any(pack[i]==3 and pack[i+1]>0 for i in range(0,48,2));await e.shot('v040-13-mining',0);await e.key('right')
     await e.key('triangle');await e.shot('v040-04-layered-equipment',1)
     await e.key('triangle');await e.shot('v040-05-six-equipment-slots',23)
     await e.key('circle');await e.move_to(24,30.5);await e.key('cross');await e.shot('v040-09-companion-dialogue',17)
@@ -71,8 +88,7 @@ async def main():
     await e.move_to(32,29);await e.key('cross');await e.key('triangle');pack=await e.read('pack','48I');leather=next(i//2 for i in range(0,48,2) if pack[i]==18 and pack[i+1]>0)
     await e.key('down',leather);await e.shot('v040-33-gear-comparison',1);await e.key('cross');assert (await e.read('gear','6I'))[1]==18
     await e.shot('v040-12-looted-armor-equipped',1);await e.key('circle')
-    await e.move_to(24,37);await e.move_to(21.5,35.5);assert (await e.read('context','ii'))[0]==1;ore_before=await e.read('pack','48I');await e.key('cross');await e.expect('task',0);await e.shot('v040-34-mining-too-far',0);await e.waitframes(100);assert await e.read('pack','48I')==ore_before;await e.move_to(24,34);await e.key('cross');await e.waitframes(120);pack=await e.read('pack','48I');assert any(pack[i]==3 and pack[i+1]>0 for i in range(0,48,2))
-    await e.shot('v040-13-mining',0);await e.key('right')
+    await e.key('right')
     await e.menu(4);await e.shot('v040-14-save-ledger',22);await e.key('down');await e.key('cross',2);assert (run/'DUST_1.sav').exists();await e.key('circle')
     await e.load(1);await e.expect('money',85);await e.expect('squad',2);assert (await e.read('gear','6I'))[1]==18
     await e.key('select');await e.shot('v040-06-frontier-atlas',5);await e.expect('mapzoom',1);await e.key('triangle');await e.expect('mapzoom',0);await e.shot('v040-35-world-atlas',5);await e.key('select');await e.shot('v040-07-contextual-guide',12)
