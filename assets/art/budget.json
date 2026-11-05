@@ -1,7 +1,7 @@
 {
-  "rom_bytes": 434662,
+  "rom_bytes": 543399,
   "shadow_bytes": 77542,
-  "palette_cache_bytes": 110592,
+  "palette_cache_bytes": 143360,
   "sprites": [
     {
       "source": "buildings-v2.png",
@@ -1598,6 +1598,584 @@
       "bytes": 5504,
       "calibration": null,
       "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 0,
+      "width": 22,
+      "height": 112,
+      "pivot": [
+        11,
+        112
+      ],
+      "bytes": 2337,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 1,
+      "width": 25,
+      "height": 112,
+      "pivot": [
+        12,
+        112
+      ],
+      "bytes": 2647,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 2,
+      "width": 15,
+      "height": 112,
+      "pivot": [
+        7,
+        112
+      ],
+      "bytes": 2296,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 3,
+      "width": 20,
+      "height": 112,
+      "pivot": [
+        10,
+        112
+      ],
+      "bytes": 3253,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 4,
+      "width": 18,
+      "height": 112,
+      "pivot": [
+        9,
+        112
+      ],
+      "bytes": 2237,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 5,
+      "width": 9,
+      "height": 112,
+      "pivot": [
+        4,
+        112
+      ],
+      "bytes": 2275,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 6,
+      "width": 19,
+      "height": 112,
+      "pivot": [
+        9,
+        112
+      ],
+      "bytes": 2373,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 7,
+      "width": 64,
+      "height": 112,
+      "pivot": [
+        32,
+        112
+      ],
+      "bytes": 5484,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 8,
+      "width": 30,
+      "height": 112,
+      "pivot": [
+        15,
+        112
+      ],
+      "bytes": 2835,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 9,
+      "width": 32,
+      "height": 112,
+      "pivot": [
+        16,
+        112
+      ],
+      "bytes": 3347,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 10,
+      "width": 24,
+      "height": 112,
+      "pivot": [
+        12,
+        112
+      ],
+      "bytes": 3131,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 11,
+      "width": 39,
+      "height": 112,
+      "pivot": [
+        19,
+        112
+      ],
+      "bytes": 4738,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 12,
+      "width": 49,
+      "height": 112,
+      "pivot": [
+        24,
+        112
+      ],
+      "bytes": 2754,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 13,
+      "width": 41,
+      "height": 112,
+      "pivot": [
+        20,
+        112
+      ],
+      "bytes": 3620,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 14,
+      "width": 21,
+      "height": 112,
+      "pivot": [
+        10,
+        112
+      ],
+      "bytes": 3187,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-blades.png",
+      "cell": 15,
+      "width": 21,
+      "height": 112,
+      "pivot": [
+        10,
+        112
+      ],
+      "bytes": 3231,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 0,
+      "width": 11,
+      "height": 112,
+      "pivot": [
+        5,
+        112
+      ],
+      "bytes": 2494,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 1,
+      "width": 24,
+      "height": 112,
+      "pivot": [
+        12,
+        112
+      ],
+      "bytes": 2765,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 2,
+      "width": 21,
+      "height": 112,
+      "pivot": [
+        10,
+        112
+      ],
+      "bytes": 2829,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 3,
+      "width": 22,
+      "height": 112,
+      "pivot": [
+        11,
+        112
+      ],
+      "bytes": 3107,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 4,
+      "width": 18,
+      "height": 112,
+      "pivot": [
+        9,
+        112
+      ],
+      "bytes": 2740,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 5,
+      "width": 20,
+      "height": 112,
+      "pivot": [
+        10,
+        112
+      ],
+      "bytes": 2984,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 6,
+      "width": 44,
+      "height": 112,
+      "pivot": [
+        22,
+        112
+      ],
+      "bytes": 2808,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 7,
+      "width": 29,
+      "height": 112,
+      "pivot": [
+        14,
+        112
+      ],
+      "bytes": 3330,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 8,
+      "width": 112,
+      "height": 106,
+      "pivot": [
+        56,
+        106
+      ],
+      "bytes": 4780,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 9,
+      "width": 109,
+      "height": 112,
+      "pivot": [
+        54,
+        112
+      ],
+      "bytes": 5611,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 10,
+      "width": 112,
+      "height": 100,
+      "pivot": [
+        56,
+        100
+      ],
+      "bytes": 5997,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 11,
+      "width": 100,
+      "height": 112,
+      "pivot": [
+        50,
+        112
+      ],
+      "bytes": 4922,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 12,
+      "width": 112,
+      "height": 77,
+      "pivot": [
+        56,
+        77
+      ],
+      "bytes": 4619,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 13,
+      "width": 27,
+      "height": 112,
+      "pivot": [
+        13,
+        112
+      ],
+      "bytes": 2928,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 14,
+      "width": 37,
+      "height": 112,
+      "pivot": [
+        18,
+        112
+      ],
+      "bytes": 3611,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-frontier.png",
+      "cell": 15,
+      "width": 28,
+      "height": 112,
+      "pivot": [
+        14,
+        112
+      ],
+      "bytes": 3467,
+      "calibration": null,
+      "foundation": null
     }
+  ],
+  "weapon_grips": [
+    [
+      6.984126984126984,
+      92.07361963190185,
+      0.25
+    ],
+    [
+      9.80392156862745,
+      88.92703862660944,
+      0.17857142857142858
+    ],
+    [
+      5.232558139534884,
+      92.19512195121952,
+      0.3482142857142857
+    ],
+    [
+      13.142857142857142,
+      86.1105527638191,
+      0.125
+    ],
+    [
+      3.306122448979592,
+      80.32323232323232,
+      0.4107142857142857
+    ],
+    [
+      4.68,
+      81.11627906976744,
+      0.4017857142857143
+    ],
+    [
+      6.46,
+      87.06976744186046,
+      0.38392857142857145
+    ],
+    [
+      8.563380281690142,
+      59.16129032258064,
+      0.24107142857142858
+    ],
+    [
+      17.92207792207792,
+      93.07586206896552,
+      0.25892857142857145
+    ],
+    [
+      17.870129870129873,
+      95.28358208955224,
+      0.16071428571428573
+    ],
+    [
+      9.836065573770492,
+      91.70731707317073,
+      0.21428571428571427
+    ],
+    [
+      31.46590909090909,
+      95.1111111111111,
+      0.22321428571428573
+    ],
+    [
+      29.686131386861316,
+      91.8974358974359,
+      0.26785714285714285
+    ],
+    [
+      29.02654867256637,
+      93.33333333333333,
+      0.25892857142857145
+    ],
+    [
+      11.033898305084746,
+      91.76774193548387,
+      0.30357142857142855
+    ],
+    [
+      13.39655172413793,
+      92.42718446601943,
+      0.30357142857142855
+    ],
+    [
+      6.448275862068965,
+      77.1891891891892,
+      0.39285714285714285
+    ],
+    [
+      10.875,
+      99.00341296928329,
+      0.25
+    ],
+    [
+      10.5,
+      99.09152542372881,
+      0.26785714285714285
+    ],
+    [
+      12.736842105263158,
+      98.71186440677967,
+      0.23214285714285715
+    ],
+    [
+      8.816326530612246,
+      92.89632107023411,
+      0.3482142857142857
+    ],
+    [
+      10.566037735849058,
+      96.96644295302013,
+      0.26785714285714285
+    ],
+    [
+      21.808695652173913,
+      91.21649484536083,
+      0.2767857142857143
+    ],
+    [
+      16.571428571428573,
+      94.79863481228669,
+      0.26785714285714285
+    ],
+    [
+      56.800000000000004,
+      49.38636363636363,
+      0.25471698113207547
+    ],
+    [
+      59.88537549407115,
+      89.94594594594595,
+      0.26785714285714285
+    ],
+    [
+      56.193771626297575,
+      80.3088803088803,
+      0.32
+    ],
+    [
+      56.44444444444444,
+      89.86561264822134,
+      0.19642857142857142
+    ],
+    [
+      56.15954415954416,
+      29.074688796680494,
+      0.35064935064935066
+    ],
+    [
+      12.24,
+      77.51111111111112,
+      0.29464285714285715
+    ],
+    [
+      21.46,
+      94.88372093023256,
+      0.1875
+    ],
+    [
+      15.636363636363637,
+      86.82736156351791,
+      0.25892857142857145
+    ]
   ]
 }
