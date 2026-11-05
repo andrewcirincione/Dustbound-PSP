@@ -1,4 +1,5 @@
 #include "game.h"
+#include "fixtures/save_v4_layout.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,14 +87,14 @@ int main(void) {
     step(6);
     CHECK(g.nodes[0].locked && !a->taskKind);
     fresh();
-    int roles[9] = {0};
+    int roles[10] = {0};
     for (int i = 1; i < g.actorCount; i++) {
         Actor *n = &g.actors[i];
         if (n->faction == HOSTILE || n->kind == BEAST)
             continue;
         int r = npc_role(n);
         roles[r]++;
-        CHECK(dialogue_count(i) >= 2 && dialogue_count(i) <= 4);
+        CHECK(dialogue_count(i) >= 2 && dialogue_count(i) <= 5);
         CHECK(has_action(i, 0) == (r == ROLE_MERCHANT));
         CHECK(has_action(i, 2) == (r == ROLE_INNKEEPER));
         CHECK(has_action(i, 3) == (r == ROLE_MEDIC));
@@ -218,10 +219,10 @@ int main(void) {
     /* Real pre-change v3 fixture: coordinates, fog, gear and specialists migrate. */
     FILE *f = fopen("build/v030-frontier.sav", "rb");
     CHECK(f != NULL);
-    Game *old = malloc(sizeof(Game));
+    PreV5Game *old = malloc(sizeof(PreV5Game));
     CHECK(old != NULL);
     fseek(f, 20, SEEK_SET);
-    CHECK(fread(old, sizeof(Game), 1, f) == 1);
+    CHECK(fread(old, sizeof(PreV5Game), 1, f) == 1);
     fclose(f);
     CHECK(load_game("build/v030-frontier.sav"));
     a = &g.actors[g.selected];
@@ -241,7 +242,7 @@ int main(void) {
     CHECK(g.actors[g.selected].x == x && g.actors[g.selected].y == y);
     /* v2 used exactly the same exterior payload as v3, without indoor fields. */
     f = fopen("build/real-v2-prefix.sav", "wb");
-    size_t n = offsetof(Game, interiorBuilding);
+    size_t n = offsetof(PreV5Game, interiorBuilding);
     uint32_t h[] = {2, n, hash(old, n)};
     fwrite("DUSTSAVE", 8, 1, f);
     fwrite(h, sizeof(h), 1, f);

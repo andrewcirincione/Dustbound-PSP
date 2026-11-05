@@ -26,7 +26,7 @@ int main(void) {
     a.gear[4] = gear_id(68, 0, 1);
     a.gear[5] = gear_id(82, 0, 1);
     a.movedTimer = 0;
-    for (int family = 0; family < 32; family++) {
+    for (int family = 0; family < WEAPON_FAMILIES; family++) {
         const ArtSprite *s = &artSprites[WEAPON_ART_FIRST + family];
         const WeaponArt *w = &weaponArt[family];
         int px0 = (int)w->gripX, py0 = (int)w->gripY;
@@ -37,7 +37,7 @@ int main(void) {
         for (int sc = 1; sc <= 5; sc++)
             for (int dir = 0; dir < 16; dir++) {
                 memset(canvas, 0, sizeof(canvas));
-                weapon_sprite(gear_id(family, 3, 2), 240, 136, sc, dir * .39269908f, 1);
+                weapon_sprite(gear_id(weapon_family_index(family), 3, 2), 240, 136, sc, dir * .39269908f, 1);
                 int near = 0;
                 for (int y = 135; y <= 137; y++)
                     for (int x = 239; x <= 241; x++)
@@ -48,7 +48,7 @@ int main(void) {
                 }
                 grips++;
             }
-        a.gear[0] = a.attackWeapon = gear_id(family, 3, 2);
+        a.gear[0] = a.attackWeapon = gear_id(weapon_family_index(family), 3, 2);
         for (int phase = 0; phase < 4; phase++)
             for (int dir = 0; dir < 8; dir++)
                 for (int step = 0; step <= 12; step++) {
@@ -83,12 +83,12 @@ int main(void) {
                     poses++;
                 }
     }
-    for (int family = 0; family < 32; family++) {
+    for (int family = 0; family < WEAPON_FAMILIES; family++) {
         Actor candidate = a;
         a.attackPhase = candidate.attackPhase = 0;
         a.facing = candidate.facing = 1;
         a.gear[0] = gear_id(0, 1, 1);
-        candidate.gear[0] = gear_id(family, 3, 2);
+        candidate.gear[0] = gear_id(weapon_family_index(family), 3, 2);
         memset(canvas, 0, sizeof(canvas));
         compare_portraits(&a, &candidate);
         uint64_t first = 0;
@@ -105,22 +105,24 @@ int main(void) {
             second = second * 31 + canvas[i];
         assert(first == second);
     }
-    for (int page = 0; page < 4; page++) {
+    for (int page = 0; page < 5; page++) {
         rect(0, 0, 480, 272, INK);
         text(12, 8, "PAINTED WEAPONS / NATIVE RENDER REVIEW", GOLD, 1);
         for (int cell = 0; cell < 8; cell++) {
+            if (page * 8 + cell >= WEAPON_FAMILIES)
+                break;
             int family = page * 8 + cell, x = 58 + (cell % 4) * 120, y = 122 + (cell / 4) * 128;
-            a.gear[0] = gear_id(family, 3, 2);
+            a.gear[0] = gear_id(weapon_family_index(family), 3, 2);
             a.attackPhase = 0;
             a.facing = 1;
             person(&a, x, y - 10, 2, 0);
-            center(x, y, familyNames[family], TEXT, 1);
+            center(x, y, familyNames[weapon_family_index(family)], TEXT, 1);
         }
         char path[100];
-        snprintf(path, sizeof(path), "build/v041-weapons-%d.ppm", page);
+        snprintf(path, sizeof(path), "build/v050-weapons-%d.ppm", page);
         save_ppm(path);
     }
-    printf("PASS: %d painted grip samples; %d attack poses fit actor cache; 32 bounded, cache-stable "
+    printf("PASS: %d painted grip samples; %d attack poses fit actor cache; 36 bounded, cache-stable "
            "comparison pairs. Bounds x=%d..%d y=%d..%d at 2x.\n",
            grips, poses, minx, maxx, miny, maxy);
     return 0;

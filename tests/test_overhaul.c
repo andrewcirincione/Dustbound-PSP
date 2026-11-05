@@ -1,4 +1,5 @@
 #include "game.h"
+#include "fixtures/save_v4_layout.h"
 #include "combat_pose.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -66,11 +67,16 @@ int main(void) {
     CHECK(g.interiorBuilding == shop + 1 && fabsf(g.interiorY - 4.8f) < .001f);
     /* A checked legacy v2 prefix must migrate, with no fabricated indoor state. */
     FILE *f = fopen("build/v2-test.sav", "wb");
-    size_t n = offsetof(Game, interiorBuilding);
-    uint32_t h[] = {2, (uint32_t)n, sum(&g, n)};
+    PreV5Game old = {0};
+    memcpy(&old, &g, offsetof(PreV5Game, stock));
+    for (int t = 0; t < TOWNS; t++)
+        memcpy(old.stock[t], g.stock[t], sizeof(old.stock[t]));
+    memcpy(&old.lastRestock, &g.lastRestock, sizeof(old) - offsetof(PreV5Game, lastRestock));
+    size_t n = offsetof(PreV5Game, interiorBuilding);
+    uint32_t h[] = {2, (uint32_t)n, sum(&old, n)};
     fwrite("DUSTSAVE", 8, 1, f);
     fwrite(h, sizeof(h), 1, f);
-    fwrite(&g, n, 1, f);
+    fwrite(&old, n, 1, f);
     fclose(f);
     CHECK(load_game("build/v2-test.sav"));
     CHECK(g.interiorBuilding == 0);
