@@ -1,174 +1,1603 @@
 {
-  "rom_bytes": 130303,
-  "palette_cache_bytes": 24576,
+  "rom_bytes": 434662,
+  "shadow_bytes": 77542,
+  "palette_cache_bytes": 110592,
   "sprites": [
     {
-      "source": "buildings.png",
+      "source": "buildings-v2.png",
       "cell": 0,
       "width": 116,
-      "height": 102,
-      "bytes": 9700
+      "height": 127,
+      "pivot": [
+        60,
+        97
+      ],
+      "bytes": 11367,
+      "calibration": {
+        "input_slopes": [
+          0.4187192118226601,
+          -0.4888888888888889
+        ],
+        "output_slopes": [
+          0.5,
+          -0.5
+        ],
+        "shear": 0.038656374381859815,
+        "vertical_scale": 1.1017971294174407
+      },
+      "foundation": [
+        [
+          1.1687657430730478,
+          95.83956859466784
+        ],
+        [
+          60.48362720403023,
+          125.47290192800115
+        ],
+        [
+          113.07808564231738,
+          99.19703985903564
+        ]
+      ]
     },
     {
-      "source": "buildings.png",
+      "source": "buildings-v2.png",
       "cell": 1,
-      "width": 117,
-      "height": 114,
-      "bytes": 11359
+      "width": 120,
+      "height": 134,
+      "pivot": [
+        63,
+        105
+      ],
+      "bytes": 13410,
+      "calibration": {
+        "input_slopes": [
+          0.39215686274509803,
+          -0.5290697674418605
+        ],
+        "output_slopes": [
+          0.5,
+          -0.5000000000000002
+        ],
+        "shear": 0.07431011013488426,
+        "vertical_scale": 1.0855092191560451
+      },
+      "foundation": [
+        [
+          0.30612244897959184,
+          102.14893523847303
+        ],
+        [
+          62.755102040816325,
+          133.35441469052782
+        ],
+        [
+          115.40816326530613,
+          107.04391240742278
+        ]
+      ]
     },
     {
-      "source": "buildings.png",
+      "source": "buildings-v2.png",
       "cell": 2,
-      "width": 128,
-      "height": 136,
-      "bytes": 14078
+      "width": 132,
+      "height": 170,
+      "pivot": [
+        73,
+        137
+      ],
+      "bytes": 17356,
+      "calibration": {
+        "input_slopes": [
+          0.37089201877934275,
+          -0.46745562130177515
+        ],
+        "output_slopes": [
+          0.5,
+          -0.5
+        ],
+        "shear": 0.05759162303664922,
+        "vertical_scale": 1.1928225859897938
+      },
+      "foundation": [
+        [
+          2.6532663316582914,
+          133.18247024601192
+        ],
+        [
+          73.2964824120603,
+          168.6129986217458
+        ],
+        [
+          129.3467336683417,
+          140.50145263348747
+        ]
+      ]
     },
     {
-      "source": "buildings.png",
+      "source": "buildings-v2.png",
       "cell": 3,
       "width": 92,
-      "height": 128,
-      "bytes": 9900
+      "height": 145,
+      "pivot": [
+        45,
+        122
+      ],
+      "bytes": 11206,
+      "calibration": {
+        "input_slopes": [
+          0.36538461538461536,
+          -0.503448275862069
+        ],
+        "output_slopes": [
+          0.5,
+          -0.49999999999999994
+        ],
+        "shear": 0.07945351854678678,
+        "vertical_scale": 1.1509693176614257
+      },
+      "foundation": [
+        [
+          0.8544891640866874,
+          121.00289732745487
+        ],
+        [
+          45.28792569659443,
+          143.17936791569014
+        ],
+        [
+          86.58823529411765,
+          122.56662281765094
+        ]
+      ]
     },
     {
-      "source": "buildings.png",
+      "source": "buildings-v2.png",
       "cell": 4,
       "width": 116,
-      "height": 102,
-      "bytes": 10059
+      "height": 133,
+      "pivot": [
+        67,
+        105
+      ],
+      "bytes": 12186,
+      "calibration": {
+        "input_slopes": [
+          0.4398148148148148,
+          -0.4409937888198758
+        ],
+        "output_slopes": [
+          0.5,
+          -0.5
+        ],
+        "shear": 0.0006692566354346563,
+        "vertical_scale": 1.13532042701838
+      },
+      "foundation": [
+        [
+          3.541984732824427,
+          100.80944715962744
+        ],
+        [
+          67.29770992366412,
+          132.8005384736586
+        ],
+        [
+          114.81933842239185,
+          108.95532689236686
+        ]
+      ]
     },
     {
-      "source": "buildings.png",
+      "source": "buildings-v2.png",
       "cell": 5,
       "width": 100,
-      "height": 88,
-      "bytes": 8016
+      "height": 106,
+      "pivot": [
+        51,
+        82
+      ],
+      "bytes": 8951,
+      "calibration": {
+        "input_slopes": [
+          0.44878048780487806,
+          -0.4744897959183674
+        ],
+        "output_slopes": [
+          0.5,
+          -0.49999999999999994
+        ],
+        "shear": 0.01392295872981647,
+        "vertical_scale": 1.0831064506563872
+      },
+      "foundation": [
+        [
+          2.1634615384615383,
+          81.82010034351669
+        ],
+        [
+          51.44230769230769,
+          106.40154830731761
+        ],
+        [
+          98.5576923076923,
+          82.89928586387867
+        ]
+      ]
     },
     {
-      "source": "buildings.png",
+      "source": "buildings-v2.png",
       "cell": 6,
-      "width": 105,
-      "height": 104,
-      "bytes": 9097
+      "width": 108,
+      "height": 115,
+      "pivot": [
+        56,
+        90
+      ],
+      "bytes": 9953,
+      "calibration": {
+        "input_slopes": [
+          0.458128078817734,
+          -0.49473684210526314
+        ],
+        "output_slopes": [
+          0.5,
+          -0.5
+        ],
+        "shear": 0.019209838920330846,
+        "vertical_scale": 1.0494666956900305
+      },
+      "foundation": [
+        [
+          2.3592233009708736,
+          89.43938734317487
+        ],
+        [
+          55.57281553398058,
+          115.96779643408397
+        ],
+        [
+          105.37864077669903,
+          91.13825097953853
+        ]
+      ]
     },
     {
-      "source": "buildings.png",
+      "source": "buildings-v2.png",
       "cell": 7,
       "width": 104,
-      "height": 87,
-      "bytes": 7867
+      "height": 115,
+      "pivot": [
+        55,
+        91
+      ],
+      "bytes": 9786,
+      "calibration": {
+        "input_slopes": [
+          0.3827751196172249,
+          -0.4861878453038674
+        ],
+        "output_slopes": [
+          0.5,
+          -0.5000000000000001
+        ],
+        "shear": 0.05950352883913357,
+        "vertical_scale": 1.1507970309077635
+      },
+      "foundation": [
+        [
+          1.797530864197531,
+          89.51776405044932
+        ],
+        [
+          55.46666666666667,
+          116.2827974580217
+        ],
+        [
+          101.94567901234569,
+          93.10351015289919
+        ]
+      ]
     },
     {
       "source": "wilderness.png",
       "cell": 0,
       "width": 68,
       "height": 86,
-      "bytes": 4457
+      "pivot": [
+        34,
+        86
+      ],
+      "bytes": 4454,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "wilderness.png",
       "cell": 1,
       "width": 48,
       "height": 39,
-      "bytes": 2509
+      "pivot": [
+        24,
+        39
+      ],
+      "bytes": 2517,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "wilderness.png",
       "cell": 2,
       "width": 53,
       "height": 104,
-      "bytes": 3975
+      "pivot": [
+        26,
+        104
+      ],
+      "bytes": 3973,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "wilderness.png",
       "cell": 3,
       "width": 56,
       "height": 67,
-      "bytes": 3448
+      "pivot": [
+        28,
+        67
+      ],
+      "bytes": 3449,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "wilderness.png",
       "cell": 4,
       "width": 36,
       "height": 32,
-      "bytes": 2000
+      "pivot": [
+        18,
+        32
+      ],
+      "bytes": 1986,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "wilderness.png",
       "cell": 5,
       "width": 46,
       "height": 48,
-      "bytes": 2699
+      "pivot": [
+        23,
+        48
+      ],
+      "bytes": 2693,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "wilderness.png",
       "cell": 6,
       "width": 53,
       "height": 51,
-      "bytes": 2990
+      "pivot": [
+        26,
+        51
+      ],
+      "bytes": 2990,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "wilderness.png",
       "cell": 7,
       "width": 49,
       "height": 62,
-      "bytes": 2868
+      "pivot": [
+        24,
+        62
+      ],
+      "bytes": 2883,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "furniture.png",
       "cell": 0,
       "width": 59,
       "height": 55,
-      "bytes": 3199
+      "pivot": [
+        29,
+        55
+      ],
+      "bytes": 3207,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "furniture.png",
       "cell": 1,
       "width": 67,
       "height": 58,
-      "bytes": 3948
+      "pivot": [
+        33,
+        58
+      ],
+      "bytes": 3952,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "furniture.png",
       "cell": 2,
       "width": 61,
       "height": 44,
-      "bytes": 2971
+      "pivot": [
+        30,
+        44
+      ],
+      "bytes": 2971,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "furniture.png",
       "cell": 3,
       "width": 64,
       "height": 84,
-      "bytes": 4582
+      "pivot": [
+        32,
+        84
+      ],
+      "bytes": 4581,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "furniture.png",
       "cell": 4,
       "width": 35,
       "height": 31,
-      "bytes": 2034
+      "pivot": [
+        17,
+        31
+      ],
+      "bytes": 2037,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "furniture.png",
       "cell": 5,
       "width": 47,
       "height": 74,
-      "bytes": 4346
+      "pivot": [
+        23,
+        74
+      ],
+      "bytes": 4346,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "furniture.png",
       "cell": 6,
       "width": 24,
       "height": 33,
-      "bytes": 1594
+      "pivot": [
+        12,
+        33
+      ],
+      "bytes": 1599,
+      "calibration": null,
+      "foundation": null
     },
     {
       "source": "furniture.png",
       "cell": 7,
       "width": 60,
       "height": 40,
-      "bytes": 2607
+      "pivot": [
+        30,
+        40
+      ],
+      "bytes": 2607,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "props.png",
+      "cell": 0,
+      "width": 52,
+      "height": 104,
+      "pivot": [
+        26,
+        96
+      ],
+      "bytes": 4747,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "props.png",
+      "cell": 1,
+      "width": 46,
+      "height": 57,
+      "pivot": [
+        23,
+        50
+      ],
+      "bytes": 3184,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "props.png",
+      "cell": 2,
+      "width": 55,
+      "height": 52,
+      "pivot": [
+        27,
+        43
+      ],
+      "bytes": 2981,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "props.png",
+      "cell": 3,
+      "width": 36,
+      "height": 43,
+      "pivot": [
+        18,
+        37
+      ],
+      "bytes": 2162,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "props.png",
+      "cell": 4,
+      "width": 65,
+      "height": 46,
+      "pivot": [
+        32,
+        36
+      ],
+      "bytes": 2950,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "props.png",
+      "cell": 5,
+      "width": 58,
+      "height": 59,
+      "pivot": [
+        29,
+        50
+      ],
+      "bytes": 3685,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "props.png",
+      "cell": 6,
+      "width": 56,
+      "height": 63,
+      "pivot": [
+        28,
+        54
+      ],
+      "bytes": 3933,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "props.png",
+      "cell": 7,
+      "width": 31,
+      "height": 29,
+      "pivot": [
+        15,
+        24
+      ],
+      "bytes": 1876,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 0,
+      "width": 39,
+      "height": 58,
+      "pivot": [
+        19,
+        58
+      ],
+      "bytes": 2840,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 1,
+      "width": 39,
+      "height": 58,
+      "pivot": [
+        19,
+        58
+      ],
+      "bytes": 3061,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 2,
+      "width": 40,
+      "height": 51,
+      "pivot": [
+        20,
+        51
+      ],
+      "bytes": 2772,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 3,
+      "width": 36,
+      "height": 58,
+      "pivot": [
+        18,
+        58
+      ],
+      "bytes": 2962,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 4,
+      "width": 39,
+      "height": 58,
+      "pivot": [
+        19,
+        58
+      ],
+      "bytes": 3110,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 5,
+      "width": 39,
+      "height": 58,
+      "pivot": [
+        19,
+        58
+      ],
+      "bytes": 3151,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 6,
+      "width": 40,
+      "height": 52,
+      "pivot": [
+        20,
+        52
+      ],
+      "bytes": 2880,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 7,
+      "width": 36,
+      "height": 58,
+      "pivot": [
+        18,
+        58
+      ],
+      "bytes": 2792,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 8,
+      "width": 40,
+      "height": 54,
+      "pivot": [
+        20,
+        54
+      ],
+      "bytes": 3039,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 9,
+      "width": 40,
+      "height": 57,
+      "pivot": [
+        20,
+        57
+      ],
+      "bytes": 3105,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 10,
+      "width": 39,
+      "height": 58,
+      "pivot": [
+        19,
+        58
+      ],
+      "bytes": 2931,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 11,
+      "width": 40,
+      "height": 57,
+      "pivot": [
+        20,
+        57
+      ],
+      "bytes": 3071,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 12,
+      "width": 40,
+      "height": 55,
+      "pivot": [
+        20,
+        55
+      ],
+      "bytes": 3000,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 13,
+      "width": 40,
+      "height": 58,
+      "pivot": [
+        20,
+        58
+      ],
+      "bytes": 3119,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 14,
+      "width": 37,
+      "height": 58,
+      "pivot": [
+        18,
+        58
+      ],
+      "bytes": 2984,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "torsos.png",
+      "cell": 15,
+      "width": 40,
+      "height": 51,
+      "pivot": [
+        20,
+        51
+      ],
+      "bytes": 2854,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 0,
+      "width": 42,
+      "height": 35,
+      "pivot": [
+        21,
+        35
+      ],
+      "bytes": 1891,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 1,
+      "width": 42,
+      "height": 27,
+      "pivot": [
+        21,
+        27
+      ],
+      "bytes": 1910,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 2,
+      "width": 39,
+      "height": 42,
+      "pivot": [
+        19,
+        42
+      ],
+      "bytes": 2340,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 3,
+      "width": 30,
+      "height": 42,
+      "pivot": [
+        15,
+        42
+      ],
+      "bytes": 2259,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 4,
+      "width": 39,
+      "height": 42,
+      "pivot": [
+        19,
+        42
+      ],
+      "bytes": 2317,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 5,
+      "width": 41,
+      "height": 42,
+      "pivot": [
+        20,
+        42
+      ],
+      "bytes": 2406,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 6,
+      "width": 36,
+      "height": 42,
+      "pivot": [
+        18,
+        42
+      ],
+      "bytes": 2364,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 7,
+      "width": 39,
+      "height": 42,
+      "pivot": [
+        19,
+        42
+      ],
+      "bytes": 2402,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 8,
+      "width": 42,
+      "height": 24,
+      "pivot": [
+        21,
+        24
+      ],
+      "bytes": 1880,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 9,
+      "width": 39,
+      "height": 42,
+      "pivot": [
+        19,
+        42
+      ],
+      "bytes": 2150,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 10,
+      "width": 42,
+      "height": 31,
+      "pivot": [
+        21,
+        31
+      ],
+      "bytes": 1890,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 11,
+      "width": 40,
+      "height": 42,
+      "pivot": [
+        20,
+        42
+      ],
+      "bytes": 2457,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 12,
+      "width": 23,
+      "height": 32,
+      "pivot": [
+        11,
+        32
+      ],
+      "bytes": 1776,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 13,
+      "width": 22,
+      "height": 32,
+      "pivot": [
+        11,
+        32
+      ],
+      "bytes": 1774,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 14,
+      "width": 23,
+      "height": 32,
+      "pivot": [
+        11,
+        32
+      ],
+      "bytes": 1715,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "heads.png",
+      "cell": 15,
+      "width": 22,
+      "height": 32,
+      "pivot": [
+        11,
+        32
+      ],
+      "bytes": 1771,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 0,
+      "width": 20,
+      "height": 46,
+      "pivot": [
+        10,
+        46
+      ],
+      "bytes": 2066,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 1,
+      "width": 19,
+      "height": 52,
+      "pivot": [
+        9,
+        52
+      ],
+      "bytes": 2091,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 2,
+      "width": 20,
+      "height": 44,
+      "pivot": [
+        10,
+        44
+      ],
+      "bytes": 1852,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 3,
+      "width": 19,
+      "height": 52,
+      "pivot": [
+        9,
+        52
+      ],
+      "bytes": 2020,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 4,
+      "width": 20,
+      "height": 48,
+      "pivot": [
+        10,
+        48
+      ],
+      "bytes": 2039,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 5,
+      "width": 20,
+      "height": 43,
+      "pivot": [
+        10,
+        43
+      ],
+      "bytes": 1980,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 6,
+      "width": 20,
+      "height": 51,
+      "pivot": [
+        10,
+        51
+      ],
+      "bytes": 2083,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 7,
+      "width": 20,
+      "height": 46,
+      "pivot": [
+        10,
+        46
+      ],
+      "bytes": 1966,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 8,
+      "width": 17,
+      "height": 30,
+      "pivot": [
+        8,
+        30
+      ],
+      "bytes": 1586,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 9,
+      "width": 14,
+      "height": 30,
+      "pivot": [
+        7,
+        30
+      ],
+      "bytes": 1475,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 10,
+      "width": 16,
+      "height": 30,
+      "pivot": [
+        8,
+        30
+      ],
+      "bytes": 1565,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 11,
+      "width": 14,
+      "height": 30,
+      "pivot": [
+        7,
+        30
+      ],
+      "bytes": 1449,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 12,
+      "width": 18,
+      "height": 30,
+      "pivot": [
+        9,
+        30
+      ],
+      "bytes": 1542,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 13,
+      "width": 17,
+      "height": 30,
+      "pivot": [
+        8,
+        30
+      ],
+      "bytes": 1510,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 14,
+      "width": 15,
+      "height": 16,
+      "pivot": [
+        7,
+        16
+      ],
+      "bytes": 1291,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "limbs.png",
+      "cell": 15,
+      "width": 16,
+      "height": 16,
+      "pivot": [
+        8,
+        16
+      ],
+      "bytes": 1308,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 0,
+      "width": 17,
+      "height": 26,
+      "pivot": [
+        8,
+        26
+      ],
+      "bytes": 1423,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 1,
+      "width": 19,
+      "height": 26,
+      "pivot": [
+        9,
+        26
+      ],
+      "bytes": 1435,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 2,
+      "width": 17,
+      "height": 26,
+      "pivot": [
+        8,
+        26
+      ],
+      "bytes": 1421,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 3,
+      "width": 18,
+      "height": 26,
+      "pivot": [
+        9,
+        26
+      ],
+      "bytes": 1415,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 4,
+      "width": 19,
+      "height": 26,
+      "pivot": [
+        9,
+        26
+      ],
+      "bytes": 1477,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 5,
+      "width": 17,
+      "height": 26,
+      "pivot": [
+        8,
+        26
+      ],
+      "bytes": 1449,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 6,
+      "width": 22,
+      "height": 26,
+      "pivot": [
+        11,
+        26
+      ],
+      "bytes": 1478,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 7,
+      "width": 17,
+      "height": 26,
+      "pivot": [
+        8,
+        26
+      ],
+      "bytes": 1399,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 8,
+      "width": 36,
+      "height": 45,
+      "pivot": [
+        18,
+        45
+      ],
+      "bytes": 2413,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 9,
+      "width": 31,
+      "height": 48,
+      "pivot": [
+        15,
+        48
+      ],
+      "bytes": 2291,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 10,
+      "width": 36,
+      "height": 43,
+      "pivot": [
+        18,
+        43
+      ],
+      "bytes": 2531,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 11,
+      "width": 36,
+      "height": 47,
+      "pivot": [
+        18,
+        47
+      ],
+      "bytes": 2434,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 12,
+      "width": 36,
+      "height": 46,
+      "pivot": [
+        18,
+        46
+      ],
+      "bytes": 2390,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 13,
+      "width": 32,
+      "height": 48,
+      "pivot": [
+        16,
+        48
+      ],
+      "bytes": 2593,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 14,
+      "width": 36,
+      "height": 43,
+      "pivot": [
+        18,
+        43
+      ],
+      "bytes": 2589,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "boots-backs.png",
+      "cell": 15,
+      "width": 36,
+      "height": 39,
+      "pivot": [
+        18,
+        39
+      ],
+      "bytes": 2208,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "beasts.png",
+      "cell": 0,
+      "width": 53,
+      "height": 52,
+      "pivot": [
+        26,
+        52
+      ],
+      "bytes": 3057,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "beasts.png",
+      "cell": 1,
+      "width": 69,
+      "height": 52,
+      "pivot": [
+        34,
+        52
+      ],
+      "bytes": 3363,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "beasts.png",
+      "cell": 2,
+      "width": 48,
+      "height": 52,
+      "pivot": [
+        24,
+        52
+      ],
+      "bytes": 2861,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "beasts.png",
+      "cell": 3,
+      "width": 61,
+      "height": 52,
+      "pivot": [
+        30,
+        52
+      ],
+      "bytes": 3211,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "beasts.png",
+      "cell": 4,
+      "width": 70,
+      "height": 52,
+      "pivot": [
+        35,
+        52
+      ],
+      "bytes": 3616,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "beasts.png",
+      "cell": 5,
+      "width": 58,
+      "height": 52,
+      "pivot": [
+        29,
+        52
+      ],
+      "bytes": 3011,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "beasts.png",
+      "cell": 6,
+      "width": 62,
+      "height": 52,
+      "pivot": [
+        31,
+        52
+      ],
+      "bytes": 3131,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "beasts.png",
+      "cell": 7,
+      "width": 63,
+      "height": 52,
+      "pivot": [
+        31,
+        52
+      ],
+      "bytes": 3134,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "materials.png",
+      "cell": 0,
+      "width": 64,
+      "height": 64,
+      "pivot": [
+        32,
+        64
+      ],
+      "bytes": 5504,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "materials.png",
+      "cell": 1,
+      "width": 64,
+      "height": 64,
+      "pivot": [
+        32,
+        64
+      ],
+      "bytes": 5504,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "materials.png",
+      "cell": 2,
+      "width": 64,
+      "height": 64,
+      "pivot": [
+        32,
+        64
+      ],
+      "bytes": 5504,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "materials.png",
+      "cell": 3,
+      "width": 64,
+      "height": 64,
+      "pivot": [
+        32,
+        64
+      ],
+      "bytes": 5504,
+      "calibration": null,
+      "foundation": null
     }
   ]
 }
