@@ -1310,8 +1310,14 @@ static void map_screen(void) {
             int x = MAPX(towns[t].x), y = MAPY(towns[t].y);
             rect(x - 2, y - 2, 5, 5, factionColors[g.townOwner[t]]);
             frame(x - 2, y - 2, 5, 5, GOLD);
-            if (ui.mapZoom && y > oy + 16)
-                clipped(x < ox + 130 ? x + 5 : x - 76, y - 8, towns[t].name, 12, GOLD);
+            if (ui.mapZoom && y > oy + 16) {
+                int lx = x < ox + 130 ? x + 5 : x - 76, ly = y - 8;
+                int px = MAPX(g.actors[g.selected].x), py = MAPY(g.actors[g.selected].y);
+                /* Keep the player marker and YOU label readable. Nearby town
+                   names remain available in the settlement list. */
+                if (lx + 72 < px - 8 || lx > px + 34 || ly + 8 < py - 10 || ly > py + 18)
+                    clipped(lx, ly, towns[t].name, 12, GOLD);
+            }
         }
     for (int i = 0; i < g.actorCount; i++)
         if (g.actors[i].squad && !g.actors[i].dead && INMAP(g.actors[i].x, g.actors[i].y))
