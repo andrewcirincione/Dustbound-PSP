@@ -2015,3 +2015,99 @@ id,family,material,quality,render_hash,name
 2049,83,5,1,b1586646dcd34171,Field Relic Pilgrim mantle
 2050,83,5,2,f07ed6cb371fc7fa,Fine Relic Pilgrim mantle
 2051,83,5,3,16a3eab8002dfdc1,Master Relic Pilgrim mantle
+2052,84,0,0,2069b955b9bda5be,Worn Scrap Greatsword
+2053,84,0,1,50444a9c05b72241,Field Scrap Greatsword
+2054,84,0,2,3fecaee4b91a0b4a,Fine Scrap Greatsword
+2055,84,0,3,1ef729bb39487146,Master Scrap Greatsword
+2056,84,1,0,279be8227f154c74,Worn Iron Greatsword
+2057,84,1,1,2da7e7b9abacdbd3,Field Iron Greatsword
+2058,84,1,2,1e23cf0067857ac0,Fine Iron Greatsword
+2059,84,1,3,ba4275cf43c299f1,Master Iron Greatsword
+2060,84,2,0,fc2ede96f60fdd80,Worn Bronze Greatsword
+2061,84,2,1,1737291d4871605f,Field Bronze Greatsword
+2062,84,2,2,ccc15b12efb19891,Fine Bronze Greatsword
+2063,84,2,3,de06b388da03c91c,Master Bronze Greatsword
+2064,84,3,0,b35adcd7ba33dcf5,Worn Steel Greatsword
+2065,84,3,1,03153bb03d45aba3,Field Steel Greatsword
+2066,84,3,2,715f56c178370dfa,Fine Steel Greatsword
+2067,84,3,3,42b82c8454eb8c86,Master Steel Greatsword
+2068,84,4,0,d01266cd0df8bad0,Worn Black Greatsword
+2069,84,4,1,2558297763ebee96,Field Black Greatsword
+2070,84,4,2,0d667d573eebd39b,Fine Black Greatsword
+2071,84,4,3,630d4656485dc68c,Master Black Greatsword
+2072,84,5,0,df26093d9e29137c,Worn Relic Greatsword
+2073,84,5,1,38e4ab74cb84ce3e,Field Relic Greatsword
+2074,84,5,2,5d50877b9a4981e9,Fine Relic Greatsword
+2075,84,5,3,cdc33e896ffc950d,Master Relic Greatsword
+2076,85,0,0,cbe7974204619ace,Worn Scrap Railway maul
+2077,85,0,1,7a00a3d34c03d7f0,Field Scrap Railway maul
+2078,85,0,2,e28073e0535d3f27,Fine Scrap Railway maul
+2079,85,0,3,4235e16148eee7af,Master Scrap Railway maul
+2080,85,1,0,6756598ab5e2f366,Worn Iron Railway maul
+2081,85,1,1,ce17a7dbd31efe65,Field Iron Railway maul
+2082,85,1,2,3f152d36e08fcdb6,Fine Iron Railway maul
+2083,85,1,3,346a2a77d1e35ef6,Master Iron Railway maul
+2084,85,2,0,a9b8a2cb984b5883,Worn Bronze Railway maul
+2085,85,2,1,b57d8dca0ad94e90,Field Bronze Railway maul
+2086,85,2,2,356df341eb274687,Fine Bronze Railway maul
+2087,85,2,3,bbbe39577f030bc6,Master Bronze Railway maul
+2088,85,3,0,088ccc5e28361fc8,Worn Steel Railway maul
+2089,85,3,1,5536937a10d25ab5,Field Steel Railway maul
+2090,85,3,2,9e537298ca2fb2a2,Fine Steel Railway maul
+2091,85,3,3,37d66abf04e4d214,Master Steel Railway maul
+2092,85,4,0,cb8f94c0364bda2f,Worn Black Railway maul
+2093,85,4,1,5d180ab58746f0de,Field Black Railway maul
+2094,85,4,2,cceede90d8d0947b,Fine Black Railway maul
+2095,85,4,3,673c474644f98deb,Master Black Railway maul
+2096,85,5,0,590fdf435ef07f13,Worn Relic Railway maul
+2097,85,5,1,a7e1eed784e1f3d9,Field Relic Railway maul
+2098,85,5,2,824b97543a21bbe1,Fine Relic Railway maul
+2099,85,5,3,dd826ca465cfcdc8,Master Relic Railway maul
+2100,86,0,0,3e59daaf9fffc71c,Worn Scrap Crescent glaive
+2101,86,0,1,2e295dba7855801b,Field Scrap Crescent glaive
+2102,86,0,2,19a2adaa0989dd77,Fine Scrap Crescent glaive
+2103,86,0,3,0d374b02d5d0bd67,Master Scrap Crescent glaive
+2104,86,1,0,4a3ef819c12bf2d2,Worn Iron Crescent glaive
+2105,86,1,1,9a3c66234fa2f5db,Field Iron Crescent glaive
+2106,86,1,2,3b976bb9a0e1897b,Fine Iron Crescent glaive
+2107,86,1,3,7c85df483730aa11,Master Iron Crescent glaive
+2108,86,2,0,1db5c15ab54bfad5,Worn Bronze Crescent glaive
+2109,86,2,1,b24bef1653985e9e,Field Bronze Crescent glaive
+2110,86,2,2,250501710d3894d1,Fine Bronze Crescent glaive
+2111,86,2,3,e150146130e0b2bf,Master Bronze Crescent glaive
+2112,86,3,0,9dd06ccc6e7b524d,Worn Steel Crescent glaive
+2113,86,3,1,e66c7370b36036b5,Field Steel Crescent glaive
+2114,86,3,2,dcedaf3ac9e4c080,Fine Steel Crescent glaive
+2115,86,3,3,1cc0ebe13ddb1861,Master Steel Crescent glaive
+2116,86,4,0,d5cd083cdea74dc9,Worn Black Crescent glaive
+2117,86,4,1,e992ede41b1b3cd9,Field Black Crescent glaive
+2118,86,4,2,b46b734728c2be11,Fine Black Crescent glaive
+2119,86,4,3,32249b4094274fa9,Master Black Crescent glaive
+2120,86,5,0,c4115c99a7c81680,Worn Relic Crescent glaive
+2121,86,5,1,debbf15a3cd328bb,Field Relic Crescent glaive
+2122,86,5,2,889df49883b8e101,Fine Relic Crescent glaive
+2123,86,5,3,b6e1bf1372e4816d,Master Relic Crescent glaive
+2124,87,0,0,bf52572ee235327d,Worn Scrap Anchor cleaver
+2125,87,0,1,0b6d2ff4cc5ea944,Field Scrap Anchor cleaver
+2126,87,0,2,646d2dbcffa5c701,Fine Scrap Anchor cleaver
+2127,87,0,3,807a51d3d0fa491d,Master Scrap Anchor cleaver
+2128,87,1,0,84e6e8322d47b6e3,Worn Iron Anchor cleaver
+2129,87,1,1,f735d46c63dc5e73,Field Iron Anchor cleaver
+2130,87,1,2,11a7036d7415cf7a,Fine Iron Anchor cleaver
+2131,87,1,3,5fd5543a38e2f042,Master Iron Anchor cleaver
+2132,87,2,0,b033ba497b78886d,Worn Bronze Anchor cleaver
+2133,87,2,1,01d22787ecf7672d,Field Bronze Anchor cleaver
+2134,87,2,2,21144a71a922852a,Fine Bronze Anchor cleaver
+2135,87,2,3,674a0e0fe6c1c5de,Master Bronze Anchor cleaver
+2136,87,3,0,5480a01ead143328,Worn Steel Anchor cleaver
+2137,87,3,1,7b58cfee4959eb2e,Field Steel Anchor cleaver
+2138,87,3,2,518405894f6bd277,Fine Steel Anchor cleaver
+2139,87,3,3,da2c85e931bba5af,Master Steel Anchor cleaver
+2140,87,4,0,21d0c9e36a7bac0a,Worn Black Anchor cleaver
+2141,87,4,1,1eda4d339a0a5a11,Field Black Anchor cleaver
+2142,87,4,2,24eb1b33645e083e,Fine Black Anchor cleaver
+2143,87,4,3,7469d3535389475b,Master Black Anchor cleaver
+2144,87,5,0,4da1c76a5105b627,Worn Relic Anchor cleaver
+2145,87,5,1,d7e4ce26482f2c58,Field Relic Anchor cleaver
+2146,87,5,2,b1432587a46a3f47,Fine Relic Anchor cleaver
+2147,87,5,3,67628de530f03590,Master Relic Anchor cleaver

@@ -1,0 +1,38 @@
+{
+  "version": "0.5.0",
+  "eboot_bytes": 1294642,
+  "eboot_sha256": "2fd6fe5c179c49d628fa76557aec011399a003d73b04b240d1ab152ed0eb9b3d",
+  "prx_sha256": "c1dc8bb789a0a34e1b13650771b56719548cf26a5700c65a7c054ede6b86d8ed",
+  "baseline_simulation_checks": 111,
+  "playability_checks": 1541,
+  "interior_save_checks": 25,
+  "grip_poses": 13312,
+  "grip_assertions": 26624,
+  "render_cases": 272,
+  "gear_variants": 2112,
+  "save_version": 5,
+  "load_save_versions": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "sprite_count": 144,
+  "painted_grip_samples": 2880,
+  "painted_attack_bounds": 14976,
+  "bounded_comparison_pairs": 36,
+  "bss_bytes": 4054188,
+  "compiled_sprite_bytes": 554886,
+  "shadow_bytes": 77542,
+  "palette_cache_bytes": 147456,
+  "combat_recording_frames": 240,
+  "physical_psp_tested": false,
+  "playthroughs": [
+    "fresh_start",
+    "prepared_combat_outpost_regions",
+    "interiors",
+    "fresh_start_frontier_journey",
+    "roles_contracts_four_weapons_and_v4_migration"
+  ]
+}

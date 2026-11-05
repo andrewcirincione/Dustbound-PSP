@@ -1,0 +1,3 @@
+World actors 160, contract guards 4
+PASS: frontier roles, 4 new families, regional stock, strength/injury penalties, hire/range/payment/follow/expiry/dismissal and genuine v4 migration.
+PASS: 2880 painted grip samples; 14976 attack poses fit actor cache; 36 bounded, cache-stable comparison pairs. Bounds x=-111..110 y=-122..49 at 2x.
