@@ -130,6 +130,37 @@ void world_layout(int large) {
     expanded = large;
 }
 int world_is_expanded(void) { return expanded; }
+void place_wilderness_encounters(void) {
+    for (int i = 0; i < g.actorCount; i++) {
+        Actor *a = &g.actors[i];
+        if (a->squad || (a->kind != RAIDER && a->kind != BEAST))
+            continue;
+        int town = -1;
+        for (int t = 0; t < TOWNS; t++)
+            if (towns[t].faction != HOSTILE && distance(a->x, a->y, towns[t].x, towns[t].y) < 32) {
+                town = t;
+                break;
+            }
+        if (town < 0)
+            continue;
+        float angle = atan2f(a->y - towns[town].y, a->x - towns[town].x);
+        for (int k = 0; k < 24; k++) {
+            float radius = 36 + k * .5f, an = angle + k * .55f;
+            float x = towns[town].x + cosf(an) * radius, y = towns[town].y + sinf(an) * radius;
+            if (!can_walk(x, y))
+                continue;
+            int safe = 1;
+            for (int t = 0; t < TOWNS; t++)
+                if (towns[t].faction != HOSTILE && distance(x, y, towns[t].x, towns[t].y) < 32)
+                    safe = 0;
+            if (!safe)
+                continue;
+            a->x = a->homeX = a->tx = x;
+            a->y = a->homeY = a->ty = y;
+            break;
+        }
+    }
+}
 typedef struct {
     int baseExists;
     float baseX, baseY;

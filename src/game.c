@@ -382,6 +382,7 @@ void game_new(uint32_t seed, int scenario) {
     log_msg("Dusk Haven. Find supplies, allies, and a way out.");
     init_expansion();
     spread_frontier(&g);
+    place_wilderness_encounters();
     ui.camX = a->x;
     ui.camY = a->y;
     ui.mapX = a->x;

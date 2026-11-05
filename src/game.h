@@ -266,6 +266,7 @@ float context_reach(void);
 const char *context_name(void);
 const char *context_action(void);
 void spread_frontier(Game *game);
+void place_wilderness_encounters(void);
 extern const char *skillNames[SKILLS], *limbNames[LIMBS], *buildNames[], *jobNames[];
 int level(const Actor *a, int skill);
 void gain(Actor *a, int skill, float xp);

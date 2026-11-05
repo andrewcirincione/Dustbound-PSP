@@ -1048,7 +1048,9 @@ static void hud(void) {
     } else if (ui.contextIndex >= 0) {
         center(240, 182, context_name(), GOLD, 1);
         float d = context_distance();
-        if (d > context_reach()) {
+        if (ui.contextKind == 3 && (a->target >= 0 || a->attackPhase)) {
+            center(240, 195, "BREAK AWAY FROM COMBAT TO ENTER", MUTED, 1);
+        } else if (d > context_reach()) {
             char action[72];
             snprintf(action, sizeof(action), "MOVE CLOSER  %.2fm / %.2fm", d, context_reach());
             center(240, 195, action, MUTED, 1);
