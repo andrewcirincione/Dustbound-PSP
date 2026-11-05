@@ -1,0 +1,9 @@
+{
+  "workflow_run": "https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/41972937220",
+  "commit": "68bc9ca05f5cfbc0e60eaf3570dea6f49ca8e0cd",
+  "status": "success",
+  "eboot_bytes": 1098757,
+  "eboot_sha256": "e15a942ed491845938727d082d97a5ff54df146986d0dd0543a02a5fc20ae0ab",
+  "matches_local_and_all_four_playthroughs": true,
+  "observed_from": "Validate package step in GitHub Actions job 127065097027"
+}
