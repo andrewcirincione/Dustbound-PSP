@@ -21,6 +21,10 @@ int npc_role(const Actor *a) {
     return ROLE_CITIZEN;
 }
 const char *npc_role_name(const Actor *a) {
+    if (a->kind == RAIDER)
+        return "RAIDER";
+    if (a->kind == BEAST)
+        return "BEAST";
     static const char *names[] = {"RESIDENT", "MERCHANT", "RECRUIT", "MARSHAL", "INNKEEPER",
                                   "MEDIC",    "SMITH",    "BARBER",  "SCOUT",   "CONTRACT GUARD"};
     return names[npc_role(a)];
