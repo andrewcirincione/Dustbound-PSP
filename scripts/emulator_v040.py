@@ -73,9 +73,11 @@ async def main():
     await e.shot('v040-02-character-creator',15)
     await e.key('up',2);await e.key('cross');await e.expect('money',420)
     await e.shot('v040-03-dusk-haven',0)
-    for fx,fy in [(24,36),(23,36),(22,34),(25.8,34.8)]:
+    for fx,fy in [(24,35.7),(22.3,34),(24,32.3),(25.7,34),(22.8,35.2),(25.2,35.2),(22.8,32.8),(25.2,32.8)]:
      await e.move_to(fx,fy)
+     print('RESOURCE REACH PROBE',await e.read('position','ff'),await e.read('context','ii'),flush=True)
      if (await e.read('context','ii'))[0]==1:break
+    await e.shot('v040-34-mining-too-far',0)
     assert (await e.read('context','ii'))[0]==1
     ore_before=await e.read('pack','48I');await e.key('cross');await e.expect('task',0);await e.shot('v040-34-mining-too-far',0);await e.waitframes(100);assert await e.read('pack','48I')==ore_before
     await e.move_to(24,34);await e.key('cross');await e.expect('task',1);await e.waitframes(120);pack=await e.read('pack','48I');assert any(pack[i]==3 and pack[i+1]>0 for i in range(0,48,2));await e.shot('v040-13-mining',0);await e.key('right')
