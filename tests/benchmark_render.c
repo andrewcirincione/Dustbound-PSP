@@ -21,8 +21,8 @@ int main(int argc, char **argv) {
     puts("scene,median_ms,p95_ms,worst_ms,frames,game_bytes,ui_bytes");
     for (int s = 0; s < 5; s++) {
         game_new(73819, 1);
-        g.actors[0].x = pos[s][0];
-        g.actors[0].y = pos[s][1];
+        g.actors[0].x = (s == 0 || s == 2) ? pos[s][0] : pos[s][0] * 4 - 78;
+        g.actors[0].y = (s == 0 || s == 2) ? pos[s][1] : pos[s][1] * 4 - 81;
         ui.screen = SCREEN_WORLD;
         double samples[240];
         for (int i = -20; i < 240; i++) {
