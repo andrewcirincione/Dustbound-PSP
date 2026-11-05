@@ -1,7 +1,7 @@
 {
-  "rom_bytes": 543399,
+  "rom_bytes": 554886,
   "shadow_bytes": 77542,
-  "palette_cache_bytes": 143360,
+  "palette_cache_bytes": 147456,
   "sprites": [
     {
       "source": "buildings-v2.png",
@@ -2014,6 +2014,58 @@
       "bytes": 3467,
       "calibration": null,
       "foundation": null
+    },
+    {
+      "source": "weapons-heavy.png",
+      "cell": 0,
+      "width": 26,
+      "height": 112,
+      "pivot": [
+        13,
+        112
+      ],
+      "bytes": 2793,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-heavy.png",
+      "cell": 1,
+      "width": 37,
+      "height": 112,
+      "pivot": [
+        18,
+        112
+      ],
+      "bytes": 3030,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-heavy.png",
+      "cell": 2,
+      "width": 24,
+      "height": 112,
+      "pivot": [
+        12,
+        112
+      ],
+      "bytes": 2510,
+      "calibration": null,
+      "foundation": null
+    },
+    {
+      "source": "weapons-heavy.png",
+      "cell": 3,
+      "width": 32,
+      "height": 112,
+      "pivot": [
+        16,
+        112
+      ],
+      "bytes": 3154,
+      "calibration": null,
+      "foundation": null
     }
   ],
   "weapon_grips": [
@@ -2176,6 +2228,26 @@
       15.636363636363637,
       86.82736156351791,
       0.25892857142857145
+    ],
+    [
+      12.839506172839506,
+      85.29479768786128,
+      0.36607142857142855
+    ],
+    [
+      18.004464285714285,
+      89.43407407407408,
+      0.3482142857142857
+    ],
+    [
+      12.402684563758388,
+      89.6969696969697,
+      0.41964285714285715
+    ],
+    [
+      6.303030303030304,
+      88.24242424242425,
+      0.32142857142857145
     ]
   ]
 }

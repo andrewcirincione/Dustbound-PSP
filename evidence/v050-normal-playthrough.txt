@@ -1,0 +1,109 @@
+SCREENSHOT v050-01-title 480x272 screen 13 VRAM 0x4000000
+KEY cross SCREEN 13 ROW 0 -> 0
+KEY cross SCREEN 15 ROW 0 -> 0
+SCREENSHOT v050-08-name-keyboard 480x272 screen 16 VRAM 0x4088000
+KEY cross SCREEN 16 ROW 0 -> 0
+KEY start SCREEN 16 ROW 0 -> 0
+KEY down SCREEN 15 ROW 0 -> 1
+KEY right SCREEN 15 ROW 1 -> 1
+SCREENSHOT v050-02-character-creator 480x272 screen 15 VRAM 0x4000000
+KEY up SCREEN 15 ROW 1 -> 0
+KEY up SCREEN 15 ROW 0 -> 9
+KEY cross SCREEN 15 ROW 9 -> 0
+ASSERT money (420,)
+SCREENSHOT v050-03-dusk-haven 480x272 screen 0 VRAM 0x4000000
+RESOURCE REACH PROBE (24.12262535095215, 35.56538391113281) (1, 106)
+SCREENSHOT v050-34-mining-too-far 480x272 screen 0 VRAM 0x4088000
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT task (0,)
+SCREENSHOT v050-34-mining-too-far 480x272 screen 0 VRAM 0x4088000
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT task (1,)
+SCREENSHOT v050-13-mining 480x272 screen 0 VRAM 0x4000000
+KEY right SCREEN 0 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+SCREENSHOT v050-04-layered-equipment 480x272 screen 1 VRAM 0x4000000
+KEY triangle SCREEN 1 ROW 0 -> 0
+SCREENSHOT v050-05-six-equipment-slots 480x272 screen 23 VRAM 0x4000000
+KEY circle SCREEN 23 ROW 0 -> 0
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v050-09-companion-dialogue 480x272 screen 17 VRAM 0x4088000
+KEY cross SCREEN 17 ROW 0 -> 0
+ASSERT squad (2,)
+ASSERT money (120,)
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v050-10-market-dialogue 480x272 screen 17 VRAM 0x4000000
+KEY cross SCREEN 17 ROW 0 -> 0
+KEY cross SCREEN 6 ROW 0 -> 0
+ASSERT money (85,)
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+SCREENSHOT v050-11-weapon-market 480x272 screen 6 VRAM 0x4000000
+KEY circle SCREEN 6 ROW 0 -> 0
+KEY cross SCREEN 0 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+SCREENSHOT v050-33-gear-comparison 480x272 screen 1 VRAM 0x4088000
+KEY cross SCREEN 1 ROW 6 -> 6
+SCREENSHOT v050-12-looted-armor-equipped 480x272 screen 1 VRAM 0x4088000
+KEY circle SCREEN 1 ROW 6 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY cross SCREEN 11 ROW 4 -> 0
+SCREENSHOT v050-14-save-ledger 480x272 screen 22 VRAM 0x4088000
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY circle SCREEN 11 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+ASSERT money (85,)
+ASSERT squad (2,)
+KEY select SCREEN 0 ROW 0 -> 0
+SCREENSHOT v050-06-frontier-atlas 480x272 screen 5 VRAM 0x4088000
+ASSERT mapzoom (1,)
+KEY triangle SCREEN 5 ROW 0 -> 0
+ASSERT mapzoom (0,)
+SCREENSHOT v050-35-world-atlas 480x272 screen 5 VRAM 0x4088000
+KEY select SCREEN 5 ROW 0 -> 2
+SCREENSHOT v050-07-contextual-guide 480x272 screen 12 VRAM 0x4088000
+KEY rtrigger SCREEN 12 ROW 2 -> 3
+KEY rtrigger SCREEN 12 ROW 3 -> 4
+KEY rtrigger SCREEN 12 ROW 4 -> 5
+KEY rtrigger SCREEN 12 ROW 5 -> 6
+KEY rtrigger SCREEN 12 ROW 6 -> 7
+KEY rtrigger SCREEN 12 ROW 7 -> 8
+KEY rtrigger SCREEN 12 ROW 8 -> 9
+KEY rtrigger SCREEN 12 ROW 9 -> 10
+KEY rtrigger SCREEN 12 ROW 10 -> 11
+KEY rtrigger SCREEN 12 ROW 11 -> 12
+KEY rtrigger SCREEN 12 ROW 12 -> 13
+KEY rtrigger SCREEN 12 ROW 13 -> 14
+KEY rtrigger SCREEN 12 ROW 14 -> 15
+KEY rtrigger SCREEN 12 ROW 15 -> 16
+KEY rtrigger SCREEN 12 ROW 16 -> 17
+KEY rtrigger SCREEN 12 ROW 17 -> 18
+KEY rtrigger SCREEN 12 ROW 18 -> 0
+KEY rtrigger SCREEN 12 ROW 0 -> 1
+KEY rtrigger SCREEN 12 ROW 1 -> 2
+ASSERT selection (2,)
+KEY circle SCREEN 12 ROW 2 -> 0
+KEY circle SCREEN 5 ROW 0 -> 0
+NORMAL PSP PLAYTHROUGH PASS /workspace/scratch/f91171b6dca9/Dustbound-current/build/v050-playtest-21070kb4

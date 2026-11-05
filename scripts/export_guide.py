@@ -23,6 +23,6 @@ for name in icons.values():
 def glyphs(s):
  for code,name in icons.items():s=s.replace(chr(code),f'![{name}](../assets/ui/{name}.svg)')
  return s.replace('\n','\n\n')
-text='# Dustbound field guide — 0.4.0\n\nThe nineteen chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.\n\n'
+text='# Dustbound field guide — 0.5.0\n\nThe nineteen chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.\n\n'
 for i,(title,body) in enumerate(zip(array('guideTitles'),array('guideBodies')),1):text+=f'## {i}. {title.title()}\n\n{glyphs(body)}\n\n'
 (root/'docs/FIELD_GUIDE.md').write_text(text.rstrip()+'\n')

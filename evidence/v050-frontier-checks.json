@@ -1,0 +1,193 @@
+[
+  {
+    "eboot_sha256": "2fd6fe5c179c49d628fa76557aec011399a003d73b04b240d1ab152ed0eb9b3d",
+    "version": "0.5.0"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      650
+    ],
+    "expected": [
+      650
+    ]
+  },
+  {
+    "capture": "v050-50-guard-identity",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v050-51-guard-contract",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "assert": "money",
+    "actual": [
+      410
+    ],
+    "expected": [
+      410
+    ]
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v050-52-hired-guard",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "assert": "money",
+    "actual": [
+      410
+    ],
+    "expected": [
+      410
+    ]
+  },
+  {
+    "capture": "v050-53-escort-follows",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v050-54-faction-contract-ledger",
+    "screen": 20,
+    "expected": 20
+  },
+  {
+    "assert": "money",
+    "actual": [
+      410
+    ],
+    "expected": [
+      410
+    ]
+  },
+  {
+    "capture": "v050-55-shogunate-merchant",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "capture": "v050-56-shogunate-advice",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "capture": "v050-57-shogunate-stock",
+    "screen": 6,
+    "expected": 6
+  },
+  {
+    "capture": "v050-55-rust-caravans-merchant",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "capture": "v050-56-rust-caravans-advice",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "capture": "v050-57-rust-caravans-stock",
+    "screen": 6,
+    "expected": 6
+  },
+  {
+    "capture": "v050-55-black-mesa-merchant",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "capture": "v050-56-black-mesa-advice",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "capture": "v050-57-black-mesa-stock",
+    "screen": 6,
+    "expected": 6
+  },
+  {
+    "capture": "v050-58-new-weapon-0",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v050-59-new-weapon-world-0",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v050-58-new-weapon-1",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v050-59-new-weapon-world-1",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v050-58-new-weapon-2",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v050-59-new-weapon-world-2",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v050-58-new-weapon-3",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v050-59-new-weapon-world-3",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "identity",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v050-60-v041-save-migrated",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v050-61-heavy-combat-guide",
+    "screen": 12,
+    "expected": 12
+  },
+  {
+    "capture": "v050-62-faction-guide",
+    "screen": 12,
+    "expected": 12
+  },
+  {
+    "fresh_escort_hired_saved_reloaded": true,
+    "duplicate_charge_blocked": true,
+    "squad_count_unchanged": true,
+    "regional_merchants_reviewed": 3,
+    "new_weapon_families_equipped": 4,
+    "genuine_v041_save_loaded": true
+  }
+]

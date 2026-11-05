@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.4.1"
+#define VERSION "0.5.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -13,7 +13,8 @@
 #define SKILLS 20
 #define LIMBS 6
 #define BASE_ITEMS 36
-#define FAMILIES 84
+#define FAMILIES 88
+#define WEAPON_FAMILIES 36
 #define MATERIALS 6
 #define QUALITIES 4
 #define ITEMS (BASE_ITEMS + FAMILIES * MATERIALS * QUALITIES)
@@ -205,6 +206,9 @@ typedef struct {
     /* Version 3 extension. Version 2 ends immediately before these fields. */
     int interiorBuilding, interiorActor;
     float interiorX, interiorY;
+    /* v5: autonomous hired guards; actor IDs use +1, zero means vacant. */
+    int mercActor[4], mercMode[4], identityVersion;
+    float mercUntil[4];
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -254,9 +258,21 @@ enum {
     ROLE_MEDIC,
     ROLE_SMITH,
     ROLE_BARBER,
-    ROLE_SCOUT
+    ROLE_SCOUT,
+    ROLE_MERCENARY
 };
 int npc_role(const Actor *a);
+int weapon_family_index(int i);
+int weapon_strength(int item);
+float weapon_handling(const Actor *a, int item);
+void frontier_identity(void);
+void frontier_restock(int town);
+void frontier_tick(float dt);
+int merc_slot(const Actor *a);
+int merc_hire(int actor, int mode);
+void merc_dismiss(int actor);
+const char *faction_identity(int faction);
+const char *npc_rumor(const Actor *a);
 const char *npc_role_name(const Actor *a);
 int dialogue_count(int actor);
 int dialogue_action(int actor, int row);

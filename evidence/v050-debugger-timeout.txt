@@ -1,0 +1,210 @@
+KEY cross SCREEN 13 ROW 0 -> 0
+KEY up SCREEN 15 ROW 0 -> 9
+KEY cross SCREEN 15 ROW 9 -> 0
+ASSERT money (650,)
+SCREENSHOT v050-50-guard-identity 480x272 screen 0 VRAM 0x4088000
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v050-51-guard-contract 480x272 screen 17 VRAM 0x4088000
+KEY cross SCREEN 17 ROW 0 -> 0
+ASSERT money (410,)
+ASSERT squad (1,)
+SCREENSHOT v050-52-hired-guard 480x272 screen 17 VRAM 0x4000000
+KEY down SCREEN 17 ROW 0 -> 1
+KEY cross SCREEN 17 ROW 1 -> 1
+ASSERT money (410,)
+KEY circle SCREEN 17 ROW 1 -> 0
+SCREENSHOT v050-53-escort-follows 480x272 screen 0 VRAM 0x4088000
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY down SCREEN 11 ROW 5 -> 6
+KEY down SCREEN 11 ROW 6 -> 7
+KEY down SCREEN 11 ROW 7 -> 8
+KEY down SCREEN 11 ROW 8 -> 9
+KEY down SCREEN 11 ROW 9 -> 10
+KEY down SCREEN 11 ROW 10 -> 11
+KEY down SCREEN 11 ROW 11 -> 12
+KEY down SCREEN 11 ROW 12 -> 13
+KEY cross SCREEN 11 ROW 13 -> 0
+SCREENSHOT v050-54-faction-contract-ledger 480x272 screen 20 VRAM 0x4000000
+KEY circle SCREEN 20 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY cross SCREEN 11 ROW 4 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY circle SCREEN 11 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+ASSERT money (410,)
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY cross SCREEN 22 ROW 2 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v050-55-shogunate-merchant 480x272 screen 17 VRAM 0x4000000
+KEY down SCREEN 17 ROW 0 -> 1
+KEY cross SCREEN 17 ROW 1 -> 1
+SCREENSHOT v050-56-shogunate-advice 480x272 screen 17 VRAM 0x4088000
+KEY up SCREEN 17 ROW 1 -> 0
+KEY cross SCREEN 17 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+SCREENSHOT v050-57-shogunate-stock 480x272 screen 6 VRAM 0x4000000
+KEY circle SCREEN 6 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY cross SCREEN 22 ROW 3 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v050-55-rust-caravans-merchant 480x272 screen 17 VRAM 0x4000000
+KEY down SCREEN 17 ROW 0 -> 1
+KEY cross SCREEN 17 ROW 1 -> 1
+SCREENSHOT v050-56-rust-caravans-advice 480x272 screen 17 VRAM 0x4088000
+KEY up SCREEN 17 ROW 1 -> 0
+KEY cross SCREEN 17 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+SCREENSHOT v050-57-rust-caravans-stock 480x272 screen 6 VRAM 0x4000000
+KEY circle SCREEN 6 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY down SCREEN 22 ROW 3 -> 4
+KEY cross SCREEN 22 ROW 4 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v050-55-black-mesa-merchant 480x272 screen 17 VRAM 0x4088000
+KEY down SCREEN 17 ROW 0 -> 1
+KEY cross SCREEN 17 ROW 1 -> 1
+SCREENSHOT v050-56-black-mesa-advice 480x272 screen 17 VRAM 0x4088000
+KEY up SCREEN 17 ROW 1 -> 0
+KEY cross SCREEN 17 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+KEY rtrigger SCREEN 6 ROW 0 -> 0
+SCREENSHOT v050-57-black-mesa-stock 480x272 screen 6 VRAM 0x4088000
+KEY circle SCREEN 6 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY down SCREEN 22 ROW 3 -> 4
+KEY down SCREEN 22 ROW 4 -> 5
+KEY cross SCREEN 22 ROW 5 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+SCREENSHOT v050-58-new-weapon-0 480x272 screen 1 VRAM 0x4000000
+KEY cross SCREEN 1 ROW 0 -> 0
+KEY circle SCREEN 1 ROW 0 -> 0
+SCREENSHOT v050-59-new-weapon-world-0 480x272 screen 0 VRAM 0x4088000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+SCREENSHOT v050-58-new-weapon-1 480x272 screen 1 VRAM 0x4088000
+KEY cross SCREEN 1 ROW 1 -> 1
+KEY circle SCREEN 1 ROW 1 -> 0
+SCREENSHOT v050-59-new-weapon-world-1 480x272 screen 0 VRAM 0x4088000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+SCREENSHOT v050-58-new-weapon-2 480x272 screen 1 VRAM 0x4000000
+KEY cross SCREEN 1 ROW 2 -> 2
+KEY circle SCREEN 1 ROW 2 -> 0
+SCREENSHOT v050-59-new-weapon-world-2 480x272 screen 0 VRAM 0x4000000
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+SCREENSHOT v050-58-new-weapon-3 480x272 screen 1 VRAM 0x4000000
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/websockets/asyncio/connection.py", line 305, in recv
+    return await self.recv_messages.get(decode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/websockets/asyncio/messages.py", line 158, in get
+    frame = await self.frames.get(not self.closed)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/websockets/asyncio/messages.py", line 51, in get
+    await self.get_waiter
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_frontier_v050.py", line 50, in <module>
+    if __name__=='__main__':asyncio.run(main())
+                            ^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_frontier_v050.py", line 37, in main
+    pack=await e.read('pack','48I');it=pack[i*2];await e.key('cross');assert (await e.read('gear','6I'))[0]==it
+                                                 ^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_v050.py", line 32, in key
+    await self.call('input.buttons.send',buttons={k:False});await self.waitframes(2)
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_v050.py", line 15, in waitframes
+    if (await self.read('framecount'))[0]>=before+n:return
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_test.py", line 40, in read
+    result = await self.call('memory.read',address=state[field+'_pointer'],size=struct.calcsize('<'+fmt))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_test.py", line 27, in call
+    data = json.loads(await asyncio.wait_for(self.ws.recv(), 60))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/tasks.py", line 519, in wait_for
+    async with timeouts.timeout(timeout):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/timeouts.py", line 115, in __aexit__
+    raise TimeoutError from exc_val
+TimeoutError

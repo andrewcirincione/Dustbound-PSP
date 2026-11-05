@@ -27,3 +27,9 @@ The unreleased 0.3 graphics/interior candidate is included in this milestone. Ol
 - [ ] Physical PSP-3000 profiling, controller feel, frame pacing and memory-stick endurance.
 
 See [the mechanics audit](MECHANICS_AUDIT.md), [iteration record](ITERATION_LOG.md), and [validation](VALIDATION.md). Unchecked items are not implemented claims.
+
+## 0.5.0 completed / next design priority
+
+Completed: four heavy weapon families, strength/arm handling, faction/profession equipment and advice, regional markets, timed independent guards, medic/merchant separation, v5 save migration and the [whole-game review](DESIGN_REVIEW_V050.md).
+
+Next priority: one authored salvage-route/rescue/raider-leader loop whose outcomes persist in town stock, NPC dialogue, road safety and retaliation. Then deepen defeat/recovery, outpost job logistics and independent squads. Require physical PSP-3000 frame-time and save qualification before claiming hardware readiness.

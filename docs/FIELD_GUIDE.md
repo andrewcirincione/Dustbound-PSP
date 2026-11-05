@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.4.0
+# Dustbound field guide — 0.5.0
 
 The nineteen chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -22,7 +22,7 @@ The 1536 by 1536 borderlands contain sixteen settlements and nine terrain region
 
 ## 4. Combat
 
-![square](../assets/ui/square.svg) toggles fighting. Move into weapon reach to attack automatically; followers engage nearby threats. ![r](../assets/ui/r.svg) pauses combat for orders. Heavy weapons hit harder but recover slowly. Guns use cartridges; bows use bolts.
+![square](../assets/ui/square.svg) toggles fighting. Move into weapon reach to attack automatically; followers engage nearby threats. ![r](../assets/ui/r.svg) pauses combat for orders. Heavy steel needs strength equal to twice its weight. Weak or injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords hit hard; anchor cleavers bleed. Guns use cartridges; bows use bolts.
 
 Armor protects specific body locations. Piercing weapons ignore some armor; serrated blades bleed; staggering hits interrupt. Skills improve through use. Retreat from stronger opponents and use terrain.
 
@@ -40,7 +40,7 @@ An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Sleepin
 
 ## 7. Equipment
 
-Six visible slots: weapon, torso, head, boots, legs and back. The catalog has 2,016 combinations across 84 silhouettes, six materials and four quality grades. Every variant has visible material/quality details and mechanical differences.
+Six visible slots: weapon, torso, head, boots, legs and back. The catalog has 2,112 combinations across 88 silhouettes, six materials and four quality grades. Every variant has visible material/quality details and mechanical differences.
 
 Pack ![cross](../assets/ui/cross.svg) equips or uses; ![square](../assets/ui/square.svg) passes one item to an ally. ![triangle](../assets/ui/triangle.svg) switches between carried items and worn equipment. Highlight gear to compare WORN and TRY ON, stat changes and effects; ![cross](../assets/ui/cross.svg) on worn gear removes it if space allows. Weight above capacity slows movement.
 
@@ -82,13 +82,13 @@ Witnesses create a faction penalty and bounty. A theft can fail, drawing guards.
 
 ## 14. Factions
 
-The Frontier Compact guards the old roads. Rust Caravans trade salvage. The Iron Shogunate rules the east; Ash monks shelter pilgrims. Black Mesa fences stolen goods. Red Vultures raid; wild packs hunt.
+Compact guards roads and wells; Rust Caravans trade salvage. Shogunate markets sell lamellar and glaives. Ash monks sell medicine; Black Mesa fences stolen goods. Vultures raid; wild packs hunt.
 
-Completed contracts improve standing. Theft worsens it. The Factions ledger shows standing and controlled towns. Settlement unrest affects prosperity and prices. Fighting a faction can close its shops; peaceful jobs offer a way back.
+Contracts raise standing; theft lowers it. The Factions ledger shows specialties and controlled towns. Hired guards cost 240 silver for escort or 180 for camp duty: one simulated day. They fight and bandage independently, keep their gear, wait outside interiors and return home on expiry.
 
 ## 15. Contracts
 
-Town residents offer delivery, supply, hunt and relic contracts. Accept through dialogue; track objectives in the Journal. Deliveries require reaching another town. Supplies require the listed items. Hunts count victories after acceptance.
+Marshals offer delivery, supply, hunt and relic contracts. Accept through dialogue; track objectives in the Journal. Deliveries require reaching another town. Supplies require the listed items. Hunts count victories after acceptance.
 
 Return to the issuing settlement and claim in the Journal with ![cross](../assets/ui/cross.svg). Rewards grant silver, reputation and experience. Contracts persist in saves. Complete contracts, research relic technology and survey the frontier to advance the expedition legacy.
 
@@ -96,7 +96,7 @@ Return to the issuing settlement and claim in the Journal with ![cross](../asset
 
 Six manual slots plus autosave. ![start](../assets/ui/start.svg), Save or Load opens a ledger with name, day, party size and silver. Choose a slot; ![cross](../assets/ui/cross.svg) asks for confirmation. Save-and-title uses the selected manual slot.
 
-Saves use version, size and checksum validation and preserve a previous .bak file. Invalid files never replace your running expedition. Version 0.1 and 0.2 saves migrate on load. Back them up before overwriting. Autosave is slot zero and is never used for manual saving.
+Saves use version, size and checksum validation and preserve a previous .bak file. Invalid files never replace your running expedition. Older saves through 0.4.1 migrate on load. Back them up before overwriting. Autosave is slot zero and is never used for manual saving.
 
 ## 17. Weather
 

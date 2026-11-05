@@ -1,0 +1,58 @@
+[
+  {
+    "eboot_sha256": "2fd6fe5c179c49d628fa76557aec011399a003d73b04b240d1ab152ed0eb9b3d",
+    "version": "0.5.0"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v050-38-copper-route",
+    "screen": 5,
+    "expected": 5
+  },
+  {
+    "capture": "v050-39-wilderness-travel",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v050-40-location-on-route",
+    "screen": 5,
+    "expected": 5
+  },
+  {
+    "assert": "waypoint",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v050-41-copper-arrival",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "fresh_start_journey": true,
+    "goal": [
+      226.0,
+      47.0
+    ],
+    "arrival": [
+      225.50413513183594,
+      46.95989227294922
+    ],
+    "map_browsing_preserved_route": true,
+    "simulation_seconds_elapsed": 100.98795175552368,
+    "input_method": "PSP buttons only; no memory writes"
+  }
+]

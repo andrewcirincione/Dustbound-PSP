@@ -1,0 +1,61 @@
+SCREENSHOT v050-01-title 480x272 screen 13 VRAM 0x4000000
+KEY cross SCREEN 13 ROW 0 -> 0
+KEY cross SCREEN 15 ROW 0 -> 0
+SCREENSHOT v050-08-name-keyboard 480x272 screen 16 VRAM 0x4088000
+KEY cross SCREEN 16 ROW 0 -> 0
+KEY start SCREEN 16 ROW 0 -> 0
+KEY down SCREEN 15 ROW 0 -> 1
+KEY right SCREEN 15 ROW 1 -> 1
+SCREENSHOT v050-02-character-creator 480x272 screen 15 VRAM 0x4088000
+KEY up SCREEN 15 ROW 1 -> 0
+KEY up SCREEN 15 ROW 0 -> 9
+KEY cross SCREEN 15 ROW 9 -> 0
+ASSERT money (420,)
+SCREENSHOT v050-03-dusk-haven 480x272 screen 0 VRAM 0x4000000
+RESOURCE REACH PROBE (23.833633422851562, 35.51708984375) (1, 103)
+SCREENSHOT v050-34-mining-too-far 480x272 screen 0 VRAM 0x4000000
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT task (0,)
+SCREENSHOT v050-34-mining-too-far 480x272 screen 0 VRAM 0x4000000
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT task (1,)
+SCREENSHOT v050-13-mining 480x272 screen 0 VRAM 0x4000000
+KEY right SCREEN 0 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+SCREENSHOT v050-04-layered-equipment 480x272 screen 1 VRAM 0x4000000
+KEY triangle SCREEN 1 ROW 0 -> 0
+SCREENSHOT v050-05-six-equipment-slots 480x272 screen 23 VRAM 0x4000000
+KEY circle SCREEN 23 ROW 0 -> 0
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v050-09-companion-dialogue 480x272 screen 17 VRAM 0x4088000
+KEY cross SCREEN 17 ROW 0 -> 0
+ASSERT squad (2,)
+ASSERT money (120,)
+Traceback (most recent call last):
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_v050.py", line 143, in <module>
+    if __name__=='__main__':asyncio.run(main())
+                            ^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_v050.py", line 88, in main
+    await e.move_to(28,25.5);await e.key('cross');await e.shot('v050-10-market-dialogue',17);await e.key('cross');await e.key('cross');await e.expect('money',85)
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_v050.py", line 41, in move_to
+    await self.call('input.buttons.send',buttons={key:True});await self.waitframes(2)
+                                                             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_v050.py", line 15, in waitframes
+    if (await self.read('framecount'))[0]>=before+n:return
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_test.py", line 40, in read
+    result = await self.call('memory.read',address=state[field+'_pointer'],size=struct.calcsize('<'+fmt))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_test.py", line 30, in call
+    raise RuntimeError(data)
+RuntimeError: {'event': 'error', 'message': 'CPU not started', 'level': 2, 'ticket': '845'}
