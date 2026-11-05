@@ -96,11 +96,17 @@ int main(void) {
     interior_leave();
     CHECK(!g.interiorBuilding && can_walk(a->x, a->y));
     CHECK(!interior_enter(-1) && !interior_enter(g.buildingCount));
-    game_new(73819,1);a=&g.actors[0];b=&g.buildings[bar];
-    a->x=b->x+1.45f;a->y=b->y+.65f;a->target=-1;
-    CHECK(interior_enter(bar));a->dead=1;ui.screen=SCREEN_SQUAD;
-    game_tick(.033f,(Input){0,KEY_SQUARE,0,0});
-    CHECK(!g.interiorBuilding && g.selected!=0 && g.squadCount==2);
+    game_new(73819, 1);
+    a = &g.actors[0];
+    b = &g.buildings[bar];
+    a->x = b->x + 1.45f;
+    a->y = b->y + .65f;
+    a->target = -1;
+    CHECK(interior_enter(bar));
+    a->dead = 1;
+    ui.screen = SCREEN_SQUAD;
+    game_tick(.033f, (Input){0, KEY_SQUARE, 0, 0});
+    CHECK(!g.interiorBuilding && g.selected != 0 && g.squadCount == 2);
     CHECK(save_game("build/indoor-death.sav") && load_game("build/indoor-death.sav"));
     /* Independent rigid-body invariant: both wrists lie on the weapon's own
        axis at all directions and phases, including crouched follow-through. */
@@ -113,9 +119,14 @@ int main(void) {
                     WeaponGrip grip =
                         weapon_grip(20 + p.shift * (1 + p.twist), 40 + p.handY * 1.25f + p.crouch, an, 3);
                     float x0, y0, x1, y1;
-                    grip_hand(grip, 0, &x0, &y0);
-                    grip_hand(grip, 1, &x1, &y1);
-                    CHECK(fabsf(hypotf(x1 - x0, y1 - y0) - 12) < .001f);
+                    weapon_hand(grip, gear_id(family, 1, 1), 0, &x0, &y0);
+                    weapon_hand(grip, gear_id(family, 1, 1), 1, &x1, &y1);
+                    float support = family == 29 || family == 31   ? 7
+                                    : family == 25 || family == 26 ? 5
+                                    : family == 24                 ? 6
+                                    : family == 28                 ? 11.5f
+                                                                   : 4;
+                    CHECK(fabsf(hypotf(x1 - x0, y1 - y0) - support * 3) < .001f);
                     CHECK(fabsf((x1 - x0) * sinf(an) - (y1 - y0) * cosf(an)) < .001f);
                 }
     printf("PASS: %d interior, save migration and rigid grip checks.\n", checks);
