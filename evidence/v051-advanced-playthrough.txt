@@ -1,0 +1,125 @@
+KEY down SCREEN 13 ROW 0 -> 1
+KEY down SCREEN 13 ROW 1 -> 2
+KEY cross SCREEN 13 ROW 2 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY cross SCREEN 22 ROW 2 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+ASSERT screen (0,)
+ASSERT squad (3,)
+KEY rtrigger SCREEN 0 ROW 0 -> 0
+RECORDED EBOOT COMBAT 240 frames; phases [0, 1, 2, 3]
+KEY rtrigger SCREEN 0 ROW 0 -> 0
+SCREENSHOT v051-16-combat-aftermath 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY rtrigger SCREEN 1 ROW 0 -> 0
+KEY rtrigger SCREEN 2 ROW 0 -> 0
+SCREENSHOT v051-17-limb-health 480x272 screen 3
+KEY circle SCREEN 3 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY cross SCREEN 22 ROW 3 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+SCREENSHOT v051-18-outpost 480x272 screen 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY down SCREEN 11 ROW 5 -> 6
+KEY down SCREEN 11 ROW 6 -> 7
+KEY down SCREEN 11 ROW 7 -> 8
+KEY down SCREEN 11 ROW 8 -> 9
+KEY down SCREEN 11 ROW 9 -> 10
+KEY down SCREEN 11 ROW 10 -> 11
+KEY cross SCREEN 11 ROW 11 -> 0
+KEY right SCREEN 18 ROW 0 -> 0
+KEY down SCREEN 18 ROW 0 -> 1
+KEY right SCREEN 18 ROW 1 -> 1
+KEY right SCREEN 18 ROW 1 -> 1
+KEY down SCREEN 18 ROW 1 -> 2
+KEY right SCREEN 18 ROW 2 -> 2
+KEY right SCREEN 18 ROW 2 -> 2
+KEY right SCREEN 18 ROW 2 -> 2
+KEY down SCREEN 18 ROW 2 -> 3
+KEY right SCREEN 18 ROW 3 -> 3
+KEY right SCREEN 18 ROW 3 -> 3
+KEY down SCREEN 18 ROW 3 -> 4
+SCREENSHOT v051-19-gear-forge 480x272 screen 18
+KEY cross SCREEN 18 ROW 4 -> 4
+KEY circle SCREEN 18 ROW 4 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY down SCREEN 22 ROW 3 -> 4
+KEY cross SCREEN 22 ROW 4 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+SCREENSHOT v051-20-shoguns-rest 480x272 screen 0
+KEY select SCREEN 0 ROW 0 -> 0
+SCREENSHOT v051-21-surveyed-world 480x272 screen 5
+KEY circle SCREEN 5 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY down SCREEN 11 ROW 5 -> 6
+KEY down SCREEN 11 ROW 6 -> 7
+KEY down SCREEN 11 ROW 7 -> 8
+KEY down SCREEN 11 ROW 8 -> 9
+KEY down SCREEN 11 ROW 9 -> 10
+KEY down SCREEN 11 ROW 10 -> 11
+KEY down SCREEN 11 ROW 11 -> 12
+KEY down SCREEN 11 ROW 12 -> 13
+KEY cross SCREEN 11 ROW 13 -> 0
+SCREENSHOT v051-22-faction-ledger 480x272 screen 20
+KEY circle SCREEN 20 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY down SCREEN 22 ROW 3 -> 4
+KEY down SCREEN 22 ROW 4 -> 5
+KEY cross SCREEN 22 ROW 5 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+SCREENSHOT v051-23-snow-highlands 480x272 screen 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY down SCREEN 22 ROW 3 -> 4
+KEY down SCREEN 22 ROW 4 -> 5
+KEY down SCREEN 22 ROW 5 -> 6
+KEY cross SCREEN 22 ROW 6 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+SCREENSHOT v051-24-pine-reach 480x272 screen 0
+V051 PLAYTHROUGH PASS /workspace/scratch/f91171b6dca9/Dustbound-current/build/v051-playtest-mm4uh1p8
