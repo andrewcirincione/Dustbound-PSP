@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.1 — Worn steel
+
+- Replace all 32 geometric weapon designs with original painted art, retaining material and quality differences.
+- Author handle pivots and rifle/crossbow/bow support-hand positions; preserve rigid follow-through.
+- Fix downward/long-weapon clipping in actor caches and oversized equipment escaping menu previews.
+- Fit WORN and TRY ON figures at the same scale; cache menu images to avoid re-rendering unchanged art.
+- Replace the obsolete PSP launcher icon/background and texture indoor thresholds.
+- Add actual rasterized grip, attack silhouette and preview-bounds checks, plus controller-driven equip captures for all weapon families.
+
 ## 0.4.0 — Frontier playability
 
 - Show the nearby target, available action and exact reach; cancel gathering/lockpicking outside reach.
