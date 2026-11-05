@@ -171,12 +171,6 @@ static void quad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3,
 static void diamond(int x, int y, int w, int h, uint32_t c) {
     quad(x, y - h, x + w, y, x, y + h, x - w, y, c);
 }
-static void ellipse(int x, int y, int w, int h, uint32_t c) {
-    for (int yy = -h; yy <= h; yy++) {
-        int span = (int)(w * sqrtf(fmaxf(0, 1 - (float)(yy * yy) / (h * h))));
-        rect(x - span, y + yy, span * 2 + 1, 1, c);
-    }
-}
 static void frame(int x, int y, int w, int h, uint32_t c) {
     rect(x, y, w, 1, c);
     rect(x, y + h - 1, w, 1, c);
@@ -518,131 +512,6 @@ static void resource(int n) {
         frame(x - 2, y - 5, 4, 4, GOLD);
     }
 }
-static void thickline(int x, int y, int xx, int yy, int width, uint32_t c) {
-    for (int i = -width / 2; i <= width / 2; i++)
-        line(x + i, y, xx + i, yy, c);
-}
-/* Equipment is layered onto the same animated body; no per-outfit sprite sheet. */
-static void weapon_sprite(int id, int x, int y, int sc, float angle, float li) {
-    if (!id)
-        return;
-    ItemDef *d = &itemDefs[id];
-    int f = gear_family(id), q = d->quality;
-    if (f < 0)
-        f = id == STAFF ? 16 : id == CROSSBOW ? 25 : id == CLEAVER ? 11 : id == SABRE ? 8 : 0;
-    float ux = cosf(angle) * sc, uy = sinf(angle) * sc, vx = -uy, vy = ux;
-    uint32_t c = shade(d->color, li), edge = shade(d->color, 1.4f * li), grip = shade(0x46372c, li),
-             trim = shade(d->trim, li);
-#define WX(a, b) (x + (int)(ux * (a) + vx * (b)))
-#define WY(a, b) (y + (int)(uy * (a) + vy * (b)))
-#define WL(a, b, c0, d0, col) thickline(WX(a, b), WY(a, b), WX(c0, d0), WY(c0, d0), sc, col)
-#define WQ(a, b, c0, d0, e, f0, g0, h, col)                                                                  \
-    quad(WX(a, b), WY(a, b), WX(c0, d0), WY(c0, d0), WX(e, f0), WY(e, f0), WX(g0, h), WY(g0, h), col)
-    int len = 16 + (f % 4) * 2;
-    if (f == 1 || f == 3 || f == 9)
-        len = 11 + f % 3;
-    if (f == 2 || f == 6 || f == 20)
-        len = 27;
-    if (f == 4 || f == 5 || f == 6 || f == 16) {
-        WL(-12, 0, 24, 0, grip);
-        WL(-11, 1, 23, 1, c);
-        if (f == 4) {
-            WQ(14, -1, 29, -3, 26, 2, 15, 3, c);
-            WL(17, 3, 29, -3, edge);
-        } else if (f == 5) {
-            WQ(20, -3, 31, 0, 20, 3, 23, 0, c);
-            WL(22, -2, 31, 0, edge);
-        } else if (f == 6) {
-            WQ(9, -1, 29, -2, 24, 3, 10, 3, c);
-            WL(11, 3, 29, -2, edge);
-        }
-        for (int j = 0; j < q + 1; j++)
-            WL(8 + j * 2, -1, 8 + j * 2, 2, trim);
-    } else if (f >= 29) {
-        len = f == 30 ? 12 : f == 31 ? 20 : 27;
-        WQ(-6, -2, 3, -2, 5, 2, -5, 4, grip);
-        WQ(0, -2, len, -2, len, 0, 0, 1, c);
-        WL(5, -2, len, -2, edge);
-        WL(3, 0, 3, 5, grip);
-        WL(-3, -1, 1, -1, trim);
-        if (f == 29) {
-            WL(11, -4, 17, -4, c);
-            WL(12, -3, 12, -1, grip);
-        }
-        if (f == 31)
-            WL(5, 1, len, 1, c);
-    } else if (f >= 24) {
-        WL(-5, 0, 13, 0, grip);
-        WL(0, -11 - (f % 3), 6, 0, c);
-        WL(6, 0, 0, 11 + (f % 3), c);
-        WL(0, -11 - (f % 3), -2, 0, trim);
-        WL(-2, 0, 0, 11 + (f % 3), trim);
-        WL(0, 0, 16, 0, edge);
-        if (f == 26)
-            WL(1, -10, 7, 0, c);
-        if (f == 27) {
-            WL(-4, -2, 5, -2, c);
-            WL(-4, -2, -5, 4, grip);
-        }
-        if (f == 28) {
-            WL(0, -17, 6, 0, c);
-            WL(6, 0, 0, 17, c);
-            WL(0, -17, -2, 0, trim);
-            WL(-2, 0, 0, 17, trim);
-        }
-    } else if (f == 12 || f == 13 || f == 14 || f == 15 || f == 23) {
-        WL(-5, 0, 21, 0, grip);
-        if (f == 12) {
-            WQ(15, -2, 20, -9, 21, 6, 18, 2, c);
-            WL(20, -9, 21, 6, edge);
-        } else if (f == 13) {
-            WQ(14, 0, 17, -8, 24, -7, 21, 4, c);
-            WL(17, -8, 24, -7, edge);
-        } else {
-            int start = f == 14 ? 7 : f == 15 ? 4 : 12, wide = f == 14 ? 3 : f == 15 ? 4 : 2;
-            WQ(start, -wide, 21, -wide, 23, 1, start, wide, c);
-            for (int j = start + 2; j < 22; j += 4) {
-                WL(j, -wide, j, -wide - 2, trim);
-                WL(j, wide, j, wide + 2, trim);
-            }
-        }
-    } else {
-        int bend = (f == 8 || f == 18 || f == 19 || f == 0 || f == 2) ? 3 : 0,
-            width = f == 11 || f == 20 ? 4 : 2;
-        WQ(3, -1, len - 3, -1 - bend, len, -bend, 4, width, c);
-        WL(4, width, len, -bend, edge);
-        WL(-5, 0, 3, 0, grip);
-        WL(3, -3, 3, 4, trim);
-        if (f == 8) {
-            WL(-4, 3, 3, 4, trim);
-            WL(-5, 0, -4, 3, trim);
-        }
-        if (f == 9) {
-            WQ(7, -1, len, -3, len - 2, 1, 7, 2, c);
-            WL(7, -1, len, -3, edge);
-        }
-        if (f == 7 || f == 17 || f == 22) {
-            WL(len - 2, -2, len - 2, -8, c);
-            WL(len - 2, -8, len - 7, -7, edge);
-        }
-        if (f == 21)
-            for (int j = 5; j < len - 2; j += 3)
-                WL(j, 2, j + 1, 4, edge);
-        if (f == 18)
-            for (int j = 7; j < len - 3; j += 5)
-                ellipse(WX(j, -2), WY(j, -2), sc, sc, trim);
-        if (f == 7) {
-            for (int j = 0; j < 7; j++)
-                ellipse(WX(-6 - j, -j % 2), WY(-6 - j, -j % 2), sc, sc, trim);
-        }
-    }
-    for (int j = 0; j <= q; j++)
-        WL(-3 + j * 2, -1, -3 + j * 2, 1, trim);
-#undef WX
-#undef WY
-#undef WL
-#undef WQ
-}
 #include "painted_actor.h"
 typedef struct {
     float depth;
@@ -857,7 +726,7 @@ static void interior_draw(void) {
     /* Door threshold remains visible on the removed front wall. */
     int x, y;
     room_project(3.5f, 6.8f, &x, &y);
-    diamond(x, y, 22, 10, 0xb3986b);
+    texture_plane(104, x, y - 11, 22, 11, -22, 11, .5f, .5f, .83f);
     line(x - 22, y, x, y + 10, GOLD);
     text(x - 15, y + 12, "EXIT", GOLD, 1);
     room_project(3.8f, 3.6f, &x, &y);
@@ -1209,8 +1078,7 @@ static void pack_screen(void) {
     Actor current = preview_actor(), preview = current;
     if (it && itemDefs[it].slot >= 0)
         preview.gear[itemDefs[it].slot] = it;
-    person(&current, 310, 160, 2, 0);
-    person(&preview, 409, 160, 2, 0);
+    compare_portraits(&current, &preview);
     text(287, 82, "WORN", MUTED, 1);
     text(386, 82, "TRY ON", GOLD, 1);
     equipment_comparison(it, 173);
@@ -1234,7 +1102,7 @@ static void health_screen(void) {
     Actor *a = &g.actors[g.selected];
     char b[100];
     overlay_header("BODY & FIRST AID", "\001 USE A FIELD DRESSING. LOST LIMBS NEED PROSTHETICS.");
-    person(a, 99, 196, 2, 0);
+    portrait_scale(a, 132, 112, 29, 84, 1);
     for (int i = 0; i < LIMBS; i++) {
         int y = 88 + i * 18;
         text(185, y, limbNames[i], TEXT, 1);
@@ -1478,7 +1346,7 @@ static void creator_screen(void) {
         a.gear[4] = gear_id(69, 0, 0);
         a.gear[5] = gear_id(76, 0, 0);
     }
-    person(&a, 106, 196, 2, 0);
+    portrait_scale(&a, 156, 112, 30, 85, 1);
     center(105, 211, ui.createName, TEAL, 1);
     const char *labels[] = {
         "NAME", "ORIGIN",    "ANCESTRY", "BUILD", "SKIN",
@@ -1529,7 +1397,7 @@ static void name_screen(void) {
 static void equipped_screen(void) {
     Actor *a = &g.actors[g.selected];
     overlay_header("WORN EQUIPMENT", "\001 UNEQUIP   \004 PACK   \010 GUIDE");
-    person(a, 100, 193, 2, 0);
+    portrait_scale(a, 150, 110, 30, 84, 1);
     for (int i = 0; i < GEARS; i++) {
         int y = 86 + i * 18;
         if (i == ui.selection)
@@ -1549,7 +1417,7 @@ static void forge_screen(void) {
     ItemDef *d = &itemDefs[it];
     Actor a = preview_actor();
     a.gear[d->slot] = it;
-    person(&a, 102, 184, 2, 0);
+    portrait_scale(&a, 150, 100, 30, 84, 1);
     const char *labels[] = {"SLOT", "DESIGN", "MATERIAL", "QUALITY", "FORGE THIS PIECE"};
     const char *values[] = {slotNames[ui.forgeSlot], familyNames[ui.forgeFamily],
                             materialNames[ui.forgeMaterial], qualityNames[ui.forgeQuality], "\001"};
@@ -1579,7 +1447,7 @@ static void dialogue_screen(void) {
         return;
     Actor *a = &g.actors[n];
     overlay_header(a->name, "\001 REPLY   \015 CHOOSE   \002 LEAVE   \010 GUIDE");
-    person(a, 76, 178, 2, 0);
+    portrait_scale(a, 94, 108, 28, 83, 1);
     clipped(30, 204, npc_role_name(a), 16, TEAL);
     clipped(30, 218, factionNames[a->faction], 16, MUTED);
     wrap(134, 85, 50, dialogue_line(n, ui.dialogPage), TEXT);
@@ -1780,7 +1648,7 @@ void render_game(uint32_t *pixels, int stride) {
     case SCREEN_RECRUIT: {
         Actor *r = &g.actors[ui.selection];
         overlay_header("A FELLOW WANDERER", "\001 RECRUIT FOR 300 SILVER   /   \002 LEAVE");
-        person(r, 103, 201, 2, 0);
+        portrait_scale(r, 142, 118, 30, 86, 1);
         text(186, 92, r->name, TEAL, 2);
         wrap(186, 118, 39,
              "I can work, fight, and carry my share. Three hundred silver settles my debts. After that, we "

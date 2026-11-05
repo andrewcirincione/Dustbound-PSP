@@ -16,3 +16,5 @@ cc -O2 -std=gnu99 -Isrc src/game.c src/content.c src/world.c src/expansion.c src
 python3 -c "import gzip,pathlib; pathlib.Path('build/v030-frontier.sav').write_bytes(gzip.open('tests/fixtures/v030-frontier.sav.gz','rb').read())"
 cc -O2 -std=gnu99 -Isrc src/game.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c tests/test_playability.c -lm -o build/test-playability
 ./build/test-playability
+cc -O2 -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c tests/test_weapon_art.c -lm -o build/test-weapon-art
+./build/test-weapon-art

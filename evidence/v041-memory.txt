@@ -1,0 +1,2 @@
+   text	   data	    bss	    dec	    hex	filename
+ 899976	   3340	4020588	4923904	 4b2200	dustbound.prx

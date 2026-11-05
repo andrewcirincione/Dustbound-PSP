@@ -1,11 +1,13 @@
-# Original frontier artwork
+# Original painted frontier artwork
 
-Three original generated RGBA atlases provide eight buildings, eight wilderness elements and eight indoor furnishings. They were created for Dustbound from written western/samurai frontier briefs, without source art from Kenshi or another game. The wilderness atlas received a separate background-removal pass after runtime QA found a white matte in the first generation.
+The runtime uses twelve original painted source atlases: buildings-v2, wilderness, furniture, props, torsos, heads, limbs, boots-backs, beasts, materials, weapons-blades and weapons-frontier. Their western/samurai briefs were created for Dustbound; no Kenshi game assets are included. The separate launcher-v041 illustration supplies the PSP launcher icon and background.
 
-`buildings.png`, `wilderness.png` and `furniture.png` are the source atlases. Each is a four-column, two-row grid. `sprite-00.png` through `sprite-23.png` are cropped, resized and palette-quantized runtime previews. `budget.json` records the exact dimensions and ROM footprint.
+Version 0.4.1 replaces all 32 geometric weapon families with painted sprites. Legacy items use the matching family art. Six material treatments and four quality grades preserve wood, leather, wrapping and rust while changing exposed metal. Warm source colours remain muted. Painted sprites, articulated body parts and rigid weapon pivots share the existing attack poses.
 
-Run `python3 scripts/pack_art.py` from the repository root with Pillow installed. It crops cells by alpha, downsamples with Lanczos, quantizes to 256 colors, and emits `src/art_data.h`. The compiled atlas occupies 130,303 bytes; palette lighting caches use 24,576 bytes. Transparent row margins are omitted. Only soft edge texels blend; opaque texels are direct writes. No PNG decoder, image-loading allocation, network request or external art file is needed on PSP.
+Run `python3 scripts/pack_art.py` with Pillow installed. It crops cells using alpha, calibrates building foundations, resizes and palette-quantizes the runtime sprites, and emits `src/art_data.h`. Weapon cells have explicit source-space handle anchors and scale metadata; do not replace these with the alpha bounding-box centre. Source atlases remain unchanged. The same compiler produces `assets/ICON0.png` and `assets/PIC1.png` from the launcher illustration.
 
-Characters and equipment remain original procedural, articulated drawings so all six gear slots, body parts and 2,016 material/grade variants can animate without thousands of full sprite sheets. Runtime buildings use cutaway dithering when they cover the selected survivor. Furniture and actors are sorted by floor depth inside rooms.
+The 140 indexed sprites and 32 projected shadow masks occupy 543,399 bytes, plus small sprite/pivot descriptors. Lighting palettes occupy 143,360 bytes. No PNG decoder, network request or external art file is needed on PSP. Actor and menu caches have fixed capacities; see `docs/VALIDATION.md` for the complete memory budget.
 
-Source art and generated derivatives are included under the repository license. A screenshot of an asset atlas is not a gameplay capture; the `evidence/v030-*` PSP captures document the actual executable.
+The two weapon atlas prompts are recorded in `weapon-prompts.txt`. The built-in image generator produced the new source artwork; crop, resize, quantization and pivot calibration are reproducible asset-compilation steps. Runtime sprite previews are `sprite-00.png` through `sprite-139.png`.
+
+Source art and derivatives are included under the repository license. Atlas images, launcher illustration and native review grids are not gameplay screenshots. `evidence/v041-*` playthrough captures document the actual EBOOT; the intentionally retained `iteration1` capture shows the preview clipping defect found before correction.

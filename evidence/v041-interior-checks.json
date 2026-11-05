@@ -1,0 +1,148 @@
+[
+  {
+    "eboot_sha256": "68e2abba366b71c4941a43001325da8fc259764756b6ca2545d455242f965d14",
+    "version": "0.4.1"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      3
+    ],
+    "expected": [
+      3
+    ]
+  },
+  {
+    "capture": "v041-26-shop-entry",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v041-27-shop-interior",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      6
+    ],
+    "expected": [
+      6
+    ]
+  },
+  {
+    "capture": "v041-28-indoor-trade",
+    "screen": 6,
+    "expected": 6
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      3
+    ],
+    "expected": [
+      3
+    ]
+  },
+  {
+    "assert": "money",
+    "actual": [
+      615
+    ],
+    "expected": [
+      615
+    ]
+  },
+  {
+    "capture": "v041-29-indoor-save-reloaded",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v041-36-inn-door",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v041-37-inn-attempt",
+    "screen": 0,
+    "expected": null
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      4
+    ],
+    "expected": [
+      4
+    ]
+  },
+  {
+    "assert": "money",
+    "actual": [
+      590
+    ],
+    "expected": [
+      590
+    ]
+  },
+  {
+    "capture": "v041-30-inn-rest",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v041-31-left-inn",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "selection",
+    "actual": [
+      18
+    ],
+    "expected": [
+      18
+    ]
+  },
+  {
+    "capture": "v041-32-interior-guide",
+    "screen": 12,
+    "expected": 12
+  },
+  {
+    "indoor_trade": true,
+    "indoor_save_reload": true,
+    "bed_paid_once": true,
+    "doors_enter_exit": true,
+    "input_method": "PSP buttons, no memory writes"
+  }
+]

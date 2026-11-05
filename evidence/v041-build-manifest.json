@@ -1,0 +1,37 @@
+{
+  "version": "0.4.1",
+  "eboot_bytes": 1267722,
+  "eboot_sha256": "68e2abba366b71c4941a43001325da8fc259764756b6ca2545d455242f965d14",
+  "prx_sha256": "a1b99ab68f7d5b7de44da62f2accc04a6d4ca7765da543117c3aed4b94b0ae87",
+  "baseline_simulation_checks": 111,
+  "playability_checks": 1513,
+  "interior_save_checks": 25,
+  "grip_poses": 13312,
+  "grip_assertions": 26624,
+  "render_cases": 272,
+  "gear_variants": 2016,
+  "save_version": 4,
+  "load_save_versions": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "sprite_count": 140,
+  "painted_grip_samples": 2560,
+  "painted_attack_bounds": 13312,
+  "bounded_comparison_pairs": 32,
+  "bss_bytes": 4020588,
+  "compiled_sprite_bytes": 543399,
+  "shadow_bytes": 77542,
+  "palette_cache_bytes": 143360,
+  "combat_recording_frames": 240,
+  "physical_psp_tested": false,
+  "playthroughs": [
+    "fresh_start",
+    "prepared_combat_outpost_regions",
+    "interiors",
+    "fresh_start_frontier_journey",
+    "prepared_32_weapon_families"
+  ]
+}

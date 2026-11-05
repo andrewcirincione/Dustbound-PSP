@@ -1,14 +1,9 @@
-# Dustbound 0.4.0 — Frontier playability
+# Dustbound 0.4.1 — Worn steel
 
-This alpha addresses unclear interactions, excessive mining reach, universal NPC menus, cramped settlement spacing and missing equipment comparisons. It also replaces mismatched flat artwork with articulated painted characters, frontier props, calibrated building foundations, projected shadows and textured interiors.
+All 32 weapon families now use painted textures that match the western/samurai characters: weathered blades, wrapped grips, aged wood, bows, crossbows and firearms. Material and quality variants remain visible, including legacy equipment.
 
-- See the target and its action before interacting. Mining and locks require remaining within 1.15 world meters.
-- Seek merchants, medics, innkeepers, marshals, smiths, barbers and recruits for their own services.
-- Compare WORN and TRY ON gear, numeric differences and effects in the pack or market.
-- Travel between compact towns separated by larger wilderness areas. Use the local/world atlas toggle, town selection and destination distance.
-- Share food from nearby companion backpacks and owned depots. Wounds require food and stopped bleeding to recover during sleep.
-- Keep indoor positions, equipment, exploration and expedition progress when saving. Version 4 migrates older coordinate systems.
+The art review also found and fixed long/downward weapon clipping, a misplaced longbow hand anchor and oversized weapons escaping menu previews. WORN and TRY ON figures now share a scale and fit completely inside their cells. Other character previews follow the same rule. The PSP launcher art is updated and indoor thresholds use painted wood.
 
-Extract `Dustbound-0.4.0-PSP.zip` to the memory-stick root on a PSP already configured for homebrew. Launch `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Back up older saves and use a new slot after migration. Test markers and prepared saves are excluded from the package.
+Extract `Dustbound-0.4.1-PSP.zip` to the memory-stick root on a PSP already configured for homebrew. Launch `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Version 4 saves remain compatible with 0.4.0; back up valuable saves before upgrading. No test fixtures or QA markers are included.
 
-The 2,016 equipment entries are modular design/material/quality combinations, not thousands of separately authored models. Interiors are single rooms. The [mechanics audit](MECHANICS_AUDIT.md) lists missing and simplified systems. PPSSPP testing does not establish physical PSP-3000 performance.
+See `VALIDATION.md` for the exact executable, controller playthroughs, pose/preview regressions and rendering budget. This remains an alpha; physical PSP-3000 performance is unverified and the mechanics audit still records missing systems.

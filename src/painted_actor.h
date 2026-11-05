@@ -90,6 +90,82 @@ static void part(int id, float ax, float ay, float bx, float by, float width, ui
         }
     }
 }
+/* Paint the complete weapon around its authored handle pivot. Palette tinting
+   preserves warm leather/wood and patina while changing exposed metal. */
+static void weapon_palette(int id, const ItemDef *item, float li) {
+    uint64_t key = (uint64_t)item->color | ((uint64_t)((int)(li * 64) + item->quality * 3) << 24);
+    key++;
+    if (partKeys[id] == key)
+        return;
+    partKeys[id] = key;
+    int lum = (int)(li * 64) + item->quality * 2;
+    for (int i = 0; i < 256; i++) {
+        uint32_t c = artSprites[id].palette[i];
+        int r = c & 255, green = (c >> 8) & 255, b = (c >> 16) & 255;
+        int max = r > green ? r : green;
+        if (b > max)
+            max = b;
+        int min = r < green ? r : green;
+        if (b < min)
+            min = b;
+        // Neutral texels are iron/steel. Warm wood, rust and leather retain their
+        // painted colour; subtle material staining still distinguishes staffs.
+        if (max - min < 28) {
+            r = r * (64 + (item->color >> 16)) / 192;
+            green = green * (64 + ((item->color >> 8) & 255)) / 192;
+            b = b * (64 + (item->color & 255)) / 192;
+        } else {
+            r = r * (224 + (item->color >> 16) / 4) / 256;
+            green = green * (224 + ((item->color >> 8) & 255) / 4) / 256;
+            b = b * (224 + (item->color & 255) / 4) / 256;
+        }
+        r = r * lum / 64;
+        green = green * lum / 64;
+        b = b * lum / 64;
+        artPalette[id][i] = (c & 0xff000000) | (r > 255 ? 255 : r) | ((green > 255 ? 255 : green) << 8) |
+                            ((b > 255 ? 255 : b) << 16);
+    }
+}
+static int weapon_family(int item) {
+    int f = gear_family(item);
+    if (f < 0)
+        f = item == STAFF ? 16 : item == CROSSBOW ? 25 : item == CLEAVER ? 11 : item == SABRE ? 8 : 0;
+    return f < 32 ? f : 0;
+}
+static void weapon_sprite(int item, float x, float y, int sc, float angle, float li) {
+    if (!item)
+        return;
+    int f = weapon_family(item), id = WEAPON_ART_FIRST + f;
+    const ArtSprite *s = &artSprites[id];
+    const WeaponArt *w = &weaponArt[f];
+    float scale = w->scale * sc, ca = cosf(angle), sa = sinf(angle);
+    float left = 1e6f, top = 1e6f, right = -1e6f, bottom = -1e6f;
+    for (int j = 0; j < 4; j++) {
+        float along = (w->gripY - ((j & 1) ? s->h : 0)) * scale;
+        float across = (((j & 2) ? s->w : 0) - w->gripX) * scale;
+        float xx = x + ca * along - sa * across, yy = y + sa * along + ca * across;
+        left = fminf(left, xx);
+        right = fmaxf(right, xx);
+        top = fminf(top, yy);
+        bottom = fmaxf(bottom, yy);
+    }
+    int x0 = (int)fmaxf(clipLeft, floorf(left)), x1 = (int)fminf(clipRight, ceilf(right));
+    int y0 = (int)fmaxf(clipTop, floorf(top)), y1 = (int)fminf(clipBottom, ceilf(bottom));
+    weapon_palette(id, &itemDefs[item], li);
+    float du = -sa / scale, dv = -ca / scale;
+    for (int yy = y0; yy < y1; yy++) {
+        float u = w->gripX + (-(x0 + .5f - x) * sa + (yy + .5f - y) * ca) / scale;
+        float v = w->gripY - ((x0 + .5f - x) * ca + (yy + .5f - y) * sa) / scale;
+        for (int xx = x0; xx < x1; xx++, u += du, v += dv) {
+            if (u < 0 || v < 0 || u >= s->w || v >= s->h)
+                continue;
+            int sx = (int)u, sy = (int)v, lo = s->rows[sy * 3 + 1];
+            if (sx < lo || sx >= s->rows[sy * 3 + 2])
+                continue;
+            rgba_over(fb + yy * pitch + xx, artPalette[id][s->pixels[s->rows[sy * 3] + sx - lo]]);
+        }
+    }
+}
 static void actor_painted(Actor *a, int x, int y, int sc, float li) {
     static const uint32_t skins[] = {0xe0b78a, 0xc39971, 0xad7d58, 0x956645,
                                      0x744c36, 0x553d30, 0xc5b69b, 0x817a68};
@@ -164,7 +240,7 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
     // Arms behind the body; wrists and handle remain one rigid construction.
     for (int i = 0; i < 2; i++) {
         int limb = i ? RARM : LARM;
-        grip_hand(grip, !i, &wrists[i][0], &wrists[i][1]);
+        weapon_hand(grip, weapon, !i, &wrists[i][0], &wrists[i][1]);
         if (!i && !combat_two_hands(weapon)) {
             wrists[i][0] = RX(-face * 5, -17 + rig.crouch);
             wrists[i][1] = RY(-17 + rig.crouch);
@@ -203,7 +279,7 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
         PART(hf, 0, -37, 0, bottom, wide, itemDefs[head].color, itemDefs[head].quality);
     }
     if (!(missing & (1 << RARM)))
-        weapon_sprite(weapon, (int)grip.x, (int)grip.y, sc, angle, li);
+        weapon_sprite(weapon, grip.x, grip.y, sc, angle, li);
     for (int i = 0; i < 2; i++)
         if (!(missing & (1 << (i ? RARM : LARM)))) {
             float hx = wrists[i][0], hy = wrists[i][1];
@@ -215,12 +291,13 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
 #undef RX
 #undef RY
 }
-#define ACT_W 96
-#define ACT_H 80
+#define ACT_W 112
+#define ACT_H 104
 #define ACT_CACHE 24
 static uint32_t actorScratch[ACT_W * 2 * ACT_H * 2];
 static struct {
     uint64_t key;
+    int left, top, right, bottom;
     uint32_t pixels[ACT_W * ACT_H];
 } actorCache[ACT_CACHE];
 static unsigned actorNext;
@@ -281,6 +358,9 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
     if (slot < 0) {
         slot = actorNext++ % ACT_CACHE;
         actorCache[slot].key = key;
+        actorCache[slot].left = ACT_W;
+        actorCache[slot].top = ACT_H;
+        actorCache[slot].right = actorCache[slot].bottom = 0;
         uint32_t *oldfb = fb;
         int oldpitch = pitch, l = clipLeft, t = clipTop, r = clipRight, b = clipBottom;
         memset(actorScratch, 0, sizeof(actorScratch));
@@ -312,6 +392,16 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
                                                                        ((green / alpha) << 8) |
                                                                        ((blue / alpha) << 16)
                                                                  : 0;
+                if (alpha >= 4) {
+                    if (xx < actorCache[slot].left)
+                        actorCache[slot].left = xx;
+                    if (yy < actorCache[slot].top)
+                        actorCache[slot].top = yy;
+                    if (xx + 1 > actorCache[slot].right)
+                        actorCache[slot].right = xx + 1;
+                    if (yy + 1 > actorCache[slot].bottom)
+                        actorCache[slot].bottom = yy + 1;
+                }
             }
     }
     // Small directional contact shadow, matching the environment light vector.
@@ -325,11 +415,11 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
                      (((*d & 0xff00) * m >> 8) & 0xff00);
             }
     }
-    for (int yy = 0; yy < ACT_H; yy++) {
+    for (int yy = actorCache[slot].top; yy < actorCache[slot].bottom; yy++) {
         int sy = y - 68 + yy;
         if (sy < clipTop || sy >= clipBottom)
             continue;
-        for (int xx = 0; xx < ACT_W; xx++) {
+        for (int xx = actorCache[slot].left; xx < actorCache[slot].right; xx++) {
             int sx = x - ACT_W / 2 + xx;
             if (sx < clipLeft || sx >= clipRight)
                 continue;
@@ -345,4 +435,105 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
                                   : damage,
              a->impactKind == 1 ? RED : GOLD, 1);
     }
+}
+/* Menu portraits keep their complete silhouette inside their allotted cell.
+   Cache the two comparison figures so unchanged menus only composite pixels. */
+#define PORTRAIT_W 160
+#define PORTRAIT_H 128
+static struct {
+    uint64_t key;
+    int width, height, x0, y0, x1, y1, outputValid;
+    float intrinsic, drawnScale;
+    uint32_t pixels[PORTRAIT_W * PORTRAIT_H];
+} portraitCache[2];
+static unsigned portraitNext;
+static void portrait_source(Actor *a) {
+    uint32_t *oldfb = fb;
+    int oldpitch = pitch, l = clipLeft, t = clipTop, r = clipRight, b = clipBottom;
+    fb = actorScratch;
+    pitch = ACT_W * 2;
+    clipLeft = clipTop = 0;
+    clipRight = ACT_W * 2;
+    clipBottom = ACT_H * 2;
+    memset(actorScratch, 0, sizeof(actorScratch));
+    actor_painted(a, ACT_W, 136, 2, 1);
+    fb = oldfb;
+    pitch = oldpitch;
+    clipLeft = l;
+    clipTop = t;
+    clipRight = r;
+    clipBottom = b;
+}
+static float portrait_scale(Actor *a, int width, int height, int drawX, int drawY, float limit) {
+    if (width > PORTRAIT_W || height > PORTRAIT_H || width < 1 || height < 1)
+        return 1;
+    uint64_t key = actor_key(a, 64);
+    int slot = -1;
+    for (int i = 0; i < 2; i++)
+        if (portraitCache[i].key == key && portraitCache[i].width == width &&
+            portraitCache[i].height == height)
+            slot = i;
+    int sourceReady = 0;
+    if (slot < 0) {
+        slot = portraitNext++ % 2;
+        portraitCache[slot].key = key;
+        portraitCache[slot].width = width;
+        portraitCache[slot].height = height;
+        portraitCache[slot].outputValid = 0;
+        portrait_source(a);
+        sourceReady = 1;
+        int x0 = ACT_W * 2, y0 = ACT_H * 2, x1 = 0, y1 = 0;
+        for (int yy = 0; yy < ACT_H * 2; yy++)
+            for (int xx = 0; xx < ACT_W * 2; xx++)
+                if (actorScratch[yy * ACT_W * 2 + xx] >> 24 >= 16) {
+                    if (xx < x0)
+                        x0 = xx;
+                    if (xx + 1 > x1)
+                        x1 = xx + 1;
+                    if (yy < y0)
+                        y0 = yy;
+                    if (yy + 1 > y1)
+                        y1 = yy + 1;
+                }
+        portraitCache[slot].x0 = x0;
+        portraitCache[slot].x1 = x1;
+        portraitCache[slot].y0 = y0;
+        portraitCache[slot].y1 = y1;
+        portraitCache[slot].intrinsic =
+            x1 <= x0 || y1 <= y0 ? 1 : fminf(1, fminf((float)width / (x1 - x0), (float)height / (y1 - y0)));
+    }
+    float scale = portraitCache[slot].intrinsic;
+    if (drawX < 0)
+        return scale;
+    scale = fminf(scale, limit);
+    if (!portraitCache[slot].outputValid || portraitCache[slot].drawnScale != scale) {
+        if (!sourceReady)
+            portrait_source(a);
+        int x0 = portraitCache[slot].x0, y0 = portraitCache[slot].y0;
+        int w = (int)((portraitCache[slot].x1 - x0) * scale);
+        int h = (int)((portraitCache[slot].y1 - y0) * scale);
+        int left = (width - w) / 2, top = height - h;
+        memset(portraitCache[slot].pixels, 0, sizeof(portraitCache[slot].pixels));
+        for (int yy = 0; yy < h; yy++)
+            for (int xx = 0; xx < w; xx++) {
+                int sx = x0 + (int)((xx + .5f) / scale), sy = y0 + (int)((yy + .5f) / scale);
+                portraitCache[slot].pixels[(top + yy) * PORTRAIT_W + left + xx] =
+                    actorScratch[sy * ACT_W * 2 + sx];
+            }
+        portraitCache[slot].outputValid = 1;
+        portraitCache[slot].drawnScale = scale;
+    }
+    for (int yy = 0; yy < height; yy++)
+        for (int xx = 0; xx < width; xx++) {
+            int dx = drawX + xx, dy = drawY + yy;
+            if (dx >= clipLeft && dx < clipRight && dy >= clipTop && dy < clipBottom)
+                rgba_over(fb + dy * pitch + dx, portraitCache[slot].pixels[yy * PORTRAIT_W + xx]);
+        }
+    return scale;
+}
+static void compare_portraits(Actor *current, Actor *candidate) {
+    float scale =
+        fminf(portrait_scale(current, 84, 76, -1, 0, 1), portrait_scale(candidate, 84, 76, -1, 0, 1));
+    portrait_scale(current, 84, 76, 277, 92, scale);
+    portrait_scale(candidate, 84, 76, 374, 92, scale);
 }

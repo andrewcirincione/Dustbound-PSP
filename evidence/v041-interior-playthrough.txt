@@ -1,0 +1,63 @@
+KEY cross SCREEN 13 ROW 0 -> 0
+KEY up SCREEN 15 ROW 0 -> 9
+KEY cross SCREEN 15 ROW 9 -> 0
+ASSERT screen (0,)
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT interior (3,)
+SCREENSHOT v041-26-shop-entry 480x272 screen 0 VRAM 0x4000000
+SCREENSHOT v041-27-shop-interior 480x272 screen 0 VRAM 0x4088000
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT screen (6,)
+KEY cross SCREEN 6 ROW 0 -> 0
+SCREENSHOT v041-28-indoor-trade 480x272 screen 6 VRAM 0x4000000
+KEY circle SCREEN 6 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY cross SCREEN 11 ROW 4 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY circle SCREEN 11 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+ASSERT interior (3,)
+ASSERT money (615,)
+SCREENSHOT v041-29-indoor-save-reloaded 480x272 screen 0 VRAM 0x4088000
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT interior (0,)
+INN APPROACH (23.50103759765625, 30.789783477783203) (3, 3)
+SCREENSHOT v041-36-inn-door 480x272 screen 0 VRAM 0x4000000
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v041-37-inn-attempt 480x272 screen 0 VRAM 0x4088000
+ASSERT interior (4,)
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT money (590,)
+SCREENSHOT v041-30-inn-rest 480x272 screen 0 VRAM 0x4000000
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT interior (0,)
+KEY down SCREEN 0 ROW 0 -> 0
+SCREENSHOT v041-31-left-inn 480x272 screen 0 VRAM 0x4000000
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY down SCREEN 11 ROW 5 -> 6
+KEY down SCREEN 11 ROW 6 -> 7
+KEY cross SCREEN 11 ROW 7 -> 0
+KEY ltrigger SCREEN 12 ROW 0 -> 18
+ASSERT selection (18,)
+SCREENSHOT v041-32-interior-guide 480x272 screen 12 VRAM 0x4000000
+PSP INTERIOR PLAYTHROUGH PASS /workspace/scratch/f91171b6dca9/Dustbound-current/build/v041-rooms-709hr00i
