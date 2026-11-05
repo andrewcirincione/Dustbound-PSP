@@ -191,11 +191,18 @@ int main(void) {
     ui.waypoint = 1;
     ui.mapX = towns[1].x + 2;
     ui.mapY = towns[1].y + 7;
+    ui.travelX = ui.mapX;
+    ui.travelY = ui.mapY;
+    game_tick(.033f, (Input){KEY_SELECT, KEY_SELECT, 0, 0});
+    CHECK(ui.screen == SCREEN_MAP && ui.mapX == a->x && ui.travelX == towns[1].x + 2);
+    game_tick(.033f, (Input){KEY_R, KEY_R, 0, 0});
+    game_tick(.033f, (Input){KEY_CIRCLE, KEY_CIRCLE, 0, 0});
+    CHECK(ui.waypoint && ui.travelX == towns[1].x + 2 && ui.travelY == towns[1].y + 7);
     int frames = 0;
     for (; frames < 30 * 240 && ui.waypoint; frames++)
         game_tick(1.f / 30, (Input){0});
     printf("Dusk to Copper: %.1fs, remaining %.2fm.\n", frames / 30.f,
-           distance(a->x, a->y, ui.mapX, ui.mapY));
+           distance(a->x, a->y, ui.travelX, ui.travelY));
     CHECK(!ui.waypoint && frames > 30 * 40);
     CHECK(g.discovered[1]);
     ui.screen = SCREEN_WORLD;
