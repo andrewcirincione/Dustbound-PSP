@@ -1,44 +1,39 @@
-# 0.3.0 validation record
+# 0.4.0 validation record
 
-The release EBOOT is 750,528 bytes. SHA-256: `72e48dd77dbda25dffa8811f1cdc3ef4dfe7ca2bdad99913900d1600d8f8fc7a`.
+The packaged EBOOT is the executable used by all four controller playthroughs. The packaging script refuses mismatched hashes. Screenshots come from PPSSPP VRAM at 480×272; the combat GIF contains 240 captured frames with simulation-based durations. No debug memory writes were used to play the game.
 
-## Functional and visual checks
+## Build identity
 
-- 111 existing simulation assertions passed: 61 baseline and 50 expansion, including strike contact timing and single-hit resolution.
-- 25 new interior/save checks passed: door eligibility, collision, trading, paid rest, wound recovery, continued bleeding, indoor save/load, v2-prefix migration, safe exterior return and dismissing a fallen indoor leader.
-- 13,312 grip poses cover 32 weapon families, four phases, eight directions and 13 progress samples. Each pose checks rigid hand spacing and alignment, for 26,624 geometric assertions.
-- 272 screen/biome/guide/interior renders preserve 480×272 bounds and the 512-pixel framebuffer stride.
-- All 2,016 gear variants produce distinct gameplay and portrait renders.
-- AddressSanitizer/UndefinedBehaviorSanitizer passed the renderer and new interior/grip checks. LeakSanitizer is disabled because process inspection is restricted in this environment.
-- The exact release EBOOT passed the normal PPSSPP playthrough: creation, recruitment, trade, loot/equip, mining, manual save/reload, atlas and all nineteen guide chapters.
-- The same EBOOT passed prepared combat/outpost scenarios: all four attack phases, limb health, construction, forging an item through PSP controls, factions, atlas, snow and pine regions.
-- The same EBOOT passed a button-only interior playthrough: enter shop, walk around furniture, buy at the counter, save/reload the indoor position, leave, enter inn, pay for a bed, wake, exit and open the interior guide. The debugger only reads state and VRAM; it does not write gameplay state.
-- Visual inspection checked anticipation, contact and recovery, native-resolution controls, interior draw order, sleeping placement and facade cutaways. A white matte in the first wilderness atlas was caught in native capture and removed before PSP testing.
+- EBOOT: 1,098,757 bytes.
+- SHA-256: `e15a942ed491845938727d082d97a5ff54df146986d0dd0543a02a5fc20ae0ab`.
+- PSPDEV pinned to the official `v20261101` toolchain in the read-only GitHub Actions workflow.
+- PSP user-mode PRX, 333 MHz, 12 MiB heap; no expanded-memory flag.
+- Physical PSP-3000 testing: **not performed**. Emulator playthroughs and memory budgets do not prove hardware frame rate, battery use or memory-stick reliability.
 
-## PSP budget and host benchmark
+## Checks
 
-The packed artwork occupies 130,303 bytes of executable data, with a 24,576-byte lighting palette cache. The scrolling ground cache is 731,136 bytes; the cached main-RAM frame buffer is 557,056 bytes. The PSP ELF reports 2,430,892 bytes of BSS, including the fixed game state and rendering buffers, plus roughly 0.48 MiB of code/read-only data. The configured heap remains 12 MiB and the executable does not request the expanded-memory flag. Two 512×272×4 display buffers occupy 1,114,112 bytes of VRAM.
+| Check | Result / scope |
+|---|---|
+| Baseline simulation | 61 core + 50 expansion assertions |
+| Playability | 1,513 assertions: reach, role menus, recruitment, food sharing, ownership, loadouts, town spacing, hostile spawn separation, route preservation and old saves |
+| Interior/save checks | 25 assertions plus 26,624 rigid-grip assertions over 13,312 weapon poses |
+| Rendering | 272 screen/region/guide/interior cases preserve 480×272 bounds and 512-pixel stride |
+| Gear catalog | All 2,016 items produce distinct render hashes at gameplay and portrait scales |
+| Sanitizers | AddressSanitizer and UndefinedBehaviorSanitizer pass playability and renderer checks; LeakSanitizer is disabled because this environment cannot inspect process tasks |
+| Save migration | Genuine shipped v0.1 fixture; genuine pre-change v0.3 fixture; v0.2 exterior-prefix compatibility; v0.4 roundtrips including interiors |
+| Fresh-start EBOOT | Character creation, far-mining refusal, close mining, recruitment, trade, loot, gear comparison/equip, save/reload, local/world atlas and guide |
+| Prepared EBOOT scenarios | Combat phases, wounds, forging, outpost, faction ledger and far regions |
+| Interior EBOOT | Enter shop, buy, save/reload indoor position, leave, enter inn, pay once for rest, leave |
+| Frontier EBOOT journey | Fresh starter travels Dusk Haven → Copper Cross; map inspection and town browsing retain the active route; hostile encounter occurs en route |
 
-`tests/benchmark_render.c` compares v0.2.1 and v0.3.0 at the same seed and five camera locations. Both were compiled with native `cc -O2` and pinned to the same host CPU. Each case warms 20 frames and measures 240 frames. Scrolling advances the camera 0.02 world units per frame. No emulator ran during this comparison.
+Prepared combat/outpost/region saves are separate from the two fresh-start runs. Native routing disables combat to isolate terrain traversal; the EBOOT journey leaves enemies active. All final run logs and assertions are in `evidence/v040-*`.
 
-| Scene | Stationary before / after (median ms) | Scrolling before / after (median ms) |
-|---|---:|---:|
-| Dusk Haven | 0.448 / 0.259 | 0.393 / 0.229 |
-| Shogun's Rest | 0.356 / 0.173 | 0.375 / 0.171 |
-| Outpost | 0.269 / 0.092 | 0.272 / 0.096 |
-| Snow | 0.306 / 0.109 | 0.299 / 0.114 |
-| Pine | 0.315 / 0.139 | 0.310 / 0.137 |
+## Memory and rendering cost
 
-Median native render cost fell about 42–66%. CSVs include p95 and worst samples; host scheduling affects them. These are CPU rendering measurements on a desktop host, not PSP-3000 frame rates. Hardware frame time, suspend/resume, battery, audio and long-campaign qualification remain outstanding.
+108 indexed sprites occupy 434,662 bytes, with 77,542 bytes of shadow masks and 110,592 bytes of lighting palettes. Actor rendering uses a bounded 24-entry 96×80 pixel cache (737,280 bytes) and a 192×160 scratch surface (122,880 bytes). The ground cache is 731,136 bytes, and the staged main-RAM framebuffer is 557,056 bytes. These are included in the executable's 3,378,732-byte BSS; do not add them to BSS again. Code/read-only data is about 0.76 MiB. Two VRAM framebuffers use 1,114,112 bytes separately. The configured 12 MiB heap remains unchanged.
 
-## Capture and harness limits
+A native host run measured stationary median render times of 0.14–0.54 ms and scrolling medians of 0.15–0.49 ms across five scenes, with 20 warm-up frames and 240 measured frames per case. Scrolling advances 0.02 world units per frame. This is a host measurement, not a PSP speed estimate or controlled comparison with older releases. The CSV label “Outpost” names the open-frontier camera location; this microbenchmark does not construct an outpost. Actual outpost gameplay is covered by the EBOOT fixture run.
 
-The combat GIF uses 240 frames written from the PSP executable's display buffer. The test-only `DUST_RECORD` marker sets a deterministic 1/30-second simulation step; GIF timing follows simulation timestamps and duplicate frames may be merged. This is a prepared encounter, not earned progression. Normal gameplay uses the real clock with no frame recording. Neither QA marker is included in release packages.
+## Review limits
 
-An initial advanced harness run lost its debugger WebSocket while the title loop remained active; a subsequent run passed, and the final package passed all three playthroughs. The interior harness initially resumed before CPU startup and later stopped too close to an NPC instead of the inn door; startup waiting and precise button-driven door positioning resolved those harness issues.
-
-`evidence/v030-*-checks.json` records the exact EBOOT checksum for each final playthrough. The build manifest, test transcripts, benchmark CSVs, screenshots and combat frames CSV provide the reproducible evidence. Source art and sprite packing/export scripts are included in the repository.
-
-## Independent build
-
-GitHub Actions run `41726347159` passed on source commit `a193d2b896df9ae5223c017c127f02164745b98b`. Its pinned PSPDEV build produced the same 750,528-byte EBOOT and SHA-256 as the package exercised by all three PPSSPP playthroughs. See `evidence/v030-ci.json`.
+The [iteration record](ITERATION_LOG.md) documents defects found and corrected. The [mechanics audit](MECHANICS_AUDIT.md) distinguishes simplified loops from absent Kenshi systems. This is a playable alpha, not full Kenshi parity. Two-state animal animation, small equipment detail, single-room interiors and sparse authored wilderness content still need work.

@@ -18,6 +18,11 @@
 | Some fresh starts were already overloaded | Give each origin strength appropriate to its starting loadout | All five origins start within carrying capacity |
 | Rounded distance could show equal values while refusing an action | Display both distance and reach to two decimal places | Final HUD review |
 
+| Browsing the map silently changed the travel destination | Separate the map cursor from the active route | Regression test and fresh-start PSP journey with map inspection |
+| Hostiles wandered into the starting town during service tests | Place new-game hostile spawns at least 32 m from friendly town centers | All spawn/town pairs checked; indoor controller pass |
+| Door prompt offered entry while combat blocked it | Explain the combat restriction in the target panel | Combat-state HUD branch and render checks |
+| Town text obscured the map player label | Suppress overlapping town text; retain settlement list | Final journey map capture |
+
 ## Remaining critique
 
 The game is still an alpha. The larger wilderness needs more authored destinations and encounter variety, the two-state beast animations are limited, and conversations need richer consequences. Characters are small at 480×272 and equipment materials can be difficult to distinguish in motion. Building occlusion uses a dithered cutaway rather than full roof removal. Interiors are functional single rooms. Physical PSP-3000 frame pacing, controls and battery behavior remain untested. The mechanics audit records larger missing systems without disguising them as completed features.
