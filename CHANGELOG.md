@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.1 — Packs and proper grips
+
+- Fit all twelve headwear designs to individual brow anchors, preserve aspect ratio, reduce width and join necks to collars.
+- Replace catalog-order clothing stats with 44 authored profiles; expose actual movement, stealth, load and weather bonuses. Review all clothing silhouettes and test 1,056 variants.
+
+- Mount each back design at the shoulders/belt; turn its straps toward the wearer.
+- Reflect weapons around their authored grips so cutting edges and mirrored hands agree in both facings.
+- Stock four affordable backpack types in every market; add a BACKPACKS filter with worn/candidate portraits.
+- Give bags deliberate cargo-weight, capacity, combat and stealth tradeoffs, plus medical/recovery roles; show the actual swap-load result.
+- Add a contextual backpack chapter and preparation advice.
+- Locate active contracts on the atlas without replacing travel orders; show held supply counts.
+- Preserve v5 save layout/item IDs and supplement older markets once.
+- Add all-family attachment, backpack gameplay and genuine v5 migration checks, controller evidence and an updated whole-game critique.
+
 ## 0.5.0 — Heavy steel, hired hands
 
 - Add greatsword, railway maul, crescent glaive and anchor cleaver: 36 weapon families and 2,112 modular gear variants.
