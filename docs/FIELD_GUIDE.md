@@ -1,6 +1,6 @@
-# Dustbound field guide — 0.5.0
+# Dustbound field guide — 0.5.1
 
-The nineteen chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
+The twenty chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
 ## 1. Controls
 
@@ -46,7 +46,7 @@ Pack ![cross](../assets/ui/cross.svg) equips or uses; ![square](../assets/ui/squ
 
 ## 8. Merchants
 
-Talk to a trader and choose Trade. ![horizontal](../assets/ui/horizontal.svg) switches buying and selling; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) filters supplies, weapons or armor. ![cross](../assets/ui/cross.svg) trades one item. Shops have finite stocks and refresh daily with different gear.
+Talk to a trader and choose Trade. ![horizontal](../assets/ui/horizontal.svg) switches buying and selling; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) filters supplies, weapons, armor or backpacks. ![cross](../assets/ui/cross.svg) trades one item. Shops have finite stocks and refresh daily with different gear.
 
 Prices depend on quality, faction relations, local prosperity. Hostile factions refuse trade. Selling stolen goods back to their owner can expose you; Black Mesa fences accept them. The item details show its stats and effects before purchase.
 
@@ -90,7 +90,7 @@ Contracts raise standing; theft lowers it. The Factions ledger shows specialties
 
 Marshals offer delivery, supply, hunt and relic contracts. Accept through dialogue; track objectives in the Journal. Deliveries require reaching another town. Supplies require the listed items. Hunts count victories after acceptance.
 
-Return to the issuing settlement and claim in the Journal with ![cross](../assets/ui/cross.svg). Rewards grant silver, reputation and experience. Contracts persist in saves. Complete contracts, research relic technology and survey the frontier to advance the expedition legacy.
+Return to the issuing settlement and claim in the Journal with ![cross](../assets/ui/cross.svg). Rewards grant silver, reputation and experience. ![square](../assets/ui/square.svg) in the Journal locates an active contract on the atlas; it does not replace an existing route. Choose travel there when ready. Supply descriptions show held/needed counts. Contracts persist in saves. Complete contracts, research relic technology and survey the frontier to advance the expedition legacy.
 
 ## 16. Saves
 
@@ -117,3 +117,27 @@ Approach a house, inn, shop, tower or workshop door and press ![cross](../assets
 Counters open local trade. Beds cost 25 silver in town; owned beds are free. Workshop stations open forging, research or storage. Indoor time passes: hunger, bleeding and healing continue. The rest of your squad remains outside.
 
 Save games preserve the building and indoor position. Switching squad members leaves the room. Interiors shelter you from weather; hostile occupants refuse entry.
+
+
+## 20. Backpacks
+
+Traders stock two worn Scrap examples of each **travel pack, medicine roll, ore harness and bedroll pack** daily. Use the BACKPACKS market filter and compare WORN / TRY ON before buying. Other back equipment rotates with regional stock. ![select](../assets/ui/select.svg) from that filter opens this chapter.
+
+| Pack | Extra allowance, worn grade | Carried cargo weight counted | Melee/defence penalty | Purpose |
+|---|---:|---:|---:|---|
+| Travel pack | +16 | 80% | −2 | Light general travel |
+| Medicine roll | +10 | 85% | 0 | First-aid improvement |
+| Ore harness | +36 | 60% | −7 | Heavy salvage; large stealth penalty |
+| Bedroll pack | +24 | 70% | −4 | Expedition cargo and resting recovery |
+
+CARRY is extra weight allowance. LOAD predicts total effective load after swapping, including the old bag returning to inventory. CARGO is the percentage of carried inventory weight counted while the bag is worn. Equipped gear and a carried person always retain full weight. WT is the bag's empty weight; FIGHT and SNEAK show combat and stealth changes. Higher quality adds allowance to storage designs; materials and grades also change price and perk potency.
+
+All bags use the same 24 inventory slots. There are no nested bag inventories or bag-specific stack limits. A bedroll pack improves recovery while resting; it does not place a bed. Unequipped bags give no equipment bonuses. Keep money for supplies and a safe retreat, rather than buying every bag at once.
+
+0.5.1 keeps the v5 save layout and old item IDs. Older v5 markets receive the four affordable pack choices once. Later reloads preserve sold-out quantities. Existing back gear adopts the new role stats.
+
+## Clothing protection and fit
+
+Plate protects better but is heavy, slows movement and hinders stealth. Robes and wraps have low protection and low weight; travel clothes favor weather resistance, mobility or recovery. Material denotes reinforcement/finish, not a second armor layer. Higher quality preserves the family role and improves protection without increasing weight.
+
+WORN / TRY ON shows armor, weight, actual movement percentage, stealth and the relevant passive effect. MOVE% is an additive equipment modifier to the movement multiplier; excess load, wounds, hunger and fatigue can slow you further. Chest and arms use torso armor; head uses headgear; each leg uses leg armor plus half boot armor. There are no separate cut/blunt coverage layers. An item in your pack gives no worn bonus.

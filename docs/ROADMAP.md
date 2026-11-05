@@ -33,3 +33,18 @@ See [the mechanics audit](MECHANICS_AUDIT.md), [iteration record](ITERATION_LOG.
 Completed: four heavy weapon families, strength/arm handling, faction/profession equipment and advice, regional markets, timed independent guards, medic/merchant separation, v5 save migration and the [whole-game review](DESIGN_REVIEW_V050.md).
 
 Next priority: one authored salvage-route/rescue/raider-leader loop whose outcomes persist in town stock, NPC dialogue, road safety and retaliation. Then deepen defeat/recovery, outpost job logistics and independent squads. Require physical PSP-3000 frame-time and save qualification before claiming hardware readiness.
+
+## 0.5.1: equipment trust and expedition choices
+
+- [x] Shoulder/belt backpack mounts with per-design geometry and correctly mirrored straps.
+- [x] Authored cutting-edge orientation, reflected weapons and matching shoulder/hand rig.
+- [x] Four reliably stocked backpack types, dedicated market filter and shop preview portraits.
+- [x] Cargo-weight reduction, deliberate carrying/combat/stealth/medical/recovery tradeoffs and exact swap-load comparisons.
+- [x] Contextual backpack guide and trader preparation advice.
+- [x] Contract destination lookup on the atlas, supply counts and route-preserving browsing.
+- [x] One-time older-v5 stock supplement and genuine 0.5.0 expedition regression fixture.
+
+The [updated whole-game critique](DESIGN_REVIEW_V051.md) reviews 36 areas and distinguishes shipped improvements from outstanding simulation work. The authored salvage-route/world-consequence milestone above remains next; this patch does not claim it is implemented.
+
+- [x] 0.5.1: fitted brow anchors for all 12 headwear designs; review all 44 clothing silhouettes.
+- [x] 0.5.1: authored garment stats and actual movement/stealth/load/weather comparison values.

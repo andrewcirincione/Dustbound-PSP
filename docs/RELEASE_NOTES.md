@@ -1,11 +1,11 @@
-# Dustbound 0.5.0 — Heavy steel, hired hands
+# Dustbound 0.5.1 — Equipment fit and expedition choices
 
-Greatswords, railway mauls, crescent glaives and anchor cleavers join the painted weapon roster. Strength and injured arms now affect melee preparation/recovery, and inventory comparison explains the requirement and current delay penalty.
+Hats and hoods are smaller and seated at individual brow anchors, with preserved proportions and a connected neck/collar. Backpacks sit on the upper back with straps toward the wearer. Asymmetric blades, shoulders and hands now mirror correctly. The existing 144 painted sprites and fixed cache sizes are retained.
 
-Merchants, medics, smiths, recruits and guards have clearer roles, outfits, advice and behavior. Medics no longer overlap merchants. Faction markets stock different weapon families and show regional gear first. Hired guards offer one-day escort or camp contracts, fight and provide nearby first aid independently, and return home on expiry. Contracts persist in saves without consuming squad slots.
+All 44 clothing designs have authored protection, weight, movement, stealth and effect profiles. Plate is protective but heavy and restrictive; robes and travel clothes retain lighter, useful roles. Comparisons display actual bonuses. Four affordable bag designs are stocked in every town with a dedicated BACKPACKS tab, useful cargo/stealth/combat tradeoffs and accurate loaded-weight previews. The journal locates contract objectives on the atlas while preserving existing travel orders.
 
-The accompanying whole-game design review covers 34 areas, the defects corrected during playtesting and the major systems still missing. This remains an alpha: causal leader/world states, deeper wilderness stories, independent squads and outpost logistics still need substantial work.
+The whole-game critique covers 36 areas and distinguishes shipped improvements from remaining gaps. This remains an alpha: deeper world consequences, wilderness stories, defeat/recovery, independent squads and outpost logistics need substantial work.
 
-Extract `Dustbound-0.5.0-PSP.zip` to the memory-stick root on a PSP already configured for homebrew. Launch `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Back up saves and use a new slot for the first migrated save. Version 5 loads older formats but older executables cannot read v5 saves. Migration refreshes regional stocks and town NPC outfits/medic locations once. No QA saves or markers are included in the installer.
+Extract `Dustbound-0.5.1-PSP.zip` to the memory-stick root on a PSP configured for homebrew. Launch `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Back up saves and use a separate slot for the first migrated save. Save format remains 5; existing item IDs are preserved, but equipment statistics update to the new balance. Older v5 expeditions receive basic backpack stock once. No QA saves or markers are included.
 
-See `VALIDATION.md` for the exact EBOOT hash, all five controller playthroughs, native/sanitizer coverage and memory budget. Physical PSP-3000 testing has not been performed.
+See [VALIDATION.md](VALIDATION.md) for the exact EBOOT identity, thirteen controller scenarios, native/sanitizer results and memory budget. Physical PSP-3000 testing has not been performed.

@@ -1,3 +1,7 @@
+# 0.5.1 critique and correction record
+
+The complete finding/change/evidence table is in [DESIGN_REVIEW_V051.md](DESIGN_REVIEW_V051.md). This pass corrected low/reversed packs, weapon edge parity, left-facing shoulder geometry, hidden backpack stock, arbitrary bag roles, missing loaded comparisons, contract-map navigation and an overflowing guide page found in the EBOOT. Validation records distinguish incomplete debugger runs from the final successful scenarios.
+
 # 0.4.1 art critique and correction record
 
 | Finding | Correction | Verification |
@@ -51,3 +55,7 @@ The released 0.4.1 build was replayed before changes. The [full review](DESIGN_R
 The pass added four heavy weapon designs, strength/injury handling, role/faction identity and regional trade, plus independent timed guards. During review the anchor-cleaver pivot failed its opaque-handle check, a strength hint conflicted with the comparison layout, a medic overlapped the merchant, common starter goods hid regional stock, and save contract validation referenced actors before validating the actor count. The expanded faction-guide text also reached the footer in a PSP capture and was shortened. A defeated raider also inherited a resident label; raiders and beasts now have explicit context labels. All were corrected before the final runs. A separate controller-harness double-step was corrected by converging on the desired dialogue row.
 
 The final controller scenarios use the same EBOOT: fresh-start survival/save, prepared greatsword combat/outpost, shop/inn interiors, a fresh Dusk-to-Copper journey, and hire/save/three regional markets/four weapons/genuine v0.4.1 migration. The new combat recording is an actual prepared EBOOT encounter. Native checks cover all 36 weapon families and contract edge cases. Physical PSP qualification and full emergent-world depth remain open.
+
+### Follow-up: headwear and clothing balance
+
+The user identified large, lifted hats. Full-image bounds included straps/crests, so generic hat rectangles were the wrong anchor. Individual brow rows, preserved aspect ratios and smaller widths now seat headwear on the forehead. A neck/collar bridge removes a separate floating-head gap. All 44 garment families receive fit sheets and real EBOOT equipment captures. The stat audit found catalog-index armor and unrelated clothing perks; authored family profiles now establish consistent plate/cloth/travel tradeoffs, with 1,056 variant checks and actual bonus values in comparison.
