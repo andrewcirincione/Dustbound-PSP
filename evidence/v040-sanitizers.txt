@@ -1,0 +1,4 @@
+Closest towns 134.2m; wilderness enemies 57.
+Dusk to Copper: 95.9s, remaining 0.70m.
+PASS: 1513 playability checks.
+PASS: 272 screen/biome/guide renders; 480x272 bounds and 512-pixel stride preserved.

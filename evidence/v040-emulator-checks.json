@@ -1,0 +1,201 @@
+[
+  {
+    "eboot_sha256": "e15a942ed491845938727d082d97a5ff54df146986d0dd0543a02a5fc20ae0ab",
+    "version": "0.4.0"
+  },
+  {
+    "capture": "v040-01-title",
+    "screen": 13,
+    "expected": 13
+  },
+  {
+    "capture": "v040-08-name-keyboard",
+    "screen": 16,
+    "expected": 16
+  },
+  {
+    "capture": "v040-02-character-creator",
+    "screen": 15,
+    "expected": 15
+  },
+  {
+    "assert": "money",
+    "actual": [
+      420
+    ],
+    "expected": [
+      420
+    ]
+  },
+  {
+    "capture": "v040-03-dusk-haven",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v040-34-mining-too-far",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "task",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v040-34-mining-too-far",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "assert": "task",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v040-13-mining",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "capture": "v040-04-layered-equipment",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v040-05-six-equipment-slots",
+    "screen": 23,
+    "expected": 23
+  },
+  {
+    "capture": "v040-09-companion-dialogue",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "assert": "money",
+    "actual": [
+      120
+    ],
+    "expected": [
+      120
+    ]
+  },
+  {
+    "capture": "v040-10-market-dialogue",
+    "screen": 17,
+    "expected": 17
+  },
+  {
+    "assert": "money",
+    "actual": [
+      85
+    ],
+    "expected": [
+      85
+    ]
+  },
+  {
+    "capture": "v040-11-weapon-market",
+    "screen": 6,
+    "expected": 6
+  },
+  {
+    "capture": "v040-33-gear-comparison",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v040-12-looted-armor-equipped",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v040-14-save-ledger",
+    "screen": 22,
+    "expected": 22
+  },
+  {
+    "assert": "money",
+    "actual": [
+      85
+    ],
+    "expected": [
+      85
+    ]
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "capture": "v040-06-frontier-atlas",
+    "screen": 5,
+    "expected": 5
+  },
+  {
+    "assert": "mapzoom",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "assert": "mapzoom",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v040-35-world-atlas",
+    "screen": 5,
+    "expected": 5
+  },
+  {
+    "capture": "v040-07-contextual-guide",
+    "screen": 12,
+    "expected": 12
+  },
+  {
+    "assert": "selection",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "normal_run_saved_reloaded": true,
+    "starting_origin": "Ronin",
+    "ending_silver": 85,
+    "ending_squad": 2
+  }
+]

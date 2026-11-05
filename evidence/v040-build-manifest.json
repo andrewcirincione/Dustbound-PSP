@@ -1,0 +1,32 @@
+{
+  "version": "0.4.0",
+  "eboot_bytes": 1098757,
+  "eboot_sha256": "e15a942ed491845938727d082d97a5ff54df146986d0dd0543a02a5fc20ae0ab",
+  "prx_sha256": "8fd41f94392af955c1de199cce8b42ed4e625989bd616bddad411bf3e92e00dc",
+  "baseline_simulation_checks": 111,
+  "playability_checks": 1513,
+  "interior_save_checks": 25,
+  "grip_poses": 13312,
+  "grip_assertions": 26624,
+  "render_cases": 272,
+  "gear_variants": 2016,
+  "save_version": 4,
+  "load_save_versions": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "sprite_count": 108,
+  "compiled_sprite_bytes": 434662,
+  "shadow_bytes": 77542,
+  "palette_cache_bytes": 110592,
+  "combat_recording_frames": 240,
+  "physical_psp_tested": false,
+  "playthroughs": [
+    "fresh_start",
+    "prepared_combat_outpost_regions",
+    "interiors",
+    "fresh_start_frontier_journey"
+  ]
+}
