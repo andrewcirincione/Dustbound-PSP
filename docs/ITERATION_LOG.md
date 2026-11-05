@@ -1,4 +1,19 @@
-# 0.4.0 critique and correction record
+# 0.4.1 art critique and correction record
+
+| Finding | Correction | Verification |
+|---|---|---|
+| Weapons remained flat polygons against painted characters | Generated two original sixteen-cell weapon atlases; compiled all 32 families with material-aware palettes | All family native review grids and controller-driven EBOOT equip captures |
+| Curved blades and asymmetric stocks cannot use image centres as grips | Explicit source-space hand anchors and rigid transforms | 2,560 rendered grip samples and 13,312 attack poses |
+| Long/downward weapons disappeared beyond the actor image | Expand the fixed cache to 112×104; blit only visible bounds | Full rasterized pose sweep, both sides and eight attack directions |
+| Longbow grip was on the thin arrow instead of the bow | Move the anchor to the wooden riser; place support hands on strings/fore-ends | Grip coverage check and bow/firearm inspection |
+| Naginata reached outside the inventory panel in the first EBOOT review | Fit the whole figure into each preview cell; use the same scale for both comparison figures | Retained iteration1 capture versus corrected final capture; 32 bounded/cache-stable pairs |
+| Other preview screens could overlap labels with long weapons | Apply fitting to creator, worn gear, forge, health and dialogue portraits | Screen render checks and emulator menu captures |
+| PSP launcher icon still showed early polygon graphics | Generate matching launcher illustration and compile both PSP images | Embedded PBP image validation |
+| Interior doorway was a flat beige diamond | Reuse the existing painted wood texture, keeping the exit label | Interior EBOOT capture |
+
+Buildings, vegetation, rocks, furnishings, clothing and creature source art were inspected for the same mismatch; they already use the painted palette. UI button pictograms remain crisp functional icons. This revision does not claim that two-state creature animation or sparse wilderness detail is finished. The launcher illustration is promotional art, not a gameplay screenshot.
+
+## Previous 0.4.0 critique and correction record
 
 | Finding | Correction | Evidence |
 |---|---|---|
