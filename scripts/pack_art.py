@@ -28,6 +28,12 @@ WEAPON_GRIPS=[(164,273),(468,275),(756,273),(1075,275),
  (186,1013),(490,1127),(814,1169),(1119,1151),(271,540),(812,566),(1358,567),(1875,558)]
 WEAPON_HEIGHT=[28,20,39,14,46,45,43,27,29,18,24,25,30,29,34,34,
  44,28,30,26,39,30,31,30,27,30,32,22,27,33,21,29,41,39,47,36]
+# Source-space cutting/striking side, looking from handle to tip (source up).
+# Curved swords, cleavers and the axe cut on source LEFT; the sickle and
+# anchor cleaver cut on RIGHT. Symmetric and ranged art uses +1. This parity
+# is combined with actor facing at runtime; rotating alone reverses the edge.
+WEAPON_EDGE=[-1,-1,-1,-1,-1,1,-1,1,-1,-1,-1,-1,-1,-1,1,1,
+ 1,-1,-1,-1,-1,-1,-1,1,1,1,1,1,1,1,1,1,1,1,-1,1]
 def arr(name,typ,vals):
  return 'static const '+typ+' '+name+'[] = {\n'+',\n'.join(','.join(map(str,vals[i:i+24])) for i in range(0,len(vals),24))+'\n};\n'
 def spans(im,palette=None):
@@ -73,7 +79,7 @@ for filename,nrows,sizes in SPECS:
   if filename in WEAPON_ROWS:
    f=idx-108;gx,gy=WEAPON_GRIPS[f]
    # Store floating point pivots: integer rounding caused carry-through drift.
-   weapons.append(((gx-xa-box[0])*sx,(gy-ya-box[1])*sy,WEAPON_HEIGHT[f]/im.height))
+   weapons.append(((gx-xa-box[0])*sx,(gy-ya-box[1])*sy,WEAPON_HEIGHT[f]/im.height,WEAPON_EDGE[f]))
   ax=im.width//2;ay=im.height;front=im.height-1
   if pts:
    pts=[(x*sx,y*sy) for x,y in pts];front=pts[1][1];ax=round(pts[1][0]);ay=round(front-(pts[2][0]-pts[0][0])*.25)
@@ -88,7 +94,7 @@ for filename,nrows,sizes in SPECS:
   lines += [arr(name+'_data','uint8_t',data),arr(name+'_rows','uint16_t',rows),arr(name+'_palette','uint32_t',[hex(p)+'u' for p in palette])]
   entries.append('{%d,%d,%d,%d,%s_data,%s_rows,%s_palette}'%(im.width,im.height,ax,ay,name,name,name));size=len(data)+len(rows)*2+1024;total+=size
   stats.append(dict(source=filename,cell=i,width=im.width,height=im.height,pivot=[ax,ay],bytes=size,calibration=cal,foundation=pts));im.convert('RGBA').save(ART/f'sprite-{idx:02d}.png')
-lines+=['#define ART_COUNT '+str(len(entries))+'\n#define WEAPON_ART_FIRST 108\nstatic const ArtSprite artSprites[ART_COUNT]={\n'+',\n'.join(entries)+'\n};\nstatic const ArtShadow artShadows[32]={\n'+',\n'.join(shadows)+'\n};\ntypedef struct {float gripX,gripY,scale;} WeaponArt;\nstatic const WeaponArt weaponArt[36]={\n'+',\n'.join('{%.5ff,%.5ff,%.6ff}'%p for p in weapons)+'\n};\n#endif\n']
+lines+=['#define ART_COUNT '+str(len(entries))+'\n#define WEAPON_ART_FIRST 108\nstatic const ArtSprite artSprites[ART_COUNT]={\n'+',\n'.join(entries)+'\n};\nstatic const ArtShadow artShadows[32]={\n'+',\n'.join(shadows)+'\n};\ntypedef struct {float gripX,gripY,scale; int edgeSide;} WeaponArt;\nstatic const WeaponArt weaponArt[36]={\n'+',\n'.join('{%.5ff,%.5ff,%.6ff,%d}'%p for p in weapons)+'\n};\n#endif\n']
 (ROOT/'src/art_data.h').write_text(''.join(lines));(ART/'budget.json').write_text(json.dumps(dict(rom_bytes=total+shadowbytes,shadow_bytes=shadowbytes,palette_cache_bytes=len(entries)*256*4,sprites=stats,weapon_grips=weapons),indent=2)+'\n');print('Packed',len(entries),'sprites;',total+shadowbytes,'bytes ROM;',len(entries)*256*4,'bytes palette RAM')
 # Launcher images are offline derivatives; they add no in-game texture RAM.
 launcher=Image.open(ART/'launcher-v041.png').convert('RGB')
