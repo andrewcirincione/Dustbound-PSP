@@ -1,0 +1,1 @@
+PASS: 2560 painted grip samples; 13312 attack poses fit actor cache; 32 bounded, cache-stable comparison pairs. Bounds x=-101..99 y=-122..49 at 2x.

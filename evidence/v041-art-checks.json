@@ -1,0 +1,493 @@
+[
+  {
+    "eboot_sha256": "68e2abba366b71c4941a43001325da8fc259764756b6ca2545d455242f965d14",
+    "version": "0.4.1"
+  },
+  {
+    "capture": "v041-art-compare-00",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-00",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 0,
+    "item": 50,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-01",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-01",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 1,
+    "item": 74,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-02",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-02",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 2,
+    "item": 98,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-03",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-03",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 3,
+    "item": 122,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-04",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-04",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 4,
+    "item": 146,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-05",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-05",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 5,
+    "item": 170,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-06",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-06",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 6,
+    "item": 194,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-07",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-07",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 7,
+    "item": 218,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-08",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-08",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 8,
+    "item": 242,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-09",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-09",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 9,
+    "item": 266,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-10",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-10",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 10,
+    "item": 290,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-11",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-11",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 11,
+    "item": 314,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-12",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-12",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 12,
+    "item": 338,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-13",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-13",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 13,
+    "item": 362,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-14",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-14",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 14,
+    "item": 386,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-15",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-15",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 15,
+    "item": 410,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-16",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-16",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 16,
+    "item": 434,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-17",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-17",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 17,
+    "item": 458,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-18",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-18",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 18,
+    "item": 482,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-19",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-19",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 19,
+    "item": 506,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-20",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-20",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 20,
+    "item": 530,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-21",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-21",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 21,
+    "item": 554,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-22",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-22",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 22,
+    "item": 578,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-23",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-23",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 23,
+    "item": 602,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-24",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-24",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 24,
+    "item": 626,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-25",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-25",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 25,
+    "item": 650,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-26",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-26",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 26,
+    "item": 674,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-27",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-27",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 27,
+    "item": 698,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-28",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-28",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 28,
+    "item": 722,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-29",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-29",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 29,
+    "item": 746,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-30",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-30",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 30,
+    "item": 770,
+    "controller_equip": true
+  },
+  {
+    "capture": "v041-art-compare-31",
+    "screen": 1,
+    "expected": 1
+  },
+  {
+    "capture": "v041-art-world-31",
+    "screen": 0,
+    "expected": 0
+  },
+  {
+    "equipped_family": 31,
+    "item": 794,
+    "controller_equip": true
+  },
+  {
+    "all_32_weapon_families_equipped": true,
+    "prepared_fixture_slots": [
+      1,
+      2
+    ]
+  }
+]
