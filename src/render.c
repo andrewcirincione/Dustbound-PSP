@@ -1050,7 +1050,7 @@ static void hud(void) {
         float d = context_distance();
         if (d > context_reach()) {
             char action[72];
-            snprintf(action, sizeof(action), "MOVE CLOSER  %.1fm / %.1fm", d, context_reach());
+            snprintf(action, sizeof(action), "MOVE CLOSER  %.2fm / %.2fm", d, context_reach());
             center(240, 195, action, MUTED, 1);
         } else {
             char action[72];
@@ -1320,8 +1320,20 @@ static void map_screen(void) {
     int youx = MAPX(leader->x), youy = MAPY(leader->y);
     int x = MAPX(ui.mapX), y = MAPY(ui.mapY);
     if (INMAP(leader->x, leader->y)) {
-        if (ui.waypoint)
-            line(youx, youy, x, y, TEAL);
+        if (ui.waypoint) {
+            int dx = MAPX(ui.travelX), dy = MAPY(ui.travelY);
+            /* Clip the route to the visible map rectangle. */
+            float vx = dx - youx, vy = dy - youy, t = 1;
+            if (vx > 0)
+                t = fminf(t, (ox + mw - 1 - youx) / vx);
+            else if (vx < 0)
+                t = fminf(t, (ox - youx) / vx);
+            if (vy > 0)
+                t = fminf(t, (oy + mh - 1 - youy) / vy);
+            else if (vy < 0)
+                t = fminf(t, (oy - youy) / vy);
+            line(youx, youy, youx + vx * t, youy + vy * t, TEAL);
+        }
         diamond(youx, youy, 5, 4, TEAL);
         frame(youx - 5, youy - 5, 11, 11, TEXT);
         text(youx < 235 ? youx + 8 : youx - 25, youy < oy + 12 ? youy + 8 : youy - 8, "YOU", TEXT, 1);
@@ -1340,7 +1352,9 @@ static void map_screen(void) {
     }
     char b[90];
     snprintf(b, 90, "YOU %d,%d  DEST %.0fm  %s", (int)leader->x, (int)leader->y,
-             distance(leader->x, leader->y, ui.mapX, ui.mapY), regionNames[biome(ui.mapX, ui.mapY)]);
+             distance(leader->x, leader->y, ui.waypoint ? ui.travelX : ui.mapX,
+                      ui.waypoint ? ui.travelY : ui.mapY),
+             regionNames[biome(ui.mapX, ui.mapY)]);
     text(31, 222, b, TEAL, 1);
 #undef MAPX
 #undef MAPY

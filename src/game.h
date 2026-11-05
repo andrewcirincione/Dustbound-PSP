@@ -223,7 +223,7 @@ void interior_move(float dx, float dy, float dt);
 typedef struct {
     int screen, selection, scroll, tab, paused, speed, contextKind, contextIndex, tradeTown, sell, slot,
         confirmAction, titleChoice, waypoint;
-    float mapX, mapY, camX, camY, noticeTime, repeat;
+    float mapX, mapY, camX, camY, noticeTime, repeat, travelX, travelY;
     char logs[LOGS][80], notice[100];
     int logCount;
     int helpReturn, helpTopic, dialogActor, dialogPage, forgeSlot, forgeFamily, forgeMaterial, forgeQuality;

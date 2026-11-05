@@ -47,6 +47,10 @@ void character_finish(void) {
     a->race = race;
     a->origin = origin;
     if (!editing) {
+        /* Starting loadouts should leave room for supplies instead of applying
+           an unexplained movement penalty on the first step. */
+        const int strength[5] = {8, 11, 15, 2, 6};
+        a->xp[STRENGTH] = 12 * strength[origin] * strength[origin];
         const int weapons[5] = {8, 0, 12, 9, 24}, torsos[5] = {32, 34, 35, 46, 45},
                   heads[5] = {49, 48, 56, 51, 54};
         a->gear[0] = gear_id(weapons[origin], origin == 1 ? 1 : 0, 1);

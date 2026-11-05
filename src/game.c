@@ -1846,6 +1846,8 @@ void game_tick(float dt, Input in) {
             ui.mapY = clamp(ui.mapY, 3, WORLD - 4);
             if (p & KEY_CROSS) {
                 ui.waypoint = 1;
+                ui.travelX = ui.mapX;
+                ui.travelY = ui.mapY;
                 open_screen(SCREEN_WORLD);
                 log_msg("Route set. Move manually to cancel.");
             }
@@ -2015,11 +2017,11 @@ void game_tick(float dt, Input in) {
         a->taskKind = 0;
         move_actor(a, (dx + dy) * .7071f, (dy - dx) * .7071f, step);
     } else if (ui.waypoint) {
-        if (distance(a->x, a->y, ui.mapX, ui.mapY) < .7f) {
+        if (distance(a->x, a->y, ui.travelX, ui.travelY) < .7f) {
             ui.waypoint = 0;
             log_msg("Waypoint reached.");
         } else
-            route_toward(a, ui.mapX, ui.mapY, step);
+            route_toward(a, ui.travelX, ui.travelY, step);
     }
     simulate(step);
     g.autosave += step;
@@ -2060,6 +2062,7 @@ void debug_snapshot(const char *path) {
     PTR("task", &a->taskKind);
     PTR("mapzoom", &ui.mapZoom);
     PTR("waypoint", &ui.waypoint);
+    PTR("travel", &ui.travelX);
 #undef PTR
     fprintf(f, "}\n");
     fclose(f);
