@@ -17,3 +17,9 @@ Remaining acceptance scope:
 - [ ] Verified GitHub build, source, installer, evidence and release.
 
 Physical PSP-3000 qualification remains outstanding.
+
+## Publishing connection
+
+On 2026-11-06, Dustbound-PSP was added to the existing ChatGPT Codex Connector installation used for Rift-Ascent. This status update was published directly through the GitHub connector, verifying repository write access. Future source updates can use this connection instead of browser uploads.
+
+The implementation and validation checklist above remains outstanding; this access repair does not constitute a new game build.
