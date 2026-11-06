@@ -1,5 +1,10 @@
 # Kenshi mechanics audit
 
+## 0.6.0 update
+
+The historical matrix below records the 0.5.0 baseline. The [0.6.0 review](DESIGN_REVIEW_V060.md) now supersedes its missing-system column for Copper Road world states, basic captivity/escape, witnessed interior trespass, three expedition groups, ordered jobs, construction labor, fuel, armor layers/coverage, mechanical repair, projectiles and indoor combat. These are bounded original implementations; full slavery, disguises, schedules, animal systems and power networks remain absent.
+
+
 Checked against the Kenshi wiki while developing 0.4.0 and revisited for 0.5.0. This is a scope audit, not a claim that Dustbound reproduces Kenshi. Dustbound uses original code, artwork and setting. A working simplified loop is recorded separately from a missing system.
 
 | Area | Dustbound 0.5.0 | Remaining depth |

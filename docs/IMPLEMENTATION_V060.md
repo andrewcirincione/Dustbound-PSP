@@ -1,29 +1,9 @@
-# 0.6.0 implementation status
+# 0.6.0 reconstruction
 
-The unpublished candidate was lost during a workspace reset following an interrupted upload. Released v0.5.2 is intact. Earlier tests do not qualify a reconstructed executable.
+The rebuild starts from released 0.5.2; an earlier unpublished candidate was lost. Source checkpoints are committed directly through the repaired GitHub connection. Earlier candidate claims are not used as validation for this executable.
 
-Remaining acceptance scope:
+Implemented: the Copper Road rescue and branching road conflict; eight landmarks and named roles; persistent local trade/ownership/retaliation; physical captivity and escape; trauma and mechanical repair; moving projectiles and indoor combat; witnessed trespass and opening hours; construction labor, fuel, condition, four job priorities and three expedition groups; armor underlayers and coverage; six panels and five added guide chapters; v6 saves retaining v1–v5 readers.
 
-- [ ] Authored exploration and multiple quest solutions.
-- [ ] Persistent town, faction, road and trade consequences.
-- [ ] Captivity, escape, recovery and robotic repair.
-- [ ] Tactical combat, projectiles and indoor combat.
-- [ ] Named dialogue, schedules and contextual NPC behavior.
-- [ ] Construction, production, fuel, job priorities and expedition groups.
-- [ ] Armor layers, coverage and meaningful gear comparisons.
-- [ ] Objectives, preparation advice and contextual guides.
-- [ ] Presentation review, campaign/economy tests and PSP profiling.
-- [ ] Fresh native/sanitizer checks and controller playtests on the exact EBOOT.
-- [ ] Verified GitHub build, source, installer, evidence and release.
+Qualification uses scripts/validate_v060.sh. Exact delivered executable, fresh native/sanitizer results, controller scenarios, capture method and known limits are recorded in VALIDATION.md. The packaged installer is built only after its evidence hashes agree.
 
-Physical PSP-3000 qualification remains outstanding.
-
-## Publishing connection
-
-On 2026-11-06, Dustbound-PSP was added to the existing ChatGPT Codex Connector installation used for Rift-Ascent. This status update was published directly through the GitHub connector, verifying repository write access. Future source updates can use this connection instead of browser uploads.
-
-The implementation and validation checklist above remains outstanding; this access repair does not constitute a new game build.
-
-## Rebuild checkpoint — 2026-11-06
-
-Reconstructed the Copper Road expedition, named residents and branching consequences, six new gameplay panels, v6 save migration, construction/fuel, job queues and groups, trauma/robot repair, underlayers/coverage, captivity, room combat and moving projectiles. New native tests cover the branching route, transactional failure paths, save migration, seven simulated days and the whole catalog buy/resell spread. Regression work and controller playtests are in progress. This checkpoint is not release qualification.
+The [critical review](DESIGN_REVIEW_V060.md) lists what remains incomplete. Physical PSP-3000 qualification is outstanding. Full resident schedules, faction disguises, animal recruitment, a slavery economy, destructive sieges and an electrical grid are not implemented claims.

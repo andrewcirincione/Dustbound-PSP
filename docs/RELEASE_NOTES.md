@@ -1,9 +1,11 @@
-# Dustbound 0.5.2 — Reliable actions and recovery
+# Dustbound 0.6.0 — Copper Road rebuild
 
-A critical pass over the interface and survival loop: exact help/save navigation, explicit save-and-title confirmation, ownership-safe item transactions, rescue choices, loot previews and full-stack transfers, nearby target cycling, close workstation/service reach, working camp supply trips, skill explanations and bounded live effects, clearer health/crafting/forging panels, and recent-message history.
+An authored rescue and road conflict gives the frontier a lasting objective: escort Sora, repair a bypass, negotiate a toll, capture Rell or defeat him, then report to Nell. Choices alter Copper's trade, allegiance and future threats. Eight landmarks, dialogue, the atlas and an expedition ledger connect the journey.
 
-The installer includes one self-contained PSP EBOOT. Preserve existing save files; save format remains 5 and item IDs remain stable. Older saves through 0.5.1 remain supported. The new efficiency and combat effects intentionally affect old characters too.
+This rebuild adds construction labor/fuel, four job priorities, three independent expedition groups, trauma and robotic repair, underlayers/armor coverage, physical captivity and escape, moving projectiles, indoor actors/combat, witnessed trespass and trade hours. Six added panels bring the total to 33, with 25 contextual guide chapters. Complete dressed prone characters retain their worn attachments.
 
-Validation uses native regression/sanitizer checks and real PSP controller input in PPSSPP. Prepared saves are labeled fixtures; screenshots are captured from the executable. Exact checks and binary identity are in VALIDATION.md. Physical PSP-3000 performance, suspend/resume and memory-stick endurance have not been tested.
+Install the PSP folder from Dustbound-0.6.0-PSP.zip at the memory-stick root on a PSP already configured for homebrew. The game appears at PSP/GAME/DUSTBOUND/EBOOT.PBP. Back up existing DUST_*.sav files. Save format 6 reads versions 1–5 and preserves item IDs; save a migrated expedition to a new slot. Do not reopen a v6 save using an older executable.
 
-The comprehensive DESIGN_REVIEW_V052.md distinguishes shipped corrections from remaining gaps: authored wilderness consequences, named leader world states, slavery, independent squads, deeper armor layers, job queues and interior combat. This remains an original playable alpha inspired by Kenshi, not a Kenshi port or full recreation.
+The release includes the exact PSP EBOOT exercised through controller input in PPSSPP. Prepared scenarios are labeled and excluded from the installer. VALIDATION.md and the evidence archive record binary hashes and test scope. Physical PSP-3000 frame pacing, battery behavior, suspend/resume and memory-stick endurance remain untested.
+
+This remains an original playable alpha, not full Kenshi parity. DESIGN_REVIEW_V060.md separates implemented improvements from remaining world-density, schedule, disguise, animal, captivity-economy, power and siege limitations.

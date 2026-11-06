@@ -1,0 +1,1 @@
+PASS: 377967 depth checks, seven-day campaign, all catalog price spreads.

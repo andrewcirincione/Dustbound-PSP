@@ -1,0 +1,2 @@
+Audit fixture slots 2=rescue, 3=camp logistics, 4=loot generated.
+Final native, sanitizers, PSP package and controller scenarios passed.

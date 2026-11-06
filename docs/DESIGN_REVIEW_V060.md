@@ -33,6 +33,7 @@ The rebuild starts from released 0.5.2. The unpublished earlier candidate was lo
 | Gear comparisons | Variant totals can obscure useful choices | Existing worn/candidate load, speed, stealth and effect comparisons retained; underlayer panel compares coverage/protection |
 | Presentation | Hats/packs disappear on fallen characters | Rotate the complete dressed rig for prone characters; weapon grips and fitted head/back anchors retained |
 | World labels | Landmark text overlaps the selected NPC role | Only the targeted landmark receives an overhead name; small ground markers remain |
+| Atlas legend | New route hints overlapped the old close/help footer | Clear the footer and render one combined icon legend |
 | Controls | World buttons still appear beneath modal menus | Overlay footer states that time is paused; actionable icon instructions belong to the open panel |
 | Construction | Structures appear instantly | Material validation followed by interruptible labor; unfinished stations cannot produce or attract workers |
 | Production | Fire and forge output costs no energy | Timber/coal fuel charges, input fetching, station travel and output storage; no electrical grid is claimed |

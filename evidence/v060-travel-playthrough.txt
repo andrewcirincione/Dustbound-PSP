@@ -1,0 +1,17 @@
+KEY cross SCREEN 13 ROW 0 -> 0
+KEY up SCREEN 15 ROW 0 -> 9
+KEY cross SCREEN 15 ROW 9 -> 0
+ASSERT screen (0,)
+KEY square SCREEN 0 ROW 0 -> 0
+KEY select SCREEN 0 ROW 0 -> 0
+KEY rtrigger SCREEN 5 ROW 0 -> 0
+SCREENSHOT v060-38-copper-route 480x272 screen 5
+KEY cross SCREEN 5 ROW 0 -> 0
+SCREENSHOT v060-39-wilderness-travel 480x272 screen 0
+KEY select SCREEN 0 ROW 0 -> 0
+SCREENSHOT v060-40-location-on-route 480x272 screen 5
+KEY rtrigger SCREEN 5 ROW 0 -> 0
+KEY circle SCREEN 5 ROW 0 -> 0
+ASSERT waypoint (1,)
+SCREENSHOT v060-41-copper-arrival 480x272 screen 0
+PSP FRONTIER JOURNEY PASS /workspace/scratch/f91171b6dca9/Dustbound-recovered/build/v060-travel-koc_2ema

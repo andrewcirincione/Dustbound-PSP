@@ -14,17 +14,21 @@
 
 The unreleased 0.3 graphics/interior candidate is included in this milestone. Older released builds and their evidence remain in git history.
 
-## Next gameplay priorities
+## 0.6.0 rebuilt / current priorities
 
-- [ ] Authored wilderness landmarks, encounter objectives and more regional enemy behaviors.
-- [ ] Trespassing, faction disguises, recognition and kidnapping consequences.
-- [ ] Captivity/slavery, shackles, liberation and ex-captive recognition.
-- [ ] Leader-driven settlement changes and persistent faction retaliation.
-- [ ] Ordered job queues, material hauling/construction labor and fuller production chains.
-- [ ] Armor layers, cut/blunt coverage and deeper robotic wound treatment.
-- [ ] Multiple independently commanded squads and recruited animals.
-- [ ] Expanded dialogue consequences, resident schedules and interior combat.
-- [ ] Physical PSP-3000 profiling, controller feel, frame pacing and memory-stick endurance.
+- [x] Authored Copper Road exploration, rescue and multiple solutions.
+- [x] Persistent local leadership, road, supply, dialogue and retaliation consequences.
+- [x] Physical captivity, shackles, liberation and timed recognition by former captors.
+- [x] Witnessed interior trespass, trade hours and same-room combat.
+- [x] Construction labor, station fuel/condition and four ordered job priorities.
+- [x] Armor underlayers, cut/blunt coverage, trauma and mechanical repairs.
+- [x] Three expedition groups with independent leaders and travel destinations.
+- [x] Contextual guides, exact-binary controller captures and native regressions.
+- [ ] Broaden authored conflict density beyond Copper Road.
+- [ ] Resident daily schedules, faction disguises and more nuanced witness behavior.
+- [ ] Forced-labor/captivity economy, animal recruitment and multi-region pursuit.
+- [ ] Destructible outpost sieges, electrical networks and deeper research.
+- [ ] Physical PSP-3000 profiling, controller feel, suspend/resume and memory-stick endurance.
 
 See [the mechanics audit](MECHANICS_AUDIT.md), [iteration record](ITERATION_LOG.md), and [validation](VALIDATION.md). Unchecked items are not implemented claims.
 
@@ -60,3 +64,5 @@ The [updated whole-game critique](DESIGN_REVIEW_V051.md) reviews 36 areas and di
 - [x] Recent-message history, clearer health/recipe/forge panels and invalid-route feedback.
 
 Ordered job queues and the authored Copper Cross expedition remain open. See [the 0.5.2 review](DESIGN_REVIEW_V052.md).
+
+The older milestone notes below describe their historical status. The 0.6.0 checklist and [rebuild review](DESIGN_REVIEW_V060.md) supersede their next-priority lists.

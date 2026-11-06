@@ -9,3 +9,6 @@ build/
 *.sav.tmp
 *.log
 __pycache__/
+
+# Uncompressed intermediate recording; the release includes v060-combat.mp4.
+evidence/v060-15-combat.gif

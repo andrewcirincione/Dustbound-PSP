@@ -128,10 +128,12 @@ static void depth_screen(void) {
             row(103 + j * 16, ui.selection == i, it ? itemDefs[it].name : "EMPTY", it ? value : "");
         }
         int candidate = a->pack[ui.selection].item, limb = CHEST;
-        snprintf(buf, sizeof(buf), "CHEST COVERAGE %d%% > %d%% / CUT ARMOR %.1f > %.1f",
-                 depth_coverage(z->layer, limb), depth_coverage(candidate, limb),
-                 itemDefs[z->layer].armor * .55f,
-                 itemDefs[candidate].slot == 1 ? itemDefs[candidate].armor * .55f : 0);
+        if (candidate && itemDefs[candidate].slot == 1 && itemDefs[candidate].weight <= 5)
+            snprintf(buf, sizeof(buf), "CHEST COVERAGE %d%% > %d%% / CUT ARMOR %.1f > %.1f",
+                     depth_coverage(z->layer, limb), depth_coverage(candidate, limb),
+                     itemDefs[z->layer].armor * .55f, itemDefs[candidate].armor * .55f);
+        else
+            snprintf(buf, sizeof(buf), "CHOOSE LIGHT BODY CLOTHING / \003 REMOVES WORN LAYER");
         clipped(31, 178, buf, 68, GOLD);
         text(31, 195, "CLOTH ONLY: BODY SLOT, WEIGHT 5 OR LESS.", MUTED, 1);
         text(31, 210, "COVERAGE: BODY 95%, ARMS 65%, HEAD 85%.", MUTED, 1);

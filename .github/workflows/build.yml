@@ -23,7 +23,40 @@ jobs:
         run: make -j2
       - name: Validate package
         run: python3 scripts/validate_pbp.py EBOOT.PBP
+      - name: Verify tested release executable
+        if: hashFiles('evidence/v060-build-manifest.json') != ''
+        run: |
+          python3 - <<'PYCODE'
+          import hashlib,json,pathlib
+          expected=json.loads(pathlib.Path('evidence/v060-build-manifest.json').read_text())['eboot_sha256']
+          assert hashlib.sha256(pathlib.Path('EBOOT.PBP').read_bytes()).hexdigest()==expected
+          assert pathlib.Path('EBOOT.PBP').read_bytes()==pathlib.Path('dist/Dustbound-0.6.0-EBOOT.PBP').read_bytes()
+          PYCODE
+          cd dist
+          sha256sum -c SHA256SUMS-0.6.0.txt
       - uses: actions/upload-artifact@v4
         with:
           name: Dustbound-PSP
           path: EBOOT.PBP
+
+  release:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish tested alpha
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test -f evidence/v060-build-manifest.json
+          cd dist
+          sha256sum -c SHA256SUMS-0.6.0.txt
+          cd ..
+          if gh release view v0.6.0 >/dev/null 2>&1; then
+            echo 'Release already exists; leaving its artifacts unchanged.'
+          else
+            gh release create v0.6.0 dist/Dustbound-0.6.0-* dist/SHA256SUMS-0.6.0.txt --target "$GITHUB_SHA" --title 'Dustbound 0.6.0 — Copper Road rebuild' --notes-file docs/RELEASE_NOTES.md --prerelease
+          fi

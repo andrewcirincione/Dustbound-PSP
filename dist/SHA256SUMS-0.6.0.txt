@@ -1,0 +1,3 @@
+ea0995ddc13e9c5def13d1e6a31dddd351012364fb8315d5bd7b0b047e5e1e7c  Dustbound-0.6.0-EBOOT.PBP
+b8ea5eecb7f87c669233a6abf1674d04d7d475fe4a422cca2bc680e7fe23ba7b  Dustbound-0.6.0-Evidence.zip
+87a0c0d3645855d40cc17bae30cf36424cd893ce1b2590885ca2e255d47ad142  Dustbound-0.6.0-PSP.zip

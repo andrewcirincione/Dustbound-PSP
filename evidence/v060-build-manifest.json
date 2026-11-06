@@ -1,0 +1,42 @@
+{
+  "version": "0.6.0",
+  "eboot_sha256": "ea0995ddc13e9c5def13d1e6a31dddd351012364fb8315d5bd7b0b047e5e1e7c",
+  "eboot_bytes": 1418194,
+  "prx_sha256": "2e575e7c4457f581274b1b36b01704cfc7e226b01992f0ebff4a148ba08b6809",
+  "save_version": 6,
+  "load_save_versions": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "game_state_bytes": 435556,
+  "legacy_v5_prefix_bytes": 410656,
+  "text_bytes": 1021696,
+  "data_bytes": 3452,
+  "bss_bytes": 4126508,
+  "configured_heap_bytes": 12582912,
+  "screen_types": 33,
+  "guide_chapters": 25,
+  "render_cases": 350,
+  "depth_assertions": 377967,
+  "gear_variants": 2112,
+  "base_gear_designs": 88,
+  "projectile_pool": 24,
+  "expedition_groups": 3,
+  "job_priorities": 4,
+  "landmarks": 8,
+  "controller_suites": [
+    "depth",
+    "emulator",
+    "advanced",
+    "audit",
+    "interior",
+    "travel"
+  ],
+  "combat_recorded_frames": 240,
+  "physical_psp_tested": false,
+  "limitations": "Host timings are not PSP timings; fixtures are not natural campaigns; mechanics remain simplified."
+}

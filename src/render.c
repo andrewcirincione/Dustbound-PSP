@@ -1288,7 +1288,8 @@ static void map_screen(void) {
                       ui.waypoint ? ui.travelY : ui.mapY),
              regionNames[biome(ui.mapX, ui.mapY)]);
     text(31, 222, b, TEAL, 1);
-    text(31,236,"GOLD: LANDMARK / HOLD \006 + \001: GROUP ROUTE",GOLD,1);
+    rect(25, 233, 425, 15, PANEL);
+    text(31, 237, "\002 CLOSE  \010 GUIDE  GOLD: LANDMARK  \006+\001 GROUP", GOLD, 1);
 #undef MAPX
 #undef MAPY
 #undef INMAP

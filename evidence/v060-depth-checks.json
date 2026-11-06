@@ -1,0 +1,260 @@
+[
+  {
+    "eboot_sha256": "ea0995ddc13e9c5def13d1e6a31dddd351012364fb8315d5bd7b0b047e5e1e7c",
+    "version": "0.6.0"
+  },
+  {
+    "capture": "v060-01-title",
+    "screen": 13,
+    "expected": 13,
+    "frame": 38,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v060-02-fresh-frontier",
+    "screen": 0,
+    "expected": 0,
+    "frame": 144,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-03-expedition-leads",
+    "screen": 27,
+    "expected": 27,
+    "frame": 823,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-04-expedition-guide",
+    "screen": 12,
+    "expected": 12,
+    "frame": 847,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-05-sora-wreck",
+    "screen": 17,
+    "expected": 17,
+    "frame": 1414,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "depth_rescued",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v060-06-copper-route",
+    "screen": 5,
+    "expected": 5,
+    "frame": 2709,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-07-sora-home",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3540,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-08-culvert-before",
+    "screen": 31,
+    "expected": 31,
+    "frame": 4392,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "depth_route",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v060-09-bypass-open",
+    "screen": 31,
+    "expected": 31,
+    "frame": 4419,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "depth_route",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v060-10-rell-negotiation",
+    "screen": 17,
+    "expected": 17,
+    "frame": 6210,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "depth_route",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "assert": "money",
+    "actual": [
+      200
+    ],
+    "expected": [
+      200
+    ]
+  },
+  {
+    "capture": "v060-11-truce-outcome",
+    "screen": 27,
+    "expected": 27,
+    "frame": 7155,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-12-faction-consequence",
+    "screen": 20,
+    "expected": 20,
+    "frame": 7864,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-13-captive-care",
+    "screen": 30,
+    "expected": 30,
+    "frame": 8774,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v060-14-escape",
+    "screen": 0,
+    "expected": 0,
+    "frame": 8982,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-15-camp-ledger",
+    "screen": 29,
+    "expected": 29,
+    "frame": 12943,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-16-fueled-recipe",
+    "screen": 9,
+    "expected": 9,
+    "frame": 13366,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-17-layer-preview",
+    "screen": 32,
+    "expected": 32,
+    "frame": 15250,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-18-layer-fitted",
+    "screen": 32,
+    "expected": 32,
+    "frame": 15284,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "depth_order",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "assert": "depth_group",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v060-19-orders",
+    "screen": 28,
+    "expected": 28,
+    "frame": 16511,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-20-orders-guide",
+    "screen": 12,
+    "expected": 12,
+    "frame": 16536,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-21-care",
+    "screen": 30,
+    "expected": 30,
+    "frame": 17794,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v060-22-care-guide",
+    "screen": 12,
+    "expected": 12,
+    "frame": 17826,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "completed": true,
+    "fresh_start": true,
+    "prepared_fixture_slots": [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "physical_escort": true,
+    "bypass_saved_reloaded": true,
+    "truce_paid": true,
+    "captivity_escaped": true,
+    "construction_fuel_recipe": true,
+    "layer_equipped": true,
+    "orders_changed": true,
+    "physical_psp_tested": false
+  }
+]
