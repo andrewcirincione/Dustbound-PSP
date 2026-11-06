@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.5.1"
+#define VERSION "0.5.2"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -117,7 +117,9 @@ enum {
     SCREEN_STORAGE,
     SCREEN_SAVES,
     SCREEN_EQUIPPED,
-    SCREEN_LOOT
+    SCREEN_LOOT,
+    SCREEN_ASSIST,
+    SCREEN_LOG
 };
 enum {
     KEY_UP = 1,
@@ -236,6 +238,8 @@ typedef struct {
     int nameCursor, nameCell, storageIndex, storageSide, shopFilter, saveMode, lootActor, mapZoom, mapTown;
     char createName[16];
     SaveInfo saves[SAVE_SLOTS];
+    int helpSelection, helpScroll, saveReturn, saveExit, contextChoice, contextCount, squadCyclePending;
+    float travelStall, travelLastX, travelLastY;
 } UI;
 typedef struct {
     int held, pressed;
@@ -289,6 +293,20 @@ void gain(Actor *a, int skill, float xp);
 int inventory_count(const Actor *a, int item);
 int inventory_add(Actor *a, int item, int qty);
 int inventory_remove(Actor *a, int item, int qty);
+int inventory_add_owned(Actor *a, int item, int qty, int owner);
+int inventory_remove_slot(Actor *a, int slot, int qty);
+int inventory_input_owner(const Actor *a, int item, int qty);
+int inventory_transfer(Actor *from, Actor *to, int slot, int qty);
+int loot_take(int slot, int all);
+int nearby_service(int role);
+const char *job_status(const Actor *a);
+const char *skill_training(int skill);
+void recipe_status(int recipe, char *out, int size);
+int nearby_station(int type, float radius);
+int build_wood_cost(int choice);
+int research_cost(void);
+int harvest_yield(const Actor *actor);
+int needs_aid(const Actor *actor);
 float encumbrance(const Actor *a);
 float backpack_load_preview(const Actor *a, int item);
 int backpack_load_percent(int item);

@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_audit_v052.py", line 72, in <module>
+    if __name__=='__main__':asyncio.run(main())
+                            ^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_audit_v052.py", line 21, in main
+    await e.key('down',2);await e.key('cross');await e.key('circle');await e.expect('screen',13);await e.expect('selection',2)
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_v052.py", line 48, in key
+    before=(await self.read('selection'))[0];screen=(await self.read('screen'))[0]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_v052.py", line 19, in read
+    raise TimeoutError('PSP telemetry did not complete')
+TimeoutError: PSP telemetry did not complete

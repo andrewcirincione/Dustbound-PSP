@@ -1,3 +1,9 @@
+# 0.5.2 critical review and corrections
+
+[DESIGN_REVIEW_V052.md](DESIGN_REVIEW_V052.md) records the all-screen audit and findings. Inventory and UI navigation now preserve intent; rescue has explicit choices; camp workers fetch, travel, craft and store; selected skills have meaningful bounded effects. Real controller tests include negative paths and the complete cooking loop.
+
+Self-review caught an ownership edge case in crafting: carrying stolen material must not taint a recipe that consumes only clean material. Consumption-order tests now cover that case. Visual review caught a list/ownership overlap and unsupported separators. An overly broad separator edit also changed color bitwise operators and prevented startup; those operators were restored, native rendering passed, and renderer sanitizer coverage was added. Harness fixes handle signed carry-state telemetry, distinguish a depot door from its outdoor interaction, and converge menu selection despite input repeat. Failed runs do not qualify the package.
+
 # 0.5.1 critique and correction record
 
 The complete finding/change/evidence table is in [DESIGN_REVIEW_V051.md](DESIGN_REVIEW_V051.md). This pass corrected low/reversed packs, weapon edge parity, left-facing shoulder geometry, hidden backpack stock, arbitrary bag roles, missing loaded comparisons, contract-map navigation and an overflowing guide page found in the EBOOT. Validation records distinguish incomplete debugger runs from the final successful scenarios.

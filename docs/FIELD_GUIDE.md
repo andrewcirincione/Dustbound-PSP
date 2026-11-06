@@ -1,12 +1,12 @@
-# Dustbound field guide — 0.5.1
+# Dustbound field guide — 0.5.0
 
-The twenty chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
+The nineteen chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
 ## 1. Controls
 
 ![dpad](../assets/ui/dpad.svg) or analog: move in screen direction. ![cross](../assets/ui/cross.svg): nearby interaction. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): expedition menu.
 
-Menus pause the world. ![select](../assets/ui/select.svg) inside a menu opens its guide. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch inventory tabs or guide pages. Move to cancel a work order or travel route.
+Menus pause the world. ![select](../assets/ui/select.svg) inside a menu opens its guide. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch inventory tabs or guide pages. Hold ![l](../assets/ui/l.svg) and tap ![cross](../assets/ui/cross.svg) to cycle nearby targets. Move to cancel work or travel.
 
 ## 2. Your Drifter
 
@@ -28,7 +28,7 @@ Armor protects specific body locations. Piercing weapons ignore some armor; serr
 
 ## 5. Wounds & Rescue
 
-Six body parts, blood and fatigue are separate. Head or chest failure knocks a survivor out. Bleeding can kill an unconscious character. ![triangle](../assets/ui/triangle.svg), Body, ![cross](../assets/ui/cross.svg) treats the selected survivor; ![cross](../assets/ui/cross.svg) near an injured ally treats or carries them.
+Six body parts, blood and fatigue are separate. Head or chest failure knocks a survivor out. Bleeding can kill an unconscious character. ![triangle](../assets/ui/triangle.svg), Body, ![cross](../assets/ui/cross.svg) treats the selected survivor; ![cross](../assets/ui/cross.svg) near an injured ally opens First Aid, Carry and Recover Gear choices.
 
 Dressings stop bleeding and restore some health. Sleeping restores the rest. A doctor charges for full treatment. Lost limbs require a mechanical replacement. Death is permanent; dismiss the body from Squad to free its slot.
 
@@ -40,9 +40,9 @@ An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Sleepin
 
 ## 7. Equipment
 
-Six visible slots: weapon, torso, head, boots, legs and back. The catalog has 2,112 combinations across 88 silhouettes, six materials and four quality grades. Every variant has visible material/quality details and mechanical differences.
+Six slots: weapon, torso, head, boots, legs, back. Pack ![cross](../assets/ui/cross.svg) equips; ![square](../assets/ui/square.svg) passes one to an ally; ![triangle](../assets/ui/triangle.svg) switches carried/worn gear. ![cross](../assets/ui/cross.svg) on worn gear removes it if space allows. WORN / TRY ON compares fit and actual bonuses.
 
-Pack ![cross](../assets/ui/cross.svg) equips or uses; ![square](../assets/ui/square.svg) passes one item to an ally. ![triangle](../assets/ui/triangle.svg) switches between carried items and worn equipment. Highlight gear to compare WORN and TRY ON, stat changes and effects; ![cross](../assets/ui/cross.svg) on worn gear removes it if space allows. Weight above capacity slows movement.
+Plate protects more but slows movement and hinders stealth. Cloth is light; travel gear favors weather or movement. Higher grades improve the same role. Torso armor covers chest/arms; headgear covers head; legs gain leg armor plus half boot armor. MOVE% is the worn speed bonus. Weight above capacity slows you further.
 
 ## 8. Merchants
 
@@ -66,13 +66,13 @@ Stand close to the station. The recipe screen lists costs and unlocks. Research 
 
 Build outside settlement boundaries. Choose a structure and place it beside the selected character. Buildings cannot overlap; materials are charged only after validation.
 
-Shelters heal; farms need water and yield grain; wind pumps irrigate nearby crops. Forges and benches unlock production. Depots hold sixteen item stacks of any type. ![cross](../assets/ui/cross.svg) opens storage; ![horizontal](../assets/ui/horizontal.svg) switches deposit/withdraw. Camps attract raiders, so keep medicine and a retreat route.
+Shelters heal; farms need water and yield grain; wind pumps irrigate nearby crops. Forges and benches unlock production. Depots hold sixteen clean stacks. ![cross](../assets/ui/cross.svg) opens storage; ![horizontal](../assets/ui/horizontal.svg) switches sides; ![square](../assets/ui/square.svg) moves a full stack. Camps attract raiders, so keep medicine and a retreat route.
 
 ## 12. Squad Jobs
 
 ![triangle](../assets/ui/triangle.svg), Squad: choose a survivor with ![horizontal](../assets/ui/horizontal.svg), then assign a job with ![cross](../assets/ui/cross.svg). Follow trails the selected leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats injured allies.
 
-Smelt and Cook use nearby stations and can collect ingredients from a nearby depot. Haul moves pack resources into storage. Each worker needs supplies and food. Select a worker and move to interrupt their current action. Up to eight living members may join.
+Smelt and Cook use nearby stations and can collect ingredients from a nearby depot. Workers fetch water and ingredients, walk to stations, and store output; cooks keep two rations. Haul deposits raw cargo. Job status explains delays. Select a worker and move to interrupt their current action. Up to eight living members may join.
 
 ## 13. Crime & Stealth
 
@@ -90,13 +90,13 @@ Contracts raise standing; theft lowers it. The Factions ledger shows specialties
 
 Marshals offer delivery, supply, hunt and relic contracts. Accept through dialogue; track objectives in the Journal. Deliveries require reaching another town. Supplies require the listed items. Hunts count victories after acceptance.
 
-Return to the issuing settlement and claim in the Journal with ![cross](../assets/ui/cross.svg). Rewards grant silver, reputation and experience. ![square](../assets/ui/square.svg) in the Journal locates an active contract on the atlas; it does not replace an existing route. Choose travel there when ready. Supply descriptions show held/needed counts. Contracts persist in saves. Complete contracts, research relic technology and survey the frontier to advance the expedition legacy.
+Return to the issuing settlement and claim in the Journal with ![cross](../assets/ui/cross.svg). Rewards grant silver, reputation and experience. Contracts persist in saves. Complete contracts, research relic technology and survey the frontier to advance the expedition legacy. ![square](../assets/ui/square.svg) locates an active contract on the atlas; ![cross](../assets/ui/cross.svg) there starts travel when ready.
 
 ## 16. Saves
 
-Six manual slots plus autosave. ![start](../assets/ui/start.svg), Save or Load opens a ledger with name, day, party size and silver. Choose a slot; ![cross](../assets/ui/cross.svg) asks for confirmation. Save-and-title uses the selected manual slot.
+Six manual slots plus autosave. ![start](../assets/ui/start.svg), Save or Load opens a ledger with name, day, party size and silver. Choose a slot; ![cross](../assets/ui/cross.svg) asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.
 
-Saves use version, size and checksum validation and preserve a previous .bak file. Invalid files never replace your running expedition. Older saves through 0.4.1 migrate on load. Back them up before overwriting. Autosave is slot zero and is never used for manual saving.
+Saves use version, size and checksum validation and preserve a previous .bak file. Invalid files never replace your running expedition. Older saves through 0.5.1 remain loadable. Back them up before overwriting. Autosave is slot zero and is never used for manual saving.
 
 ## 17. Weather
 
@@ -118,26 +118,10 @@ Counters open local trade. Beds cost 25 silver in town; owned beds are free. Wor
 
 Save games preserve the building and indoor position. Switching squad members leaves the room. Interiors shelter you from weather; hostile occupants refuse entry.
 
-
 ## 20. Backpacks
 
-Traders stock two worn Scrap examples of each **travel pack, medicine roll, ore harness and bedroll pack** daily. Use the BACKPACKS market filter and compare WORN / TRY ON before buying. Other back equipment rotates with regional stock. ![select](../assets/ui/select.svg) from that filter opens this chapter.
+Buy travel packs, medicine rolls, ore harnesses and bedroll packs from the BACKPACKS shop tab. Preview before buying. Other back gear rotates daily.
 
-| Pack | Extra allowance, worn grade | Carried cargo weight counted | Melee/defence penalty | Purpose |
-|---|---:|---:|---:|---|
-| Travel pack | +16 | 80% | −2 | Light general travel |
-| Medicine roll | +10 | 85% | 0 | First-aid improvement |
-| Ore harness | +36 | 60% | −7 | Heavy salvage; large stealth penalty |
-| Bedroll pack | +24 | 70% | −4 | Expedition cargo and resting recovery |
+CARGO: travel 80%, medicine 85%, ore 60%, bedroll 70% of carried weight. Worn gear and carried people keep full weight. CARRY adds load allowance; LOAD previews a swap. All packs use the same 24 inventory slots.
 
-CARRY is extra weight allowance. LOAD predicts total effective load after swapping, including the old bag returning to inventory. CARGO is the percentage of carried inventory weight counted while the bag is worn. Equipped gear and a carried person always retain full weight. WT is the bag's empty weight; FIGHT and SNEAK show combat and stealth changes. Higher quality adds allowance to storage designs; materials and grades also change price and perk potency.
-
-All bags use the same 24 inventory slots. There are no nested bag inventories or bag-specific stack limits. A bedroll pack improves recovery while resting; it does not place a bed. Unequipped bags give no equipment bonuses. Keep money for supplies and a safe retreat, rather than buying every bag at once.
-
-0.5.1 keeps the v5 save layout and old item IDs. Older v5 markets receive the four affordable pack choices once. Later reloads preserve sold-out quantities. Existing back gear adopts the new role stats.
-
-## Clothing protection and fit
-
-Plate protects better but is heavy, slows movement and hinders stealth. Robes and wraps have low protection and low weight; travel clothes favor weather resistance, mobility or recovery. Material denotes reinforcement/finish, not a second armor layer. Higher quality preserves the family role and improves protection without increasing weight.
-
-WORN / TRY ON shows armor, weight, actual movement percentage, stealth and the relevant passive effect. MOVE% is an additive equipment modifier to the movement multiplier; excess load, wounds, hunger and fatigue can slow you further. Chest and arms use torso armor; head uses headgear; each leg uses leg armor plus half boot armor. There are no separate cut/blunt coverage layers. An item in your pack gives no worn bonus.
+FIGHT reduces melee attack/defence: travel -2, medicine 0, ore -7, bedroll -4. Bulky packs hurt stealth. Medicine aids first aid; bedrolls improve rest but are not beds. Unworn packs give no bonus.

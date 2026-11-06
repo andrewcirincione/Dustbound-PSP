@@ -106,7 +106,7 @@ const char *context_action(void) {
         return "ENTER";
     if (ui.contextKind == 0) {
         Actor *b = &g.actors[n];
-        return b->squad                        ? "FIRST AID / CARRY"
+        return b->squad                        ? "RESCUE OPTIONS"
                : b->dead || b->unconscious > 0 ? "LOOT"
                : g.actors[g.selected].sneaking ? "PICKPOCKET"
                                                : "TALK";
@@ -502,4 +502,159 @@ void frontier_tick(float dt) {
             }
         }
     }
+}
+
+int nearby_service(int role) {
+    Actor *a = &g.actors[g.selected];
+    if (!conscious(a) || actor_inside(a))
+        return -1;
+    int best = -1;
+    float d = TALK_REACH;
+    for (int i = 0; i < g.actorCount; i++) {
+        Actor *b = &g.actors[i];
+        float dd = distance(a->x, a->y, b->x, b->y);
+        if (!b->squad && conscious(b) && npc_role(b) == role && dd <= d && g.rep[b->faction] >= -25) {
+            best = i;
+            d = dd;
+        }
+    }
+    return best;
+}
+int loot_take(int slot, int all) {
+    Actor *a = &g.actors[g.selected];
+    if (ui.lootActor < 0 || ui.lootActor >= g.actorCount || slot < 0 || slot >= PACK + GEARS)
+        return 0;
+    Actor *b = &g.actors[ui.lootActor];
+    if (!conscious(a) || (!b->dead && b->unconscious <= 0) || actor_inside(a) != actor_inside(b) ||
+        distance(a->x, a->y, b->x, b->y) > TALK_REACH) {
+        log_msg("Salvage needs a fallen target within reach.");
+        return 0;
+    }
+    int it = slot < PACK ? b->pack[slot].item : b->gear[slot - PACK];
+    int qty = slot < PACK && all ? b->pack[slot].qty : 1;
+    int owner = slot < PACK ? b->stolen[slot] : b->gearStolen[slot - PACK];
+    int theft = !b->squad && b->faction != HOSTILE && b->faction != WILDLIFE;
+    if (theft)
+        owner = b->faction;
+    if (!it || !inventory_add_owned(a, it, qty, owner)) {
+        log_msg("No item, or no room for that stack.");
+        return 0;
+    }
+    if (slot < PACK)
+        inventory_remove_slot(b, slot, qty);
+    else {
+        b->gear[slot - PACK] = 0;
+        b->gearStolen[slot - PACK] = 0;
+    }
+    if (theft) {
+        for (int i = 0; i < g.actorCount; i++) {
+            Actor *w = &g.actors[i];
+            if (!w->squad && w->faction == b->faction && conscious(w) &&
+                distance(a->x, a->y, w->x, w->y) < (a->sneaking ? 3 : 6)) {
+                a->bounty += 20;
+                g.rep[b->faction] -= 4;
+                log_msg("Witnessed looting! Bounty +20; stolen goods stay marked.");
+                return 1;
+            }
+        }
+    }
+    log_msg("Took %d %s%s.", qty, itemDefs[it].name, owner ? " (stolen)" : "");
+    return 1;
+}
+const char *skill_training(int s) {
+    static const char *text[SKILLS] = {
+        "Travel on foot. Higher athletics increases walking speed.",
+        "Carry weight and mine. Strength raises load allowance and handles heavy weapons.",
+        "Land weapon hits. Dexterity improves attack timing.",
+        "Fight with melee weapons. Practice improves your chance to hit.",
+        "Face melee attacks. Defence improves blocks; heavy packs penalize it.",
+        "Survive blows. Each toughness level reduces incoming damage by 0.2%, up to 20%.",
+        "Evade attacks while unarmed. Dodge replaces weapon defence when your weapon slot is empty.",
+        "Fight with an empty weapon slot. Martial arts improves unarmed attacks.",
+        "Walk while sneaking. Stealth reduces detection; bulky gear penalizes it.",
+        "Pick pockets and steal salvage. Failure can trigger bounties and guards.",
+        "Open locked salvage with tools. Failed attempts still teach you.",
+        "Treat injuries with field dressings. Medicine restores more limb health.",
+        "Mine ore and gather supplies. Work completes only within reach.",
+        "Water and harvest crops. Every 30 farming levels adds one grain per harvest.",
+        "Cook at a campfire. Every 35 cooking levels adds one ration per batch.",
+        "Smelt and forge. Smithing unlocks higher equipment quality.",
+        "Build and make prosthetics. Every 30 engineering levels saves one timber per building.",
+        "Research at a bench. Every 5 science levels reduces research silver cost by 1%.",
+        "Land ranged shots. Crossbows improves accuracy; bring matching ammunition.",
+        "Discover settlements and finish contracts. Perception improves ranged accuracy."};
+    return s >= 0 && s < SKILLS ? text[s] : "";
+}
+int needs_aid(const Actor *a) {
+    if (a->dead)
+        return 0;
+    if (a->bleed > .1f)
+        return 1;
+    for (int i = 0; i < LIMBS; i++)
+        if (a->health[i] < 60 && (!(a->lostMask & (1 << i)) || (a->prostheticMask & (1 << i))))
+            return 1;
+    return 0;
+}
+const char *job_status(const Actor *a) {
+    if (a->dead)
+        return "DEAD - recover equipment or dismiss";
+    if (a->prisonTime > 0)
+        return "IN CUSTODY - settle bail or escape";
+    if (a->unconscious > 0)
+        return "UNCONSCIOUS - needs rescue";
+    if (actor_inside(a))
+        return "INDOORS - jobs resume outside";
+    if (a->target >= 0 && a->autoattack)
+        return "FIGHTING - work waits for safety";
+    if (a->taskKind == 3)
+        return "RESTING - move to wake";
+    if (a->taskKind)
+        return "WORKING - moving cancels this task";
+    if (a->job == JOB_HOLD)
+        return "HOLDING - defends if combat stance is on";
+    if (a->job == JOB_FOLLOW)
+        return a == &g.actors[g.selected] ? "LEADING - direct movement" : "FOLLOWING selected squad member";
+    if (a->job == JOB_MEDIC) {
+        if (!inventory_count(a, MEDKIT))
+            return "BLOCKED - no field dressings";
+        for (int j = 0; j < g.actorCount; j++) {
+            Actor *b = &g.actors[j];
+            if (b->squad && !b->dead && needs_aid(b) && actor_inside(a) == actor_inside(b))
+                return "SEEKING injured squad member";
+        }
+        return "READY - watching for serious injuries";
+    }
+    if (a->job == JOB_MINE) {
+        for (int i = 0; i < g.nodeCount; i++)
+            if (g.nodes[i].type <= NODE_COPPER && g.nodes[i].remaining &&
+                distance(a->x, a->y, g.nodes[i].x, g.nodes[i].y) < 12) {
+                Actor copy = *a;
+                return inventory_add(&copy, g.nodes[i].type == NODE_ORE ? ORE : COPPER, 1)
+                           ? "SEEKING ore within 12 paces"
+                           : "BLOCKED - pack full; unload ore";
+            }
+        return "BLOCKED - no ore within 12 paces";
+    }
+    int type = a->job == JOB_FARM    ? FARM
+               : a->job == JOB_SMELT ? FORGE
+               : a->job == JOB_COOK  ? CAMPFIRE
+                                     : STORE;
+    int found = 0;
+    for (int i = 0; i < g.buildingCount; i++)
+        if (g.buildings[i].type == type && distance(a->x, a->y, g.buildings[i].x, g.buildings[i].y) < 15)
+            found = 1;
+    if (!found)
+        return "BLOCKED - no required station within 15 paces";
+    if (a->job == JOB_FARM)
+        return inventory_count(a, WATER) ? "TENDING nearby farm; waiting for harvest"
+                                         : "NEEDS WATER unless rain irrigates the field";
+    if (a->job == JOB_HAUL)
+        return "HAULING raw materials; supplies stay in pack";
+    if (a->job == JOB_SMELT && inventory_count(a, ORE) < 3)
+        return "FETCHING 3 ore; stock the nearby depot";
+    if (a->job == JOB_COOK && inventory_count(a, WATER) < 1)
+        return "FETCHING water; stock the nearby depot";
+    if (a->job == JOB_COOK && inventory_count(a, GRAIN) < 3 && inventory_count(a, MEAT) < 2)
+        return "FETCHING grain or meat; stock the depot";
+    return "WORKING at station; unload finished goods";
 }

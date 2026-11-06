@@ -237,7 +237,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "\011 or analog: move in screen direction. \001: nearby interaction. \004: pack. \003: "
     "fight/passive. \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
     "expedition menu.\nMenus pause the world. \010 inside a menu opens its guide. \005/\006 switch inventory "
-    "tabs or guide pages. Move to cancel a work order or travel route.",
+    "tabs or guide pages. Hold \005 and tap \001 to cycle nearby targets. Move to cancel work or travel.",
     "New expedition opens character creation. Choose a name, origin, ancestry, body, skin, hairstyle, hair "
     "color, beard and scars. \014 adjusts each choice; \001 edits your name or begins.\nOrigins change "
     "equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Ancestry "
@@ -257,7 +257,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "and use terrain.",
     "Six body parts, blood and fatigue are separate. Head or chest failure knocks a survivor out. Bleeding "
     "can kill an unconscious character. \004, Body, \001 treats the selected survivor; \001 near an injured "
-    "ally treats or carries them.\nDressings stop bleeding and restore some health. Sleeping restores the "
+    "ally opens First Aid, Carry and Recover Gear choices.\nDressings stop bleeding and restore some health. Sleeping restores the "
     "rest. A doctor charges for full treatment. Lost limbs require a mechanical replacement. Death is "
     "permanent; dismiss the body from Squad to free its slot.",
     "Rations are eaten below forty hunger: first your pack, then a companion backpack or owned depot within "
@@ -292,12 +292,12 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Build outside settlement boundaries. Choose a structure and place it beside the selected character. "
     "Buildings cannot overlap; materials are charged only after validation.\nShelters heal; farms need water "
     "and yield grain; wind pumps irrigate nearby crops. Forges and benches unlock production. Depots hold "
-    "sixteen item stacks of any type. \001 opens storage; \014 switches deposit/withdraw. Camps attract "
+    "sixteen clean stacks. \001 opens storage; \014 switches sides; \003 moves a full stack. Camps attract "
     "raiders, so keep medicine and a retreat route.",
     "\004, Squad: choose a survivor with \014, then assign a job with \001. Follow trails the "
     "selected leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats "
     "injured allies.\nSmelt and Cook use nearby stations and can collect ingredients from a nearby depot. "
-    "Haul moves pack resources into storage. Each worker needs supplies and food. Select a worker and move "
+    "Workers fetch water and ingredients, walk to stations, and store output; cooks keep two rations. Haul deposits raw cargo. Job status explains delays. Select a worker and move "
     "to interrupt their current action. Up to eight living members may join.",
     "\002 sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and \001 near a "
     "civilian to attempt pickpocketing. Owned salvage also counts as theft; locked containers require tools "
@@ -316,9 +316,9 @@ const char *guideBodies[GUIDE_PAGES] = {
     "research relic technology and survey the frontier to advance the expedition legacy. \003 locates an "
     "active contract on the atlas; \001 there starts travel when ready.",
     "Six manual slots plus autosave. \007, Save or Load opens a ledger with name, day, party size and "
-    "silver. Choose a slot; \001 asks for confirmation. Save-and-title uses the selected manual slot.\nSaves "
+    "silver. Choose a slot; \001 asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.\nSaves "
     "use version, size and checksum validation and preserve a previous .bak file. Invalid files never "
-    "replace your running expedition. Older saves through 0.4.1 migrate on load. Back them up before "
+    "replace your running expedition. Older saves through 0.5.1 remain loadable. Back them up before "
     "overwriting. "
     "Autosave is slot zero and is never used for manual saving.",
     "Dust, rain, acid mist and snow change visibility, terrain colors and survival pressure. Storms reduce "

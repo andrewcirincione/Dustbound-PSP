@@ -117,18 +117,47 @@ int inventory_count(const Actor *a, int item) {
             n += a->pack[i].qty;
     return n;
 }
-int inventory_add(Actor *a, int item, int qty) {
-    if (item <= 0 || item >= ITEMS || qty <= 0)
+int inventory_add_owned(Actor *a, int item, int qty, int owner) {
+    if (item <= 0 || item >= ITEMS || qty <= 0 || qty > 999 || owner < 0 || owner >= FACTIONS)
         return 0;
     for (int i = 0; i < PACK; i++)
-        if (a->pack[i].item == item && a->pack[i].qty + qty <= 999) {
+        if (a->pack[i].item == item && a->stolen[i] == owner && a->pack[i].qty + qty <= 999) {
             a->pack[i].qty += qty;
             return 1;
         }
     for (int i = 0; i < PACK; i++)
         if (!a->pack[i].item) {
             a->pack[i] = (Stack){item, qty};
+            a->stolen[i] = owner;
             return 1;
+        }
+    return 0;
+}
+int inventory_add(Actor *a, int item, int qty) { return inventory_add_owned(a, item, qty, 0); }
+int inventory_remove_slot(Actor *a, int slot, int qty) {
+    if (slot < 0 || slot >= PACK || qty <= 0 || !a->pack[slot].item || a->pack[slot].qty < qty)
+        return 0;
+    a->pack[slot].qty -= qty;
+    if (!a->pack[slot].qty) {
+        a->pack[slot].item = 0;
+        a->stolen[slot] = 0;
+    }
+    return 1;
+}
+int inventory_transfer(Actor *from, Actor *to, int slot, int qty) {
+    if (from == to || slot < 0 || slot >= PACK || qty <= 0 || from->pack[slot].qty < qty)
+        return 0;
+    if (!inventory_add_owned(to, from->pack[slot].item, qty, from->stolen[slot]))
+        return 0;
+    return inventory_remove_slot(from, slot, qty);
+}
+int inventory_input_owner(const Actor *a, int item, int qty) {
+    for (int i = 0; i < PACK && qty > 0; i++)
+        if (a->pack[i].item == item) {
+            int taken = a->pack[i].qty < qty ? a->pack[i].qty : qty;
+            if (taken && a->stolen[i])
+                return a->stolen[i];
+            qty -= taken;
         }
     return 0;
 }
@@ -436,7 +465,7 @@ void strike(int ai, int bi) {
     if (distance(a->x, a->y, b->x, b->y) > (w ? itemDefs[w].range : 1.55f))
         return;
     if (ranged && !inventory_count(a, gear_family(w) >= 29 ? CARTRIDGE : BOLTS)) {
-        if (inventory_add(a, w, 1)) {
+        if (inventory_add_owned(a, w, 1, a->gearStolen[0])) {
             a->gear[0] = NONE;
             a->gearStolen[0] = 0;
         }
@@ -478,6 +507,8 @@ static void resolve_strike(int ai, int bi) {
     for (int e = 0; e < GEARS; e++)
         if (itemDefs[b->gear[e]].effect == 4)
             def += itemDefs[b->gear[e]].potency;
+    if (ranged)
+        atk += level(a, PERCEPTION) * .15f;
     if (ranged && g.weather)
         atk -= 7;
     if (a->health[LARM] < 30)
@@ -506,7 +537,7 @@ static void resolve_strike(int ai, int bi) {
     damage -= fmaxf(0, armor_at(b, limb) - itemDefs[w].penetration) * .65f;
     if (itemDefs[w].effect == 3)
         b->stun = .3f + itemDefs[w].potency * .03f;
-    damage = fmaxf(2, damage);
+    damage = fmaxf(2, damage * (1 - level(b, TOUGHNESS) * .002f));
     if (a->health[RARM] < 20)
         damage *= .65f;
     if (a->hunger < 15)
@@ -514,6 +545,7 @@ static void resolve_strike(int ai, int bi) {
     if (distance(b->x, b->y, g.actors[g.selected].x, g.actors[g.selected].y) < 12)
         audio_event(2);
     b->health[limb] -= damage;
+    b->taskKind = 0; /* A hit interrupts resting and gathering even in passive stance. */
     b->impactLimb = limb;
     b->impactDamage = (int)damage;
     b->impactKind = 1;
@@ -559,11 +591,12 @@ static void resolve_strike(int ai, int bi) {
             log_msg("%s is unconscious.", b->name);
     }
 }
-int heal_actor(int mi, int pi) {
+static int heal_from(int mi, int pi, int kitSlot) {
     if (mi < 0 || pi < 0 || mi >= g.actorCount || pi >= g.actorCount)
         return 0;
     Actor *m = &g.actors[mi], *p = &g.actors[pi];
-    if (!conscious(m) || p->dead || distance(m->x, m->y, p->x, p->y) > 3)
+    if (!conscious(m) || p->dead || actor_inside(m) != actor_inside(p) ||
+        distance(m->x, m->y, p->x, p->y) > TALK_REACH)
         return 0;
     int hurt = p->bleed > .01f;
     for (int j = 0; j < LIMBS; j++)
@@ -571,7 +604,9 @@ int heal_actor(int mi, int pi) {
             hurt = 1;
     if (!hurt)
         return 0;
-    if (!inventory_remove(m, MEDKIT, 1)) {
+    if (kitSlot < 0
+            ? !inventory_remove(m, MEDKIT, 1)
+            : (kitSlot >= PACK || m->pack[kitSlot].item != MEDKIT || !inventory_remove_slot(m, kitSlot, 1))) {
         if (mi == g.selected)
             log_msg("No field dressings.");
         return 0;
@@ -585,6 +620,7 @@ int heal_actor(int mi, int pi) {
     log_msg("%s bandaged %s. Bleeding stopped.", m->name, p->name);
     return 1;
 }
+int heal_actor(int mi, int pi) { return heal_from(mi, pi, -1); }
 void use_item(int s) {
     Actor *a = &g.actors[g.selected];
     if (s < 0 || s >= PACK || !a->pack[s].item)
@@ -593,41 +629,37 @@ void use_item(int s) {
     if (itemDefs[it].slot >= 0) {
         int e = itemDefs[it].slot, old = a->gear[e], owner = a->stolen[s], oldOwner = a->gearStolen[e];
         Actor backup = *a;
-        inventory_remove(a, it, 1);
-        if (old && !inventory_add(a, old, 1)) {
+        inventory_remove_slot(a, s, 1);
+        if (old && !inventory_add_owned(a, old, 1, oldOwner)) {
             *a = backup;
             log_msg("Pack full. Cannot swap equipment.");
             return;
         }
         a->gear[e] = it;
         a->gearStolen[e] = owner;
-        if (old && oldOwner)
-            for (int j = 0; j < PACK; j++)
-                if (a->pack[j].item == old)
-                    a->stolen[j] = oldOwner;
         log_msg("Equipped %s.", itemDefs[it].name);
     } else if (it == RATION || it == WATER) {
-        inventory_remove(a, it, 1);
+        inventory_remove_slot(a, s, 1);
         a->hunger = fminf(100, a->hunger + (it == RATION ? 48 : 12));
         log_msg("Used %s.", itemDefs[it].name);
     } else if (it == TONIC) {
-        inventory_remove(a, TONIC, 1);
+        inventory_remove_slot(a, s, 1);
         a->blood = fminf(100, a->blood + 35);
         a->exposure = fmaxf(0, a->exposure - 60);
         log_msg("Tonic restores blood and warmth.");
     } else if (it == MAPSCROLL) {
-        inventory_remove(a, MAPSCROLL, 1);
+        inventory_remove_slot(a, s, 1);
         memset(g.seen, 255, sizeof(g.seen));
         for (int t = 0; t < TOWNS; t++)
             g.discovered[t] = 1;
         log_msg("Survey chart reveals the frontier.");
     } else if (it == MEDKIT)
-        heal_actor(g.selected, g.selected);
+        heal_from(g.selected, g.selected, s);
     else if (it == ARM || it == LEG) {
         int first = it == ARM ? LARM : LLEG, done = 0;
         for (int i = first; i < first + 2; i++)
             if ((a->lostMask & (1 << i)) && !(a->prostheticMask & (1 << i))) {
-                inventory_remove(a, it, 1);
+                inventory_remove_slot(a, s, 1);
                 a->prostheticMask |= 1 << i;
                 a->health[i] = 100;
                 done = 1;
@@ -670,13 +702,17 @@ int sell_item(int town, int s) {
     if (town < 0 || town >= TOWNS || s < 0 || s >= PACK || !a->pack[s].item)
         return 0;
     int it = a->pack[s].item, price = item_price(town, it, 1);
+    if (g.rep[g.townOwner[town]] < -25) {
+        log_msg("This faction refuses to trade with you.");
+        return 0;
+    }
     if (a->stolen[s] && a->stolen[s] == g.townOwner[town]) {
         g.rep[a->stolen[s]] -= 8;
         a->bounty += 40;
         log_msg("Recognized stolen goods. The trader alerts guards.");
         return 0;
     }
-    inventory_remove(a, it, 1);
+    inventory_remove_slot(a, s, 1);
     g.money += price;
     g.stock[town][it]++;
     log_msg("Sold %s for %d silver.", itemDefs[it].name, price);
@@ -710,6 +746,15 @@ int recruit_actor(int n) {
 static const int buildTypes[] = {CAMPFIRE, BED, FARM, FORGE, BENCH, WALL, STORE, WINDMILL};
 static const int buildWood[] = {3, 5, 6, 8, 6, 3, 5, 8}, buildIron[] = {0, 0, 0, 3, 1, 0, 0, 3},
                  buildTech[] = {0, 0, 0, 0, 0, 0, 0, 1};
+int build_wood_cost(int c) {
+    return c >= 0 && c < buildCount
+               ? (int)fmaxf(1, buildWood[c] - level(&g.actors[g.selected], ENGINEERING) / 30)
+               : 0;
+}
+int harvest_yield(const Actor *a) { return 5 + level(a, FARMING) / 30; }
+int research_cost(void) {
+    return 150 * (g.tech + 1) * (100 - level(&g.actors[g.selected], SCIENCE) / 5) / 100;
+}
 int build_structure(int c) {
     Actor *a = &g.actors[g.selected];
     if (c < 0 || c >= buildCount)
@@ -726,8 +771,8 @@ int build_structure(int c) {
         log_msg("Research level %d required.", buildTech[c]);
         return 0;
     }
-    if (inventory_count(a, WOOD) < buildWood[c] || inventory_count(a, IRONBAR) < buildIron[c]) {
-        log_msg("Need %d timber and %d iron bars.", buildWood[c], buildIron[c]);
+    if (inventory_count(a, WOOD) < build_wood_cost(c) || inventory_count(a, IRONBAR) < buildIron[c]) {
+        log_msg("Need %d timber and %d iron bars.", build_wood_cost(c), buildIron[c]);
         return 0;
     }
     float x = a->x + 1.9f, y = a->y;
@@ -740,7 +785,7 @@ int build_structure(int c) {
             log_msg("Too close to another structure.");
             return 0;
         }
-    inventory_remove(a, WOOD, buildWood[c]);
+    inventory_remove(a, WOOD, build_wood_cost(c));
     if (buildIron[c])
         inventory_remove(a, IRONBAR, buildIron[c]);
     add_build(x, y, buildTypes[c], FREE, g.selected);
@@ -768,7 +813,15 @@ static const Recipe recipes[] = {{IRONBAR, 1, ORE, 3, NONE, 0, FORGE, SMITHING, 
 int nearby_station(int type, float r) {
     if (g.interiorBuilding && g.selected == g.interiorActor) {
         int id = g.interiorBuilding - 1;
-        return g.buildings[id].type == type ? id : -1;
+        int c = interior_context();
+        InteriorProp props[8];
+        interior_props(id, props);
+        int action = type == FORGE   ? ROOM_FORGE
+                     : type == BENCH ? ROOM_RESEARCH
+                     : type == BED   ? ROOM_REST
+                     : type == STORE ? ROOM_STORAGE
+                                     : ROOM_NONE;
+        return c >= 0 && action && props[c].action == action ? id : -1;
     }
     Actor *a = &g.actors[g.selected];
     for (int i = 0; i < g.buildingCount; i++)
@@ -785,13 +838,13 @@ int craft_item(int c) {
         log_msg("Research level %d required.", r->tech);
         return 0;
     }
-    if (nearby_station(r->station, 5) < 0) {
+    if (nearby_station(r->station, 1.7f) < 0) {
         log_msg("Stand near a %s.", r->station == FORGE      ? "forge"
                                     : r->station == CAMPFIRE ? "campfire"
                                                              : "research bench");
         return 0;
     }
-    int in1 = r->in1, n1 = r->n1;
+    int in1 = r->in1, n1 = r->n1, qty = r->qty + (c == 1 ? level(a, COOKING) / 35 : 0);
     if (c == 1 && inventory_count(a, GRAIN) < n1) {
         in1 = MEAT;
         n1 = 2;
@@ -800,19 +853,48 @@ int craft_item(int c) {
         log_msg("Need %d %s + %d %s.", n1, itemDefs[in1].name, r->n2, itemDefs[r->in2].name);
         return 0;
     }
-    Stack old[PACK];
-    memcpy(old, a->pack, sizeof(old));
+    Actor old = *a;
+    int owner = inventory_input_owner(a, in1, n1);
+    if (!owner && r->in2)
+        owner = inventory_input_owner(a, r->in2, r->n2);
     inventory_remove(a, in1, n1);
     if (r->in2)
         inventory_remove(a, r->in2, r->n2);
-    if (!inventory_add(a, r->output, r->qty)) {
-        memcpy(a->pack, old, sizeof(old));
+    if (!inventory_add_owned(a, r->output, qty, owner)) {
+        *a = old;
         log_msg("Pack full.");
         return 0;
     }
     gain(a, r->skill, 35);
-    log_msg("Crafted %d %s.", r->qty, itemDefs[r->output].name);
+    log_msg("Crafted %d %s.", qty, itemDefs[r->output].name);
     return 1;
+}
+void recipe_status(int c, char *out, int size) {
+    const Recipe *r = &recipes[c];
+    Actor *a = &g.actors[g.selected];
+    int in = r->in1, need = r->n1;
+    if (c == 1 && inventory_count(a, GRAIN) < need) {
+        in = MEAT;
+        need = 2;
+    }
+    if (c == 1) {
+        snprintf(out, size, "MAKES %d / GRAIN %d/3 OR MEAT %d/2 + WATER %d/1 / %s",
+                 r->qty + level(a, COOKING) / 35, inventory_count(a, GRAIN), inventory_count(a, MEAT),
+                 inventory_count(a, WATER),
+                 nearby_station(CAMPFIRE, 1.7f) >= 0 ? "CAMPFIRE READY" : "NEED NEARBY CAMPFIRE");
+        return;
+    }
+    char second[64] = "";
+    if (r->in2)
+        snprintf(second, sizeof(second), " + %s %d/%d", itemDefs[r->in2].name, inventory_count(a, r->in2),
+                 r->n2);
+    snprintf(out, size, "MAKES %d / %s %d/%d%s / TIER %d/%d / %s",
+             r->qty + (c == 1 ? level(a, COOKING) / 35 : 0), itemDefs[in].name, inventory_count(a, in), need,
+             second, g.tech, r->tech,
+             nearby_station(r->station, 1.7f) >= 0 ? "STATION READY"
+             : r->station == FORGE                 ? "NEED NEARBY FORGE"
+             : r->station == CAMPFIRE              ? "NEED NEARBY CAMPFIRE"
+                                                   : "NEED NEARBY BENCH");
 }
 int research_tech(void) {
     Actor *a = &g.actors[g.selected];
@@ -820,32 +902,51 @@ int research_tech(void) {
         log_msg("All three research tiers completed.");
         return 0;
     }
-    if (nearby_station(BENCH, 5) < 0) {
+    if (nearby_station(BENCH, 1.7f) < 0) {
         log_msg("Stand near a research bench.");
         return 0;
     }
-    int need = g.tech + 1;
-    if (g.money < 150 * need || inventory_count(a, RELIC) < 1) {
-        log_msg("Need 1 relic and %d silver.", 150 * need);
+    int cost = research_cost();
+    if (g.money < cost || inventory_count(a, RELIC) < 1) {
+        log_msg("Need 1 relic and %d silver.", cost);
         return 0;
     }
     inventory_remove(a, RELIC, 1);
-    g.money -= 150 * need;
+    g.money -= cost;
     g.tech++;
     gain(a, SCIENCE, 120);
     log_msg("Research tier %d completed.", g.tech);
     return 1;
 }
 
+typedef struct {
+    int kind, index;
+    float score;
+} ContextCandidate;
+static ContextCandidate candidates[64];
+static void add_context(int kind, int index, float d, float reach) {
+    if (d >= 4.5f)
+        return;
+    float score = d + (d > reach ? 10 : 0);
+    int count = ui.contextCount, pos = count < 64 ? count : 63;
+    if (count == 64 && score >= candidates[63].score)
+        return;
+    while (pos > 0 && score < candidates[pos - 1].score) {
+        candidates[pos] = candidates[pos - 1];
+        pos--;
+    }
+    candidates[pos] = (ContextCandidate){kind, index, score};
+    if (count < 64)
+        ui.contextCount++;
+}
 void find_context(void) {
     Actor *a = &g.actors[g.selected];
-    float best = 4.5f;
+    ui.contextCount = 0;
     ui.contextKind = ui.contextIndex = -1;
     for (int i = 0; i < g.actorCount; i++) {
         Actor *b = &g.actors[i];
-        if (i == g.selected || !b->active)
+        if (i == g.selected || !b->active || b->carriedBy >= 0 || actor_inside(a) != actor_inside(b))
             continue;
-        /* Healthy followers must not intercept nearby loot or workstations. */
         if (b->squad && !b->dead && b->unconscious <= 0) {
             int hurt = b->bleed > .01f;
             for (int j = 0; j < LIMBS; j++)
@@ -855,45 +956,25 @@ void find_context(void) {
                 continue;
         }
         if (b->kind == TRADER || b->kind == RECRUIT || b->dead || b->unconscious > 0 || b->squad ||
-            b->kind == SETTLER || b->kind == GUARD || b->kind == CARAVAN) {
-            float d = distance(a->x, a->y, b->x, b->y);
-            if (d < best) {
-                best = d;
-                ui.contextKind = 0;
-                ui.contextIndex = i;
-            }
-        }
+            b->kind == SETTLER || b->kind == GUARD || b->kind == CARAVAN)
+            add_context(0, i, distance(a->x, a->y, b->x, b->y), TALK_REACH);
     }
-    for (int i = 0; i < g.nodeCount; i++) {
-        Node *n = &g.nodes[i];
-        if (!n->remaining)
-            continue;
-        float d = distance(a->x, a->y, n->x, n->y);
-        if (d < best) {
-            best = d;
-            ui.contextKind = 1;
-            ui.contextIndex = i;
-        }
-    }
+    for (int i = 0; i < g.nodeCount; i++)
+        if (g.nodes[i].remaining)
+            add_context(1, i, distance(a->x, a->y, g.nodes[i].x, g.nodes[i].y), WORK_REACH);
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
-        if (building_has_interior(b->type)) {
-            float d = distance(a->x, a->y, b->x + 1.45f, b->y + .65f);
-            if (d < 3.2f && d < best) {
-                best = d;
-                ui.contextKind = 3;
-                ui.contextIndex = i;
-            }
-        }
-        if (b->type < WELL || b->type == WALL || b->type == WINDMILL)
-            continue;
-        float d = distance(a->x, a->y, b->x, b->y);
-        if (d < best) {
-            best = d;
-            ui.contextKind = 2;
-            ui.contextIndex = i;
-        }
+        if (building_has_interior(b->type))
+            add_context(3, i, distance(a->x, a->y, b->x + 1.45f, b->y + .65f), 1.7f);
+        if (b->type >= WELL && b->type != WALL && b->type != WINDMILL)
+            add_context(2, i, distance(a->x, a->y, b->x, b->y), 1.7f);
     }
+    if (ui.contextCount) {
+        ui.contextChoice %= ui.contextCount;
+        ui.contextKind = candidates[ui.contextChoice].kind;
+        ui.contextIndex = candidates[ui.contextChoice].index;
+    } else
+        ui.contextChoice = 0;
 }
 static void theft(Actor *a, Node *n) {
     int seen = 0;
@@ -934,20 +1015,9 @@ void interact(void) {
     if (ui.contextKind == 0) {
         Actor *b = &g.actors[n];
         if (b->squad) {
-            if (b->unconscious > 0) {
-                if (!heal_actor(g.selected, n)) {
-                    a->carrying = n;
-                    b->carriedBy = g.selected;
-                    log_msg("Carrying %s. Interact again to put down.", b->name);
-                }
-                return;
-            }
-            if (a->carrying == n) {
-                a->carrying = -1;
-                b->carriedBy = -1;
-                return;
-            }
-            heal_actor(g.selected, n);
+            ui.lootActor = n;
+            ui.selection = 0;
+            ui.screen = SCREEN_ASSIST;
             return;
         }
         if (b->unconscious > 0 || b->dead) {
@@ -985,13 +1055,9 @@ void interact(void) {
             log_msg("Gathering... movement cancels the job.");
             return;
         }
-        if (inventory_add(a, b->item, b->qty)) {
+        if (inventory_add_owned(a, b->item, b->qty, b->owner)) {
             if (b->owner)
                 theft(a, b);
-            if (b->owner)
-                for (int s = 0; s < PACK; s++)
-                    if (a->pack[s].item == b->item)
-                        a->stolen[s] = b->owner;
             b->remaining = 0;
             log_msg("Found %d %s.", b->qty, itemDefs[b->item].name);
         } else
@@ -1015,11 +1081,11 @@ void interact(void) {
         log_msg("Resting. Move to wake; wounds recover slowly.");
     } else if (b->type == FARM) {
         if (b->progress >= 100) {
-            if (inventory_add(a, GRAIN, 5)) {
+            if (inventory_add(a, GRAIN, harvest_yield(a))) {
                 b->progress = 0;
                 b->stock = 0;
                 gain(a, FARMING, 40);
-                log_msg("Harvested 5 grain. Water to replant.");
+                log_msg("Harvested grain. Water to replant.");
             }
         } else if (inventory_remove(a, WATER, 1)) {
             b->stock = 1;
@@ -1121,6 +1187,9 @@ static void squad_job(Actor *a, float dt) {
                 }
             }
         if (n >= 0) {
+            Actor test = *a;
+            if (!inventory_add(&test, g.nodes[n].type == NODE_ORE ? ORE : COPPER, 1))
+                return;
             if (d > WORK_REACH * .9f)
                 route_toward(a, g.nodes[n].x, g.nodes[n].y, dt);
             else {
@@ -1131,9 +1200,9 @@ static void squad_job(Actor *a, float dt) {
         }
     } else if (a->job == JOB_MEDIC) {
         for (int j = 0; j < g.actorCount; j++)
-            if (g.actors[j].squad && !g.actors[j].dead &&
-                (g.actors[j].bleed > .1f || g.actors[j].health[CHEST] < 60)) {
-                if (distance(a->x, a->y, g.actors[j].x, g.actors[j].y) > 2)
+            if (g.actors[j].squad && !g.actors[j].dead && needs_aid(&g.actors[j]) &&
+                actor_inside(a) == actor_inside(&g.actors[j])) {
+                if (distance(a->x, a->y, g.actors[j].x, g.actors[j].y) > TALK_REACH * .9f)
                     route_toward(a, g.actors[j].x, g.actors[j].y, dt);
                 else
                     heal_actor((int)(a - g.actors), j);
@@ -1146,7 +1215,7 @@ static void squad_job(Actor *a, float dt) {
                 continue;
             if (distance(a->x, a->y, b->x, b->y) > 2)
                 route_toward(a, b->x, b->y, dt);
-            else if (b->progress >= 100 && inventory_add(a, GRAIN, 5)) {
+            else if (b->progress >= 100 && inventory_add(a, GRAIN, harvest_yield(a))) {
                 b->progress = 0;
                 b->stock = 0;
                 gain(a, FARMING, 40);
@@ -1334,6 +1403,7 @@ void simulate(float dt) {
         if (target >= 0 && (a->kind == RAIDER || a->kind == BEAST || a->kind == GUARD || a->kind == CARAVAN ||
                             (a->squad && a->autoattack))) {
             a->target = target;
+            a->taskKind = 0;
             Actor *b = &g.actors[target];
             float range = (a->gear[0] ? itemDefs[a->gear[0]].range : 1.55f) - .2f;
             if (best > range) {
@@ -1780,6 +1850,8 @@ void game_tick(float dt, Input in) {
     dt = clamp(dt, 0, .1f);
     ui.noticeTime = fmaxf(0, ui.noticeTime - dt);
     int p = in.pressed;
+    if (ui.screen != SCREEN_WORLD)
+        ui.squadCyclePending = 0;
     if (expansion_input(dt, in))
         return;
     Actor *a = &g.actors[g.selected];
@@ -1793,6 +1865,8 @@ void game_tick(float dt, Input in) {
                 character_begin(ui.selection == 1 ? 4 : 0);
             } else if (ui.selection == 2) {
                 ui.saveMode = 0;
+                ui.saveReturn = SCREEN_TITLE;
+                ui.saveExit = 0;
                 save_refresh();
                 open_screen(SCREEN_SAVES);
             } else
@@ -1802,16 +1876,27 @@ void game_tick(float dt, Input in) {
         return;
     }
     if (ui.screen == SCREEN_CONFIRM) {
-        if (p & KEY_CIRCLE)
-            open_screen(SCREEN_MENU);
+        if (p & (KEY_CIRCLE | KEY_START)) {
+            open_screen(ui.confirmAction == 1 ? SCREEN_MENU : SCREEN_SAVES);
+            ui.selection = ui.confirmAction == 1 ? 8 : ui.slot;
+            return;
+        }
         if (p & KEY_CROSS) {
             if (ui.confirmAction == 1) {
                 character_begin(0);
             } else if (ui.confirmAction == 2) {
-                load_slot(ui.slot);
+                if (!load_slot(ui.slot)) {
+                    open_screen(SCREEN_SAVES);
+                    ui.selection = ui.slot;
+                }
             } else if (ui.confirmAction == 3) {
-                save_slot(ui.slot);
-                open_screen(SCREEN_MENU);
+                if (save_slot(ui.slot)) {
+                    open_screen(ui.saveExit ? SCREEN_TITLE : SCREEN_MENU);
+                    ui.saveExit = 0;
+                } else {
+                    open_screen(SCREEN_SAVES);
+                    ui.selection = ui.slot;
+                }
             }
         }
         return;
@@ -1847,7 +1932,7 @@ void game_tick(float dt, Input in) {
             count = recipeCount;
             break;
         case SCREEN_MENU:
-            count = 16;
+            count = 17;
             break;
         case SCREEN_HELP:
             count = GUIDE_PAGES;
@@ -1877,17 +1962,15 @@ void game_tick(float dt, Input in) {
                     for (int j = 1; j <= g.actorCount; j++) {
                         int n = (g.selected + j) % g.actorCount;
                         if (n != g.selected && g.actors[n].squad && !g.actors[n].dead &&
-                            distance(a->x, a->y, g.actors[n].x, g.actors[n].y) < 4) {
+                            actor_inside(a) == actor_inside(&g.actors[n]) &&
+                            distance(a->x, a->y, g.actors[n].x, g.actors[n].y) < 3) {
                             recipient = n;
                             break;
                         }
                     }
-                    if (recipient >= 0 && inventory_add(&g.actors[recipient], s->item, 1)) {
-                        for (int k = 0; k < PACK; k++)
-                            if (g.actors[recipient].pack[k].item == s->item && a->stolen[ui.selection])
-                                g.actors[recipient].stolen[k] = a->stolen[ui.selection];
-                        log_msg("Passed %s to %s.", itemDefs[s->item].name, g.actors[recipient].name);
-                        inventory_remove(a, s->item, 1);
+                    int item = s->item;
+                    if (recipient >= 0 && inventory_transfer(a, &g.actors[recipient], ui.selection, 1)) {
+                        log_msg("Passed %s to %s.", itemDefs[item].name, g.actors[recipient].name);
                     } else
                         log_msg("No nearby ally can take this item.");
                 }
@@ -1918,6 +2001,18 @@ void game_tick(float dt, Input in) {
             ui.mapX = clamp(ui.mapX, 3, WORLD - 4);
             ui.mapY = clamp(ui.mapY, 3, WORLD - 4);
             if (p & KEY_CROSS) {
+                if (actor_inside(a) || !conscious(a) || a->prisonTime > 0) {
+                    log_msg("Leave the building and choose a free, conscious traveler.");
+                    return;
+                }
+                if (!can_walk(ui.mapX, ui.mapY)) {
+                    log_msg("Destination is blocked. Choose land or a road crossing.");
+                    return;
+                }
+                ui.travelStall = 0;
+                ui.travelLastX = a->x;
+                ui.travelLastY = a->y;
+                a->taskKind = 0;
                 ui.waypoint = 1;
                 ui.travelX = ui.mapX;
                 ui.travelY = ui.mapY;
@@ -1945,8 +2040,6 @@ void game_tick(float dt, Input in) {
         else if (ui.screen == SCREEN_RESEARCH && (p & KEY_CROSS))
             research_tech();
         else if (ui.screen == SCREEN_MENU) {
-            if (p & (KEY_LEFT | KEY_RIGHT))
-                ui.slot = (ui.slot + 1) % SAVE_SLOTS;
             if (p & KEY_CROSS) {
                 switch (ui.selection) {
                 case 0:
@@ -1963,11 +2056,15 @@ void game_tick(float dt, Input in) {
                     break;
                 case 4:
                     ui.saveMode = 1;
+                    ui.saveReturn = SCREEN_MENU;
+                    ui.saveExit = 0;
                     save_refresh();
                     open_screen(SCREEN_SAVES);
                     break;
                 case 5:
                     ui.saveMode = 0;
+                    ui.saveReturn = SCREEN_MENU;
+                    ui.saveExit = 0;
                     save_refresh();
                     open_screen(SCREEN_SAVES);
                     break;
@@ -1982,8 +2079,12 @@ void game_tick(float dt, Input in) {
                     open_screen(SCREEN_CONFIRM);
                     break;
                 case 9:
-                    if (save_slot(ui.slot ? ui.slot : 1))
-                        open_screen(SCREEN_TITLE);
+                    ui.saveMode = 1;
+                    ui.saveReturn = SCREEN_MENU;
+                    ui.saveExit = 1;
+                    save_refresh();
+                    open_screen(SCREEN_SAVES);
+                    ui.selection = ui.slot ? ui.slot : 1;
                     break;
                 case 11:
                     open_screen(SCREEN_FORGE);
@@ -1995,26 +2096,24 @@ void game_tick(float dt, Input in) {
                     open_screen(SCREEN_FACTIONS);
                     break;
                 case 14:
-                    if (town_near(a->x, a->y, 12) >= 0) {
+                    if (nearby_service(ROLE_BARBER) >= 0)
                         character_begin(-1);
-                    } else
-                        log_msg("A town barber is required.");
+                    else
+                        log_msg("Walk to a barber and talk to change your appearance.");
                     break;
                 case 15:
                     start_sleep(town_near(a->x, a->y, 10));
                     break;
-                case 10:
-                    if (town_near(a->x, a->y, 10) < 0) {
-                        log_msg("Visit a town official to pay a bounty.");
-                        break;
-                    }
-                    if (a->bounty && g.money >= a->bounty) {
-                        g.money -= a->bounty;
-                        a->bounty = 0;
-                        g.rep[UNION] = g.rep[SCAVENGERS] = 0;
-                        log_msg("Bounty paid. Reputation restored.");
-                    } else
-                        log_msg("No bounty, or insufficient silver.");
+                case 10: {
+                    int official = nearby_service(ROLE_MARSHAL);
+                    if (official >= 0)
+                        dialogue_open(official);
+                    else
+                        log_msg("Walk to a marshal to settle a local bounty.");
+                    break;
+                }
+                case 16:
+                    open_screen(SCREEN_LOG);
                     break;
                 }
             }
@@ -2036,8 +2135,21 @@ void game_tick(float dt, Input in) {
         open_screen(SCREEN_MAP);
         return;
     }
-    if (p & KEY_L) {
+    if (p & KEY_L)
+        ui.squadCyclePending = 1;
+    if ((p & (KEY_CROSS | KEY_L)) && (in.held & KEY_L) && (in.held & KEY_CROSS) && !g.interiorBuilding) {
+        ui.squadCyclePending = 0;
+        ui.contextChoice++;
+        find_context();
+        log_msg("Target %d/%d: %s. Release \005; \001 to %s.",
+                ui.contextCount ? ui.contextChoice % ui.contextCount + 1 : 0, ui.contextCount, context_name(),
+                context_action());
+        return;
+    }
+    if (!(in.held & KEY_L) && ui.squadCyclePending) {
+        ui.squadCyclePending = 0;
         cycle_squad(1);
+        ui.contextChoice = 0;
         a = &g.actors[g.selected];
     }
     if (p & KEY_R)
@@ -2087,14 +2199,26 @@ void game_tick(float dt, Input in) {
     }
     if (fabsf(dx) + fabsf(dy) > .15f) {
         ui.waypoint = 0;
+        ui.contextChoice = 0;
         a->taskKind = 0;
         move_actor(a, (dx + dy) * .7071f, (dy - dx) * .7071f, step);
     } else if (ui.waypoint) {
         if (distance(a->x, a->y, ui.travelX, ui.travelY) < .7f) {
             ui.waypoint = 0;
             log_msg("Waypoint reached.");
-        } else
+        } else {
             route_toward(a, ui.travelX, ui.travelY, step);
+            if (distance(a->x, a->y, ui.travelLastX, ui.travelLastY) > .5f) {
+                ui.travelStall = 0;
+                ui.travelLastX = a->x;
+                ui.travelLastY = a->y;
+            } else
+                ui.travelStall += step;
+            if (ui.travelStall > 8) {
+                ui.waypoint = 0;
+                log_msg("Route blocked. Choose a nearer waypoint or walk around it.");
+            }
+        }
     }
     simulate(step);
     g.autosave += step;
@@ -2179,6 +2303,17 @@ void debug_snapshot(const char *path) {
     VALUE("mapzoom", &ui.mapZoom, 4);
     VALUE("waypoint", &ui.waypoint, 4);
     VALUE("travel", &ui.travelX, 8);
+    VALUE("carrying", &a->carrying, 4);
+    VALUE("paused", &ui.paused, 4);
+    VALUE("context_count", &ui.contextCount, 4);
+    VALUE("stolen", a->stolen, sizeof(a->stolen));
+    VALUE("job", &a->job, 4);
+    VALUE("prison", &a->prisonTime, 4);
+    for (int n = 0; n < g.buildingCount; n++)
+        if (g.buildings[n].type == STORE) {
+            VALUE("depot", g.buildings[n].storage, sizeof(g.buildings[n].storage));
+            break;
+        }
 #undef VALUE
     fprintf(f, "}\n");
     fclose(f);

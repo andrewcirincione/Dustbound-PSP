@@ -1,0 +1,48 @@
+BOOT {'event': 'cpu.status', 'ticket': '2', 'stepping': False, 'paused': False, 'pc': 142737944, 'ticks': 1025472894} {'event': 'game.status', 'ticket': '3', 'game': {'id': 'EBOO00649', 'version': '', 'title': 'Dustbound 0.5.2'}, 'paused': False}
+KEY down SCREEN 13 ROW 0 -> 1
+KEY down SCREEN 13 ROW 1 -> 2
+KEY cross SCREEN 13 ROW 2 -> 0
+KEY circle SCREEN 22 ROW 0 -> 2
+ASSERT screen (13,)
+ASSERT selection (2,)
+SCREENSHOT v052-90-title-cancel 480x272 screen 13
+KEY cross SCREEN 13 ROW 2 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY cross SCREEN 22 ROW 2 -> 0
+KEY circle SCREEN 14 ROW 0 -> 2
+ASSERT screen (22,)
+ASSERT selection (2,)
+KEY cross SCREEN 22 ROW 2 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+ASSERT screen (0,)
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v052-91-rescue-choices 480x272 screen 25
+KEY down SCREEN 25 ROW 0 -> 1
+KEY select SCREEN 25 ROW 1 -> 0
+KEY circle SCREEN 12 ROW 0 -> 1
+ASSERT selection (1,)
+KEY cross SCREEN 25 ROW 1 -> 0
+ASSERT carrying (1,)
+SCREENSHOT v052-92-carry-before-bandage 480x272 screen 0
+KEY cross SCREEN 0 ROW 0 -> 0
+Traceback (most recent call last):
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_audit_v052.py", line 73, in <module>
+    if __name__=='__main__':asyncio.run(main())
+                            ^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_audit_v052.py", line 29, in main
+    await e.key('cross');await e.expect('carrying',-1);await e.key('cross');await e.key('cross')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_test.py", line 61, in expect
+    assert actual==expected,(field,actual,expected)
+           ^^^^^^^^^^^^^^^^
+AssertionError: ('carrying', (4294967295,), (-1,))

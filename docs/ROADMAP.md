@@ -48,3 +48,15 @@ The [updated whole-game critique](DESIGN_REVIEW_V051.md) reviews 36 areas and di
 
 - [x] 0.5.1: fitted brow anchors for all 12 headwear designs; review all 44 clothing silhouettes.
 - [x] 0.5.1: authored garment stats and actual movement/stealth/load/weather comparison values.
+
+## 0.5.2: reliable UI, recovery and production
+
+- [x] All-screen audit, exact help/save return state and explicit save-and-title confirmation.
+- [x] Ownership-aware inventory transactions and atomic rollback; loot comparison and bulk transfer.
+- [x] Explicit rescue choices and nearby target cycling.
+- [x] Close station/service reach and visible job requirements.
+- [x] Fetch/walk/craft/store cooking and smelting loops, including water and output hauling.
+- [x] Skill progress/explanations and bounded profession/combat effects.
+- [x] Recent-message history, clearer health/recipe/forge panels and invalid-route feedback.
+
+Ordered job queues and the authored Copper Cross expedition remain open. See [the 0.5.2 review](DESIGN_REVIEW_V052.md).

@@ -1,0 +1,64 @@
+KEY cross SCREEN 13 ROW 0 -> 0
+KEY up SCREEN 15 ROW 0 -> 9
+KEY cross SCREEN 15 ROW 9 -> 0
+ASSERT screen (0,)
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT interior (3,)
+SCREENSHOT v052-26-shop-entry 480x272 screen 0
+SCREENSHOT v052-27-shop-interior 480x272 screen 0
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT screen (6,)
+KEY cross SCREEN 6 ROW 0 -> 0
+SCREENSHOT v052-28-indoor-trade 480x272 screen 6
+KEY circle SCREEN 6 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY cross SCREEN 11 ROW 4 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY circle SCREEN 11 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+ASSERT interior (3,)
+ASSERT money (615,)
+SCREENSHOT v052-29-indoor-save-reloaded 480x272 screen 0
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT interior (0,)
+INN APPROACH (23.412168502807617, 30.51828384399414) (3, 3)
+SCREENSHOT v052-36-inn-door 480x272 screen 0
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v052-37-inn-attempt 480x272 screen 0
+ASSERT interior (4,)
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT money (590,)
+SCREENSHOT v052-30-inn-rest 480x272 screen 0
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT interior (0,)
+KEY down SCREEN 0 ROW 0 -> 0
+SCREENSHOT v052-31-left-inn 480x272 screen 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY down SCREEN 11 ROW 5 -> 6
+KEY down SCREEN 11 ROW 6 -> 7
+KEY cross SCREEN 11 ROW 7 -> 0
+KEY ltrigger SCREEN 12 ROW 0 -> 19
+KEY ltrigger SCREEN 12 ROW 19 -> 18
+ASSERT selection (18,)
+SCREENSHOT v052-32-interior-guide 480x272 screen 12
+PSP INTERIOR PLAYTHROUGH PASS /workspace/scratch/f91171b6dca9/Dustbound-current/build/v052-rooms-0j_cburx

@@ -1,11 +1,9 @@
-# Dustbound 0.5.1 — Equipment fit and expedition choices
+# Dustbound 0.5.2 — Reliable actions and recovery
 
-Hats and hoods are smaller and seated at individual brow anchors, with preserved proportions and a connected neck/collar. Backpacks sit on the upper back with straps toward the wearer. Asymmetric blades, shoulders and hands now mirror correctly. The existing 144 painted sprites and fixed cache sizes are retained.
+A critical pass over the interface and survival loop: exact help/save navigation, explicit save-and-title confirmation, ownership-safe item transactions, rescue choices, loot previews and full-stack transfers, nearby target cycling, close workstation/service reach, working camp supply trips, skill explanations and bounded live effects, clearer health/crafting/forging panels, and recent-message history.
 
-All 44 clothing designs have authored protection, weight, movement, stealth and effect profiles. Plate is protective but heavy and restrictive; robes and travel clothes retain lighter, useful roles. Comparisons display actual bonuses. Four affordable bag designs are stocked in every town with a dedicated BACKPACKS tab, useful cargo/stealth/combat tradeoffs and accurate loaded-weight previews. The journal locates contract objectives on the atlas while preserving existing travel orders.
+The installer includes one self-contained PSP EBOOT. Preserve existing save files; save format remains 5 and item IDs remain stable. Older saves through 0.5.1 remain supported. The new efficiency and combat effects intentionally affect old characters too.
 
-The whole-game critique covers 36 areas and distinguishes shipped improvements from remaining gaps. This remains an alpha: deeper world consequences, wilderness stories, defeat/recovery, independent squads and outpost logistics need substantial work.
+Validation uses native regression/sanitizer checks and real PSP controller input in PPSSPP. Prepared saves are labeled fixtures; screenshots are captured from the executable. Exact checks and binary identity are in VALIDATION.md. Physical PSP-3000 performance, suspend/resume and memory-stick endurance have not been tested.
 
-Extract `Dustbound-0.5.1-PSP.zip` to the memory-stick root on a PSP configured for homebrew. Launch `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Back up saves and use a separate slot for the first migrated save. Save format remains 5; existing item IDs are preserved, but equipment statistics update to the new balance. Older v5 expeditions receive basic backpack stock once. No QA saves or markers are included.
-
-See [VALIDATION.md](VALIDATION.md) for the exact EBOOT identity, thirteen controller scenarios, native/sanitizer results and memory budget. Physical PSP-3000 testing has not been performed.
+The comprehensive DESIGN_REVIEW_V052.md distinguishes shipped corrections from remaining gaps: authored wilderness consequences, named leader world states, slavery, independent squads, deeper armor layers, job queues and interior combat. This remains an original playable alpha inspired by Kenshi, not a Kenshi port or full recreation.
