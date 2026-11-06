@@ -1,13 +1,14 @@
 # Dustbound 0.6.0 — Copper Road rebuild
 
-An authored rescue and road conflict gives the frontier a lasting objective: escort Sora, repair a bypass, negotiate a toll, capture Rell or defeat him, then report to Nell. Choices alter Copper's trade, allegiance and future threats. Eight landmarks, dialogue, the atlas and an expedition ledger connect the journey.
+Download **Dustbound-0.6.0-PSP.zip** and extract its PSP folder to the memory-stick root. The game goes at **PSP/GAME/DUSTBOUND/EBOOT.PBP**. The standalone **EBOOT.PBP** is also attached; all art and sound are embedded. Requires a PSP configured for homebrew, or PPSSPP.
 
-This rebuild adds construction labor/fuel, four job priorities, three independent expedition groups, trauma and robotic repair, underlayers/armor coverage, physical captivity and escape, moving projectiles, indoor actors/combat, witnessed trespass and trade hours. Six added panels bring the total to 33, with 25 contextual guide chapters. Complete dressed prone characters retain their worn attachments.
+This release includes the Copper Road rescue and faction conflict, eight landmarks, construction labor and fuel, ordered jobs and independent expedition groups, captivity and escape, trauma recovery, armor layers, moving projectiles and indoor combat. It retains the clothing, hat, backpack and weapon-grip fixes and the inventory, equipment comparison and camp-work improvements.
 
-The continuation also makes bleeding explicit on the HUD and explains when unconsciousness, stun or being carried prevents dialogue and landmark work. These conditions no longer produce a misleading distance warning. Travel now holds its destination during unconsciousness, carrying, custody, stuns and attack animations, shows why it is held, and resumes when movement is possible. Actual terrain obstructions still stop the route; manual movement still cancels it. Sora can also receive further first aid during the escort, using another dressing and preserving the physical-arrival reward requirement. After treatment, you can carry her to safety with the normal load and movement penalties; reaching Copper sets her down and pays the escort reward once.
+The latest continuation adds clear bleeding and incapacity feedback, preserves travel destinations during temporary incapacity, and allows repeated first aid and carrying Sora during her rescue.
 
-Install the PSP folder from Dustbound-0.6.0-PSP.zip at the memory-stick root on a PSP already configured for homebrew. The game appears at PSP/GAME/DUSTBOUND/EBOOT.PBP. Back up existing DUST_*.sav files. Save format 6 reads versions 1–5 and preserves item IDs; save a migrated expedition to a new slot. Do not reopen a v6 save using an older executable.
+Back up existing DUST_*.sav files before upgrading. Save format 6 reads formats 1–5; save a migrated expedition to a new slot.
 
-The release includes the exact PSP EBOOT exercised through controller input in PPSSPP. Prepared scenarios are labeled and excluded from the installer. VALIDATION.md and the evidence archive record binary hashes and test scope. Physical PSP-3000 frame pacing, battery behavior, suspend/resume and memory-stick endurance remain untested.
+Published directly from the latest source with the pinned PSPDEV toolchain. No additional gameplay tests were run for this publication. The executable checksum matches the existing local 0.6.0 build:
+155e31c905efb923026207bd0ea53e8448ea8de5258262d6920cb5c18b8a4650
 
-This remains an original playable alpha, not full Kenshi parity. DESIGN_REVIEW_V060.md separates implemented improvements from remaining world-density, schedule, disguise, animal, captivity-economy, power and siege limitations.
+This is a playable alpha. Physical PSP hardware validation remains outstanding.
