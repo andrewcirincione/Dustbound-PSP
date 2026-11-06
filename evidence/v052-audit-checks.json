@@ -1,0 +1,308 @@
+[
+  {
+    "eboot_sha256": "6dbbd8e09ed10412913dd4835be13f985433e52eb41096ba0985e93ae03dfffb",
+    "version": "0.5.2"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      13
+    ],
+    "expected": [
+      13
+    ]
+  },
+  {
+    "assert": "selection",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "capture": "v052-90-title-cancel",
+    "screen": 13,
+    "expected": 13,
+    "frame": 212,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      22
+    ],
+    "expected": [
+      22
+    ]
+  },
+  {
+    "assert": "selection",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v052-91-rescue-choices",
+    "screen": 25,
+    "expected": 25,
+    "frame": 546,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "selection",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "assert": "carrying",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v052-92-carry-before-bandage",
+    "screen": 0,
+    "expected": 0,
+    "frame": 740,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "carrying",
+    "actual": [
+      -1
+    ],
+    "expected": [
+      -1
+    ]
+  },
+  {
+    "capture": "v052-93-first-aid",
+    "screen": 25,
+    "expected": 25,
+    "frame": 900,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-94-recover-companion-gear",
+    "screen": 24,
+    "expected": 24,
+    "frame": 1010,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "selection",
+    "actual": [
+      3
+    ],
+    "expected": [
+      3
+    ]
+  },
+  {
+    "capture": "v052-95-skills-training",
+    "screen": 2,
+    "expected": 2,
+    "frame": 1611,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-96-health-vitals",
+    "screen": 3,
+    "expected": 3,
+    "frame": 1642,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-97-squad-status",
+    "screen": 4,
+    "expected": 4,
+    "frame": 1674,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-98-loot-greatsword-comparison",
+    "screen": 24,
+    "expected": 24,
+    "frame": 2759,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-99-stolen-stack-provenance",
+    "screen": 1,
+    "expected": 1,
+    "frame": 3325,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "job",
+    "actual": [
+      6
+    ],
+    "expected": [
+      6
+    ]
+  },
+  {
+    "capture": "v052-100-cook-needs-water",
+    "screen": 4,
+    "expected": 4,
+    "frame": 4621,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-101-camp-production",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4867,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "job",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "assert": "selected",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "assert": "selected",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v052-108-target-cycling",
+    "screen": 0,
+    "expected": 0,
+    "frame": 5599,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      21
+    ],
+    "expected": [
+      21
+    ]
+  },
+  {
+    "capture": "v052-102-depot-produced-rations",
+    "screen": 21,
+    "expected": 21,
+    "frame": 5677,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-103-bulk-withdraw",
+    "screen": 21,
+    "expected": 21,
+    "frame": 5705,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-104-recipe-requirements",
+    "screen": 9,
+    "expected": 9,
+    "frame": 6690,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-105-forge-held-required",
+    "screen": 18,
+    "expected": 18,
+    "frame": 8385,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-106-message-history",
+    "screen": 26,
+    "expected": 26,
+    "frame": 9377,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      22
+    ],
+    "expected": [
+      22
+    ]
+  },
+  {
+    "capture": "v052-107-save-exit-confirm",
+    "screen": 14,
+    "expected": 14,
+    "frame": 10219,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      22
+    ],
+    "expected": [
+      22
+    ]
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      13
+    ],
+    "expected": [
+      13
+    ]
+  },
+  {
+    "completed": true,
+    "title_cancel_safe": true,
+    "help_preserved_selection": true,
+    "carry_before_first_aid": true,
+    "loot_compared_and_bulk_taken": true,
+    "stolen_owner_preserved": true,
+    "cook_fetched_water_and_grain_then_stored_rations": true,
+    "bulk_storage": true,
+    "save_exit_confirmed": true,
+    "prepared_fixture_slots": [
+      2,
+      3,
+      4
+    ]
+  }
+]

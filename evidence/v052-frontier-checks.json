@@ -1,0 +1,243 @@
+[
+  {
+    "eboot_sha256": "6dbbd8e09ed10412913dd4835be13f985433e52eb41096ba0985e93ae03dfffb",
+    "version": "0.5.2"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      650
+    ],
+    "expected": [
+      650
+    ]
+  },
+  {
+    "capture": "v052-50-guard-identity",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1297,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-51-guard-contract",
+    "screen": 17,
+    "expected": 17,
+    "frame": 1332,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      410
+    ],
+    "expected": [
+      410
+    ]
+  },
+  {
+    "assert": "squad",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v052-52-hired-guard",
+    "screen": 17,
+    "expected": 17,
+    "frame": 1356,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      410
+    ],
+    "expected": [
+      410
+    ]
+  },
+  {
+    "capture": "v052-53-escort-follows",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2681,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-54-faction-contract-ledger",
+    "screen": 20,
+    "expected": 20,
+    "frame": 3230,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "money",
+    "actual": [
+      410
+    ],
+    "expected": [
+      410
+    ]
+  },
+  {
+    "capture": "v052-55-shogunate-merchant",
+    "screen": 17,
+    "expected": 17,
+    "frame": 4924,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-56-shogunate-advice",
+    "screen": 17,
+    "expected": 17,
+    "frame": 5027,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-57-shogunate-stock",
+    "screen": 6,
+    "expected": 6,
+    "frame": 5148,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-55-rust-caravans-merchant",
+    "screen": 17,
+    "expected": 17,
+    "frame": 5866,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-56-rust-caravans-advice",
+    "screen": 17,
+    "expected": 17,
+    "frame": 5924,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-57-rust-caravans-stock",
+    "screen": 6,
+    "expected": 6,
+    "frame": 6050,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-55-black-mesa-merchant",
+    "screen": 17,
+    "expected": 17,
+    "frame": 6674,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-56-black-mesa-advice",
+    "screen": 17,
+    "expected": 17,
+    "frame": 6733,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-57-black-mesa-stock",
+    "screen": 6,
+    "expected": 6,
+    "frame": 6854,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-58-new-weapon-0",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7579,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-59-new-weapon-world-0",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7654,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-58-new-weapon-1",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7783,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-59-new-weapon-world-1",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7855,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-58-new-weapon-2",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7953,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-59-new-weapon-world-2",
+    "screen": 0,
+    "expected": 0,
+    "frame": 8030,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-58-new-weapon-3",
+    "screen": 1,
+    "expected": 1,
+    "frame": 8196,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-59-new-weapon-world-3",
+    "screen": 0,
+    "expected": 0,
+    "frame": 8261,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "identity",
+    "actual": [
+      2
+    ],
+    "expected": [
+      2
+    ]
+  },
+  {
+    "capture": "v052-60-v041-save-migrated",
+    "screen": 0,
+    "expected": 0,
+    "frame": 9019,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-61-heavy-combat-guide",
+    "screen": 12,
+    "expected": 12,
+    "frame": 9520,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-62-faction-guide",
+    "screen": 12,
+    "expected": 12,
+    "frame": 9863,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "fresh_escort_hired_saved_reloaded": true,
+    "duplicate_charge_blocked": true,
+    "squad_count_unchanged": true,
+    "regional_merchants_reviewed": 3,
+    "new_weapon_families_equipped": 4,
+    "genuine_v041_save_loaded": true
+  }
+]

@@ -1,0 +1,133 @@
+BOOT {'event': 'cpu.status', 'ticket': '2', 'stepping': False, 'paused': False, 'pc': 142721656, 'ticks': 1043688234} {'event': 'game.status', 'ticket': '3', 'game': {'id': 'EBOO00649', 'version': '', 'title': 'Dustbound 0.5.2'}, 'paused': False}
+KEY down SCREEN 13 ROW 0 -> 1
+KEY down SCREEN 13 ROW 1 -> 2
+KEY cross SCREEN 13 ROW 2 -> 0
+KEY circle SCREEN 22 ROW 0 -> 2
+ASSERT screen (13,)
+ASSERT selection (2,)
+SCREENSHOT v052-90-title-cancel 480x272 screen 13
+KEY cross SCREEN 13 ROW 2 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY cross SCREEN 22 ROW 2 -> 0
+KEY circle SCREEN 14 ROW 0 -> 2
+ASSERT screen (22,)
+ASSERT selection (2,)
+KEY cross SCREEN 22 ROW 2 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+ASSERT screen (0,)
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v052-91-rescue-choices 480x272 screen 25
+KEY down SCREEN 25 ROW 0 -> 1
+KEY select SCREEN 25 ROW 1 -> 0
+KEY circle SCREEN 12 ROW 0 -> 1
+ASSERT selection (1,)
+KEY cross SCREEN 25 ROW 1 -> 0
+ASSERT carrying (1,)
+SCREENSHOT v052-92-carry-before-bandage 480x272 screen 0
+KEY cross SCREEN 0 ROW 0 -> 0
+ASSERT carrying (-1,)
+KEY cross SCREEN 0 ROW 0 -> 0
+KEY cross SCREEN 25 ROW 0 -> 0
+SCREENSHOT v052-93-first-aid 480x272 screen 25
+KEY down SCREEN 25 ROW 0 -> 1
+KEY down SCREEN 25 ROW 1 -> 2
+KEY cross SCREEN 25 ROW 2 -> 0
+SCREENSHOT v052-94-recover-companion-gear 480x272 screen 24
+KEY circle SCREEN 24 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY select SCREEN 1 ROW 3 -> 6
+KEY circle SCREEN 12 ROW 6 -> 3
+ASSERT selection (3,)
+KEY rtrigger SCREEN 1 ROW 3 -> 0
+KEY down SCREEN 2 ROW 0 -> 1
+KEY down SCREEN 2 ROW 1 -> 2
+KEY down SCREEN 2 ROW 2 -> 3
+KEY down SCREEN 2 ROW 3 -> 4
+KEY down SCREEN 2 ROW 4 -> 5
+SCREENSHOT v052-95-skills-training 480x272 screen 2
+KEY rtrigger SCREEN 2 ROW 5 -> 0
+SCREENSHOT v052-96-health-vitals 480x272 screen 3
+KEY rtrigger SCREEN 3 ROW 0 -> 0
+SCREENSHOT v052-97-squad-status 480x272 screen 4
+KEY circle SCREEN 4 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY down SCREEN 22 ROW 3 -> 4
+KEY cross SCREEN 22 ROW 4 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY cross SCREEN 0 ROW 0 -> 0
+SCREENSHOT v052-98-loot-greatsword-comparison 480x272 screen 24
+KEY down SCREEN 24 ROW 0 -> 1
+KEY down SCREEN 24 ROW 1 -> 2
+KEY square SCREEN 24 ROW 2 -> 2
+KEY circle SCREEN 24 ROW 2 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+SCREENSHOT v052-99-stolen-stack-provenance 480x272 screen 1
+KEY circle SCREEN 1 ROW 6 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY cross SCREEN 22 ROW 3 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY ltrigger SCREEN 1 ROW 0 -> 0
+KEY down SCREEN 4 ROW 0 -> 1
+KEY down SCREEN 4 ROW 1 -> 2
+KEY down SCREEN 4 ROW 2 -> 3
+KEY down SCREEN 4 ROW 3 -> 4
+KEY down SCREEN 4 ROW 4 -> 5
+KEY down SCREEN 4 ROW 5 -> 6
+KEY cross SCREEN 4 ROW 6 -> 6
+ASSERT job (6,)
+SCREENSHOT v052-100-cook-needs-water 480x272 screen 4
+KEY circle SCREEN 4 ROW 6 -> 0
+SCREENSHOT v052-101-camp-production 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY ltrigger SCREEN 1 ROW 0 -> 0
+KEY down SCREEN 4 ROW 0 -> 2
+KEY cross SCREEN 4 ROW 2 -> 2
+Traceback (most recent call last):
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_audit_v052.py", line 73, in <module>
+    if __name__=='__main__':asyncio.run(main())
+                            ^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_audit_v052.py", line 48, in main
+    await e.key('triangle');await e.key('ltrigger');await e.key('down');await e.key('cross');await e.expect('job',1);await e.key('circle')
+                                                                                             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f91171b6dca9/Dustbound-current/scripts/emulator_test.py", line 61, in expect
+    assert actual==expected,(field,actual,expected)
+           ^^^^^^^^^^^^^^^^
+AssertionError: ('job', (2,), (1,))

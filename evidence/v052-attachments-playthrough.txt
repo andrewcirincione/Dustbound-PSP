@@ -1,0 +1,1573 @@
+KEY cross SCREEN 13 ROW 0 -> 0
+KEY up SCREEN 15 ROW 0 -> 9
+KEY cross SCREEN 15 ROW 9 -> 0
+ASSERT money (650,)
+KEY cross SCREEN 0 ROW 0 -> 0
+KEY cross SCREEN 17 ROW 0 -> 0
+KEY ltrigger SCREEN 6 ROW 0 -> 0
+ASSERT shop_filter (4,)
+SCREENSHOT v052-70-backpack-market 480x272 screen 6
+KEY select SCREEN 6 ROW 0 -> 19
+ASSERT selection (19,)
+SCREENSHOT v052-71-backpack-guide 480x272 screen 12
+KEY circle SCREEN 12 ROW 19 -> 0
+KEY down SCREEN 6 ROW 0 -> 1
+KEY down SCREEN 6 ROW 1 -> 2
+SCREENSHOT v052-72-purchase-78 480x272 screen 6
+KEY cross SCREEN 6 ROW 2 -> 2
+ASSERT money (470,)
+KEY down SCREEN 6 ROW 2 -> 3
+KEY down SCREEN 6 ROW 3 -> 4
+SCREENSHOT v052-72-purchase-79 480x272 screen 6
+KEY cross SCREEN 6 ROW 4 -> 4
+ASSERT money (240,)
+KEY down SCREEN 6 ROW 4 -> 5
+KEY down SCREEN 6 ROW 5 -> 6
+KEY down SCREEN 6 ROW 6 -> 7
+KEY down SCREEN 6 ROW 7 -> 8
+SCREENSHOT v052-72-purchase-82 480x272 screen 6
+KEY cross SCREEN 6 ROW 8 -> 8
+ASSERT money (40,)
+KEY circle SCREEN 6 ROW 8 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+SCREENSHOT v052-73-pack-compare-78 480x272 screen 1
+KEY cross SCREEN 1 ROW 5 -> 5
+KEY circle SCREEN 1 ROW 5 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-74-bought-pack-78-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-74-bought-pack-78-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+SCREENSHOT v052-73-pack-compare-79 480x272 screen 1
+KEY cross SCREEN 1 ROW 6 -> 6
+KEY circle SCREEN 1 ROW 6 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-74-bought-pack-79-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-74-bought-pack-79-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+SCREENSHOT v052-73-pack-compare-82 480x272 screen 1
+KEY cross SCREEN 1 ROW 7 -> 7
+KEY circle SCREEN 1 ROW 7 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-74-bought-pack-82-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-74-bought-pack-82-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+SCREENSHOT v052-73-pack-compare-76 480x272 screen 1
+KEY cross SCREEN 1 ROW 5 -> 5
+KEY circle SCREEN 1 ROW 5 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-74-bought-pack-76-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-74-bought-pack-76-left 480x272 screen 0
+KEY cross SCREEN 0 ROW 0 -> 0
+KEY cross SCREEN 17 ROW 0 -> 0
+ASSERT screen (17,)
+KEY cross SCREEN 17 ROW 0 -> 0
+KEY circle SCREEN 17 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY down SCREEN 11 ROW 5 -> 6
+KEY down SCREEN 11 ROW 6 -> 7
+KEY down SCREEN 11 ROW 7 -> 8
+KEY down SCREEN 11 ROW 8 -> 9
+KEY down SCREEN 11 ROW 9 -> 10
+KEY down SCREEN 11 ROW 10 -> 11
+KEY down SCREEN 11 ROW 11 -> 12
+KEY cross SCREEN 11 ROW 12 -> 0
+SCREENSHOT v052-75-contract-journal 480x272 screen 19
+KEY square SCREEN 19 ROW 0 -> 0
+SCREENSHOT v052-76-contract-destination 480x272 screen 5
+KEY circle SCREEN 5 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY cross SCREEN 11 ROW 4 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY circle SCREEN 11 ROW 0 -> 0
+KEY start SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 11 ROW 0 -> 1
+KEY down SCREEN 11 ROW 1 -> 2
+KEY down SCREEN 11 ROW 2 -> 3
+KEY down SCREEN 11 ROW 3 -> 4
+KEY down SCREEN 11 ROW 4 -> 5
+KEY cross SCREEN 11 ROW 5 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY cross SCREEN 22 ROW 1 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+ASSERT money (40,)
+PSP ATTACHMENT SCENARIO PASS shopping /workspace/scratch/f91171b6dca9/Dustbound-current/build/v052-attachments-c4vfvple
+KEY down SCREEN 13 ROW 0 -> 1
+KEY down SCREEN 13 ROW 1 -> 2
+KEY cross SCREEN 13 ROW 2 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY cross SCREEN 22 ROW 2 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY cross SCREEN 1 ROW 0 -> 0
+KEY circle SCREEN 1 ROW 0 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-00-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-00-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY cross SCREEN 1 ROW 1 -> 1
+KEY circle SCREEN 1 ROW 1 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-01-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-01-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY cross SCREEN 1 ROW 2 -> 2
+KEY circle SCREEN 1 ROW 2 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-02-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-02-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY cross SCREEN 1 ROW 3 -> 3
+KEY circle SCREEN 1 ROW 3 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-03-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-03-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY cross SCREEN 1 ROW 4 -> 4
+KEY circle SCREEN 1 ROW 4 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-04-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-04-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY cross SCREEN 1 ROW 5 -> 5
+KEY circle SCREEN 1 ROW 5 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-05-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-05-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY cross SCREEN 1 ROW 6 -> 6
+KEY circle SCREEN 1 ROW 6 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-06-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-06-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY cross SCREEN 1 ROW 7 -> 7
+KEY circle SCREEN 1 ROW 7 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-07-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-07-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY cross SCREEN 1 ROW 8 -> 8
+KEY circle SCREEN 1 ROW 8 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-08-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-08-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY cross SCREEN 1 ROW 9 -> 9
+KEY circle SCREEN 1 ROW 9 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-09-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-09-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY cross SCREEN 1 ROW 10 -> 10
+KEY circle SCREEN 1 ROW 10 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-10-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-10-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY down SCREEN 1 ROW 10 -> 11
+KEY cross SCREEN 1 ROW 11 -> 11
+KEY circle SCREEN 1 ROW 11 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-11-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-11-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY down SCREEN 1 ROW 10 -> 11
+KEY down SCREEN 1 ROW 11 -> 12
+KEY cross SCREEN 1 ROW 12 -> 12
+KEY circle SCREEN 1 ROW 12 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-12-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-12-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY up SCREEN 1 ROW 0 -> 23
+KEY up SCREEN 1 ROW 23 -> 22
+KEY up SCREEN 1 ROW 22 -> 21
+KEY up SCREEN 1 ROW 21 -> 20
+KEY up SCREEN 1 ROW 20 -> 19
+KEY up SCREEN 1 ROW 19 -> 18
+KEY up SCREEN 1 ROW 18 -> 17
+KEY up SCREEN 1 ROW 17 -> 16
+KEY up SCREEN 1 ROW 16 -> 15
+KEY up SCREEN 1 ROW 15 -> 14
+KEY up SCREEN 1 ROW 14 -> 13
+KEY cross SCREEN 1 ROW 13 -> 13
+KEY circle SCREEN 1 ROW 13 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-13-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-13-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY up SCREEN 1 ROW 0 -> 23
+KEY up SCREEN 1 ROW 23 -> 22
+KEY up SCREEN 1 ROW 22 -> 21
+KEY up SCREEN 1 ROW 21 -> 20
+KEY up SCREEN 1 ROW 20 -> 19
+KEY up SCREEN 1 ROW 19 -> 18
+KEY up SCREEN 1 ROW 18 -> 17
+KEY up SCREEN 1 ROW 17 -> 16
+KEY up SCREEN 1 ROW 16 -> 15
+KEY up SCREEN 1 ROW 15 -> 14
+KEY cross SCREEN 1 ROW 14 -> 14
+KEY circle SCREEN 1 ROW 14 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-14-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-14-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY up SCREEN 1 ROW 0 -> 23
+KEY up SCREEN 1 ROW 23 -> 22
+KEY up SCREEN 1 ROW 22 -> 21
+KEY up SCREEN 1 ROW 21 -> 20
+KEY up SCREEN 1 ROW 20 -> 19
+KEY up SCREEN 1 ROW 19 -> 18
+KEY up SCREEN 1 ROW 18 -> 17
+KEY up SCREEN 1 ROW 17 -> 16
+KEY up SCREEN 1 ROW 16 -> 15
+KEY cross SCREEN 1 ROW 15 -> 15
+KEY circle SCREEN 1 ROW 15 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-15-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-15-left 480x272 screen 0
+PSP ATTACHMENT SCENARIO PASS weapons0 /workspace/scratch/f91171b6dca9/Dustbound-current/build/v052-attachments-zv0eyna6
+KEY down SCREEN 13 ROW 0 -> 1
+KEY down SCREEN 13 ROW 1 -> 2
+KEY cross SCREEN 13 ROW 2 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY cross SCREEN 22 ROW 3 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY cross SCREEN 1 ROW 0 -> 0
+KEY circle SCREEN 1 ROW 0 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-16-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-16-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY cross SCREEN 1 ROW 1 -> 1
+KEY circle SCREEN 1 ROW 1 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-17-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-17-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY cross SCREEN 1 ROW 2 -> 2
+KEY circle SCREEN 1 ROW 2 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-18-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-18-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY cross SCREEN 1 ROW 3 -> 3
+KEY circle SCREEN 1 ROW 3 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-19-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-19-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY cross SCREEN 1 ROW 4 -> 4
+KEY circle SCREEN 1 ROW 4 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-20-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-20-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY cross SCREEN 1 ROW 5 -> 5
+KEY circle SCREEN 1 ROW 5 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-21-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-21-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY cross SCREEN 1 ROW 6 -> 6
+KEY circle SCREEN 1 ROW 6 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-22-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-22-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY cross SCREEN 1 ROW 7 -> 7
+KEY circle SCREEN 1 ROW 7 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-23-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-23-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY cross SCREEN 1 ROW 8 -> 8
+KEY circle SCREEN 1 ROW 8 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-24-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-24-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY cross SCREEN 1 ROW 9 -> 9
+KEY circle SCREEN 1 ROW 9 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-25-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-25-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY cross SCREEN 1 ROW 10 -> 10
+KEY circle SCREEN 1 ROW 10 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-26-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-26-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY down SCREEN 1 ROW 10 -> 11
+KEY cross SCREEN 1 ROW 11 -> 11
+KEY circle SCREEN 1 ROW 11 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-27-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-27-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY down SCREEN 1 ROW 10 -> 11
+KEY down SCREEN 1 ROW 11 -> 12
+KEY cross SCREEN 1 ROW 12 -> 12
+KEY circle SCREEN 1 ROW 12 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-28-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-28-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY up SCREEN 1 ROW 0 -> 23
+KEY up SCREEN 1 ROW 23 -> 22
+KEY up SCREEN 1 ROW 22 -> 21
+KEY up SCREEN 1 ROW 21 -> 20
+KEY up SCREEN 1 ROW 20 -> 19
+KEY up SCREEN 1 ROW 19 -> 18
+KEY up SCREEN 1 ROW 18 -> 17
+KEY up SCREEN 1 ROW 17 -> 16
+KEY up SCREEN 1 ROW 16 -> 15
+KEY up SCREEN 1 ROW 15 -> 14
+KEY up SCREEN 1 ROW 14 -> 13
+KEY cross SCREEN 1 ROW 13 -> 13
+KEY circle SCREEN 1 ROW 13 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-29-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-29-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY up SCREEN 1 ROW 0 -> 23
+KEY up SCREEN 1 ROW 23 -> 22
+KEY up SCREEN 1 ROW 22 -> 21
+KEY up SCREEN 1 ROW 21 -> 20
+KEY up SCREEN 1 ROW 20 -> 19
+KEY up SCREEN 1 ROW 19 -> 18
+KEY up SCREEN 1 ROW 18 -> 17
+KEY up SCREEN 1 ROW 17 -> 16
+KEY up SCREEN 1 ROW 16 -> 15
+KEY up SCREEN 1 ROW 15 -> 14
+KEY cross SCREEN 1 ROW 14 -> 14
+KEY circle SCREEN 1 ROW 14 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-30-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-30-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY up SCREEN 1 ROW 0 -> 23
+KEY up SCREEN 1 ROW 23 -> 22
+KEY up SCREEN 1 ROW 22 -> 21
+KEY up SCREEN 1 ROW 21 -> 20
+KEY up SCREEN 1 ROW 20 -> 19
+KEY up SCREEN 1 ROW 19 -> 18
+KEY up SCREEN 1 ROW 18 -> 17
+KEY up SCREEN 1 ROW 17 -> 16
+KEY up SCREEN 1 ROW 16 -> 15
+KEY cross SCREEN 1 ROW 15 -> 15
+KEY circle SCREEN 1 ROW 15 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-31-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-31-left 480x272 screen 0
+PSP ATTACHMENT SCENARIO PASS weapons1 /workspace/scratch/f91171b6dca9/Dustbound-current/build/v052-attachments-xfy2xkv7
+KEY down SCREEN 13 ROW 0 -> 1
+KEY down SCREEN 13 ROW 1 -> 2
+KEY cross SCREEN 13 ROW 2 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY down SCREEN 22 ROW 3 -> 4
+KEY cross SCREEN 22 ROW 4 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY cross SCREEN 1 ROW 0 -> 0
+KEY circle SCREEN 1 ROW 0 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-32-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-32-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY cross SCREEN 1 ROW 1 -> 1
+KEY circle SCREEN 1 ROW 1 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-33-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-33-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY cross SCREEN 1 ROW 2 -> 2
+KEY circle SCREEN 1 ROW 2 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-34-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-34-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY cross SCREEN 1 ROW 3 -> 3
+KEY circle SCREEN 1 ROW 3 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-77-weapon-35-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-77-weapon-35-left 480x272 screen 0
+PSP ATTACHMENT SCENARIO PASS weapons2 /workspace/scratch/f91171b6dca9/Dustbound-current/build/v052-attachments-7fmgedfc
+KEY down SCREEN 13 ROW 0 -> 1
+KEY down SCREEN 13 ROW 1 -> 2
+KEY cross SCREEN 13 ROW 2 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY down SCREEN 22 ROW 3 -> 4
+KEY down SCREEN 22 ROW 4 -> 5
+KEY cross SCREEN 22 ROW 5 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY cross SCREEN 1 ROW 0 -> 0
+KEY circle SCREEN 1 ROW 0 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-78-back-00-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-78-back-00-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY cross SCREEN 1 ROW 1 -> 1
+KEY circle SCREEN 1 ROW 1 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-78-back-01-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-78-back-01-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY cross SCREEN 1 ROW 2 -> 2
+KEY circle SCREEN 1 ROW 2 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-78-back-02-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-78-back-02-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY cross SCREEN 1 ROW 3 -> 3
+KEY circle SCREEN 1 ROW 3 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-78-back-03-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-78-back-03-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY cross SCREEN 1 ROW 4 -> 4
+KEY circle SCREEN 1 ROW 4 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-78-back-04-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-78-back-04-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY cross SCREEN 1 ROW 5 -> 5
+KEY circle SCREEN 1 ROW 5 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-78-back-05-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-78-back-05-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY cross SCREEN 1 ROW 6 -> 6
+KEY circle SCREEN 1 ROW 6 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-78-back-06-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-78-back-06-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY cross SCREEN 1 ROW 7 -> 7
+KEY circle SCREEN 1 ROW 7 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-78-back-07-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-78-back-07-left 480x272 screen 0
+PSP ATTACHMENT SCENARIO PASS backs /workspace/scratch/f91171b6dca9/Dustbound-current/build/v052-attachments-3k0nzfrl
+KEY down SCREEN 13 ROW 0 -> 1
+KEY down SCREEN 13 ROW 1 -> 2
+KEY cross SCREEN 13 ROW 2 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY cross SCREEN 22 ROW 2 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+SCREENSHOT v052-79-clothing-compare-32 480x272 screen 1
+KEY cross SCREEN 1 ROW 0 -> 0
+KEY circle SCREEN 1 ROW 0 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-32-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-32-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+SCREENSHOT v052-79-clothing-compare-33 480x272 screen 1
+KEY cross SCREEN 1 ROW 1 -> 1
+KEY circle SCREEN 1 ROW 1 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-33-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-33-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+SCREENSHOT v052-79-clothing-compare-34 480x272 screen 1
+KEY cross SCREEN 1 ROW 2 -> 2
+KEY circle SCREEN 1 ROW 2 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-34-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-34-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+SCREENSHOT v052-79-clothing-compare-35 480x272 screen 1
+KEY cross SCREEN 1 ROW 3 -> 3
+KEY circle SCREEN 1 ROW 3 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-35-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-35-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+SCREENSHOT v052-79-clothing-compare-36 480x272 screen 1
+KEY cross SCREEN 1 ROW 4 -> 4
+KEY circle SCREEN 1 ROW 4 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-36-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-36-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+SCREENSHOT v052-79-clothing-compare-37 480x272 screen 1
+KEY cross SCREEN 1 ROW 5 -> 5
+KEY circle SCREEN 1 ROW 5 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-37-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-37-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+SCREENSHOT v052-79-clothing-compare-38 480x272 screen 1
+KEY cross SCREEN 1 ROW 6 -> 6
+KEY circle SCREEN 1 ROW 6 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-38-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-38-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+SCREENSHOT v052-79-clothing-compare-39 480x272 screen 1
+KEY cross SCREEN 1 ROW 7 -> 7
+KEY circle SCREEN 1 ROW 7 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-39-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-39-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+SCREENSHOT v052-79-clothing-compare-40 480x272 screen 1
+KEY cross SCREEN 1 ROW 8 -> 8
+KEY circle SCREEN 1 ROW 8 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-40-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-40-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+SCREENSHOT v052-79-clothing-compare-41 480x272 screen 1
+KEY cross SCREEN 1 ROW 9 -> 9
+KEY circle SCREEN 1 ROW 9 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-41-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-41-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+SCREENSHOT v052-79-clothing-compare-42 480x272 screen 1
+KEY cross SCREEN 1 ROW 10 -> 10
+KEY circle SCREEN 1 ROW 10 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-42-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-42-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY down SCREEN 1 ROW 10 -> 11
+SCREENSHOT v052-79-clothing-compare-43 480x272 screen 1
+KEY cross SCREEN 1 ROW 11 -> 11
+KEY circle SCREEN 1 ROW 11 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-43-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-43-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY down SCREEN 1 ROW 10 -> 11
+KEY down SCREEN 1 ROW 11 -> 12
+SCREENSHOT v052-79-clothing-compare-44 480x272 screen 1
+KEY cross SCREEN 1 ROW 12 -> 12
+KEY circle SCREEN 1 ROW 12 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-44-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-44-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY up SCREEN 1 ROW 0 -> 23
+KEY up SCREEN 1 ROW 23 -> 22
+KEY up SCREEN 1 ROW 22 -> 21
+KEY up SCREEN 1 ROW 21 -> 20
+KEY up SCREEN 1 ROW 20 -> 19
+KEY up SCREEN 1 ROW 19 -> 18
+KEY up SCREEN 1 ROW 18 -> 17
+KEY up SCREEN 1 ROW 17 -> 16
+KEY up SCREEN 1 ROW 16 -> 15
+KEY up SCREEN 1 ROW 15 -> 14
+KEY up SCREEN 1 ROW 14 -> 13
+SCREENSHOT v052-79-clothing-compare-45 480x272 screen 1
+KEY cross SCREEN 1 ROW 13 -> 13
+KEY circle SCREEN 1 ROW 13 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-45-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-45-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY up SCREEN 1 ROW 0 -> 23
+KEY up SCREEN 1 ROW 23 -> 22
+KEY up SCREEN 1 ROW 22 -> 21
+KEY up SCREEN 1 ROW 21 -> 20
+KEY up SCREEN 1 ROW 20 -> 19
+KEY up SCREEN 1 ROW 19 -> 18
+KEY up SCREEN 1 ROW 18 -> 17
+KEY up SCREEN 1 ROW 17 -> 16
+KEY up SCREEN 1 ROW 16 -> 15
+KEY up SCREEN 1 ROW 15 -> 14
+SCREENSHOT v052-79-clothing-compare-46 480x272 screen 1
+KEY cross SCREEN 1 ROW 14 -> 14
+KEY circle SCREEN 1 ROW 14 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-46-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-46-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY up SCREEN 1 ROW 0 -> 23
+KEY up SCREEN 1 ROW 23 -> 22
+KEY up SCREEN 1 ROW 22 -> 21
+KEY up SCREEN 1 ROW 21 -> 20
+KEY up SCREEN 1 ROW 20 -> 19
+KEY up SCREEN 1 ROW 19 -> 18
+KEY up SCREEN 1 ROW 18 -> 17
+KEY up SCREEN 1 ROW 17 -> 16
+KEY up SCREEN 1 ROW 16 -> 15
+SCREENSHOT v052-79-clothing-compare-47 480x272 screen 1
+KEY cross SCREEN 1 ROW 15 -> 15
+KEY circle SCREEN 1 ROW 15 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-47-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-47-left 480x272 screen 0
+PSP ATTACHMENT SCENARIO PASS clothing0 /workspace/scratch/f91171b6dca9/Dustbound-current/build/v052-attachments-6hg4bzbf
+KEY down SCREEN 13 ROW 0 -> 1
+KEY down SCREEN 13 ROW 1 -> 2
+KEY cross SCREEN 13 ROW 2 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY cross SCREEN 22 ROW 3 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+SCREENSHOT v052-79-clothing-compare-48 480x272 screen 1
+KEY cross SCREEN 1 ROW 0 -> 0
+KEY circle SCREEN 1 ROW 0 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-48-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-48-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+SCREENSHOT v052-79-clothing-compare-49 480x272 screen 1
+KEY cross SCREEN 1 ROW 1 -> 1
+KEY circle SCREEN 1 ROW 1 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-49-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-49-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+SCREENSHOT v052-79-clothing-compare-50 480x272 screen 1
+KEY cross SCREEN 1 ROW 2 -> 2
+KEY circle SCREEN 1 ROW 2 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-50-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-50-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+SCREENSHOT v052-79-clothing-compare-51 480x272 screen 1
+KEY cross SCREEN 1 ROW 3 -> 3
+KEY circle SCREEN 1 ROW 3 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-51-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-51-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+SCREENSHOT v052-79-clothing-compare-52 480x272 screen 1
+KEY cross SCREEN 1 ROW 4 -> 4
+KEY circle SCREEN 1 ROW 4 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-52-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-52-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+SCREENSHOT v052-79-clothing-compare-53 480x272 screen 1
+KEY cross SCREEN 1 ROW 5 -> 5
+KEY circle SCREEN 1 ROW 5 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-53-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-53-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+SCREENSHOT v052-79-clothing-compare-54 480x272 screen 1
+KEY cross SCREEN 1 ROW 6 -> 6
+KEY circle SCREEN 1 ROW 6 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-54-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-54-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+SCREENSHOT v052-79-clothing-compare-55 480x272 screen 1
+KEY cross SCREEN 1 ROW 7 -> 7
+KEY circle SCREEN 1 ROW 7 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-55-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-55-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+SCREENSHOT v052-79-clothing-compare-56 480x272 screen 1
+KEY cross SCREEN 1 ROW 8 -> 8
+KEY circle SCREEN 1 ROW 8 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-56-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-56-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+SCREENSHOT v052-79-clothing-compare-57 480x272 screen 1
+KEY cross SCREEN 1 ROW 9 -> 9
+KEY circle SCREEN 1 ROW 9 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-57-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-57-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+SCREENSHOT v052-79-clothing-compare-58 480x272 screen 1
+KEY cross SCREEN 1 ROW 10 -> 10
+KEY circle SCREEN 1 ROW 10 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-58-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-58-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY down SCREEN 1 ROW 10 -> 11
+SCREENSHOT v052-79-clothing-compare-59 480x272 screen 1
+KEY cross SCREEN 1 ROW 11 -> 11
+KEY circle SCREEN 1 ROW 11 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-59-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-59-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY down SCREEN 1 ROW 10 -> 11
+KEY down SCREEN 1 ROW 11 -> 12
+SCREENSHOT v052-79-clothing-compare-60 480x272 screen 1
+KEY cross SCREEN 1 ROW 12 -> 12
+KEY circle SCREEN 1 ROW 12 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-60-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-60-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY up SCREEN 1 ROW 0 -> 23
+KEY up SCREEN 1 ROW 23 -> 22
+KEY up SCREEN 1 ROW 22 -> 21
+KEY up SCREEN 1 ROW 21 -> 20
+KEY up SCREEN 1 ROW 20 -> 19
+KEY up SCREEN 1 ROW 19 -> 18
+KEY up SCREEN 1 ROW 18 -> 17
+KEY up SCREEN 1 ROW 17 -> 16
+KEY up SCREEN 1 ROW 16 -> 15
+KEY up SCREEN 1 ROW 15 -> 14
+KEY up SCREEN 1 ROW 14 -> 13
+SCREENSHOT v052-79-clothing-compare-61 480x272 screen 1
+KEY cross SCREEN 1 ROW 13 -> 13
+KEY circle SCREEN 1 ROW 13 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-61-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-61-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY up SCREEN 1 ROW 0 -> 23
+KEY up SCREEN 1 ROW 23 -> 22
+KEY up SCREEN 1 ROW 22 -> 21
+KEY up SCREEN 1 ROW 21 -> 20
+KEY up SCREEN 1 ROW 20 -> 19
+KEY up SCREEN 1 ROW 19 -> 18
+KEY up SCREEN 1 ROW 18 -> 17
+KEY up SCREEN 1 ROW 17 -> 16
+KEY up SCREEN 1 ROW 16 -> 15
+KEY up SCREEN 1 ROW 15 -> 14
+SCREENSHOT v052-79-clothing-compare-62 480x272 screen 1
+KEY cross SCREEN 1 ROW 14 -> 14
+KEY circle SCREEN 1 ROW 14 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-62-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-62-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY up SCREEN 1 ROW 0 -> 23
+KEY up SCREEN 1 ROW 23 -> 22
+KEY up SCREEN 1 ROW 22 -> 21
+KEY up SCREEN 1 ROW 21 -> 20
+KEY up SCREEN 1 ROW 20 -> 19
+KEY up SCREEN 1 ROW 19 -> 18
+KEY up SCREEN 1 ROW 18 -> 17
+KEY up SCREEN 1 ROW 17 -> 16
+KEY up SCREEN 1 ROW 16 -> 15
+SCREENSHOT v052-79-clothing-compare-63 480x272 screen 1
+KEY cross SCREEN 1 ROW 15 -> 15
+KEY circle SCREEN 1 ROW 15 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-63-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-63-left 480x272 screen 0
+PSP ATTACHMENT SCENARIO PASS clothing1 /workspace/scratch/f91171b6dca9/Dustbound-current/build/v052-attachments-iutp318r
+KEY down SCREEN 13 ROW 0 -> 1
+KEY down SCREEN 13 ROW 1 -> 2
+KEY cross SCREEN 13 ROW 2 -> 0
+KEY down SCREEN 22 ROW 0 -> 1
+KEY down SCREEN 22 ROW 1 -> 2
+KEY down SCREEN 22 ROW 2 -> 3
+KEY down SCREEN 22 ROW 3 -> 4
+KEY cross SCREEN 22 ROW 4 -> 0
+KEY cross SCREEN 14 ROW 0 -> 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+SCREENSHOT v052-79-clothing-compare-64 480x272 screen 1
+KEY cross SCREEN 1 ROW 0 -> 0
+KEY circle SCREEN 1 ROW 0 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-64-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-64-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+SCREENSHOT v052-79-clothing-compare-65 480x272 screen 1
+KEY cross SCREEN 1 ROW 1 -> 1
+KEY circle SCREEN 1 ROW 1 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-65-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-65-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+SCREENSHOT v052-79-clothing-compare-66 480x272 screen 1
+KEY cross SCREEN 1 ROW 2 -> 2
+KEY circle SCREEN 1 ROW 2 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-66-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-66-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+SCREENSHOT v052-79-clothing-compare-67 480x272 screen 1
+KEY cross SCREEN 1 ROW 3 -> 3
+KEY circle SCREEN 1 ROW 3 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-67-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-67-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+SCREENSHOT v052-79-clothing-compare-68 480x272 screen 1
+KEY cross SCREEN 1 ROW 4 -> 4
+KEY circle SCREEN 1 ROW 4 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-68-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-68-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+SCREENSHOT v052-79-clothing-compare-69 480x272 screen 1
+KEY cross SCREEN 1 ROW 5 -> 5
+KEY circle SCREEN 1 ROW 5 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-69-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-69-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+SCREENSHOT v052-79-clothing-compare-70 480x272 screen 1
+KEY cross SCREEN 1 ROW 6 -> 6
+KEY circle SCREEN 1 ROW 6 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-70-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-70-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+SCREENSHOT v052-79-clothing-compare-71 480x272 screen 1
+KEY cross SCREEN 1 ROW 7 -> 7
+KEY circle SCREEN 1 ROW 7 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-71-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-71-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+SCREENSHOT v052-79-clothing-compare-72 480x272 screen 1
+KEY cross SCREEN 1 ROW 8 -> 8
+KEY circle SCREEN 1 ROW 8 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-72-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-72-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+SCREENSHOT v052-79-clothing-compare-73 480x272 screen 1
+KEY cross SCREEN 1 ROW 9 -> 9
+KEY circle SCREEN 1 ROW 9 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-73-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-73-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+SCREENSHOT v052-79-clothing-compare-74 480x272 screen 1
+KEY cross SCREEN 1 ROW 10 -> 10
+KEY circle SCREEN 1 ROW 10 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-74-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-74-left 480x272 screen 0
+KEY triangle SCREEN 0 ROW 0 -> 0
+KEY down SCREEN 1 ROW 0 -> 1
+KEY down SCREEN 1 ROW 1 -> 2
+KEY down SCREEN 1 ROW 2 -> 3
+KEY down SCREEN 1 ROW 3 -> 4
+KEY down SCREEN 1 ROW 4 -> 5
+KEY down SCREEN 1 ROW 5 -> 6
+KEY down SCREEN 1 ROW 6 -> 7
+KEY down SCREEN 1 ROW 7 -> 8
+KEY down SCREEN 1 ROW 8 -> 9
+KEY down SCREEN 1 ROW 9 -> 10
+KEY down SCREEN 1 ROW 10 -> 11
+SCREENSHOT v052-79-clothing-compare-75 480x272 screen 1
+KEY cross SCREEN 1 ROW 11 -> 11
+KEY circle SCREEN 1 ROW 11 -> 0
+KEY right SCREEN 0 ROW 0 -> 0
+ASSERT facing (1,)
+SCREENSHOT v052-80-clothing-75-right 480x272 screen 0
+KEY left SCREEN 0 ROW 0 -> 0
+ASSERT facing (0,)
+SCREENSHOT v052-80-clothing-75-left 480x272 screen 0
+PSP ATTACHMENT SCENARIO PASS clothing2 /workspace/scratch/f91171b6dca9/Dustbound-current/build/v052-attachments-dkhnd0kb
+ALL EIGHT ATTACHMENT SCENARIOS PASS
