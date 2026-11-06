@@ -236,7 +236,7 @@ const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE 
 const char *guideBodies[GUIDE_PAGES] = {
     "\011 or analog: move in screen direction. \001: nearby interaction. \004: pack. \003: "
     "fight/passive. \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
-    "expedition menu.\nMenus pause the world. \010 inside a menu opens its guide. \005/\006 switch inventory "
+    "pause menu: \005/\006 change Pause, Squad and World tabs. Skills: \004 then \006, or Start > Squad > Skills.\nMenus pause time. \010 opens help. \005/\006 switch inventory "
     "tabs or guide pages. Hold \005 and tap \001 to cycle nearby targets. Move to cancel work or travel.",
     "New expedition opens character creation. Choose a name, origin, ancestry, body, skin, hairstyle, hair "
     "color, beard and scars. \014 adjusts each choice; \001 edits your name or begins.\nOrigins change "
@@ -268,7 +268,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "simulation; menus and "
     "tactical pause stop time.",
     "Six slots: weapon, torso, head, boots, legs, back. Pack \001 equips; \003 passes one to an ally; \004 "
-    "switches carried/worn gear. \001 on worn gear removes it if space allows. WORN / TRY ON compares fit "
+    "switches carried/worn gear. \001 on worn gear removes it if space allows. ITEM / WORN compares stats "
     "and actual bonuses.\nPlate protects more but slows movement and hinders stealth. Cloth is light; "
     "travel gear favors weather or movement. Higher grades improve the same role. Torso armor covers "
     "chest/arms; headgear covers head; leg armor and boots have separate coverage chances. MOVE% is the worn speed "
@@ -279,7 +279,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "gear.\nPrices depend on quality, faction relations, local prosperity. Hostile factions refuse trade. "
     "Selling stolen goods back to their owner can expose you; Black Mesa fences accept them. The item "
     "details show its stats and effects before purchase.",
-    "Visit a forge, then choose Gear forge from the expedition menu or smith dialogue. Choose slot, design, "
+    "Walk to a forge or ask a smith to use the smithy. Choose slot, design, "
     "material and quality with \014. The preview updates before you spend anything.\n\001 on Forge makes "
     "the selected design. Metal, cloth and timber costs scale with material and grade; relic gear also needs "
     "a relic. Higher grades require smithing experience and research. Missing materials or a full pack "
@@ -300,7 +300,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Workers fetch water and ingredients, walk to stations, and store output; cooks keep two rations. Haul deposits raw cargo. Job status explains delays. Select a worker and move "
     "to interrupt their current action. Up to eight living members may join.",
     "\002 sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and \001 near a "
-    "civilian to attempt pickpocketing. Owned salvage also counts as theft; locked containers require tools "
+    "civilian to inspect a pickpocket attempt. The screen shows the item, success chance and penalty. Press \001 again to steal, or \002 to cancel. Owned salvage says STEAL; locked containers require tools "
     "and time.\nWitnesses create a faction penalty and bounty. A theft can fail, drawing guards. Stolen "
     "stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a "
     "defeated wanted survivor; breaking out or paying bail is possible.",

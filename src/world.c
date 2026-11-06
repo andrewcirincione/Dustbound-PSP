@@ -709,16 +709,31 @@ void dialogue_open(int n) {
         g.actors[n].speech = (n + g.day) % 24;
     }
 }
+float pickpocket_chance(const Actor *a) {
+    return fmaxf(0, fminf(.9f, .25f + level(a, THEFT) * .007f + level(a, STEALTH) * .003f + gear_bonus(a, 2) * .003f));
+}
+int pickpocket_item(int n) {
+    if (n < 0 || n >= g.actorCount) return NONE;
+    for (int i = 0; i < PACK; i++)
+        if (g.actors[n].pack[i].item) return g.actors[n].pack[i].item;
+    return NONE;
+}
 int pickpocket(int n) {
     Actor *a = &g.actors[g.selected];
-    if (n < 0 || n >= g.actorCount || !a->sneaking)
-        return 0;
+    if (n < 0 || n >= g.actorCount || !a->sneaking || !conscious(a)) return 0;
     Actor *b = &g.actors[n];
-    if (b->squad || b->dead || b->kind == BEAST || distance(a->x, a->y, b->x, b->y) > TALK_REACH)
+    if (!b->active || b->squad || b->dead || b->unconscious > 0 || b->kind == BEAST || depth_distance(a, b) > TALK_REACH)
         return 0;
+    int it = pickpocket_item(n), source = -1, room = 0;
+    if (!it) { log_msg("Their pockets are empty."); return 0; }
+    for (int i = 0; i < PACK; i++) {
+        if (source < 0 && b->pack[i].item == it) source = i;
+        if (!a->pack[i].item || (a->pack[i].item == it && a->stolen[i] == b->faction && a->pack[i].qty < 999)) room = 1;
+    }
+    if (!room) { log_msg("Your pack is full."); return 0; }
+    float chance = pickpocket_chance(a);
     gain(a, THEFT, 22);
-    float chance = .25f + level(a, THEFT) * .007f + level(a, STEALTH) * .003f + gear_bonus(a, 2) * .003f;
-    if ((wrand() % 1000) / 1000.f > fminf(.9f, chance)) {
+    if ((wrand() % 1000) / 1000.f >= chance) {
         a->bounty += 80;
         g.rep[b->faction] -= 18;
         b->speech = 19;
@@ -726,21 +741,7 @@ int pickpocket(int n) {
         log_msg("Caught stealing! Bounty +80; faction standing -18.");
         return 0;
     }
-    int it = NONE, source = -1;
-    for (int i = 0; i < PACK; i++)
-        if (b->pack[i].item) {
-            it = b->pack[i].item;
-            source = i;
-            break;
-        }
-    if (!it) {
-        log_msg("Their pockets are empty.");
-        return 0;
-    }
-    if (!inventory_add_owned(a, it, 1, b->faction)) {
-        log_msg("Your pack is full.");
-        return 0;
-    }
+    if (!inventory_add_owned(a, it, 1, b->faction)) return 0;
     inventory_remove_slot(b, source, 1);
     log_msg("Lifted %s. Find a fence before selling it back.", itemDefs[it].name);
     return 1;

@@ -1,14 +1,22 @@
-# Dustbound 0.6.0 — Copper Road rebuild
+# Dustbound 0.6.1 — compact UI
 
-Download **Dustbound-0.6.0-PSP.zip** and extract its PSP folder to the memory-stick root. The game goes at **PSP/GAME/DUSTBOUND/EBOOT.PBP**. The standalone **EBOOT.PBP** is also attached; all art and sound are embedded. Requires a PSP configured for homebrew, or PPSSPP.
+- Reduced the bottom HUD from 60 pixels to a single 20-pixel status strip. Removed the permanent controls footer and indoor diagram.
+- Removed nearest-object distance/readiness banners. The one-line action prompt and target marker only appear within usable interaction range; target cycling includes reachable targets only.
+- Removed duplicate Worn/Try On models from inventory, stores and loot. Full-width item lists retain equipped-item comparisons, weight, penalties and effects. The worn-equipment page still shows your actual character.
+- Replaced the long Start list with Pause, Squad and World tabs. L/R changes tabs; Circle returns from a menu subpage, and Start resumes. Skills, body, orders, inventory and camp tools have explicit entries. Bounty payment, barbers, beds and smith services are accessed where they exist in the world.
+- Pickpocketing now opens an explicit attempt screen showing the item, success chance and caught penalty before committing. Indoor residents support the same action. Empty pockets and a full inventory do not roll a theft attempt. Owned salvage says STEAL.
+- Updated the in-game guide and control documentation.
 
-This release includes the Copper Road rescue and faction conflict, eight landmarks, construction labor and fuel, ordered jobs and independent expedition groups, captivity and escape, trauma recovery, armor layers, moving projectiles and indoor combat. It retains the clothing, hat, backpack and weapon-grip fixes and the inventory, equipment comparison and camp-work improvements.
+## Controls for the reported questions
 
-The latest continuation adds clear bleeding and incapacity feedback, preserves travel destinations during temporary incapacity, and allows repeated first aid and carrying Sora during her rescue.
+Skills: Triangle, then R once; alternatively Start > Squad > Skills.
 
-Back up existing DUST_*.sav files before upgrading. Save format 6 reads formats 1–5; save a migrated expedition to a new slot.
+Steal: Circle to sneak, approach a civilian, Cross to inspect Pickpocket, then Cross to steal or Circle to cancel. Named story/rescue characters retain their authored outdoor interactions. Owned salvage uses Cross when its prompt says STEAL. Stolen items retain their owner; Black Mesa fences accept them.
 
-Published directly from the latest source with the pinned PSPDEV toolchain. No additional gameplay tests were run for this publication. The executable checksum matches the existing local 0.6.0 build:
-155e31c905efb923026207bd0ea53e8448ea8de5258262d6920cb5c18b8a4650
+## Install
 
-This is a playable alpha. Physical PSP hardware validation remains outstanding.
+Extract the PSP folder from Dustbound-0.6.1-PSP.zip to the memory stick root, or replace PSP/GAME/DUSTBOUND/EBOOT.PBP. Keep your existing save files. Save format is unchanged from 0.6.0.
+
+## Verification
+
+PSP compilation and static 480x272 native-renderer layout inspection. The screenshots are native-rendered layout frames, not PSP emulator captures. No gameplay test suites or emulator runs were performed for this update. Physical PSP verification remains outstanding.

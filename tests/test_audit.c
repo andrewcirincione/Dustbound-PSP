@@ -121,7 +121,8 @@ int main(void) {
     press(KEY_CIRCLE);
     CHECK(ui.screen == SCREEN_TITLE && ui.selection == 2);
     ui.screen = SCREEN_MENU;
-    ui.selection = 9;
+    ui.menuTab = 0;
+    ui.selection = 5;
     press(KEY_CROSS);
     CHECK(ui.screen == SCREEN_SAVES && ui.saveExit);
     ui.selection = 5;
@@ -130,7 +131,7 @@ int main(void) {
     press(KEY_CIRCLE);
     CHECK(ui.screen == SCREEN_SAVES && ui.selection == 5);
     press(KEY_CIRCLE);
-    CHECK(ui.screen == SCREEN_MENU && ui.selection == 9);
+    CHECK(ui.screen == SCREEN_MENU && ui.selection == 5);
     /* Target selection prefers actions within reach and the chord never changes the controlled actor. */
     fresh();
     a = &g.actors[0];
@@ -142,12 +143,12 @@ int main(void) {
     g.nodes[0] = (Node){.x = 43.3f, .y = 44, .type = NODE_ORE, .remaining = 20};
     find_context();
     CHECK(ui.contextKind == 2);
-    CHECK(ui.contextCount == 2);
+    CHECK(ui.contextCount == 1);
     int selected = g.selected;
     game_tick(.033f, (Input){KEY_L, KEY_L});
     game_tick(.033f, (Input){KEY_L | KEY_CROSS, KEY_CROSS});
     game_tick(.033f, (Input){0});
-    CHECK(g.selected == selected && ui.contextKind == 1);
+    CHECK(g.selected == selected && ui.contextKind == 2);
     interact();
     CHECK(a->taskKind == 0);
     a->x = 42.4f;
@@ -224,11 +225,11 @@ int main(void) {
     b->kind = SETTLER;
     b->x = 48;
     b->y = 44;
-    ui.screen = SCREEN_MENU;
-    ui.selection = 14;
-    press(KEY_CROSS);
-    CHECK(ui.screen == SCREEN_MENU);
+    CHECK(nearby_service(ROLE_BARBER) < 0);
     b->x = 43;
+    CHECK(nearby_service(ROLE_BARBER) == 1);
+    dialogue_open(1);
+    ui.selection = 0;
     press(KEY_CROSS);
     CHECK(ui.screen == SCREEN_CREATE);
     /* Cooks fetch BOTH inputs, physically walk, cook, then bank output. */

@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.6.0"
+#define VERSION "0.6.1"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -119,7 +119,8 @@ enum {
     SCREEN_EQUIPPED,
     SCREEN_LOOT,
     SCREEN_ASSIST,
-    SCREEN_LOG, SCREEN_EXPEDITION, SCREEN_ORDERS, SCREEN_CAMP, SCREEN_CARE, SCREEN_ENCOUNTER, SCREEN_LAYERS
+    SCREEN_LOG, SCREEN_EXPEDITION, SCREEN_ORDERS, SCREEN_CAMP, SCREEN_CARE, SCREEN_ENCOUNTER, SCREEN_LAYERS,
+    SCREEN_THEFT
 };
 enum {
     KEY_UP = 1,
@@ -243,6 +244,7 @@ typedef struct {
     SaveInfo saves[SAVE_SLOTS];
     int helpSelection, helpScroll, saveReturn, saveExit, contextChoice, contextCount, squadCyclePending;
     int depthSite, depthRow;
+    int menuTab, menuRow, menuReturn;
     float travelStall, travelLastX, travelLastY;
 } UI;
 typedef struct {
@@ -377,6 +379,10 @@ int accept_contract(int town, int kind);
 int complete_contract(int index);
 void contract_description(int index, char *dst, int size);
 int pickpocket(int actor);
+float pickpocket_chance(const Actor *actor);
+int pickpocket_item(int actor);
+int pause_menu_count(void);
+const char *pause_menu_label(int row);
 void character_begin(int origin);
 void character_finish(void);
 int save_inspect(int slot, SaveInfo *info);

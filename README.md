@@ -2,11 +2,24 @@
 
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.6.0, Copper Road rebuild — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.6.1, compact UI — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 
 ![Copper Road rescue dialogue from the PSP EBOOT](evidence/v060-05-sora-wreck.png)
+
+## 0.6.1: compact UI
+
+The bottom HUD is one 20-pixel strip. Interaction prompts appear only within usable reach, and disappear in open space. Inventory, shop and loot lists use the full panel width with numerical equipment comparisons; the duplicate try-on characters are removed.
+
+Start opens Pause, Squad and World tabs. L/R changes tabs; Circle returns to the menu from its subpages. Remote NPC service shortcuts have been removed: speak to the relevant NPC or use the workstation. **Skills: Triangle, then R once**, or **Start > Squad > Skills**.
+
+**Stealing:** press Circle to sneak, approach a civilian and press Cross to open Pickpocket. It shows the item, success chance and consequences. Cross attempts the theft; Circle cancels. Owned salvage explicitly says STEAL. Pickpocketing now works near indoor residents as well. Named story/rescue characters keep their authored interaction outdoors.
+
+This update was compiled for PSP and its layouts reviewed using static 480x272 native-rendered frames. No gameplay suites or emulator runs were performed for 0.6.1. Existing save format is unchanged.
+
+![Compact exploration HUD, native renderer](evidence/v061-clear-hud.png)
+![Inventory without try-on models, native renderer](evidence/v061-inventory.png)
 
 ## 0.6.0: the Copper Road
 
@@ -16,7 +29,7 @@ Construction now takes work, and owned fires/forges consume timber or coal. Four
 
 Projectiles move through the world, strike intervening actors and stop at structures. Defensive, ranged and hold-fire orders apply indoors and outdoors. Actual residents and nearby followers enter rooms; trespass requires a conscious witness. Markets open from 06:00 to 22:00. Complete dressed bodies retain their clothing and backpacks when prone.
 
-Use the new expedition-menu entries for Copper Road, Orders, Camp Work, Recovery and Armor Layers. Each has a contextual guide and controller icons. Read the [critical review](docs/DESIGN_REVIEW_V060.md) and [validation record](docs/VALIDATION.md) for implemented scope and limits. This is an original, bounded PSP survival RPG, not a complete reproduction of Kenshi.
+Use Start > World for Copper Road and Camp Upkeep, and Start > Squad for Orders, Treatment and Armor Layers. Each has a contextual guide and controller icons. Read the [critical review](docs/DESIGN_REVIEW_V060.md) and [validation record](docs/VALIDATION.md) for implemented scope and limits. This is an original, bounded PSP survival RPG, not a complete reproduction of Kenshi.
 
 Watch the persistent BLEEDING warning during travel. First aid stops bleeding; rest addresses lasting trauma. Dialogue and landmark work explain whether unconsciousness, stun, being carried or distance is preventing an action. Interrupted travel keeps its destination and shows ROUTE HELD with the cause; movement resumes after recovery. Actual blocked terrain and manual cancellation remain separate. Sora can receive another dressing during the escort if she needs more treatment; stay close and protect her on the road, or carry her at the cost of extra weight and slower travel.
 
@@ -27,9 +40,9 @@ The sections below record the earlier systems retained by the rebuild.
 
 ## Reliable actions, recovery and camp work
 
-0.5.2 audits all 27 screen types and the survival loop. Help returns to the exact selection; title/load cancellation returns to its origin; save-and-title asks for an explicit slot confirmation. Inventory operations preserve the selected stack and its stolen owner, including equipment, crafting, passing and salvage. Loot has worn/candidate previews and full-stack transfer.
+0.5.2 audits all 27 screen types and the survival loop. Help returns to the exact selection; title/load cancellation returns to its origin; save-and-title asks for an explicit slot confirmation. Inventory operations preserve the selected stack and its stolen owner, including equipment, crafting, passing and salvage. Loot has numerical equipment comparison and full-stack transfer.
 
-A rescue menu separates first aid, carrying and recovering gear. Nearby actions can be cycled with ![L](assets/ui/l.svg) held and ![Cross](assets/ui/cross.svg). Workstations and beds require actual reach. Cooks fetch water and food, walk to campfires, and return output to depots; job status explains what they need. Shops show weapon/armor previews, recipes show held/needed materials, skills explain training and live effects, and recent messages remain accessible.
+A rescue menu separates first aid, carrying and recovering gear. Nearby actions can be cycled with ![L](assets/ui/l.svg) held and ![Cross](assets/ui/cross.svg). Workstations and beds require actual reach. Cooks fetch water and food, walk to campfires, and return output to depots; job status explains what they need. Shops show weapon/armor stat comparisons, recipes show held/needed materials, skills explain training and live effects, and recent messages remain accessible.
 
 Toughness, perception and four production professions gain bounded practical benefits. See the [critical review](docs/DESIGN_REVIEW_V052.md) for the complete finding/change matrix, all-screen audit, balance rules and remaining limitations.
 
@@ -42,7 +55,7 @@ Toughness, perception and four production professions gain bounded practical ben
 
 Garment-specific profiles replace catalog-order armor values. Plate offers protection at a weight, movement and stealth cost; robes remain light, and travel clothes favor weather, recovery or movement. Comparisons show actual movement percentages, stealth, carrying/weather bonuses and effects. The [balance table](evidence/v051-clothing-balance.csv) lists every design at the same grade.
 
-Every trader now stocks four affordable bag types: travel pack, medicine roll, ore harness and bedroll pack. A dedicated BACKPACKS tab shows WORN / TRY ON portraits. Packs offer different cargo-weight relief, carrying allowance, combat/stealth penalties and medical/recovery benefits. The comparison predicts actual loaded weight after an equipment swap; all use the existing 24-slot inventory.
+Every trader now stocks four affordable bag types: travel pack, medicine roll, ore harness and bedroll pack. A dedicated BACKPACKS filter shows numerical comparisons. Packs offer different cargo-weight relief, carrying allowance, combat/stealth penalties and medical/recovery benefits. The comparison predicts actual loaded weight after an equipment swap; all use the existing 24-slot inventory.
 
 The Journal can locate an active contract on the atlas without changing an existing travel order. Supply objectives show held/needed counts. A new contextual guide explains backpack choices. Existing v5 saves keep their item IDs and receive the new market stock once.
 
@@ -93,7 +106,7 @@ Walk through a door into a house, shop, inn, tower, smithy, workshop or depot. C
 ## Install on PSP
 
 1. Use a PSP already configured to run homebrew. This repository does not install or modify firmware.
-2. Download `Dustbound-0.6.0-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
+2. Download `Dustbound-0.6.1-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
 3. The executable should be at `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Launch it from **Game → Memory Stick**.
 4. Back up existing `DUST_*.sav` files before upgrading. v0.1 through v0.5.2 saves are supported. Older formats migrate when loaded; save the migrated game to a different slot first. Keep a backup before using an older executable. Older-format migration refreshes regional markets, town NPC outfits and medic positions once; existing v5 saves receive the backpack supplement and the new frontier state once, preserving inventory and item IDs. New saves use version 6. Do not remove the memory stick during a save.
 
@@ -111,7 +124,7 @@ The single EBOOT includes its art, catalog and sounds. No network access or exte
 | ![L](assets/ui/l.svg) | Next squad member; previous inventory tab |
 | ![R](assets/ui/r.svg) | Tactical pause; next inventory tab |
 | ![Select](assets/ui/select.svg) | Atlas; contextual guide inside an overlay |
-| ![Start](assets/ui/start.svg) | Expedition menu |
+| ![Start](assets/ui/start.svg) | Pause / Squad / World tabs |
 
 Menus stop simulation. Attacks are automatic when fighting is enabled and a hostile is in reach. Move to interrupt work or a travel route. In the forge, ![directions](assets/ui/horizontal.svg) chooses a design, material and grade; ![cross](assets/ui/cross.svg) on the final row crafts it. The guide explains each section.
 

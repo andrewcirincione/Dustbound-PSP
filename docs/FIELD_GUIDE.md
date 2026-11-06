@@ -1,12 +1,12 @@
-# Dustbound field guide — 0.6.0
+# Dustbound field guide — 0.6.1
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
 ## 1. Controls
 
-![dpad](../assets/ui/dpad.svg) or analog: move in screen direction. ![cross](../assets/ui/cross.svg): nearby interaction. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): expedition menu.
+![dpad](../assets/ui/dpad.svg) or analog: move in screen direction. ![cross](../assets/ui/cross.svg): nearby interaction. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): pause menu: ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) change Pause, Squad and World tabs. Skills: ![triangle](../assets/ui/triangle.svg) then ![r](../assets/ui/r.svg), or Start > Squad > Skills.
 
-Menus pause the world. ![select](../assets/ui/select.svg) inside a menu opens its guide. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch inventory tabs or guide pages. Hold ![l](../assets/ui/l.svg) and tap ![cross](../assets/ui/cross.svg) to cycle nearby targets. Move to cancel work or travel.
+Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch inventory tabs or guide pages. Hold ![l](../assets/ui/l.svg) and tap ![cross](../assets/ui/cross.svg) to cycle nearby targets. Move to cancel work or travel.
 
 ## 2. Your Drifter
 
@@ -40,7 +40,7 @@ An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Sleepin
 
 ## 7. Equipment
 
-Six slots: weapon, torso, head, boots, legs, back. Pack ![cross](../assets/ui/cross.svg) equips; ![square](../assets/ui/square.svg) passes one to an ally; ![triangle](../assets/ui/triangle.svg) switches carried/worn gear. ![cross](../assets/ui/cross.svg) on worn gear removes it if space allows. WORN / TRY ON compares fit and actual bonuses.
+Six slots: weapon, torso, head, boots, legs, back. Pack ![cross](../assets/ui/cross.svg) equips; ![square](../assets/ui/square.svg) passes one to an ally; ![triangle](../assets/ui/triangle.svg) switches carried/worn gear. ![cross](../assets/ui/cross.svg) on worn gear removes it if space allows. ITEM / WORN compares stats and actual bonuses.
 
 Plate protects more but slows movement and hinders stealth. Cloth is light; travel gear favors weather or movement. Higher grades improve the same role. Torso armor covers chest/arms; headgear covers head; leg armor and boots have separate coverage chances. MOVE% is the worn speed bonus. Weight above capacity slows you further.
 
@@ -52,7 +52,7 @@ Prices depend on quality, faction relations, local prosperity. Hostile factions 
 
 ## 9. Forging Gear
 
-Visit a forge, then choose Gear forge from the expedition menu or smith dialogue. Choose slot, design, material and quality with ![horizontal](../assets/ui/horizontal.svg). The preview updates before you spend anything.
+Walk to a forge or ask a smith to use the smithy. Choose slot, design, material and quality with ![horizontal](../assets/ui/horizontal.svg). The preview updates before you spend anything.
 
 ![cross](../assets/ui/cross.svg) on Forge makes the selected design. Metal, cloth and timber costs scale with material and grade; relic gear also needs a relic. Higher grades require smithing experience and research. Missing materials or a full pack cancel the transaction without charging you.
 
@@ -76,7 +76,7 @@ Smelt and Cook use nearby stations and can collect ingredients from a nearby dep
 
 ## 13. Crime & Stealth
 
-![circle](../assets/ui/circle.svg) sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and ![cross](../assets/ui/cross.svg) near a civilian to attempt pickpocketing. Owned salvage also counts as theft; locked containers require tools and time.
+![circle](../assets/ui/circle.svg) sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and ![cross](../assets/ui/cross.svg) near a civilian to inspect a pickpocket attempt. The screen shows the item, success chance and penalty. Press ![cross](../assets/ui/cross.svg) again to steal, or ![circle](../assets/ui/circle.svg) to cancel. Owned salvage says STEAL; locked containers require tools and time.
 
 Witnesses create a faction penalty and bounty. A theft can fail, drawing guards. Stolen stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a defeated wanted survivor; breaking out or paying bail is possible.
 

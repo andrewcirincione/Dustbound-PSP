@@ -585,9 +585,3 @@ static float portrait_scale(Actor *a, int width, int height, int drawX, int draw
         }
     return scale;
 }
-static void compare_portraits(Actor *current, Actor *candidate) {
-    float scale =
-        fminf(portrait_scale(current, 84, 76, -1, 0, 1), portrait_scale(candidate, 84, 76, -1, 0, 1));
-    portrait_scale(current, 84, 76, 277, 92, scale);
-    portrait_scale(candidate, 84, 76, 374, 92, scale);
-}

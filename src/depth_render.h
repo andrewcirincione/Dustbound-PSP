@@ -3,7 +3,7 @@ static void depth_world_draw(void) {
     for (int i = 0; !g.interiorBuilding && i < LANDMARKS; i++) {
         int x, y;
         project(g.depth.siteX[i], g.depth.siteY[i], &x, &y);
-        if (x < 10 || x > 470 || y < 48 || y > 175)
+        if (x < 10 || x > 470 || y < 48 || y > 232)
             continue;
         int nearby = distance(g.actors[g.selected].x, g.actors[g.selected].y, g.depth.siteX[i],
                               g.depth.siteY[i]) < 5;
@@ -31,7 +31,7 @@ static void depth_world_draw(void) {
 static void depth_header(const char *name, const char *sub) {
     overlay_header(name, sub);
     rect(25, 233, 425, 15, PANEL);
-    text(31, 237, "\002 CLOSE   \010 GUIDE", MUTED, 1);
+    text(31, 237, ui.menuReturn ? "\002 BACK   \010 GUIDE" : "\002 CLOSE   \010 GUIDE", MUTED, 1);
 }
 static void depth_screen(void) {
     Actor *a = &g.actors[g.selected];
@@ -97,7 +97,7 @@ static void depth_screen(void) {
         }
         if (!total)
             wrap(31, 100, 60,
-                 "No owned structures yet. Build a camp outside town from the expedition menu.", TEXT);
+                 "No owned structures yet. Build a camp outside town from Start, World, Build a camp.", TEXT);
         text(31, 225, "TIMBER: 4 CHARGES / COAL: 10 / WORK WITHIN REACH", GOLD, 1);
     } else if (ui.screen == SCREEN_CARE) {
         depth_header(z->captive ? "SHACKLED / RECOVERY" : "TREATMENT & RECOVERY",

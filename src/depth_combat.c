@@ -118,7 +118,7 @@ void depth_leave_room(int building) {
             g.actors[i].y = g.buildings[building].y + .65f;
         }
 }
-int depth_room_interact(void) {
+int depth_room_target(void) {
     Actor *a = &g.actors[g.selected];
     int nearest = -1;
     float reach = TALK_REACH;
@@ -130,8 +130,11 @@ int depth_room_interact(void) {
                 reach = d;
             }
         }
-    if (nearest < 0)
-        return 0;
+    return nearest;
+}
+int depth_room_interact(void) {
+    int nearest = depth_room_target();
+    if (nearest < 0) return 0;
     Actor *b = &g.actors[nearest];
     ui.selection = 0;
     if (b->squad) {
@@ -140,6 +143,9 @@ int depth_room_interact(void) {
     } else if (b->dead || b->unconscious > 0) {
         ui.lootActor = nearest;
         ui.screen = SCREEN_LOOT;
+    } else if (g.actors[g.selected].sneaking) {
+        ui.lootActor = nearest;
+        ui.screen = SCREEN_THEFT;
     } else
         dialogue_open(nearest);
     return 1;

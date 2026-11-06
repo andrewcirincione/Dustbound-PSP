@@ -54,7 +54,7 @@ int main(void) {
     a->x = 102.5f;
     a->y = 100;
     find_context();
-    CHECK(ui.contextKind == 1 && ui.contextIndex == 0 && context_distance() > context_reach());
+    CHECK(ui.contextIndex == -1 && ui.contextCount == 0);
     int ore = inventory_count(a, ORE);
     interact();
     step(4);

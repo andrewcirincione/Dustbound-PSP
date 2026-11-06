@@ -972,9 +972,9 @@ typedef struct {
 } ContextCandidate;
 static ContextCandidate candidates[64];
 static void add_context(int kind, int index, float d, float reach) {
-    if (d >= 4.5f)
+    if (d > reach)
         return;
-    float score = d + (d > reach ? 10 : 0);
+    float score = d;
     int count = ui.contextCount, pos = count < 64 ? count : 63;
     if (count == 64 && score >= candidates[63].score)
         return;
@@ -1081,8 +1081,11 @@ void interact(void) {
             ui.lootActor = n;
             ui.selection = 0;
             ui.screen = SCREEN_LOOT;
-        } else if (a->sneaking)
-            pickpocket(n);
+        } else if (a->sneaking) {
+            ui.lootActor = n;
+            ui.selection = 0;
+            ui.screen = SCREEN_THEFT;
+        }
         else
             dialogue_open(n);
         return;
@@ -1895,12 +1898,70 @@ static void cycle_squad(int direction) {
         }
     }
 }
+static const char *pauseLabels[3][8] = {
+    {"Resume", "Save game", "Load game", "Game speed", "Controls & field guide", "Save and quit to title", "New wanderer"},
+    {"Inventory & equipment", "Skills", "Body & first aid", "Squad jobs", "Orders & priorities", "Treatment & recovery", "Armor layers", "Recent messages"},
+    {"Map & travel", "Copper Road expedition", "Contracts", "Factions", "Build a camp", "Camp upkeep", "Crafting recipes", "Research"}
+};
+int pause_menu_count(void) { return ui.menuTab == 0 ? 7 : 8; }
+const char *pause_menu_label(int row) {
+    return row >= 0 && row < pause_menu_count() ? pauseLabels[ui.menuTab][row] : "";
+}
+static void pause_menu_open(void) {
+    Actor *a = &g.actors[g.selected];
+    int row = ui.selection;
+    if (row < 0 || row >= pause_menu_count()) return;
+    ui.menuRow = row;
+    if (ui.menuTab == 0) {
+        switch (row) {
+        case 0: ui.menuReturn = 0; open_screen(SCREEN_WORLD); break;
+        case 1: case 2: case 5:
+            ui.saveMode = row != 2;
+            ui.saveExit = row == 5;
+            ui.saveReturn = SCREEN_MENU;
+            save_refresh();
+            open_screen(SCREEN_SAVES);
+            ui.selection = ui.saveMode ? (ui.slot ? ui.slot : 1) : 0;
+            break;
+        case 3: ui.speed = ui.speed == 1 ? 2 : 1; break;
+        case 4: open_help(0); break;
+        case 6: ui.confirmAction = 1; open_screen(SCREEN_CONFIRM); break;
+        }
+        return;
+    }
+    static const int screens[2][8] = {
+        {SCREEN_PACK, SCREEN_SKILLS, SCREEN_HEALTH, SCREEN_SQUAD, SCREEN_ORDERS, SCREEN_CARE, SCREEN_LAYERS, SCREEN_LOG},
+        {SCREEN_MAP, SCREEN_EXPEDITION, SCREEN_JOURNAL, SCREEN_FACTIONS, SCREEN_BUILD, SCREEN_CAMP, SCREEN_CRAFT, SCREEN_RESEARCH}
+    };
+    ui.menuReturn = 1;
+    int target = screens[ui.menuTab - 1][row];
+    if (target == SCREEN_MAP) {
+        ui.mapX = a->x;
+        ui.mapY = a->y;
+        ui.mapZoom = 1;
+    }
+    if (target >= SCREEN_EXPEDITION && target <= SCREEN_LAYERS) depth_open(target);
+    else open_screen(target);
+}
 void game_tick(float dt, Input in) {
     dt = clamp(dt, 0, .1f);
     ui.noticeTime = fmaxf(0, ui.noticeTime - dt);
     int p = in.pressed;
     if (ui.screen != SCREEN_WORLD)
         ui.squadCyclePending = 0;
+    if (ui.screen == SCREEN_WORLD) ui.menuReturn = 0;
+    if (ui.menuReturn && ui.screen != SCREEN_MENU && ui.screen != SCREEN_HELP &&
+        ui.screen != SCREEN_CONFIRM && ui.screen != SCREEN_SAVES && (p & (KEY_CIRCLE | KEY_START))) {
+        open_screen(p & KEY_START ? SCREEN_WORLD : SCREEN_MENU);
+        ui.selection = ui.menuRow;
+        if (p & KEY_START) ui.menuReturn = 0;
+        return;
+    }
+    if (ui.screen == SCREEN_MENU && (p & (KEY_L | KEY_R | KEY_LEFT | KEY_RIGHT))) {
+        ui.menuTab = (ui.menuTab + (p & (KEY_R | KEY_RIGHT) ? 1 : 2)) % 3;
+        ui.selection = 0;
+        return;
+    }
     if (depth_input(dt,in) || expansion_input(dt, in))
         return;
     Actor *a = &g.actors[g.selected];
@@ -1927,7 +1988,7 @@ void game_tick(float dt, Input in) {
     if (ui.screen == SCREEN_CONFIRM) {
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_screen(ui.confirmAction == 1 ? SCREEN_MENU : SCREEN_SAVES);
-            ui.selection = ui.confirmAction == 1 ? 8 : ui.slot;
+            ui.selection = ui.confirmAction == 1 ? 6 : ui.slot;
             return;
         }
         if (p & KEY_CROSS) {
@@ -1981,7 +2042,7 @@ void game_tick(float dt, Input in) {
             count = recipeCount;
             break;
         case SCREEN_MENU:
-            count = 23;
+            count = pause_menu_count();
             break;
         case SCREEN_HELP:
             count = GUIDE_PAGES;
@@ -2088,88 +2149,8 @@ void game_tick(float dt, Input in) {
             craft_item(ui.selection);
         else if (ui.screen == SCREEN_RESEARCH && (p & KEY_CROSS))
             research_tech();
-        else if (ui.screen == SCREEN_MENU) {
-            if (p & KEY_CROSS) {
-                switch (ui.selection) {
-                case 0:
-                    open_screen(SCREEN_WORLD);
-                    break;
-                case 1:
-                    open_screen(SCREEN_BUILD);
-                    break;
-                case 2:
-                    open_screen(SCREEN_CRAFT);
-                    break;
-                case 3:
-                    open_screen(SCREEN_RESEARCH);
-                    break;
-                case 4:
-                    ui.saveMode = 1;
-                    ui.saveReturn = SCREEN_MENU;
-                    ui.saveExit = 0;
-                    save_refresh();
-                    open_screen(SCREEN_SAVES);
-                    break;
-                case 5:
-                    ui.saveMode = 0;
-                    ui.saveReturn = SCREEN_MENU;
-                    ui.saveExit = 0;
-                    save_refresh();
-                    open_screen(SCREEN_SAVES);
-                    break;
-                case 6:
-                    ui.speed = ui.speed == 1 ? 2 : 1;
-                    break;
-                case 7:
-                    open_help(0);
-                    break;
-                case 8:
-                    ui.confirmAction = 1;
-                    open_screen(SCREEN_CONFIRM);
-                    break;
-                case 9:
-                    ui.saveMode = 1;
-                    ui.saveReturn = SCREEN_MENU;
-                    ui.saveExit = 1;
-                    save_refresh();
-                    open_screen(SCREEN_SAVES);
-                    ui.selection = ui.slot ? ui.slot : 1;
-                    break;
-                case 11:
-                    open_screen(SCREEN_FORGE);
-                    break;
-                case 12:
-                    open_screen(SCREEN_JOURNAL);
-                    break;
-                case 13:
-                    open_screen(SCREEN_FACTIONS);
-                    break;
-                case 14:
-                    if (nearby_service(ROLE_BARBER) >= 0)
-                        character_begin(-1);
-                    else
-                        log_msg("Walk to a barber and talk to change your appearance.");
-                    break;
-                case 15:
-                    start_sleep(town_near(a->x, a->y, 10));
-                    break;
-                case 10: {
-                    int official = nearby_service(ROLE_MARSHAL);
-                    if (official >= 0)
-                        dialogue_open(official);
-                    else
-                        log_msg("Walk to a marshal to settle a local bounty.");
-                    break;
-                }
-                case 16:
-                    open_screen(SCREEN_LOG);
-                    break;
-                case 17:case 18:case 19:case 20:case 21:
-                    depth_open(SCREEN_EXPEDITION+ui.selection-17);break;
-                case 22:depth_open(SCREEN_LAYERS);break;
-                }
-            }
-        }
+        else if (ui.screen == SCREEN_MENU && (p & KEY_CROSS))
+            pause_menu_open();
         return;
     }
     if (p & KEY_TRIANGLE) {
@@ -2177,6 +2158,7 @@ void game_tick(float dt, Input in) {
         return;
     }
     if (p & KEY_START) {
+        ui.menuTab = ui.menuRow = ui.menuReturn = 0;
         open_screen(SCREEN_MENU);
         return;
     }

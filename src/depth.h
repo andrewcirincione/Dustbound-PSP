@@ -38,6 +38,7 @@ void depth_enter_room(int building);
 void depth_leave_room(int building);
 void depth_room_tick(float dt);
 int depth_room_interact(void);
+int depth_room_target(void);
 int depth_fire(int source, int target, int weapon);
 void depth_projectiles(float dt);
 void combat_impact(int attacker, int defender, int weapon);

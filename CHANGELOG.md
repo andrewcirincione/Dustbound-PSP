@@ -1,5 +1,9 @@
 # 0.5.2 — Reliable actions and recovery
 
+## 0.6.1 — Compact UI
+
+20-pixel HUD; in-range-only prompts; full-width inventory/shop/loot lists without try-on models; tabbed Start menu with direct Skills access; explicit pickpocket attempt screen and owned-salvage labels. PSP compiled and static layouts inspected; no gameplay suites or emulator runs. Save format unchanged.
+
 ## 0.6.0 — Copper Road rebuild
 
 - Reconstruct a persistent rescue/road expedition with eight landmarks, named dialogue and repair, truce, capture and lethal outcomes.

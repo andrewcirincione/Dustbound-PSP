@@ -552,7 +552,7 @@ static void objects_draw(void) {
                 continue;
             int sx, sy;
             project(x + .3f, y + .4f, &sx, &sy);
-            if (sx < 0 || sx > 480 || sy < 0 || sy > 210)
+            if (sx < 0 || sx > 480 || sy < 0 || sy > 252)
                 continue;
             objects[n++] = (Object){x + y + .7f, 3, biome(x, y) * 4 + (int)(h % 4), sx, sy};
         }
@@ -581,7 +581,7 @@ static void objects_draw(void) {
             art_shadow(id, x, y + 4);
         }
     }
-    if (ui.contextIndex >= 0 && !g.interiorBuilding) {
+    if (ui.screen == SCREEN_WORLD && ui.contextIndex >= 0 && !g.interiorBuilding && context_distance() <= context_reach()) {
         int x, y;
         float wx, wy;
         int id = ui.contextIndex;
@@ -616,7 +616,7 @@ static void objects_draw(void) {
                 bar(o->x - 10, o->y - 43, 21, 2, hp, a->squad ? TEAL : RED);
             }
             if (!a->squad && a->kind != BEAST && a->kind != RAIDER && ui.contextKind == 0 &&
-                ui.contextIndex == o->index) {
+                ui.contextIndex == o->index && context_distance() <= context_reach()) {
                 center(o->x, o->y - 52, npc_role_name(a), a->kind == RECRUIT ? TEAL : GOLD, 1);
             }
             if (a->squad && o->index == g.selected) {
@@ -838,139 +838,105 @@ static void hud(void) {
     rect(0, 0, 480, 23, INK);
     line(0, 22, 480, 22, EDGE);
     int t = town_near(a->x, a->y, 10);
-
     text(9, 8, t >= 0 ? towns[t].name : regionNames[biome(a->x, a->y)], GOLD, 1);
-    snprintf(b, 120, "DAY %d  %02d:%02d", g.day, (int)g.dayTime, (int)(g.dayTime * 60) % 60);
+    snprintf(b, sizeof(b), "DAY %d  %02d:%02d", g.day, (int)g.dayTime, (int)(g.dayTime * 60) % 60);
     text(220, 8, b, MUTED, 1);
-    snprintf(b, 120, "%d SILVER", g.money);
-    text(397 - strlen(b) * 2, 8, b, TEXT, 1);
+    snprintf(b, sizeof(b), "%d SILVER", g.money);
+    text(472 - (int)strlen(b) * 6, 8, b, TEXT, 1);
+    if (ui.screen != SCREEN_WORLD)
+        return;
     if (!g.interiorBuilding)
         mini_map();
-    else {
-        panel(408, 30, 64, 60);
-        text(414, 36, "INDOORS", GOLD, 1);
-        frame(418, 49, 43, 32, EDGE);
-        rect(420 + (int)(g.interiorX * 5), 51 + (int)(g.interiorY * 4), 3, 3, TEAL);
-    }
-
     if (ui.paused) {
-        panel(192, 31, 94, 20);
-        center(239, 38, "TACTICAL PAUSE", GOLD, 1);
+        panel(192, 43, 94, 18);
+        center(239, 49, "PAUSED", GOLD, 1);
     } else if (ui.speed == 2)
-        text(338, 31, "2X", GOLD, 1);
-    rect(0, 212, 480, 60, INK);
-    line(0, 212, 480, 212, EDGE);
-    int member = 0;
-    for (int i = 0; i < g.selected; i++)
-        if (g.actors[i].squad)
-            member++;
+        text(370, 44, "2X", GOLD, 1);
+
+    /* A single status strip; portraits, load details and controls live in menus. */
+    rect(0, 252, 480, 20, INK);
+    line(0, 252, 480, 252, EDGE);
+    int member = 0, total = 0;
+    for (int i = 0; i < g.actorCount; i++)
+        if (g.actors[i].squad) {
+            if (i < g.selected) member++;
+            total++;
+        }
     int k = 0, shown = 0, page = member / 4;
     for (int i = 0; i < g.actorCount; i++)
         if (g.actors[i].squad) {
             Actor *m = &g.actors[i];
-            if (k++ / 4 != page)
-                continue;
-            int x = 8 + shown++ * 72;
-            rect(x, 219, 65, 33, i == g.selected ? 0x494132 : PANEL);
-            frame(x, 219, 65, 33, i == g.selected ? TEAL : EDGE);
-            Actor portrait = *m;
-            portrait.attackPhase = 0;
-            portrait.hitFlash = 0;
-            portrait.movedTimer = 0;
-            clipLeft = x + 1;
-            clipTop = 220;
-            clipRight = x + 23;
-            clipBottom = 251;
-            person(&portrait, x + 12, 261, 1, 0);
-            clipLeft = clipTop = 0;
-            clipRight = 480;
-            clipBottom = 272;
-            char shortname[7];
-            snprintf(shortname, sizeof(shortname), "%.6s", m->name);
-            text(x + 24, 224, shortname, i == g.selected ? TEAL : TEXT, 1);
-            bar(x + 24, 237, 35, 3, (m->health[HEAD] + m->health[CHEST]) * .5f, m->dead ? RED : TEAL);
-            text(x + 24, 244,
-                 m->dead                ? "DEAD"
-                 : m->unconscious > 0   ? "DOWN"
-                 : m->job == JOB_FOLLOW ? "FOLLOW"
-                                        : "JOB",
-                 MUTED, 1);
+            if (k++ / 4 != page) continue;
+            int x = 8 + shown++ * 56;
+            if (i == g.selected) rect(x - 2, 255, 53, 16, 0x363b32);
+            char name[9];
+            snprintf(name, sizeof(name), "%.8s", m->name);
+            text(x, 258, name, m->dead || m->unconscious > 0 ? RED : i == g.selected ? TEAL : MUTED, 1);
+            bar(x, 268, 48, 2, (m->health[HEAD] + m->health[CHEST]) * .5f, m->bleed > 0 ? RED : TEAL);
         }
-    int hx = 307;
-    snprintf(b, 120, "FOOD %d", (int)a->hunger);
-    text(hx, 220, b, TEXT, 1);
-    bar(hx + 65, 220, 47, 5, a->hunger, GOLD);
-    snprintf(b, 120, "BLOOD %d", (int)a->blood);
-    text(hx, 231, b, a->bleed > 0 ? RED : TEXT, 1);
-    bar(hx + 65, 231, 47, 5, a->blood, a->bleed > 0 ? RED : TEAL);
-    snprintf(b, 120, "LOAD %.0f / %d", encumbrance(a), 30 + level(a, STRENGTH) * 2 + gear_bonus(a, 3));
-    text(hx, 242, b, MUTED, 1);
-    if (a->sneaking)
-        text(430, 221, "SNEAK", TEAL, 1);
-    else
-        text(430, 221, a->autoattack ? "FIGHT" : "FLEE", GOLD, 1);
-    if (a->bleed > .01f)
-        text(416, 234, "BLEEDING", RED, 1);
-    if (ui.screen == SCREEN_WORLD) {
-        text(8, 261, "\001 ACT  \004 PACK  \003 FIGHT  \002 SNEAK  \005 SQUAD  \006 PAUSE", MUTED, 1);
-        text(352, 261, "\010 MAP \007 MENU", MUTED, 1);
-    } else
-        center(240, 261, "TIME PAUSED / CONTROLS SHOWN IN THIS PANEL", MUTED, 1);
+    if (total == 1) {
+        snprintf(b, sizeof(b), "LOAD %.0f/%d", encumbrance(a), 30 + level(a, STRENGTH) * 2 + gear_bonus(a, 3));
+        text(78, 259, b, MUTED, 1);
+    } else if (total > 4) {
+        snprintf(b, sizeof(b), "%d/%d", page + 1, (total + 3) / 4);
+        text(224, 259, b, MUTED, 1);
+    }
+    snprintf(b, sizeof(b), "BLOOD %d", (int)a->blood);
+    text(250, 259, b, a->blood < 50 || a->bleed > .01f ? RED : MUTED, 1);
+    snprintf(b, sizeof(b), "FOOD %d", (int)a->hunger);
+    text(320, 259, b, a->hunger < 25 ? GOLD : MUTED, 1);
+    const char *status = a->dead ? "DEAD" : a->unconscious > 0 ? "DOWN" : a->bleed > .01f ? "BLEEDING"
+                         : a->sneaking ? "SNEAK" : a->autoattack ? "FIGHT" : "PASSIVE";
+    text(472 - (int)strlen(status) * 6, 259, status, a->bleed > .01f || a->dead || a->unconscious > 0 ? RED : TEAL, 1);
+
     if (ui.noticeTime > 0) {
         rect(7, 26, 386, 14, PANEL);
         char notice[64];
         snprintf(notice, sizeof(notice), "%.62s", ui.notice);
         text(12, 30, notice, TEXT, 1);
     }
-    if (ui.screen == SCREEN_WORLD && ui.waypoint && a->active && !a->dead) {
-        const char *reason = travel_hold_reason(a);
-        if (reason) {
-            snprintf(b, sizeof(b), "ROUTE HELD / %s", reason);
-            panel(7, 44, 232, 16);
-            text(12, 49, b, GOLD, 1);
+    /* Only advertise actions that can actually be performed here. */
+    b[0] = 0;
+    int cycle = 0;
+    if (a->carrying >= 0)
+        snprintf(b, sizeof(b), "\001 PUT DOWN %.24s", g.actors[a->carrying].name);
+    else if (g.interiorBuilding) {
+        int target = interior_context() == -1 ? -1 : depth_room_target();
+        if (target >= 0) {
+            Actor *other = &g.actors[target];
+            const char *action = other->squad ? "ASSIST" : other->dead || other->unconscious > 0 ? "LOOT"
+                                 : a->sneaking ? "PICKPOCKET" : "TALK";
+            snprintf(b, sizeof(b), "\001 %s: %.24s%s", action, other->name,
+                     !a->sneaking && !other->squad && !other->dead && other->unconscious <= 0 ? "  \002 SNEAK TO STEAL" : "");
+        } else if (interior_context() != -2)
+            snprintf(b, sizeof(b), "\001 %s", interior_prompt());
+    } else if (ui.contextIndex >= 0 && context_distance() <= context_reach()) {
+        if (ui.contextKind == 3 && (a->target >= 0 || a->attackPhase))
+            snprintf(b, sizeof(b), "BREAK AWAY FROM COMBAT TO ENTER");
+        else {
+            int n = ui.contextIndex;
+            int civilian = ui.contextKind == 0 && !g.actors[n].squad && !g.actors[n].dead &&
+                           g.actors[n].unconscious <= 0 && !(depth_named(n) >= 0 && depth_named(n) <= NPC_TAMSIN);
+            snprintf(b, sizeof(b), "\001 %s: %.24s%s", context_action(), context_name(),
+                     civilian && !a->sneaking ? "  \002 SNEAK TO STEAL" : "");
+        }
+        cycle = ui.contextCount > 1;
+    }
+    if (b[0]) {
+        int width = (int)strlen(b) * 6 + 16;
+        if (width > (cycle ? 414 : 476)) width = cycle ? 414 : 476;
+        rect(4, 233, width, 15, PANEL);
+        char action[80];
+        snprintf(action, sizeof(action), "%.*s", cycle ? 66 : 76, b);
+        text(12, 237, action, TEXT, 1);
+        if (cycle) {
+            rect(420, 233, 56, 15, PANEL);
+            text(425, 237, "\005+\001 NEXT", MUTED, 1);
         }
     }
-    panel(67, 177, 346, 32);
-    if (g.interiorBuilding) {
-        center(240, 182, "INDOOR SERVICE", GOLD, 1);
-        text(80, 195, "\001", TEAL, 1);
-        text(96, 195, interior_prompt(), TEXT, 1);
-    } else if (ui.contextIndex >= 0) {
-        char identity[80];
-        if (ui.contextKind == 0)
-            snprintf(identity, sizeof(identity), "%s / %.20s", npc_role_name(&g.actors[ui.contextIndex]),
-                     factionNames[g.actors[ui.contextIndex].faction]);
-        else
-            snprintf(identity, sizeof(identity), "%s", context_name());
-        center(240, 182, identity, GOLD, 1);
-        float d = context_distance();
-        if (ui.contextKind == 3 && (a->target >= 0 || a->attackPhase)) {
-            center(240, 195, "BREAK AWAY FROM COMBAT TO ENTER", MUTED, 1);
-        } else if (d > context_reach()) {
-            char action[72];
-            snprintf(action, sizeof(action), "MOVE CLOSER  %.2fm / %.2fm", d, context_reach());
-            center(240, 195, action, MUTED, 1);
-        } else {
-            char action[72];
-            snprintf(action, sizeof(action), "\001 %s%s", context_action(),
-                     a->taskKind == 1 ? "  /  MOVE TO STOP" : "");
-            center(240, 195, action, TEXT, 1);
-        }
-    } else {
-        center(240, 182, "FIND SUPPLIES, WORK OR A ROAD OUT", GOLD, 1);
-        center(240, 195, "\010 ATLAS   \007 SERVICES & FIELD GUIDE", MUTED, 1);
-    }
-    if (!g.interiorBuilding && ui.contextCount > 1)
-        text(69, 211, "HOLD \005 + TAP \001: NEXT TARGET", MUTED, 1);
-    if (a->taskKind) {
-        int w = 120;
-        bar(180, 172, w, 3,
-            (1 - fminf(1, a->action / (a->taskKind == 3   ? 20
-                                       : a->taskKind == 2 ? 4.5f
-                                                          : 2.8f))) *
-                100,
-            GOLD);
-    }
+    if (a->taskKind)
+        bar(180, 249, 120, 2,
+            (1 - fminf(1, a->action / (a->taskKind == 3 ? 180 : a->taskKind == 2 ? 4.5f : 2.8f))) * 100, GOLD);
 }
 static void title(void) {
     ui.camX = 28;
@@ -1004,7 +970,7 @@ static void overlay_header(const char *name, const char *sub) {
     text(27, 40, name, GOLD, 2);
     text(28, 61, sub, MUTED, 1);
     line(27, 75, 451, 75, EDGE);
-    text(28, 237, "\002 CLOSE   \010 GUIDE", MUTED, 1);
+    text(28, 237, ui.menuReturn ? "\002 BACK   \010 GUIDE" : "\002 CLOSE   \010 GUIDE", MUTED, 1);
     if (ui.screen >= SCREEN_PACK && ui.screen <= SCREEN_SQUAD)
         text(249, 237, "\005 / \006: PACK  SKILLS  BODY  SQUAD", MUTED, 1);
 }
@@ -1069,9 +1035,9 @@ static void equipment_comparison(int it, int y) {
     }
     int worn = a->gear[d->slot];
     ItemDef *old = &itemDefs[worn];
-    snprintf(b, sizeof(b), "TRY  %s", d->name);
+    snprintf(b, sizeof(b), "ITEM %s", d->name);
     if (d->slot == 5 && d->effect >= 0 && item_effect_value(it))
-        snprintf(b, sizeof(b), "TRY %.37s / %.8s %d", d->name, effectNames[d->effect], item_effect_value(it));
+        snprintf(b, sizeof(b), "ITEM %.37s / %.8s %d", d->name, effectNames[d->effect], item_effect_value(it));
     clipped(31, y, b, 68, TEXT);
     snprintf(b, sizeof(b), "WORN %s", worn ? old->name : "EMPTY SLOT");
     clipped(31, y + 12, b, 68, MUTED);
@@ -1117,24 +1083,20 @@ static void pack_screen(void) {
     for (int j = 0; j < 6; j++) {
         int k = first + j, y = 84 + j * 13, id = a->pack[k].item;
         if (k == ui.selection)
-            rect(25, y - 3, 244, 13, 0x4a4030);
-        snprintf(b, sizeof(b), "%02d %.32s", k + 1, id ? itemDefs[id].name : "--");
+            rect(25, y - 3, 425, 13, 0x4a4030);
+        snprintf(b, sizeof(b), "%02d %.57s", k + 1, id ? itemDefs[id].name : "--");
         text(31, y, b, k == ui.selection ? TEXT : MUTED, 1);
         if (id) {
             snprintf(b, sizeof(b), "%d", a->pack[k].qty);
-            text(262 - strlen(b) * 6, y, b, GOLD, 1);
+            text(442 - strlen(b) * 6, y, b, GOLD, 1);
         }
     }
-    Actor current = preview_actor(), preview = current;
-    if (it && itemDefs[it].slot >= 0)
-        preview.gear[itemDefs[it].slot] = it;
-    compare_portraits(&current, &preview);
-    text(287, 82, "WORN", MUTED, 1);
-    text(386, 82, "TRY ON", GOLD, 1);
     if (a->stolen[ui.selection]) {
         snprintf(b, sizeof(b), "STOLEN: %s", factionNames[a->stolen[ui.selection]]);
         clipped(31, 160, b, 40, RED);
     }
+    snprintf(b, sizeof(b), "LOAD %.0f / %d", encumbrance(a), 30 + level(a, STRENGTH) * 2 + gear_bonus(a, 3));
+    text(322, 160, b, MUTED, 1);
     equipment_comparison(it, 173);
 }
 
@@ -1309,34 +1271,18 @@ static void trade_screen(void) {
     char b[100], v[70];
     static const char *titles[] = {"BUY / ALL STOCK", "BUY / SUPPLIES", "BUY / WEAPONS", "BUY / ARMOR",
                                    "BUY / BACKPACKS"};
-    int bags = !ui.sell && ui.shopFilter >= 2;
     overlay_header(ui.sell ? "SELL / CARRIED" : titles[ui.shopFilter],
                    ui.sell ? "\014 BUY-SELL   \001 SELL ONE"
                            : "\014 BUY-SELL   \005/\006 FILTER   \001 BUY ONE");
     int count = ui.sell ? PACK : shop_count(), first = start_row(ui.selection, count, 6);
     for (int j = 0; j < 6 && first + j < count; j++) {
         int i = first + j, it = ui.sell ? g.actors[g.selected].pack[i].item : shop_item(i);
-        snprintf(b, 100, "%.*s", bags ? 25 : 39, it ? itemDefs[it].name : "--");
+        snprintf(b, 100, "%.45s", it ? itemDefs[it].name : "--");
         snprintf(v, 70, "%d S  \001%d", item_price(ui.tradeTown, it, ui.sell),
                  ui.sell ? g.actors[g.selected].pack[i].qty : g.stock[ui.tradeTown][it]);
-        if (bags) {
-            int y = 85 + j * 16;
-            if (i == ui.selection)
-                rect(25, y - 3, 244, 14, 0x4a4030);
-            text(31, y, b, i == ui.selection ? TEXT : MUTED, 1);
-            text(265 - strlen(v) * 6, y, v, GOLD, 1);
-        } else
-            row(85 + j * 16, i == ui.selection, b, it ? v : "");
+        row(84 + j * 13, i == ui.selection, b, it ? v : "");
     }
     int it = ui.sell ? g.actors[g.selected].pack[ui.selection].item : shop_item(ui.selection);
-    if (bags) {
-        Actor current = preview_actor(), preview = current;
-        if (it)
-            preview.gear[itemDefs[it].slot] = it;
-        compare_portraits(&current, &preview);
-        text(287, 82, "WORN", MUTED, 1);
-        text(386, 82, "TRY ON", GOLD, 1);
-    }
     equipment_comparison(it, 173);
     snprintf(b, sizeof(b), "%d SILVER", g.money);
     text(360, 45, b, GOLD, 1);
@@ -1382,31 +1328,33 @@ static void research_screen(void) {
          TEXT, 1);
 }
 static void menu_screen(void) {
-    overlay_header("EXPEDITION", "\015 CHOOSE   \001 OPEN   \010 GUIDE");
-    const char *opts[] = {"Return to the wasteland",
-                          "Build an outpost",
-                          "Crafting recipes",
-                          "Research",
-                          "Save expedition",
-                          "Load expedition",
-                          "Simulation speed",
-                          "Field guide",
-                          "Start a new wanderer",
-                          "Save expedition and title",
-                          "Pay bounty / repair reputation",
-                          "Forge equipment",
-                          "Road journal",
-                          "Factions and world news",
-                          "Character appearance",
-                          "Sleep in a nearby bed",
-                          "Recent messages", "Copper Road expedition", "Squad orders & job priorities", "Camp work & fuel", "Treatment & recovery", "Nearby landmark details", "Armor layers"};
-    int first = start_row(ui.selection, 23, 9);
-    char b[30];
-    for (int j = 0; j < 9; j++) {
-        int i = first + j;
-        snprintf(b, 30, i == 6 ? "%dX" : "", ui.speed);
-        row(85 + j * 16, ui.selection == i, opts[i], b);
+    overlay_header("PAUSED", "\005/\006 TAB   \015 CHOOSE   \001 OPEN   \007 RESUME");
+    static const char *tabs[] = {"PAUSE", "SQUAD", "WORLD"};
+    for (int i = 0; i < 3; i++) {
+        int x = 28 + i * 142;
+        if (i == ui.menuTab) rect(x, 80, 136, 17, 0x494132);
+        center(x + 68, 85, tabs[i], i == ui.menuTab ? TEAL : MUTED, 1);
     }
+    int count = pause_menu_count();
+    for (int i = 0; i < count; i++) {
+        char value[24] = "";
+        if (ui.menuTab == 0 && i == 3) snprintf(value, sizeof(value), "%dX", ui.speed);
+        row(106 + i * 16, ui.selection == i, pause_menu_label(i), value);
+    }
+}
+static void theft_screen(void) {
+    Actor *a = &g.actors[g.selected], *target = &g.actors[ui.lootActor];
+    int it = pickpocket_item(ui.lootActor);
+    char b[100];
+    overlay_header("PICKPOCKET", "\001 STEAL ONE   \002 CANCEL");
+    snprintf(b, sizeof(b), "TARGET: %.24s / %.24s", target->name, factionNames[target->faction]);
+    text(31, 88, b, GOLD, 1);
+    snprintf(b, sizeof(b), "ITEM: %.60s", it ? itemDefs[it].name : "EMPTY POCKETS");
+    text(31, 111, b, TEXT, 1);
+    snprintf(b, sizeof(b), "SUCCESS CHANCE: %.0f%%", 100 * pickpocket_chance(a));
+    text(31, 139, b, TEAL, 1);
+    text(31, 164, "CAUGHT: +80 BOUNTY / -18 FACTION REPUTATION", RED, 1);
+    wrap(31, 186, 65, "Stolen goods keep their owner. Sell to a Black Mesa fence; selling back to the owner can expose you.", MUTED);
 }
 
 static void help_screen(void) {
@@ -1575,7 +1523,7 @@ static void save_screen(void) {
         snprintf(v, 100, "DAY %d  %d MEMBERS  %d SILVER", z->day, z->squad, z->money);
         row(89 + i * 18, ui.selection == i, b, z->valid ? v : "");
     }
-    text(31, 221, "CHECKSUM VERIFIED. PREVIOUS SAVE KEPT AS .BAK.", TEAL, 1);
+    text(31, 221, "AUTOSAVE IS SEPARATE FROM YOUR MANUAL SLOTS.", TEAL, 1);
 }
 static void journal_screen(void) {
     overlay_header("THE ROAD JOURNAL", "\001 CLAIM AT TOWN   \003 LOCATE ON MAP   \010 GUIDE");
@@ -1641,27 +1589,21 @@ static void storage_screen(void) {
 }
 static void loot_screen(void) {
     Actor *a = &g.actors[ui.lootActor];
-    overlay_header("SALVAGE & COMPARE", "\001 TAKE ONE   \003 TAKE STACK   \015 CHOOSE");
+    overlay_header("LOOT", "\001 TAKE ONE   \003 TAKE STACK   \015 CHOOSE");
     int first = start_row(ui.selection, PACK + GEARS, 6);
     char b[80];
     for (int j = 0; j < 6; j++) {
         int k = first + j, id = k < PACK ? a->pack[k].item : a->gear[k - PACK], y = 84 + j * 13;
         if (k == ui.selection)
-            rect(25, y - 3, 244, 13, 0x4a4030);
-        snprintf(b, sizeof(b), "%02d %.30s", k + 1, id ? itemDefs[id].name : "EMPTY");
+            rect(25, y - 3, 425, 13, 0x4a4030);
+        snprintf(b, sizeof(b), "%02d %.57s", k + 1, id ? itemDefs[id].name : "EMPTY");
         text(31, y, b, k == ui.selection ? TEXT : MUTED, 1);
         if (id) {
             snprintf(b, sizeof(b), "%d", k < PACK ? a->pack[k].qty : 1);
-            text(263 - strlen(b) * 6, y, b, GOLD, 1);
+            text(442 - strlen(b) * 6, y, b, GOLD, 1);
         }
     }
     int it = ui.selection < PACK ? a->pack[ui.selection].item : a->gear[ui.selection - PACK];
-    Actor current = preview_actor(), preview = current;
-    if (it && itemDefs[it].slot >= 0)
-        preview.gear[itemDefs[it].slot] = it;
-    compare_portraits(&current, &preview);
-    text(287, 82, "WORN", MUTED, 1);
-    text(386, 82, "TRY ON", GOLD, 1);
     clipped(31, 163,
             !a->squad && a->faction != HOSTILE && a->faction != WILDLIFE
                 ? "LOOTING THIS PERSON COUNTS AS THEFT"
@@ -1740,6 +1682,9 @@ void render_game(uint32_t *pixels, int stride) {
         break;
     case SCREEN_NAME:
         name_screen();
+        break;
+    case SCREEN_THEFT:
+        theft_screen();
         break;
     case SCREEN_EQUIPPED:
         equipped_screen();

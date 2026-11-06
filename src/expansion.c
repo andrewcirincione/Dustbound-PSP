@@ -119,6 +119,8 @@ static int guide_for(int s) {
         return 10;
     case SCREEN_SQUAD:
         return 11;
+    case SCREEN_THEFT:
+        return 12;
     case SCREEN_FACTIONS:
         return 13;
     case SCREEN_JOURNAL:
@@ -180,6 +182,15 @@ int expansion_input(float dt, Input in) {
             ui.selection = wrapi(ui.selection + 1, GUIDE_PAGES);
         if (p & (KEY_UP | KEY_L))
             ui.selection = wrapi(ui.selection - 1, GUIDE_PAGES);
+        return 1;
+    }
+    if (ui.screen == SCREEN_THEFT) {
+        if (p & (KEY_CIRCLE | KEY_START)) {
+            open_view(SCREEN_WORLD);
+        } else if (p & KEY_CROSS) {
+            pickpocket(ui.lootActor);
+            open_view(SCREEN_WORLD);
+        }
         return 1;
     }
     if (ui.screen == SCREEN_CREATE) {
@@ -380,7 +391,7 @@ int expansion_input(float dt, Input in) {
     if (ui.screen == SCREEN_SAVES) {
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(ui.saveReturn);
-            ui.selection = ui.saveReturn == SCREEN_TITLE ? 2 : ui.saveExit ? 9 : ui.saveMode ? 4 : 5;
+            ui.selection = ui.saveReturn == SCREEN_TITLE ? 2 : ui.saveExit ? 5 : ui.saveMode ? 1 : 2;
             ui.saveExit = 0;
             return 1;
         }

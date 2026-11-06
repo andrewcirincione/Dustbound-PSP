@@ -139,10 +139,10 @@ const char *context_action(void) {
     }
     if (ui.contextKind == 1) {
         Node *b = &g.nodes[n];
-        return b->locked                ? "PICK LOCK"
+        return b->locked                ? (b->owner ? "PICK OWNED LOCK" : "PICK LOCK")
                : b->type <= NODE_COPPER ? "MINE"
                : b->type == NODE_WOOD   ? "GATHER"
-                                        : "TAKE";
+                                        : b->owner ? "STEAL" : "TAKE";
     }
     int t = g.buildings[n].type;
     return t == WELL                   ? "DRAW WATER"
