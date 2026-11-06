@@ -102,6 +102,7 @@ int main(void) {
         inventory_add(a, ORE, 10);
         si = slot(a, ORE);
     }
+    a->x += .5f; /* Walk to the newly built depot. */
     int ore = inventory_count(a, ORE);
     CHECK(storage_transfer(depot, 0, si) && g.buildings[depot].storage[0].item == ORE &&
               inventory_count(a, ORE) == ore - 1,
@@ -167,7 +168,8 @@ int main(void) {
           "doctor treats wounds for the stated fee");
     a->health[LARM] = 40;
     a->fatigue = 80;
-    CHECK(start_sleep(0), "inn dialogue starts paid rest");
+    for (int j=0;j<g.buildingCount;j++) if (g.buildings[j].type==BED) { a->x=g.buildings[j].x; a->y=g.buildings[j].y; break; }
+    CHECK(start_sleep(0), "bedside interaction starts paid rest");
     step(2);
     CHECK(a->health[LARM] > 40 && a->fatigue < 80, "sleep restores wounds and fatigue");
     fresh();

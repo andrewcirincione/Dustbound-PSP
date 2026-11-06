@@ -189,6 +189,7 @@ int main(void) {
     CHECK(!build_structure(0), "construction prevents overlapping structures");
     inventory_add(a, MEAT, 2);
     inventory_add(a, WATER, 1);
+    a->x += .5f; /* Walk into workstation reach. */
     CHECK(craft_item(1) && inventory_count(a, MEAT) == 0, "campfire recipe supports meat substitution");
     a->x = 60;
     a->y = 40;
@@ -197,14 +198,16 @@ int main(void) {
     inventory_add(a, IRONBAR, 30);
     inventory_add(a, ORE, 6);
     CHECK(build_structure(3), "forge can be constructed from timber and iron bars");
+    a->x += .5f;
     CHECK(craft_item(0) && inventory_count(a, ORE) == 3, "forge smelts three ore into one iron bar");
     a->x = 66;
     CHECK(build_structure(4), "research bench can be built");
     inventory_add(a, RELIC, 3);
     g.money = 2000;
+    a->x += .5f;
     CHECK(research_tech() && g.tech == 1 && inventory_count(a, RELIC) == 2,
           "research consumes relic and money and unlocks a tier");
-    a->x = 60;
+    a->x = 60.5f;
     CHECK(craft_item(3) && inventory_count(a, SABRE) == 1, "research unlocks sabre crafting");
     fresh();
     a = &g.actors[0];
