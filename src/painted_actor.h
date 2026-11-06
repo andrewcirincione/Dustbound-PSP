@@ -386,6 +386,13 @@ static uint64_t actor_key(const Actor *a, int lum) {
     return k ? k : 1;
 }
 static void person(Actor *a, int x, int y, int sc, int chosen) {
+    Actor dressed;
+    if (!a->gear[1] && (uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors+g.actorCount) &&
+        g.depth.actors[a-g.actors].layer) {
+        dressed = *a;
+        dressed.gear[1] = g.depth.actors[a-g.actors].layer;
+        a = &dressed;
+    }
     float li = sc == 1 ? light() : 1;
     if (chosen && sc == 1) {
         line(x - 10, y + 1, x, y + 6, TEAL);

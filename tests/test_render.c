@@ -11,7 +11,7 @@ int main(void) {
                                  {235, 71}, {302, 310}, {54, 322},  {165, 150}};
         g.actors[0].x = biomeIndex ? pos[biomeIndex][0] * 4 - 78 : pos[biomeIndex][0];
         g.actors[0].y = biomeIndex ? pos[biomeIndex][1] * 4 - 81 : pos[biomeIndex][1];
-        for (int screen = 0; screen <= SCREEN_LOG; screen++) {
+        for (int screen = 0; screen <= SCREEN_LAYERS; screen++) {
             ui.screen = screen;
             ui.selection = 0;
             ui.dialogActor = 1;

@@ -2,11 +2,26 @@
 
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.5.2, playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.6.0, Copper Road rebuild — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 
-![Actual PSP EBOOT gameplay in PPSSPP](evidence/v052-03-dusk-haven.png)
+![Copper Road rescue dialogue from the PSP EBOOT](evidence/v060-05-sora-wreck.png)
+
+## 0.6.0: the Copper Road
+
+An authored expedition gives the starting frontier a lasting conflict. Find wounded engineer Sora at the Salt Road wreck and escort her home. Repair the dry culvert, buy a truce, deliver Rell alive, or defeat him. Report to Nell at Copper stores. These outcomes persist in town allegiance, prices, stock, dialogue, convoy travel and retaliation. Eight landmarks add caches and route leads; the expedition ledger locates them on the atlas without replacing your travel order.
+
+Construction now takes work, and owned fires/forges consume timber or coal. Four ordered job priorities and three expedition groups support separate travel leaders. Recovery distinguishes bandages, lasting trauma and mechanical repair. Captors carry fallen survivors to the chain yard; timed lock work, rescue and escape recognition offer a way back. Light cloth can be fitted beneath outer armor with distinct coverage and cut/blunt protection.
+
+Projectiles move through the world, strike intervening actors and stop at structures. Defensive, ranged and hold-fire orders apply indoors and outdoors. Actual residents and nearby followers enter rooms; trespass requires a conscious witness. Markets open from 06:00 to 22:00. Complete dressed bodies retain their clothing and backpacks when prone.
+
+Use the new expedition-menu entries for Copper Road, Orders, Camp Work, Recovery and Armor Layers. Each has a contextual guide and controller icons. Read the [critical review](docs/DESIGN_REVIEW_V060.md) and [validation record](docs/VALIDATION.md) for implemented scope and limits. This is an original, bounded PSP survival RPG, not a complete reproduction of Kenshi.
+
+![Copper Road outcomes in the PSP EBOOT](evidence/v060-11-truce-outcome.png)
+![Ordered squad roles in the PSP EBOOT](evidence/v060-19-orders.png)
+
+The sections below record the earlier systems retained by the rebuild.
 
 ## Reliable actions, recovery and camp work
 
@@ -69,16 +84,16 @@ Walk through a door into a house, shop, inn, tower, smithy, workshop or depot. C
 - NPC speech and service dialogue, finite market stocks, rotating daily gear, reputation/prosperity prices, recruitment, looting, theft, fencing, lockpicking, bounty and custody/bail/escape.
 - Delivery, supply, hunt and relic contracts; persistent journal, faction ledger, town prosperity/ownership events and expedition legacy goals.
 - Construction, farming/irrigation, storage, eight supply recipes, custom equipment forging and three research tiers.
-- Six manual save slots plus autosave, checksums, backup files and v0.1 through v0.5.1 save compatibility. Twenty contextual in-game guide chapters.
+- Six manual save slots plus autosave, checksums, backup files and v0.1 through v0.5.2 save compatibility. Twenty-five contextual in-game guide chapters.
 
 ![Combat captured from the EBOOT; prepared encounter](evidence/v050-15-combat.gif)
 
 ## Install on PSP
 
 1. Use a PSP already configured to run homebrew. This repository does not install or modify firmware.
-2. Download `Dustbound-0.5.2-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
+2. Download `Dustbound-0.6.0-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
 3. The executable should be at `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Launch it from **Game → Memory Stick**.
-4. Back up existing `DUST_*.sav` files before upgrading. v0.1 through v0.5.1 saves are supported. Older formats migrate when loaded; save the migrated game to a different slot first. Keep a backup before using an older executable. Older-format migration refreshes regional markets, town NPC outfits and medic positions once; existing v5 saves only receive the new basic backpack stock once. Do not remove the memory stick during a save.
+4. Back up existing `DUST_*.sav` files before upgrading. v0.1 through v0.5.2 saves are supported. Older formats migrate when loaded; save the migrated game to a different slot first. Keep a backup before using an older executable. Older-format migration refreshes regional markets, town NPC outfits and medic positions once; existing v5 saves only receive the new basic backpack stock once. Do not remove the memory stick during a save.
 
 The single EBOOT includes its art, catalog and sounds. No network access or external assets are needed. Release packages exclude developer test saves and `DUST_QA` telemetry markers.
 

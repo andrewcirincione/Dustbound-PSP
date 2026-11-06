@@ -13,6 +13,7 @@ static void init(void) {
     }
     g.squadCount = 1;
     g.nodeCount = g.buildingCount = 0;
+    for (int i=0;i<LANDMARKS;i++)g.depth.siteBuilding[i]=-1;
     g.baseExists = 0;
     g.weather = 0;
     g.weatherTimer = g.eventTimer = 9999;

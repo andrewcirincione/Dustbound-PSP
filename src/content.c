@@ -271,7 +271,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "switches carried/worn gear. \001 on worn gear removes it if space allows. WORN / TRY ON compares fit "
     "and actual bonuses.\nPlate protects more but slows movement and hinders stealth. Cloth is light; "
     "travel gear favors weather or movement. Higher grades improve the same role. Torso armor covers "
-    "chest/arms; headgear covers head; legs gain leg armor plus half boot armor. MOVE% is the worn speed "
+    "chest/arms; headgear covers head; leg armor and boots have separate coverage chances. MOVE% is the worn speed "
     "bonus. Weight above capacity slows you further.",
     "Talk to a trader and choose Trade. \014 switches buying and selling; \005/\006 filters supplies, "
     "weapons, armor or backpacks. \001 trades one item. Shops have finite stocks and refresh daily with "
@@ -295,7 +295,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "sixteen clean stacks. \001 opens storage; \014 switches sides; \003 moves a full stack. Camps attract "
     "raiders, so keep medicine and a retreat route.",
     "\004, Squad: choose a survivor with \014, then assign a job with \001. Follow trails the "
-    "selected leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats "
+    "assigned group leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats "
     "injured allies.\nSmelt and Cook use nearby stations and can collect ingredients from a nearby depot. "
     "Workers fetch water and ingredients, walk to stations, and store output; cooks keep two rations. Haul deposits raw cargo. Job status explains delays. Select a worker and move "
     "to interrupt their current action. Up to eight living members may join.",
@@ -318,7 +318,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Six manual slots plus autosave. \007, Save or Load opens a ledger with name, day, party size and "
     "silver. Choose a slot; \001 asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.\nSaves "
     "use version, size and checksum validation and preserve a previous .bak file. Invalid files never "
-    "replace your running expedition. Older saves through 0.5.1 remain loadable. Back them up before "
+    "replace your running expedition. Older saves through 0.5.2 remain loadable. Back them up before "
     "overwriting. "
     "Autosave is slot zero and is never used for manual saving.",
     "Dust, rain, acid mist and snow change visibility, terrain colors and survival pressure. Storms reduce "
@@ -335,8 +335,8 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Approach a house, inn, shop, tower or workshop door and press \001 to enter. Walk around the room with "
     "\011 or analog. Furniture blocks movement; use the aisles. \001 near the door returns outside.\n"
     "Counters open local trade. Beds cost 25 silver in town; owned beds are free. Workshop stations open "
-    "forging, research or storage. Indoor time passes: hunger, bleeding and healing continue. The rest of "
-    "your squad remains outside.\nSave games preserve the building and indoor position. Switching squad "
+    "forging, research or storage. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other "
+    "groups and hired guards remain outside.\nSave games preserve the building and indoor position. Switching squad "
     "members leaves the room. Interiors shelter you from weather; hostile occupants refuse entry.",
     "Buy travel packs, medicine rolls, ore harnesses and bedroll packs from the BACKPACKS shop tab. "
     "Preview before buying. Other back gear rotates daily.\n"

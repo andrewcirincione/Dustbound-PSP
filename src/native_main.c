@@ -243,6 +243,12 @@ int main(int argc, char **argv) {
         a->xp[SMITHING] = 12 * 40 * 40;
         inventory_add(a, COAL, 20);
         inventory_add(a, CLOTH, 30);
+        /* Prepared outpost fixture: completed and fueled, not a construction test. */
+        for (int i=0;i<g.buildingCount;i++) if(g.buildings[i].owner>=0) {
+            g.depth.buildings[i].labor=0;
+            g.depth.buildings[i].fuel=20;
+        }
+        a->taskKind=0;
         const int armored[6] = {29, 42, 49, 66, 72, 82};
         for (int j = 0; j < GEARS; j++)
             a->gear[j] = gear_id(armored[j], 4, 3);

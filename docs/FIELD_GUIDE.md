@@ -1,6 +1,6 @@
-# Dustbound field guide — 0.5.0
+# Dustbound field guide — 0.6.0
 
-The nineteen chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
+The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
 ## 1. Controls
 
@@ -42,7 +42,7 @@ An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Sleepin
 
 Six slots: weapon, torso, head, boots, legs, back. Pack ![cross](../assets/ui/cross.svg) equips; ![square](../assets/ui/square.svg) passes one to an ally; ![triangle](../assets/ui/triangle.svg) switches carried/worn gear. ![cross](../assets/ui/cross.svg) on worn gear removes it if space allows. WORN / TRY ON compares fit and actual bonuses.
 
-Plate protects more but slows movement and hinders stealth. Cloth is light; travel gear favors weather or movement. Higher grades improve the same role. Torso armor covers chest/arms; headgear covers head; legs gain leg armor plus half boot armor. MOVE% is the worn speed bonus. Weight above capacity slows you further.
+Plate protects more but slows movement and hinders stealth. Cloth is light; travel gear favors weather or movement. Higher grades improve the same role. Torso armor covers chest/arms; headgear covers head; leg armor and boots have separate coverage chances. MOVE% is the worn speed bonus. Weight above capacity slows you further.
 
 ## 8. Merchants
 
@@ -70,7 +70,7 @@ Shelters heal; farms need water and yield grain; wind pumps irrigate nearby crop
 
 ## 12. Squad Jobs
 
-![triangle](../assets/ui/triangle.svg), Squad: choose a survivor with ![horizontal](../assets/ui/horizontal.svg), then assign a job with ![cross](../assets/ui/cross.svg). Follow trails the selected leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats injured allies.
+![triangle](../assets/ui/triangle.svg), Squad: choose a survivor with ![horizontal](../assets/ui/horizontal.svg), then assign a job with ![cross](../assets/ui/cross.svg). Follow trails the assigned group leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats injured allies.
 
 Smelt and Cook use nearby stations and can collect ingredients from a nearby depot. Workers fetch water and ingredients, walk to stations, and store output; cooks keep two rations. Haul deposits raw cargo. Job status explains delays. Select a worker and move to interrupt their current action. Up to eight living members may join.
 
@@ -96,7 +96,7 @@ Return to the issuing settlement and claim in the Journal with ![cross](../asset
 
 Six manual slots plus autosave. ![start](../assets/ui/start.svg), Save or Load opens a ledger with name, day, party size and silver. Choose a slot; ![cross](../assets/ui/cross.svg) asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.
 
-Saves use version, size and checksum validation and preserve a previous .bak file. Invalid files never replace your running expedition. Older saves through 0.5.1 remain loadable. Back them up before overwriting. Autosave is slot zero and is never used for manual saving.
+Saves use version, size and checksum validation and preserve a previous .bak file. Invalid files never replace your running expedition. Older saves through 0.5.2 remain loadable. Back them up before overwriting. Autosave is slot zero and is never used for manual saving.
 
 ## 17. Weather
 
@@ -114,7 +114,7 @@ When imprisoned, movement is restricted to the holding area. ![cross](../assets/
 
 Approach a house, inn, shop, tower or workshop door and press ![cross](../assets/ui/cross.svg) to enter. Walk around the room with ![dpad](../assets/ui/dpad.svg) or analog. Furniture blocks movement; use the aisles. ![cross](../assets/ui/cross.svg) near the door returns outside.
 
-Counters open local trade. Beds cost 25 silver in town; owned beds are free. Workshop stations open forging, research or storage. Indoor time passes: hunger, bleeding and healing continue. The rest of your squad remains outside.
+Counters open local trade. Beds cost 25 silver in town; owned beds are free. Workshop stations open forging, research or storage. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other groups and hired guards remain outside.
 
 Save games preserve the building and indoor position. Switching squad members leaves the room. Interiors shelter you from weather; hostile occupants refuse entry.
 
@@ -125,3 +125,35 @@ Buy travel packs, medicine rolls, ore harnesses and bedroll packs from the BACKP
 CARGO: travel 80%, medicine 85%, ore 60%, bedroll 70% of carried weight. Worn gear and carried people keep full weight. CARRY adds load allowance; LOAD previews a swap. All packs use the same 24 inventory slots.
 
 FIGHT reduces melee attack/defence: travel -2, medicine 0, ore -7, bedroll -4. Bulky packs hurt stealth. Medicine aids first aid; bedrolls improve rest but are not beds. Unworn packs give no bonus.
+
+## 21. The Copper Road
+
+Copper Road is a voluntary expedition. Find the wreck between Dusk Haven and Copper Cross. Treat Sora, then escort her to Nell at the stores. Stay within 18m.
+
+Repair the culvert after bringing Sora home: 3 timber, 1 iron bar and tools. Or pay Rell 450 for a toll truce; challenge him; or carry him alive to Nell. Each route changes trade and patrols. Claim payment once. Raid reprisals can follow capture or death. The ledger locates leads without issuing movement.
+
+## 22. Orders & Groups
+
+Orders sets Balanced, Defensive, Keep range or Hold fire. Defensive gives +18 defence but never attacks. Ranged allies retreat if a foe closes within 3.5m. Projectiles travel and hit walls or allies: clear your firing line.
+
+Assign each survivor to one of three groups and choose its leader. In the atlas, hold ![r](../assets/ui/r.svg) and press ![cross](../assets/ui/cross.svg) for a group route. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume in Orders.
+
+## 23. Camp Work & Fuel
+
+Construction consumes materials when a foundation is placed. Stay beside it to build; moving cancels work. Resume from the nearby action or Camp ledger. Unfinished stations and beds cannot work.
+
+Campfires and forges burn one charge per production action. Add clean timber for four charges or coal for ten. Stations lose a little condition with use. One timber repairs 35 condition. Town workshops supply their own fuel. Windpumps irrigate nearby farms. Queues skip unavailable jobs.
+
+## 24. Trauma & Repair
+
+Bleeding drains blood and can kill. Dressings stop bleeding and treat organic wounds; trauma still limits maximum health. Food and bed rest slowly restore that limit.
+
+Mechanical characters and prosthetics need spare parts. Medicine and sleep cannot repair metal. The Care panel shows health, trauma and armor condition. Cloth restores equipment condition.
+
+Raiders near the chain yard may carry a fallen survivor away. Escape takes time away from guards. Tools speed it up. Free allies can unlock captives. Escapees are remembered for a day.
+
+## 25. Armor Layers
+
+Use Armor Layers to fit a light body garment under outer armor. Weight must be five or less. Swaps preserve stolen ownership and fail safely if your pack is full.
+
+Outer body covers 95% of chest hits and 65% of arm hits; headwear covers 85%, legwear 90%, boots 35%. An uncovered hit bypasses that piece. Blunt impacts use 72% of outer protection. Underlayers add reduced protection. Wear lowers protection to a minimum of 65%; maintain with cloth. Inspect both armor and movement before equipping.

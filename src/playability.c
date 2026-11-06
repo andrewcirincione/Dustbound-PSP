@@ -21,8 +21,16 @@ int npc_role(const Actor *a) {
     return ROLE_CITIZEN;
 }
 const char *npc_role_name(const Actor *a) {
-    if((uintptr_t)a>=(uintptr_t)g.actors&&(uintptr_t)a<(uintptr_t)(g.actors+MAX_ACTORS)){int n=depth_named((int)(a-g.actors));
-        if(n==NPC_SORA)return "ENGINEER";if(n==NPC_NELL)return "QUARTERMASTER";if(n==NPC_RELL)return "TOLL WARLORD";if(n==NPC_ORIN||n==NPC_TAMSIN)return "CHAIN YARD SURVIVOR";
+    if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + MAX_ACTORS)) {
+        int n = depth_named((int)(a - g.actors));
+        if (n == NPC_SORA)
+            return "ENGINEER";
+        if (n == NPC_NELL)
+            return "QUARTERMASTER";
+        if (n == NPC_RELL)
+            return "TOLL WARLORD";
+        if (n == NPC_ORIN || n == NPC_TAMSIN)
+            return "CHAIN YARD SURVIVOR";
     }
     if (a->kind == RAIDER)
         return "RAIDER";
@@ -32,14 +40,15 @@ const char *npc_role_name(const Actor *a) {
                                   "MEDIC",    "SMITH",    "BARBER",  "SCOUT",   "CONTRACT GUARD"};
     return names[npc_role(a)];
 }
-static const int services[][6] = {{6, 12, 8, -1},    {0, 6, 12, 8, -1}, {6, 12, 8, -1},    {1, 4, 6, 8, -1},
-                                  {2, 6, 12, 8, -1}, {3, 6, 12, 8, -1}, {7, 6, 12, 8, -1}, {5, 6, 12, 8, -1},
-                                  {6, 12, 8, -1},    {9, 10, 6, 12, 8}};
+static const int services[][6] = {
+    {6, 12, 8, -1},    {0, 6, 12, 8, -1}, {6, 12, 8, -1},    {1, 4, 6, 8, -1}, {2, 6, 12, 8, -1},
+    {3, 6, 12, 8, -1}, {7, 6, 12, 8, -1}, {5, 6, 12, 8, -1}, {6, 12, 8, -1},   {9, 10, 6, 12, 8}};
 int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
         return 0;
-    int named=depth_named(actor);
-    if(named>=0&&named<=NPC_TAMSIN)return named==NPC_NELL?5:named==NPC_RELL?4:3;
+    int named = depth_named(actor);
+    if (named >= 0 && named <= NPC_TAMSIN)
+        return named == NPC_NELL ? 5 : named == NPC_RELL ? 4 : 3;
     int n = 0;
     while (n < 5 && services[npc_role(&g.actors[actor])][n] >= 0)
         n++;
@@ -66,7 +75,8 @@ const char *dialogue_option(int actor, int row) {
                                    "Guard my camp. 180 silver / day",
                                    "End contract. No refund.",
                                    "Tell me about your faction."};
-    if(depth_named(actor)>=0&&depth_named(actor)<=NPC_TAMSIN)return depth_option(actor,row);
+    if (depth_named(actor) >= 0 && depth_named(actor) <= NPC_TAMSIN)
+        return depth_option(actor, row);
     int action = dialogue_action(actor, row);
     if (action == 6 && npc_role(&g.actors[actor]) == ROLE_RECRUIT)
         return "Join my expedition. 300 silver";
@@ -77,7 +87,8 @@ float context_distance(void) {
     int n = ui.contextIndex;
     if (n < 0)
         return 999;
-    if (ui.contextKind == 4) return distance(a->x,a->y,g.depth.siteX[n],g.depth.siteY[n]);
+    if (ui.contextKind == 4)
+        return distance(a->x, a->y, g.depth.siteX[n], g.depth.siteY[n]);
     if (ui.contextKind == 0)
         return distance(a->x, a->y, g.actors[n].x, g.actors[n].y);
     if (ui.contextKind == 1)
@@ -93,7 +104,8 @@ const char *context_name(void) {
     int n = ui.contextIndex;
     if (n < 0)
         return "NO NEARBY TARGET";
-    if (ui.contextKind == 4)return landmarkNames[n];
+    if (ui.contextKind == 4)
+        return landmarkNames[n];
     if (ui.contextKind == 0)
         return g.actors[n].name;
     if (ui.contextKind == 1) {
@@ -110,13 +122,16 @@ const char *context_action(void) {
     int n = ui.contextIndex;
     if (n < 0)
         return "WALK TO A PERSON, DOOR OR RESOURCE";
-    if (ui.contextKind==4)return "INSPECT LANDMARK";
-    if ((ui.contextKind==2||ui.contextKind==3)&&!depth_build_ready(n))return "CONTINUE CONSTRUCTION";
+    if (ui.contextKind == 4)
+        return "INSPECT LANDMARK";
+    if ((ui.contextKind == 2 || ui.contextKind == 3) && !depth_build_ready(n))
+        return "CONTINUE CONSTRUCTION";
     if (ui.contextKind == 3)
         return "ENTER";
     if (ui.contextKind == 0) {
         Actor *b = &g.actors[n];
-        if(depth_named(n)>=0&&depth_named(n)<=NPC_TAMSIN)return "STORY / RESCUE";
+        if (depth_named(n) >= 0 && depth_named(n) <= NPC_TAMSIN)
+            return "STORY / RESCUE";
         return b->squad                        ? "RESCUE OPTIONS"
                : b->dead || b->unconscious > 0 ? "LOOT"
                : g.actors[g.selected].sneaking ? "PICKPOCKET"
@@ -301,25 +316,31 @@ const char *npc_rumor(const Actor *a) {
     case ROLE_MERCHANT:
         return a->faction == UNION ? "Compact stock includes greatswords and rifles. Copper Cross sells "
                                      "heavy salvage tools. Save silver for food before steel."
-               : a->faction == SCAVENGERS ? "Railway mauls punch through armor, but weak arms swing slowly. "
-                                            "Look for our field-grade stock; masterwork rotates daily."
-               : a->faction == SHOGUN  ? "Our glaives outrange swords. Heavy armor slows a wounded traveler. "
-                                         "Black Mesa trades stranger weapons, if you survive the road."
-               : a->faction == OUTLAWS ? "Stolen goods move here. Anchor cleavers bleed enemies, but their "
-                                         "weight can leave you open. No refunds for dead clients."
-                                       : "Stock follows our faction's craft. Your standing affects prices. "
-                                         "Inspect weight, reach and strength before buying.";
+               : a->faction == SCAVENGERS
+                   ? "Railway mauls punch through armor, but weak arms swing slowly. "
+                     "Look for our field-grade stock; masterwork rotates daily."
+               : a->faction == SHOGUN
+                   ? "Our glaives outrange swords. Heavy armor slows a wounded traveler. "
+                     "Black Mesa trades stranger weapons, if you survive the road."
+               : a->faction == OUTLAWS
+                   ? "Stolen goods move here. Anchor cleavers bleed enemies, but their "
+                     "weight can leave you open. No refunds for dead clients."
+                   : "Stock follows our faction's craft. Your standing affects prices. "
+                     "Inspect weight, reach and strength before buying.";
     case ROLE_MARSHAL:
-        return "Bring contracts back to the journal for payment. Guards protect this town, not the whole "
+        return "Bring contracts back to the journal for payment. Guards protect this town, not the "
+               "whole "
                "road. Hire an escort before leaving alone.";
     case ROLE_MEDIC:
-        return "First aid stops bleeding; a bed finishes recovery. Injured arms slow heavy weapons even when "
+        return "First aid stops bleeding; a bed finishes recovery. Injured arms slow heavy weapons even "
+               "when "
                "your strength is high.";
     case ROLE_SMITH:
         return "Greatswords need strength; mauls defeat armor; glaives trade impact for reach. Choose a "
                "weapon your injured arms can still lift.";
     case ROLE_INNKEEPER:
-        return "Recruits join for good. Contract guards work one day and then return home. They wait outside "
+        return "Recruits join for good. Contract guards work one day and then return home. They wait "
+               "outside "
                "when you enter buildings.";
     case ROLE_RECRUIT:
         return "I join permanently and take your orders. A hired guard keeps their own gear, fights "
@@ -328,7 +349,8 @@ const char *npc_rumor(const Actor *a) {
         return "One guard, one day: 1800 seconds of moving world time. Escort follows your selected "
                "survivor; camp duty requires an outpost. No refunds.";
     case ROLE_SCOUT:
-        return "Copper Cross has mauls. Shogunate markets carry glaives. Survey the atlas before choosing a "
+        return "Copper Cross has mauls. Shogunate markets carry glaives. Survey the atlas before "
+               "choosing a "
                "long route; towns are islands of safety.";
     default:
         return faction_identity(a->faction);
@@ -344,7 +366,8 @@ void frontier_restock(int t) {
         g.stock[t][gear_id(doctrine[f][j], 1, 1)] = 2;
         g.stock[t][gear_id(doctrine[f][j], (t + g.day + j) % MATERIALS, 2 + (g.day + j) % 2)] = 1;
     }
-    static const int torso[] = {33, 44, 46, 37, 34, 39, 45, 37}, head[] = {48, 49, 56, 55, 50, 57, 52, 55};
+    static const int torso[] = {33, 44, 46, 37, 34, 39, 45, 37},
+                     head[] = {48, 49, 56, 55, 50, 57, 52, 55};
     for (int j = 0; j < 18; j++) {
         int family = j % 6 == 0   ? torso[f]
                      : j % 6 == 1 ? head[f]
@@ -368,7 +391,8 @@ void frontier_restock(int t) {
 }
 static void identity_outfit(Actor *a) {
     int f = a->faction, role = npc_role(a), m = f == SHOGUN ? 4 : f == OUTLAWS ? 0 : 1;
-    static const int torso[] = {33, 44, 46, 37, 34, 39, 45, 37}, head[] = {48, 49, 56, 55, 50, 57, 52, 55};
+    static const int torso[] = {33, 44, 46, 37, 34, 39, 45, 37},
+                     head[] = {48, 49, 56, 55, 50, 57, 52, 55};
     int combat = role == ROLE_MARSHAL || role == ROLE_MERCENARY;
     a->gear[0] = gear_id(combat               ? doctrine[f][(a->homeTown + f) % 4]
                          : role == ROLE_SMITH ? 85
@@ -424,7 +448,8 @@ void frontier_identity(void) {
     }
     const int hubs[] = {0, 1, 5, 8};
     for (int k = 0; k < 4; k++) {
-        int t = hubs[k], n = add_actor("Contract guard", GUARD, FREE, towns[t].x + 4, towns[t].y + 7, 22);
+        int t = hubs[k],
+            n = add_actor("Contract guard", GUARD, FREE, towns[t].x + 4, towns[t].y + 7, 22);
         if (n < 0)
             break;
         Actor *a = &g.actors[n];
@@ -449,8 +474,8 @@ int merc_hire(int n, int mode) {
     if (n < 0 || n >= g.actorCount || mode < 0 || mode > 1)
         return 0;
     Actor *a = &g.actors[n], *p = &g.actors[g.selected];
-    if (npc_role(a) != ROLE_MERCENARY || !conscious(a) || distance(a->x, a->y, p->x, p->y) > TALK_REACH ||
-        actor_inside(p))
+    if (npc_role(a) != ROLE_MERCENARY || !conscious(a) ||
+        distance(a->x, a->y, p->x, p->y) > TALK_REACH || actor_inside(p))
         return 0;
     if (merc_slot(a) >= 0) {
         log_msg("Already under contract. No extra payment taken.");
@@ -474,7 +499,8 @@ int merc_hire(int n, int mode) {
     g.mercActor[slot] = n + 1;
     g.mercUntil[slot] = g.time + 1800;
     g.mercMode[slot] = mode;
-    log_msg(mode ? "Camp guard hired for one day." : "Escort hired for one day. Independent, not a recruit.");
+    log_msg(mode ? "Camp guard hired for one day."
+                 : "Escort hired for one day. Independent, not a recruit.");
     return 1;
 }
 void merc_dismiss(int n) {
@@ -524,7 +550,8 @@ int nearby_service(int role) {
     for (int i = 0; i < g.actorCount; i++) {
         Actor *b = &g.actors[i];
         float dd = distance(a->x, a->y, b->x, b->y);
-        if (!b->squad && conscious(b) && npc_role(b) == role && dd <= d && g.rep[b->faction] >= -25) {
+        if (!b->squad && conscious(b) && !actor_inside(b) && npc_role(b) == role && dd <= d &&
+            g.rep[b->faction] >= -25) {
             best = i;
             d = dd;
         }
@@ -536,8 +563,7 @@ int loot_take(int slot, int all) {
     if (ui.lootActor < 0 || ui.lootActor >= g.actorCount || slot < 0 || slot >= PACK + GEARS)
         return 0;
     Actor *b = &g.actors[ui.lootActor];
-    if (!conscious(a) || (!b->dead && b->unconscious <= 0) || actor_inside(a) != actor_inside(b) ||
-        distance(a->x, a->y, b->x, b->y) > TALK_REACH) {
+    if (!conscious(a) || (!b->dead && b->unconscious <= 0) || depth_distance(a, b) > TALK_REACH) {
         log_msg("Salvage needs a fallen target within reach.");
         return 0;
     }
@@ -561,7 +587,7 @@ int loot_take(int slot, int all) {
         for (int i = 0; i < g.actorCount; i++) {
             Actor *w = &g.actors[i];
             if (!w->squad && w->faction == b->faction && conscious(w) &&
-                distance(a->x, a->y, w->x, w->y) < (a->sneaking ? 3 : 6)) {
+                depth_distance(a, w) < (a->sneaking ? 3 : 6)) {
                 a->bounty += 20;
                 g.rep[b->faction] -= 4;
                 log_msg("Witnessed looting! Bounty +20; stolen goods stay marked.");
@@ -602,14 +628,17 @@ int needs_aid(const Actor *a) {
     if (a->bleed > .1f)
         return 1;
     for (int i = 0; i < LIMBS; i++)
-        if (a->health[i] < 60 && depth_can_heal(a,i))
+        if (a->health[i] < 60 && depth_can_heal(a, i))
             return 1;
     return 0;
 }
 const char *job_status(const Actor *a) {
-    if((uintptr_t)a>=(uintptr_t)g.actors&&(uintptr_t)a<(uintptr_t)(g.actors+MAX_ACTORS)){int i=a-g.actors;
-        if(g.depth.actors[i].captive)return "CAPTIVE - escape or send a rescuer";
-        if(g.depth.actors[i].paused)return "PAUSED - resume queue in Orders";
+    if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + MAX_ACTORS)) {
+        int i = a - g.actors;
+        if (g.depth.actors[i].captive)
+            return "CAPTIVE - escape or send a rescuer";
+        if (g.depth.actors[i].paused)
+            return "PAUSED - resume queue in Orders";
     }
     if (a->dead)
         return "DEAD - recover equipment or dismiss";

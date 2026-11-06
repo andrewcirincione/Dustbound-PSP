@@ -909,8 +909,11 @@ static void hud(void) {
         text(430, 221, "SNEAK", TEAL, 1);
     else
         text(430, 221, a->autoattack ? "FIGHT" : "FLEE", GOLD, 1);
-    text(8, 261, "\001 ACT  \004 PACK  \003 FIGHT  \002 SNEAK  \005 SQUAD  \006 PAUSE", MUTED, 1);
-    text(352, 261, "\010 MAP \007 MENU", MUTED, 1);
+    if (ui.screen == SCREEN_WORLD) {
+        text(8, 261, "\001 ACT  \004 PACK  \003 FIGHT  \002 SNEAK  \005 SQUAD  \006 PAUSE", MUTED, 1);
+        text(352, 261, "\010 MAP \007 MENU", MUTED, 1);
+    } else
+        center(240, 261, "TIME PAUSED / CONTROLS SHOWN IN THIS PANEL", MUTED, 1);
     if (ui.noticeTime > 0) {
         rect(7, 26, 386, 14, PANEL);
         char notice[64];

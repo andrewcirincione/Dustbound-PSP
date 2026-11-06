@@ -267,10 +267,10 @@ void move_actor(Actor *a, float dx, float dy, float dt) {
         a->fatigue = clamp(a->fatigue + dt * .016f, 0, 100);
     }
 }
-int add_actor(const char *name, int kind, int faction, float x, float y, int skill) {
-    if (g.actorCount >= MAX_ACTORS)
-        return -1;
-    int n = g.actorCount++;
+static void init_actor(int n, const char *name, int kind, int faction, float x, float y, int skill) {
+    memset(&g.depth.actors[n], 0, sizeof(g.depth.actors[n]));
+    g.depth.actors[n].upkeep = 100;
+    for (int j = 0; j < 4; j++) g.depth.actors[n].queue[j] = JOB_HOLD;
     Actor *a = &g.actors[n];
     memset(a, 0, sizeof(*a));
     snprintf(a->name, 16, "%s", name);
@@ -306,6 +306,12 @@ int add_actor(const char *name, int kind, int faction, float x, float y, int ski
         memset(a->pack, 0, sizeof(a->pack));
         inventory_add(a, MEAT, 3);
     }
+    return;
+}
+int add_actor(const char *name, int kind, int faction, float x, float y, int skill) {
+    if (g.actorCount >= MAX_ACTORS) return -1;
+    int n = g.actorCount++;
+    init_actor(n, name, kind, faction, x, y, skill);
     return n;
 }
 int add_build(float x, float y, int type, int faction, int owner) {
@@ -446,6 +452,13 @@ int hostile(const Actor *a, const Actor *b) {
     if (depth_room(a) != depth_room(b))
         return 0;
     if (a->squad && b->squad) return 0;
+    /* Escapees remain recognizable to their former captors for one day. */
+    if ((uintptr_t)b >= (uintptr_t)g.actors && (uintptr_t)b < (uintptr_t)(g.actors+g.actorCount) &&
+        g.depth.actors[b-g.actors].recognized > 0 && (a->kind == GUARD || a->kind == RAIDER) &&
+        a->faction == OUTLAWS) return 1;
+    if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors+g.actorCount) &&
+        g.depth.actors[a-g.actors].recognized > 0 && (b->kind == GUARD || b->kind == RAIDER) &&
+        b->faction == OUTLAWS) return 1;
     if (a->faction == b->faction)
         return 0;
     if (a->faction == HOSTILE || b->faction == HOSTILE || a->faction == WILDLIFE || b->faction == WILDLIFE)
@@ -1487,7 +1500,8 @@ void simulate(float dt) {
             int spawned = 0;
             for (int i = 0; i < MAX_ACTORS && spawned < 2; i++) {
                 int n = -1;
-                if (i < g.actorCount && g.actors[i].dead && !g.actors[i].squad)
+                if (i < g.actorCount && g.actors[i].dead && !g.actors[i].squad && depth_named(i) < 0 &&
+                    g.actors[i].carriedBy < 0 && merc_slot(&g.actors[i]) < 0)
                     n = i;
                 else if (g.actorCount < MAX_ACTORS) {
                     n = add_actor("Camp raider", RAIDER, HOSTILE, clamp(g.baseX + 10, 3, WORLD - 4), g.baseY,
@@ -1496,21 +1510,8 @@ void simulate(float dt) {
                 }
                 if (n >= 0) {
                     Actor *a = &g.actors[n];
-                    if (a->dead) {
-                        a->dead = 0;
-                        a->defeatCredited = 0;
-                        a->lostMask = a->prostheticMask = 0;
-                        a->attackPhase = 0;
-                        a->unconscious = 0;
-                        a->blood = 100;
-                        a->bleed = 0;
-                        for (int l = 0; l < LIMBS; l++)
-                            a->health[l] = 100;
-                        a->x = clamp(g.baseX + 10, 3, WORLD - 4);
-                        a->y = g.baseY;
-                        a->kind = RAIDER;
-                        a->faction = HOSTILE;
-                    }
+                    if (a->dead)
+                        init_actor(n, "Camp raider", RAIDER, HOSTILE, clamp(g.baseX+10,3,WORLD-4), g.baseY,9);
                     a->tx = a->homeX = g.baseX;
                     a->ty = a->homeY = g.baseY;
                     spawned++;

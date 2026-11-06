@@ -1,5 +1,17 @@
 # 0.5.2 — Reliable actions and recovery
 
+## 0.6.0 — Copper Road rebuild
+
+- Reconstruct a persistent rescue/road expedition with eight landmarks, named dialogue and repair, truce, capture and lethal outcomes.
+- Add town trade/allegiance consequences, a physical convoy, captives, escape recognition and retaliation.
+- Add three expedition groups, four job priorities, construction labor, fuel, station condition and armor upkeep.
+- Add moving projectiles, indoor actors/combat, witnessed trespass and market hours.
+- Add trauma, mechanical repair, armor underlayers/coverage and six panels with contextual guides.
+- Preserve complete clothing on prone bodies; remove overlapping landmark labels and misleading modal controls.
+- Fix named corpse recycling, projectile collision over water, unfinished worker stations and room-distance looting.
+- Write v6 saves while retaining v1–v5 migration. Physical PSP-3000 qualification remains outstanding.
+
+
 - Preserve exact help/save navigation state; save-and-title selects and confirms a slot.
 - Preserve clean/stolen ownership through exact-slot use, equipment, passing, selling, crafting, looting and unloaded ranged weapons; transactional full-pack failure.
 - Add explicit rescue choices, loot comparisons and bulk loot/depot transfer.

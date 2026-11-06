@@ -291,6 +291,38 @@ int main(int argc, char **argv) {
     for (int i = 0; i < 12; i++)
         depth_projectiles(.05f);
     C(foe->hitFlash == 0);
+    /* Crossing water must not use pedestrian collision. */
+    g.buildingCount = 0;
+    int water = 0;
+    for (int yy = 20; yy < WORLD - 20 && !water; yy += 3)
+        for (int xx = 20; xx < WORLD - 20 && !water; xx += 3)
+            if (terrain_water(xx, yy)) {
+                a->x = xx;
+                a->y = yy;
+                foe->x = xx + 5;
+                foe->y = yy;
+                water = 1;
+            }
+    C(water && !can_walk(a->x, a->y));
+    C(depth_fire(0, 2, CROSSBOW));
+    depth_projectiles(.02f);
+    C(D.shots[0].active);
+    /* A full pool can reuse ordinary fallen raiders, never named residents. */
+    fresh();
+    isolate();
+    g.actorCount = MAX_ACTORS;
+    rell = D.npc[NPC_RELL];
+    g.actors[rell].dead = 1;
+    g.actors[1].dead = 1;
+    D.actors[1].captive = 1;
+    D.actors[1].layer = shirt;
+    g.baseExists = 1;
+    g.baseX = 42;
+    g.baseY = 43;
+    g.raidTimer = 0;
+    step(.2f);
+    C(g.actors[rell].dead && D.route == ROUTE_FREED);
+    C(g.actors[1].active && !g.actors[1].dead && !D.actors[1].captive && !D.actors[1].layer);
     fresh();
     isolate();
     a = &g.actors[0];
@@ -314,6 +346,50 @@ int main(int argc, char **argv) {
     C(a->attackPhase || ally->hitFlash || a->hitFlash);
     C(save_game("build/depth-room.sav") && load_game("build/depth-room.sav"));
     C(D.actors[1].room == shop + 1);
+    /* Indoor loot uses room coordinates, not the doorway's exterior position. */
+    a = &g.actors[0];
+    ally = &g.actors[1];
+    ally->unconscious = 100;
+    ally->pack[0] = (Stack){ORE, 1};
+    D.actors[1].rx = .5f;
+    D.actors[1].ry = .5f;
+    ui.lootActor = 1;
+    C(!loot_take(0, 0));
+    D.actors[1].rx = g.interiorX + .3f;
+    D.actors[1].ry = g.interiorY;
+    C(loot_take(0, 0));
+    /* Private interiors need a conscious occupant to witness trespass. */
+    fresh();
+    isolate();
+    int house = -1;
+    for (int i = 0; i < g.buildingCount; i++)
+        if (g.buildings[i].type == HOUSE) {
+            house = i;
+            break;
+        }
+    C(house >= 0);
+    a = &g.actors[0];
+    a->x = g.buildings[house].x + 1.45f;
+    a->y = g.buildings[house].y + .65f;
+    C(interior_enter(house));
+    depth_room_tick(13);
+    C(!a->bounty && D.actors[0].trespass == 0);
+    ally = &g.actors[1];
+    *ally = *a;
+    ally->active = 1;
+    ally->squad = 0;
+    ally->faction = g.buildings[house].faction;
+    D.actors[1].room = house + 1;
+    D.actors[1].rx = g.interiorX + .5f;
+    D.actors[1].ry = g.interiorY;
+    depth_room_tick(13);
+    C(a->bounty == 80);
+    a->gear[0] = CROSSBOW;
+    D.actors[0].order = ORDER_HOLD_FIRE;
+    ally->faction = HOSTILE;
+    a->attackPhase = 0;
+    depth_room_tick(.1f);
+    C(!a->attackPhase);
     /* Reject corrupted v6 state, including NaNs and invalid actor references. */
     fresh();
     D.actors[0].trauma[0] = NAN;

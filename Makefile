@@ -21,4 +21,4 @@ EBOOT.PBP: assets/ICON0.png assets/PIC1.png
 
 PARAM.SFO: Makefile
 
-src/render.o: src/art_data.h src/painted_actor.h
+src/render.o: src/art_data.h src/painted_actor.h src/depth_render.h

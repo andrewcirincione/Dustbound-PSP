@@ -1,6 +1,6 @@
 /* Included by render.c: shares the bounded PSP software-renderer primitives. */
 static void depth_world_draw(void) {
-    for (int i = 0; i < LANDMARKS; i++) {
+    for (int i = 0; !g.interiorBuilding && i < LANDMARKS; i++) {
         int x, y;
         project(g.depth.siteX[i], g.depth.siteY[i], &x, &y);
         if (x < 10 || x > 470 || y < 48 || y > 175)
@@ -9,7 +9,8 @@ static void depth_world_draw(void) {
                               g.depth.siteY[i]) < 5;
         if (nearby) {
             diamond(x, y, 8, 4, GOLD);
-            center(x, y - 59, landmarkNames[i], GOLD, 1);
+            if (ui.screen == SCREEN_WORLD && ui.contextKind == 4 && ui.contextIndex == i)
+                center(x, y - 59, landmarkNames[i], GOLD, 1);
         }
     }
     for (int i = 0; i < PROJECTILES; i++) {

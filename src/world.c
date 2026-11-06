@@ -751,7 +751,7 @@ static int worker_building(const Actor *a, int type) {
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
         float d = distance(a->x, a->y, b->x, b->y);
-        if (b->type == type && (b->owner >= 0 || g.rep[b->faction] >= -25) && d < best) {
+        if (b->type == type && depth_build_ready(i) && (b->owner >= 0 || g.rep[b->faction] >= -25) && d < best) {
             found = i;
             best = d;
         }
