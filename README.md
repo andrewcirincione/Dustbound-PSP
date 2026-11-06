@@ -2,11 +2,22 @@
 
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.5.1, playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.5.2, playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 
-![Actual PSP EBOOT gameplay in PPSSPP](evidence/v051-03-dusk-haven.png)
+![Actual PSP EBOOT gameplay in PPSSPP](evidence/v052-03-dusk-haven.png)
+
+## Reliable actions, recovery and camp work
+
+0.5.2 audits all 27 screen types and the survival loop. Help returns to the exact selection; title/load cancellation returns to its origin; save-and-title asks for an explicit slot confirmation. Inventory operations preserve the selected stack and its stolen owner, including equipment, crafting, passing and salvage. Loot has worn/candidate previews and full-stack transfer.
+
+A rescue menu separates first aid, carrying and recovering gear. Nearby actions can be cycled with ![L](assets/ui/l.svg) held and ![Cross](assets/ui/cross.svg). Workstations and beds require actual reach. Cooks fetch water and food, walk to campfires, and return output to depots; job status explains what they need. Shops show weapon/armor previews, recipes show held/needed materials, skills explain training and live effects, and recent messages remain accessible.
+
+Toughness, perception and four production professions gain bounded practical benefits. See the [critical review](docs/DESIGN_REVIEW_V052.md) for the complete finding/change matrix, all-screen audit, balance rules and remaining limitations.
+
+![Explicit rescue choices in the PSP EBOOT](evidence/v052-91-rescue-choices.png)
+![Loot and greatsword comparison in the PSP EBOOT](evidence/v052-98-loot-greatsword-comparison.png)
 
 ## Equipment fit and useful choices
 
@@ -58,16 +69,16 @@ Walk through a door into a house, shop, inn, tower, smithy, workshop or depot. C
 - NPC speech and service dialogue, finite market stocks, rotating daily gear, reputation/prosperity prices, recruitment, looting, theft, fencing, lockpicking, bounty and custody/bail/escape.
 - Delivery, supply, hunt and relic contracts; persistent journal, faction ledger, town prosperity/ownership events and expedition legacy goals.
 - Construction, farming/irrigation, storage, eight supply recipes, custom equipment forging and three research tiers.
-- Six manual save slots plus autosave, checksums, backup files and v0.1 through v0.5.0 save migration. Twenty contextual in-game guide chapters.
+- Six manual save slots plus autosave, checksums, backup files and v0.1 through v0.5.1 save compatibility. Twenty contextual in-game guide chapters.
 
 ![Combat captured from the EBOOT; prepared encounter](evidence/v050-15-combat.gif)
 
 ## Install on PSP
 
 1. Use a PSP already configured to run homebrew. This repository does not install or modify firmware.
-2. Download `Dustbound-0.5.1-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
+2. Download `Dustbound-0.5.2-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
 3. The executable should be at `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Launch it from **Game → Memory Stick**.
-4. Back up existing `DUST_*.sav` files before upgrading. v0.1 through v0.5.0 saves are migrated when loaded; save the migrated game to a different slot first. Version 5 saves cannot be loaded by older executables. Older-format migration refreshes regional markets, town NPC outfits and medic positions once; existing v5 saves only receive the new basic backpack stock once. Do not remove the memory stick during a save.
+4. Back up existing `DUST_*.sav` files before upgrading. v0.1 through v0.5.1 saves are supported. Older formats migrate when loaded; save the migrated game to a different slot first. Keep a backup before using an older executable. Older-format migration refreshes regional markets, town NPC outfits and medic positions once; existing v5 saves only receive the new basic backpack stock once. Do not remove the memory stick during a save.
 
 The single EBOOT includes its art, catalog and sounds. No network access or external assets are needed. Release packages exclude developer test saves and `DUST_QA` telemetry markers.
 
@@ -78,7 +89,7 @@ The single EBOOT includes its art, catalog and sounds. No network access or exte
 | Analog / ![D-pad](assets/ui/dpad.svg) | Move in screen direction; navigate menus |
 | ![Cross](assets/ui/cross.svg) | Interact, confirm, equip/use, buy/sell |
 | ![Triangle](assets/ui/triangle.svg) | Pack; press again for worn equipment |
-| ![Square](assets/ui/square.svg) | Fight/passive stance; transfer an item in pack |
+| ![Square](assets/ui/square.svg) | Fight/passive stance; pass one item in pack; move a full stack in loot/storage |
 | ![Circle](assets/ui/circle.svg) | Sneak; close an overlay |
 | ![L](assets/ui/l.svg) | Next squad member; previous inventory tab |
 | ![R](assets/ui/r.svg) | Tactical pause; next inventory tab |
@@ -101,9 +112,9 @@ The native build exercises the same simulation and renderer. `make` uses the PSP
 
 ```sh
 # Full release validation; requires PSPDEV, PPSSPPHeadless, Pillow and websockets:
-bash scripts/validate_v051.sh /path/to/PPSSPPHeadless
+bash scripts/validate_v052.sh /path/to/PPSSPPHeadless
 # Package only after every controller run verifies the exact executable:
-python3 scripts/package_v051.py
+python3 scripts/package_v052.py
 ```
 
 A desktop interactive build can define `USE_SDL` and link SDL2. Keyboard mapping: arrows, X/C/Z/V map to the four face-button pictograms; Q/E map to the shoulder keycaps; Enter and Tab map to the two system keycaps.

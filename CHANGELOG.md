@@ -1,3 +1,15 @@
+# 0.5.2 — Reliable actions and recovery
+
+- Preserve exact help/save navigation state; save-and-title selects and confirms a slot.
+- Preserve clean/stolen ownership through exact-slot use, equipment, passing, selling, crafting, looting and unloaded ranged weapons; transactional full-pack failure.
+- Add explicit rescue choices, loot comparisons and bulk loot/depot transfer.
+- Prefer usable nearby targets; add left-shoulder/interaction target cycling.
+- Enforce station/bed/depot reach and barber/marshal proximity; reject invalid travel and stop stalled routes.
+- Complete fetch/walk/craft/store worker loops, including cooking water and retained food; expose job status; recognize limb injuries for medics.
+- Add skill explanations/progress and bounded toughness, perception, farming, cooking, engineering and science effects.
+- Expand shop previews, show actual recipe/forge requirements and effect values, fix health text, add recent messages, respect pause in custody.
+- Preserve save format 5, item IDs, textures and fixed render caches. Physical PSP-3000 testing remains outstanding.
+
 # Changelog
 
 ## 0.5.1 — Packs and proper grips
