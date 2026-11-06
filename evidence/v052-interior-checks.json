@@ -1,0 +1,166 @@
+[
+  {
+    "eboot_sha256": "6dbbd8e09ed10412913dd4835be13f985433e52eb41096ba0985e93ae03dfffb",
+    "version": "0.5.2"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      3
+    ],
+    "expected": [
+      3
+    ]
+  },
+  {
+    "capture": "v052-26-shop-entry",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1731,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-27-shop-interior",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1937,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      6
+    ],
+    "expected": [
+      6
+    ]
+  },
+  {
+    "capture": "v052-28-indoor-trade",
+    "screen": 6,
+    "expected": 6,
+    "frame": 1974,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      3
+    ],
+    "expected": [
+      3
+    ]
+  },
+  {
+    "assert": "money",
+    "actual": [
+      615
+    ],
+    "expected": [
+      615
+    ]
+  },
+  {
+    "capture": "v052-29-indoor-save-reloaded",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3110,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v052-36-inn-door",
+    "screen": 0,
+    "expected": 0,
+    "frame": 10636,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-37-inn-attempt",
+    "screen": 0,
+    "expected": null,
+    "frame": 10669,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      4
+    ],
+    "expected": [
+      4
+    ]
+  },
+  {
+    "assert": "money",
+    "actual": [
+      590
+    ],
+    "expected": [
+      590
+    ]
+  },
+  {
+    "capture": "v052-30-inn-rest",
+    "screen": 0,
+    "expected": 0,
+    "frame": 12418,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "interior",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v052-31-left-inn",
+    "screen": 0,
+    "expected": 0,
+    "frame": 14396,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "selection",
+    "actual": [
+      18
+    ],
+    "expected": [
+      18
+    ]
+  },
+  {
+    "capture": "v052-32-interior-guide",
+    "screen": 12,
+    "expected": 12,
+    "frame": 14862,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "indoor_trade": true,
+    "indoor_save_reload": true,
+    "bed_paid_once": true,
+    "doors_enter_exit": true,
+    "input_method": "PSP buttons, no memory writes"
+  }
+]

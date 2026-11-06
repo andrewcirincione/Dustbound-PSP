@@ -1,0 +1,66 @@
+[
+  {
+    "eboot_sha256": "6dbbd8e09ed10412913dd4835be13f985433e52eb41096ba0985e93ae03dfffb",
+    "version": "0.5.2"
+  },
+  {
+    "assert": "screen",
+    "actual": [
+      0
+    ],
+    "expected": [
+      0
+    ]
+  },
+  {
+    "capture": "v052-38-copper-route",
+    "screen": 5,
+    "expected": 5,
+    "frame": 256,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-39-wilderness-travel",
+    "screen": 0,
+    "expected": 0,
+    "frame": 785,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v052-40-location-on-route",
+    "screen": 5,
+    "expected": 5,
+    "frame": 815,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "assert": "waypoint",
+    "actual": [
+      1
+    ],
+    "expected": [
+      1
+    ]
+  },
+  {
+    "capture": "v052-41-copper-arrival",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1897,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "fresh_start_journey": true,
+    "goal": [
+      226.0,
+      47.0
+    ],
+    "arrival": [
+      225.5105743408203,
+      46.971336364746094
+    ],
+    "map_browsing_preserved_route": true,
+    "simulation_seconds_elapsed": 100.08772325515747,
+    "input_method": "PSP buttons only; no memory writes"
+  }
+]
