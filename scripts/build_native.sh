@@ -28,3 +28,6 @@ for suite in backpacks attachments clothing; do
     cc -O2 -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c tests/test_${suite}.c -lm -o build/test-${suite}
     build/test-${suite}
 done
+
+cc -O2 -std=gnu99 -Wall -Wextra -Wno-missing-field-initializers -Isrc src/game.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c tests/test_audit.c -lm -o build/test-audit
+./build/test-audit
