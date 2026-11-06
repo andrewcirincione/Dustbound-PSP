@@ -151,6 +151,16 @@ int inventory_transfer(Actor *from, Actor *to, int slot, int qty) {
         return 0;
     return inventory_remove_slot(from, slot, qty);
 }
+int inventory_input_owner(const Actor *a, int item, int qty) {
+    for (int i = 0; i < PACK && qty > 0; i++)
+        if (a->pack[i].item == item) {
+            int taken = a->pack[i].qty < qty ? a->pack[i].qty : qty;
+            if (taken && a->stolen[i])
+                return a->stolen[i];
+            qty -= taken;
+        }
+    return 0;
+}
 int inventory_remove(Actor *a, int item, int qty) {
     if (qty <= 0 || inventory_count(a, item) < qty)
         return 0;
@@ -844,12 +854,9 @@ int craft_item(int c) {
         return 0;
     }
     Actor old = *a;
-    int owner = 0;
-    for (int k = 0; k < PACK; k++)
-        if (a->stolen[k] && (a->pack[k].item == in1 || a->pack[k].item == r->in2)) {
-            owner = a->stolen[k];
-            break;
-        }
+    int owner = inventory_input_owner(a, in1, n1);
+    if (!owner && r->in2)
+        owner = inventory_input_owner(a, r->in2, r->n2);
     inventory_remove(a, in1, n1);
     if (r->in2)
         inventory_remove(a, r->in2, r->n2);
@@ -869,6 +876,13 @@ void recipe_status(int c, char *out, int size) {
     if (c == 1 && inventory_count(a, GRAIN) < need) {
         in = MEAT;
         need = 2;
+    }
+    if (c == 1) {
+        snprintf(out, size, "MAKES %d / GRAIN %d/3 OR MEAT %d/2 + WATER %d/1 / %s",
+                 r->qty + level(a, COOKING) / 35, inventory_count(a, GRAIN), inventory_count(a, MEAT),
+                 inventory_count(a, WATER),
+                 nearby_station(CAMPFIRE, 1.7f) >= 0 ? "CAMPFIRE READY" : "NEED NEARBY CAMPFIRE");
+        return;
     }
     char second[64] = "";
     if (r->in2)

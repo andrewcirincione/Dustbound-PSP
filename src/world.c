@@ -391,14 +391,15 @@ int forge_equipment(int it) {
         return 0;
     }
     Actor backup = *a;
-    int owner = 0;
-    for (int k = 0; k < PACK; k++)
-        if (a->stolen[k] && (a->pack[k].item == IRONBAR || (cloth && a->pack[k].item == CLOTH) ||
-                             (wood && a->pack[k].item == WOOD) || (relic && a->pack[k].item == RELIC) ||
-                             (coal && a->pack[k].item == COAL))) {
-            owner = a->stolen[k];
-            break;
-        }
+    int owner = inventory_input_owner(a, IRONBAR, metal);
+    if (!owner)
+        owner = inventory_input_owner(a, CLOTH, cloth);
+    if (!owner)
+        owner = inventory_input_owner(a, WOOD, wood);
+    if (!owner)
+        owner = inventory_input_owner(a, RELIC, relic);
+    if (!owner)
+        owner = inventory_input_owner(a, COAL, coal);
     inventory_remove(a, IRONBAR, metal);
     if (cloth)
         inventory_remove(a, CLOTH, cloth);

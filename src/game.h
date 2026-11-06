@@ -295,6 +295,7 @@ int inventory_add(Actor *a, int item, int qty);
 int inventory_remove(Actor *a, int item, int qty);
 int inventory_add_owned(Actor *a, int item, int qty, int owner);
 int inventory_remove_slot(Actor *a, int slot, int qty);
+int inventory_input_owner(const Actor *a, int item, int qty);
 int inventory_transfer(Actor *from, Actor *to, int slot, int qty);
 int loot_take(int slot, int all);
 int nearby_service(int role);
