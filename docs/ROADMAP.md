@@ -24,6 +24,9 @@ The unreleased 0.3 graphics/interior candidate is included in this milestone. Ol
 - [x] Armor underlayers, cut/blunt coverage, trauma and mechanical repairs.
 - [x] Three expedition groups with independent leaders and travel destinations.
 - [x] Contextual guides, exact-binary controller captures and native regressions.
+- [x] Fresh poor-start rescue/salvage/repair/report journey, first aid and earned reward save/reload.
+- [x] Explicit bleeding warning and accurate named-action incapacity feedback.
+- [ ] Distinguish knocked-out travel from a physically blocked route in navigation feedback.
 - [ ] Broaden authored conflict density beyond Copper Road.
 - [ ] Resident daily schedules, faction disguises and more nuanced witness behavior.
 - [ ] Forced-labor/captivity economy, animal recruitment and multi-region pursuit.

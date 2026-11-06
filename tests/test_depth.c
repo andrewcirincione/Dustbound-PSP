@@ -418,6 +418,16 @@ int main(int argc, char **argv) {
     printf("PASS: %d depth checks, seven-day campaign, all catalog price spreads.\n", checks);
     if (argc > 1) {
         char path[512];
+        /* Prepared blood-loss scenario: the controller orders travel while
+         * conscious, then observes a real knockout during the journey. */
+        fresh();
+        isolate();
+        g.actors[0].x = 34;
+        g.actors[0].y = 31;
+        g.actors[0].blood = 40;
+        g.actors[0].bleed = 2;
+        snprintf(path, sizeof(path), "%s/DUST_1.sav", argv[1]);
+        C(save_game(path));
         fresh();
         character_begin(4);
         character_finish();

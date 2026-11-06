@@ -4,6 +4,7 @@ set -eu
 cd "$(dirname "$0")/.."
 emu=$(realpath "$1")
 mkdir -p build/depth-fixtures build/audit-fixtures build/audit-layout build/emu
+rm -f build/v060-qualification.txt
 bash scripts/build_native.sh > build/v060-native.txt 2>&1
 make -j2 > build/v060-psp.txt 2>&1
 python3 scripts/validate_pbp.py EBOOT.PBP > build/v060-pbp-validation.txt
@@ -26,4 +27,5 @@ python3 scripts/emulator_v060.py "$emu" --advanced > build/v060-advanced-playthr
 python3 scripts/emulator_audit_v060.py "$emu" > build/v060-audit-playthrough.txt 2>&1
 python3 scripts/emulator_interiors_v060.py "$emu" > build/v060-interior-playthrough.txt 2>&1
 python3 scripts/emulator_travel_v060.py "$emu" > build/v060-travel-playthrough.txt 2>&1
-printf 'Final native, sanitizers, PSP package and controller scenarios passed.\n'
+python3 scripts/emulator_campaign_v060.py "$emu" > build/v060-campaign-playthrough.txt 2>&1
+printf 'Final native, sanitizers, PSP package and controller scenarios passed.\n' | tee build/v060-qualification.txt

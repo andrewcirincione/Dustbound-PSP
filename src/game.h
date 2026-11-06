@@ -317,6 +317,7 @@ int backpack_load_percent(int item);
 int backpack_combat_penalty(int item);
 int item_effect_value(int item);
 float movement_speed(const Actor *a);
+const char *travel_hold_reason(const Actor *a);
 float distance(float x, float y, float u, float v);
 int can_walk(float x, float y);
 int biome(float x, float y);

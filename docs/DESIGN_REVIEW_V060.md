@@ -15,6 +15,8 @@ The rebuild starts from released 0.5.2. The unpublished earlier candidate was lo
 | Choice | Similar dialogue produces similar outcomes | Repair, negotiated toll, living capture and lethal resolution use different requirements and rewards |
 | Consequences | Town control changes randomly, disconnected from play | Copper ownership, prices, supplies, prosperity, dialogue and patrol allegiance follow the selected route; other towns retain event logic |
 | Escort | A dialogue flag could pretend an escort happened | Sora physically follows within range and must reach Copper alive; controller test travels the complete route |
+| Carrying an escort | A wounded story escort could be stranded with no carry option | After treating Sora, carry her with normal weight/speed costs; arrival sets her down and pays once, while death/free-hands/treatment checks prevent invalid pickups |
+| Escort first aid | The first rescue disabled later treatment even after new wounds | Sora's dialogue offers another dressing during the escort; real medicine is consumed and arrival is still required for payment |
 | Rescue | Wounded characters are chiefly loot targets | Treatment, carried rescue, shackles and recruiting freed captives add recovery paths |
 | Defeat | Death or reload offers little recovery play | Nearby hostile captors carry unconscious squad members to the yard; escape takes time and guards interrupt |
 | Recognition | Escape warning had no corresponding behavior | Former captors recognize escapees for a simulated day; other identity/disguise systems remain absent |
@@ -35,6 +37,9 @@ The rebuild starts from released 0.5.2. The unpublished earlier candidate was lo
 | World labels | Landmark text overlaps the selected NPC role | Only the targeted landmark receives an overhead name; small ground markers remain |
 | Atlas legend | New route hints overlapped the old close/help footer | Clear the footer and render one combined icon legend |
 | Controls | World buttons still appear beneath modal menus | Overlay footer states that time is paused; actionable icon instructions belong to the open panel |
+| Action refusal | An incapacitated survivor at the culvert was told to walk closer | Named dialogue and landmark actions now distinguish unconsciousness, stun, being carried and death from distance; denied actions preserve supplies |
+| Interrupted travel | A knockout was treated as blocked terrain and erased the destination | Incapacity/carrying/custody/combat hold the route with a visible reason; recovery resumes it, while genuine obstructions and explicit cancellation remain distinct |
+| Bleeding | A red blood number was easy to overlook during travel | A persistent BLEEDING HUD label names the condition while first aid remains an explicit decision |
 | Construction | Structures appear instantly | Material validation followed by interruptible labor; unfinished stations cannot produce or attract workers |
 | Production | Fire and forge output costs no energy | Timber/coal fuel charges, input fetching, station travel and output storage; no electrical grid is claimed |
 | Jobs | One fixed job cannot express fallback priorities | Four-entry ordered queue, readiness checks, pause/resume and explicit selected group |
@@ -53,3 +58,5 @@ Balance still needs long natural campaigns with player decisions. Seven simulate
 ## Reference check
 
 Compared the design against indexed Kenshi wiki entries for [World States](https://kenshi.fandom.com/wiki/World_States), [Slavery](https://kenshi.fandom.com/wiki/Slavery), [Armour](https://kenshi.fandom.com/wiki/Armour) and the existing [mechanics audit](MECHANICS_AUDIT.md). This does not claim a complete page-by-page wiki audit or parity with Kenshi. The game's original setting, assets and simplified rules remain its own.
+
+The poor-start continuation also demonstrated that reaching Copper without Sora earns no escort reward. Her 18m following limit and wounded pace matter: the acceptance playthrough uses sneak pace while escorting her. Persistent companion-distance/condition feedback remains useful follow-up work. Repeat treatment and carrying Sora during the escort are now available, using normal supplies/load penalties and requiring physical arrival.

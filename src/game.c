@@ -88,6 +88,19 @@ float distance(float x, float y, float u, float v) {
 int conscious(const Actor *a) {
     return a->active && !a->dead && a->unconscious <= 0 && a->carriedBy < 0 && a->stun <= 0;
 }
+const char *travel_hold_reason(const Actor *a) {
+    if (a->carriedBy >= 0)
+        return "BEING CARRIED";
+    if (a->unconscious > 0)
+        return "UNCONSCIOUS";
+    if (a->prisonTime > 0)
+        return "IN CUSTODY";
+    if (a->stun > 0)
+        return "STUNNED";
+    if (g.hitstop > 0 || a->attackPhase == 1 || a->attackPhase == 2)
+        return "COMBAT";
+    return NULL;
+}
 int level(const Actor *a, int s) { return (int)clamp(1 + sqrtf(a->xp[s] / 12), 1, 100); }
 void gain(Actor *a, int s, float n) {
     if (s < 0 || s >= SKILLS || !a->squad)
@@ -2242,7 +2255,16 @@ void game_tick(float dt, Input in) {
         a->taskKind = 0;
         move_actor(a, (dx + dy) * .7071f, (dy - dx) * .7071f, step);
     } else if (ui.waypoint) {
-        if (distance(a->x, a->y, ui.travelX, ui.travelY) < .7f) {
+        if (!a->active || a->dead) {
+            ui.waypoint = 0;
+            log_msg("Traveler lost. Select a living ally to set a route.");
+        } else if (travel_hold_reason(a)) {
+            /* Count obstruction only while movement is possible. Never confuse
+             * a knockout, carrier or combat animation with impassable terrain. */
+            ui.travelStall = 0;
+            ui.travelLastX = a->x;
+            ui.travelLastY = a->y;
+        } else if (distance(a->x, a->y, ui.travelX, ui.travelY) < .7f) {
             ui.waypoint = 0;
             log_msg("Waypoint reached.");
         } else {
@@ -2341,6 +2363,7 @@ void debug_snapshot(const char *path) {
     VALUE("task", &a->taskKind, 4);
     VALUE("mapzoom", &ui.mapZoom, 4);
     VALUE("waypoint", &ui.waypoint, 4);
+    VALUE("unconscious", &a->unconscious, 4);
     VALUE("travel", &ui.travelX, 8);
     VALUE("carrying", &a->carrying, 4);
     VALUE("paused", &ui.paused, 4);

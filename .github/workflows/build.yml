@@ -26,14 +26,8 @@ jobs:
       - name: Verify tested release executable
         if: hashFiles('evidence/v060-build-manifest.json') != ''
         run: |
-          python3 - <<'PYCODE'
-          import hashlib,json,pathlib
-          expected=json.loads(pathlib.Path('evidence/v060-build-manifest.json').read_text())['eboot_sha256']
-          assert hashlib.sha256(pathlib.Path('EBOOT.PBP').read_bytes()).hexdigest()==expected
-          assert pathlib.Path('EBOOT.PBP').read_bytes()==pathlib.Path('dist/Dustbound-0.6.0-EBOOT.PBP').read_bytes()
-          PYCODE
-          cd dist
-          sha256sum -c SHA256SUMS-0.6.0.txt
+          python3 scripts/verify_release_v060.py
+          python3 tests/test_release_v060.py
       - uses: actions/upload-artifact@v4
         with:
           name: Dustbound-PSP

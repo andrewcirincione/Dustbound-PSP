@@ -18,6 +18,8 @@ Projectiles move through the world, strike intervening actors and stop at struct
 
 Use the new expedition-menu entries for Copper Road, Orders, Camp Work, Recovery and Armor Layers. Each has a contextual guide and controller icons. Read the [critical review](docs/DESIGN_REVIEW_V060.md) and [validation record](docs/VALIDATION.md) for implemented scope and limits. This is an original, bounded PSP survival RPG, not a complete reproduction of Kenshi.
 
+Watch the persistent BLEEDING warning during travel. First aid stops bleeding; rest addresses lasting trauma. Dialogue and landmark work explain whether unconsciousness, stun, being carried or distance is preventing an action. Interrupted travel keeps its destination and shows ROUTE HELD with the cause; movement resumes after recovery. Actual blocked terrain and manual cancellation remain separate. Sora can receive another dressing during the escort if she needs more treatment; stay close and protect her on the road, or carry her at the cost of extra weight and slower travel.
+
 ![Copper Road outcomes in the PSP EBOOT](evidence/v060-11-truce-outcome.png)
 ![Ordered squad roles in the PSP EBOOT](evidence/v060-19-orders.png)
 
@@ -123,19 +125,22 @@ make -j2
 python scripts/validate_pbp.py EBOOT.PBP
 ```
 
-The native build exercises the same simulation and renderer. `make` uses the PSPDEV SDK to produce a real PSP PRX inside `EBOOT.PBP`; it is not a renamed desktop executable. The read-only GitHub Actions workflow runs native checks and compiles an EBOOT artifact using a pinned official PSPDEV toolchain.
+The native build exercises the same simulation and renderer. `make` uses the PSPDEV SDK to produce a real PSP PRX inside `EBOOT.PBP`; it is not a renamed desktop executable. GitHub Actions runs native checks and compiles with the pinned official PSPDEV v20261101 toolchain. It checks the executable against the controller-tested hash and the installer contents before publishing the alpha from `main`.
 
 ```sh
 # Full release validation; requires PSPDEV, PPSSPPHeadless, Pillow and websockets:
-bash scripts/validate_v052.sh /path/to/PPSSPPHeadless
+bash scripts/validate_v060.sh /path/to/PPSSPPHeadless
 # Package only after every controller run verifies the exact executable:
-python3 scripts/package_v052.py
+python3 scripts/package_v060.py
+python3 scripts/verify_release_v060.py
 ```
+
+To update documentation packages without replaying an unchanged executable, build the exact qualified EBOOT and use `python3 scripts/package_v060.py --from-qualified-evidence`. This mode checks the committed manifest, controller records and existing archives before reusing their evidence; it is not a new gameplay test. The [session handoff](docs/SESSION_HANDOFF.md) records project constraints, source ownership and remaining work.
 
 A desktop interactive build can define `USE_SDL` and link SDL2. Keyboard mapping: arrows, X/C/Z/V map to the four face-button pictograms; Q/E map to the shoulder keycaps; Enter and Tab map to the two system keycaps.
 
 ## Practical limits
 
-The engine uses a fixed-size world state, capped actor/building/node pools and a software renderer designed for the 32 MB PSP model. It targets a 30 Hz display cadence at 333 MHz; emulator results do not establish physical hardware performance. This alpha has simplified town services, local navigation, faction simulation and job logistics. Interiors are single rooms with services, not multistorey NPC schedules or indoor combat. It has no slavery economy, multiple independent squads, diplomacy campaign or Kenshi asset/content parity. See the [Kenshi mechanics audit](docs/MECHANICS_AUDIT.md) and [iteration record](docs/ITERATION_LOG.md) for tested changes, simplifications and remaining work.
+The engine uses a fixed-size world state, capped actor/building/node pools and a software renderer designed for the 32 MB PSP model. It targets a 30 Hz display cadence at 333 MHz; emulator results do not establish physical hardware performance. This alpha has simplified town services, local navigation, faction simulation and job logistics. Interiors support same-room combat and services, but remain single rooms without full resident schedules. Three expedition groups share the eight-survivor limit. Full slavery economics, recruited animals, disguises, electrical networks, destructible sieges and a diplomacy campaign remain absent. See the [0.6.0 review](docs/DESIGN_REVIEW_V060.md), [roadmap](docs/ROADMAP.md), and [historical mechanics audit](docs/MECHANICS_AUDIT.md) for tested changes, simplifications and remaining work.
 
 MIT license for the original source and included artwork. Art source atlases and the reproducible sprite packing script are included. PSPDEV and PPSSPP remain separate projects with their own licenses; neither is bundled in the game release.

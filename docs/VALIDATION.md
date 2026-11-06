@@ -1,11 +1,11 @@
 # 0.6.0 validation record
 
-The rebuilt executable is independently compiled in GitHub Actions and tested through real PSP controller inputs in PPSSPP 1.20.4. The release workflow rejects an EBOOT that differs from the locally qualified executable or the committed installer. scripts/package_v060.py refuses missing completion assertions or mismatched hashes across all six controller suites.
+The rebuilt executable is independently compiled in GitHub Actions and tested through real PSP controller inputs in PPSSPP 1.20.4. The release workflow rejects an EBOOT that differs from the locally qualified executable or the committed installer. scripts/package_v060.py refuses missing completion assertions or mismatched hashes across all seven controller suites.
 
 ## Executable and memory
 
-- EBOOT: **1,418,194 bytes**.
-- SHA-256: `ea0995ddc13e9c5def13d1e6a31dddd351012364fb8315d5bd7b0b047e5e1e7c`.
+- EBOOT: **1,420,178 bytes**.
+- SHA-256: `155e31c905efb923026207bd0ea53e8448ea8de5258262d6920cb5c18b8a4650`.
 - Official PSPDEV v20261101, user-mode PRX, configured 333 MHz, 12 MiB heap, no expanded-memory requirement.
 - Game state: **435,556 bytes**, with the original **410,656-byte v5 prefix** intact. Appended state adds 24,900 bytes. Writes save version 6; loads versions 1–6.
 - Static memory/code sizes and native benchmark CSVs are included in the evidence archive. The native renderer's host timings do not measure MIPS/PSP hardware speed.
@@ -27,6 +27,7 @@ The rebuilt executable is independently compiled in GitHub Actions and tested th
 | Direction / attachments | 288 asymmetric weapon reflections, 1,152 backpack fit cases, 72 hat fit cases |
 | Garment balance | 1,056 clothing variants and 96 heavy/light tradeoffs |
 | Backpack behavior | 192 actual swaps match predicted load; all 16 markets stock practical alternatives |
+| Action feedback | Incapacity versus distance, supplies preserved, repair after recovery; six travel holds beyond eight seconds, resumed arrival, true obstruction, death and explicit cancellation |
 | Critical interaction audit | 70 checks for ownership, navigation, rescue, jobs, skill effects and service reach |
 | Sanitizers | Rebuild, render, critical audit and playability suites run with AddressSanitizer and UndefinedBehaviorSanitizer; leak detection disabled |
 
@@ -34,12 +35,13 @@ The rebuilt executable is independently compiled in GitHub Actions and tested th
 
 | Suite | Origin and exercised behavior |
 |---|---|
-| Copper Road | Fresh title/creation/ledger; declared fixtures 2–6 for wounded Sora, Rell, captivity, unfinished camp and prepared culvert. Actual physical escort, bypass repair/save/reload, paid truce, timed escape, construction completion/fuel/cooking, layer fitting, tactical orders and guides |
+| Copper Road | Fresh title/creation/ledger; declared fixtures 1–6 for blood-loss travel interruption, wounded Sora, Rell, captivity, unfinished camp and prepared culvert. Actual physical escort, bypass repair/save/reload, paid truce, timed escape, construction completion/fuel/cooking, layer fitting, tactical orders and guides |
 | Fresh expedition | Normal Ronin start: creation, distant mining refusal, close mining, recruitment, purchase, looting/equipping, save/reload, atlas scales and guide navigation |
 | Combat / outpost | Declared combat/outpost/region fixtures: greatsword windup/contact/recovery, wounds, forging and distant terrain. 240 actual completed EBOOT frames recorded |
 | Critical interactions | Declared rescue/logistics/loot fixtures: safe cancellation, restored help selection, carrying before bandaging, ownership-preserving bulk loot, comparisons, cook fetching water/grain, production/output storage, target cycling, bulk depot transfer, guides/logs and confirmed save-and-title |
 | Interiors | Fresh expedition: shop entry/counter purchase, indoor position/save/reload, door exits, inn entry and paid sleep |
 | Wilderness travel | Fresh expedition with enemies enabled: Dusk Haven to Copper Cross, atlas browsing without replacing the active route, arrival assertion |
+| Natural poor-start expedition | Fresh Outlaw with 180 silver; defend at the wreck, collect three iron bars, escort Sora, treat bleeding, buy 150-silver relief cargo, repair the culvert, report to Nell, reject duplicate reward, save/reload route and payment. Final silver 480; no prepared saves or state writes |
 
 The input harness sends controller commands and reads telemetry; it never writes live game state. Screenshots are the EBOOT's own completed 480×272 frame, copied only when a developer capture request is present. The combat video encodes those recorded frames. Prepared saves are test fixtures, not naturally earned progress. Installer packages exclude saves, QA markers, telemetry and capture requests.
 
@@ -50,3 +52,23 @@ An earlier pre-final emulator launch disconnected its debugger before the first 
 Only Copper's leadership/trade consequences are authored to this depth. Civilian daily schedules, faction disguises, animal recruitment, a full captivity/slavery economy, destructible sieges and electrical networks remain absent. Other regions use simpler event and contract systems. Long natural campaigns, every combinatorial room/campaign state and physical PSP hardware have not been exhaustively verified. See DESIGN_REVIEW_V060.md and ROADMAP.md.
 
 Reproduce with `PSPDEV=/path/to/pspdev PATH=/path/to/pspdev/bin:$PATH bash scripts/validate_v060.sh /path/to/PPSSPPHeadless`, then `python3 scripts/package_v060.py`.
+
+## Session recovery verification — 2026-11-06
+
+Before the gameplay feedback changes, a clean worktree at `cbe21aa` reproduced that earlier EBOOT (`ea0995ddc13e9c5def13d1e6a31dddd351012364fb8315d5bd7b0b047e5e1e7c`) byte for byte with the pinned PSPDEV toolchain. The complete native suite passed again. The Copper Road controller suite was also rerun against that fresh binary in an isolated test directory; physical escort, bypass save/reload, truce, timed escape, construction/fuel/cooking, layer fitting and group/order changes passed. Its new records are retained as `evidence/recovery-20261106-*`; the original six-suite qualification records were subsequently replaced by fresh tests of the final feedback fixes. Selected fresh world, equipment and guide captures were visually inspected.
+
+The continuation corrects the README's obsolete v0.5.2 commands and unsupported limitations, makes the qualification script write and clear its own completion marker, and adds `verify_release_v060.py`. The release gate now reads the EBOOT inside the installer and rejects mismatched builds, incomplete controller records, changed evidence records and developer saves. Nine integrity regressions include deliberately corrupted/replaced payloads with recomputed outer ZIP checksums, an incomplete campaign, a missing qualification marker, skipped knockout acceptance, and skipped carried-escort acceptance. The final packages use fresh qualification of the feedback fixes, not `--from-qualified-evidence`. Physical PSP qualification and a natural long campaign remain outstanding.
+
+## Fresh poor-start play and feedback fixes
+
+The continuous Outlaw expedition completed on the final EBOOT in 216 simulated seconds. It retained actual wounds (left arm 62/100) and spent money on supplies; it is a short authored journey, not a multi-day balance claim. The controller uses normal PSP buttons, completed-frame captures and read-only HUD values. Blood and bleeding reads inform ordinary first-aid decisions. Enemies remain active.
+
+Earlier attempts are not counted as passes: one ignored bleeding and collapsed on the road, others assumed a stunned interaction or travel request had succeeded. The harness now confirms actual cache contents and arrival, allows stuns to expire in the running world, treats bleeding, and verifies the whole earned outcome. The failed culvert attempt exposed the incorrect distance message; the final game distinguishes incapacity from reach and shows BLEEDING explicitly. That failed expedition also exposed the route stall detector treating knockout as blocked terrain. The final continuation retains the destination during incapacity, carrying, custody and combat animations and displays the reason. A new prepared controller scenario waits ten simulated seconds after blood-loss knockout and verifies the destination remains unchanged. Native tests separately recover and reach the destination and still detect genuinely blocked terrain.
+
+All six existing controller suites were replayed against this same new EBOOT, followed by the successful continuous campaign. The native suite and four sanitizer suites also passed. Fresh world, bleeding HUD, dialogue, repair, payment and wound-panel captures were visually reviewed.
+
+The first knockout acceptance fixture started with too little blood: the survivor collapsed during the load/menu setup, before a route could be ordered. That attempt failed its route-start assertion and is retained as `v060-knockout-setup-failed.txt`. The prepared fixture was adjusted to allow time to start traveling; it still uses actual bleeding and simulation to cause the knockout. No game code or live memory was changed to make that setup pass.
+
+A fresh expedition attempt reached Copper without Sora after moving ahead of her stated 18m escort range. The saved world confirmed she was still alive, injured and far behind, so the unpaid escort assertion correctly failed (`v060-escort-attempt-failed.txt`). The controller now uses sneak pace during her escort, preserving her physical arrival requirement. This is a player-strategy adjustment, not an automatic or guaranteed escort.
+
+A second attempt at sneak pace still left the escort injured behind the party (`v060-escort-slow-attempt-failed.txt`). Inspection found an actionable problem: Sora's first-aid dialogue had been disabled after initial treatment. The final candidate allows ongoing treatment at the cost of a dressing; native checks verify renewed bleeding is stopped, supplies are spent and no escort payment is granted early; they also check carrying weight, save/load, set-down, and one-time arrival payment. A further attempt demonstrated that a wounded story escort could be stranded without a carry option. The final candidate adds carrying after treatment, with normal weight/speed costs, save/load, manual set-down, and release/payment only at actual arrival. The final controller route uses repeat treatment and physically carries Sora home. Earlier attempts tested the preceding executable and are explicitly failed evidence.

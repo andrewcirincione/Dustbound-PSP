@@ -34,3 +34,6 @@ cc -O2 -std=gnu99 -Wall -Wextra -Wno-missing-field-initializers -Isrc src/game.c
 
 cc -O2 -std=gnu99 -Isrc src/game.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c src/render.c tests/test_depth.c -lm -o build/test-depth
 ./build/test-depth
+
+cc -O2 -std=gnu99 -Isrc src/game.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_action_feedback.c -lm -o build/test-action-feedback
+./build/test-action-feedback

@@ -18,6 +18,20 @@ static int member(const Actor *a) {
                : -1;
 }
 static int alive(int n) { return n >= 0 && n < g.actorCount && g.actors[n].active && !g.actors[n].dead; }
+/* Distance feedback must not conceal the actual reason an action is blocked. */
+static int ready_to_act(const Actor *a) {
+    if (conscious(a))
+        return 1;
+    if (!a->active || a->dead)
+        log_msg("This survivor cannot act. Select a living ally.");
+    else if (a->carriedBy >= 0)
+        log_msg("Set this survivor down before acting.");
+    else if (a->unconscious > 0)
+        log_msg("Unconscious: recover or send an ally to help.");
+    else
+        log_msg("Stunned: resume time to recover before acting.");
+    return 0;
+}
 int depth_named(int actor) {
     for (int i = 0; i < DEPTH_NPCS; i++)
         if (D.npc[i] == actor && actor >= 0)
@@ -241,8 +255,8 @@ const char *depth_line(int actor) {
     case NPC_SORA:
         return D.rescued == 2 ? "The dry culvert can carry wagons. Three timber, one iron bar "
                                 "and tools will brace it. I left the route on your atlas."
-               : D.rescued    ? "Stay close. I cannot fight on this leg. Get me to "
-                                "the stores at Copper Cross."
+               : D.rescued    ? "Stay close. I cannot fight on this leg. Carry me if needed. "
+                                "Get me to the stores at Copper Cross."
                               : "Rell's men broke the wagon. My leg is bleeding. A "
                                 "dressing, then an escort to Copper. There is another "
                                 "way around his toll.";
@@ -272,7 +286,7 @@ const char *depth_line(int actor) {
 }
 const char *depth_option(int actor, int row) {
     static const char *sora[] = {"Treat the wound and escort her.", "Show Copper stores on the atlas.",
-                                 "Leave."};
+                                 "Carry Sora to safety.", "Leave."};
     static const char *nell[] = {"Mark the missing wagon.", "Report the route. Claim payment.",
                                  "Buy relief cargo. 150 silver", "Mark Rell's toll camp.", "Leave."};
     static const char *rell[] = {"Pay 450 silver for a toll truce.", "Challenge Rell and his scouts.",
@@ -280,8 +294,11 @@ const char *depth_option(int actor, int row) {
     static const char *captive[] = {"Unlock shackles / recruit.", "Recover confiscated weapon.",
                                     "Leave."};
     int n = depth_named(actor);
-    if (n == NPC_SORA)
-        return sora[row % 3];
+    if (n == NPC_SORA) {
+        if (row == 0 && D.rescued == 1)
+            return "Treat her wounds again. One dressing.";
+        return sora[row % 4];
+    }
     if (n == NPC_NELL)
         return nell[row % 5];
     if (n == NPC_RELL)
@@ -294,13 +311,15 @@ int depth_dialog(int actor, int row) {
     if (actor < 0 || actor >= g.actorCount)
         return 0;
     Actor *a = &g.actors[g.selected], *b = &g.actors[actor];
-    if (!conscious(a) || depth_distance(a, b) > TALK_REACH) {
+    if (!ready_to_act(a))
+        return 0;
+    if (depth_distance(a, b) > TALK_REACH) {
         log_msg("Move within talking reach.");
         return 0;
     }
     int n = depth_named(actor);
     if (n == NPC_SORA) {
-        if (row == 0 && !D.rescued) {
+        if (row == 0 && D.rescued < 2) {
             if (!heal_actor(g.selected, actor)) {
                 log_msg("Bring a dressing and treat Sora.");
                 return 0;
@@ -311,7 +330,18 @@ int depth_dialog(int actor, int row) {
             depth_open(SCREEN_WORLD);
         } else if (row == 1)
             depth_locate(SITE_STORES);
-        else if (row == 2)
+        else if (row == 2) {
+            if (D.rescued != 1 || b->dead || b->carriedBy >= 0 || a->carrying >= 0) {
+                log_msg("Treat Sora first. Carry needs free arms and a living escort.");
+                return 0;
+            }
+            a->carrying = actor;
+            b->carriedBy = g.selected;
+            a->taskKind = 0;
+            ui.waypoint = 0;
+            depth_open(SCREEN_WORLD);
+            log_msg("Carrying Sora. Travel is slower; \001 puts her down.");
+        } else if (row == 3)
             depth_open(SCREEN_WORLD);
     } else if (n == NPC_NELL) {
         if (row == 0)
@@ -413,7 +443,9 @@ int depth_dialog(int actor, int row) {
 }
 int depth_action(int site, int option) {
     Actor *a = &g.actors[g.selected];
-    if (!conscious(a) || site < 0 || site >= LANDMARKS || depth_near_site(a, 1.7f) != site) {
+    if (!ready_to_act(a))
+        return 0;
+    if (site < 0 || site >= LANDMARKS || depth_near_site(a, 1.7f) != site) {
         log_msg("Walk within 1.7m of the landmark.");
         return 0;
     }
@@ -862,6 +894,12 @@ static void world_consequences(float dt) {
             distance(a->x, a->y, p->x, p->y) > 2.1f)
             route_toward(a, p->x, p->y, dt);
         if (distance(a->x, a->y, D.siteX[7], D.siteY[7]) < 5) {
+            if (a->carriedBy >= 0 && a->carriedBy < g.actorCount) {
+                Actor *carrier = &g.actors[a->carriedBy];
+                if (carrier->carrying == sora)
+                    carrier->carrying = -1;
+                a->carriedBy = -1;
+            }
             D.rescued = 2;
             g.money += 100;
             log_msg("Sora is home. +100 silver. The culvert route is now known.");
@@ -1083,7 +1121,7 @@ int depth_input(float dt, Input in) {
     }
     if (ui.screen == SCREEN_DIALOG && depth_named(ui.dialogActor) >= 0 &&
         depth_named(ui.dialogActor) <= NPC_TAMSIN) {
-        int n = depth_named(ui.dialogActor), count = n == NPC_NELL ? 5 : n == NPC_RELL ? 4 : 3;
+        int count = dialogue_count(ui.dialogActor);
         if (p & KEY_SELECT) {
             open_help(20);
             return 1;

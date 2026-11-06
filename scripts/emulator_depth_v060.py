@@ -14,7 +14,7 @@ async def until(e,field,value,seconds=120,fmt='I'):
 async def main():
  run=pathlib.Path(tempfile.mkdtemp(prefix='v060-depth-',dir=ROOT/'build'))
  shutil.copy2(ROOT/'EBOOT.PBP',run/'EBOOT.PBP')
- for i in range(2,7):shutil.copy2(ROOT/'build/depth-fixtures'/f'DUST_{i}.sav',run/f'DUST_{i}.sav')
+ for i in range(1,7):shutil.copy2(ROOT/'build/depth-fixtures'/f'DUST_{i}.sav',run/f'DUST_{i}.sav')
  (run/'DUST_QA').touch();log=open(run/'ppsspp.log','w')
  proc=subprocess.Popen([str(pathlib.Path(sys.argv[1]).resolve()),'--graphics=software','--debugger=9251','--timeout=3600','-r',str(run),str(run/'EBOOT.PBP')],cwd=run,stdout=log,stderr=subprocess.STDOUT)
  try:
@@ -30,8 +30,23 @@ async def main():
    await e.key('cross');await e.key('up');await e.key('cross');await e.expect('screen',0)
    await e.shot('v060-02-fresh-frontier',0)
    await e.menu(17);await e.shot('v060-03-expedition-leads',27);await e.key('select');await e.shot('v060-04-expedition-guide',12);await e.key('circle',2)
+   # Declared blood-loss fixture: start a route, collapse naturally, retain it
+   # beyond the old eight-second cancellation threshold. No live state writes.
+   await e.load(1);await e.menu(17);await e.key('down',7);await e.key('cross',2)
+   await e.expect('waypoint',1);goal=await e.read('travel','ff')
+   deadline=time.monotonic()+60
+   while (await e.read('unconscious','f'))[0]<=0:
+    assert time.monotonic()<deadline,'Prepared traveler did not collapse'
+    await e.waitframes(10)
+   knocked_at=(await e.read('time','f'))[0]
+   while (await e.read('time','f'))[0]<knocked_at+10:
+    assert time.monotonic()<deadline,'Knockout observation timed out'
+    await e.waitframes(10)
+   await e.expect('waypoint',1);assert await e.read('travel','ff')==goal
+   await e.shot('v060-42-route-held-unconscious',0)
+   e.events.append({'assert':'knockout preserves destination beyond eight seconds','passed':True,'prepared_fixture_slot':1})
    # Prepared rescue encounter, played through the conversation and actual escort.
-   await e.load(2);e.dialog_count=3;await e.key('cross');await e.shot('v060-05-sora-wreck',17);await e.key('cross');await e.expect('depth_rescued',1)
+   await e.load(2);e.dialog_count=4;await e.key('cross');await e.shot('v060-05-sora-wreck',17);await e.key('cross');await e.expect('depth_rescued',1)
    await e.menu(17);await e.key('down',7);await e.key('cross');await e.shot('v060-06-copper-route',5);await e.key('cross')
    await until(e,'waypoint',0,180)
    await until(e,'depth_rescued',2,60)
@@ -53,7 +68,7 @@ async def main():
    await e.menu(22);shirt=next(i//2 for i in range(0,48,2) if pack[i]==1116);await e.key('down',shirt);await e.shot('v060-17-layer-preview',32);await e.key('cross');await e.shot('v060-18-layer-fitted',32);await e.key('circle')
    await e.menu(18);await e.key('cross');await e.expect('depth_order',1);await e.key('down');await e.key('right');await e.expect('depth_group',1);await e.shot('v060-19-orders',28);await e.key('select');await e.shot('v060-20-orders-guide',12);await e.key('circle',2)
    await e.menu(20);await e.shot('v060-21-care',30);await e.key('select');await e.shot('v060-22-care-guide',12);await e.key('circle',2)
-   e.events.append({'completed':True,'fresh_start':True,'prepared_fixture_slots':[2,3,4,5,6],'physical_escort':True,'bypass_saved_reloaded':True,'truce_paid':True,'captivity_escaped':True,'construction_fuel_recipe':True,'layer_equipped':True,'orders_changed':True,'physical_psp_tested':False})
+   e.events.append({'completed':True,'fresh_start':True,'prepared_fixture_slots':[1,2,3,4,5,6],'knockout_route_preserved':True,'physical_escort':True,'bypass_saved_reloaded':True,'truce_paid':True,'captivity_escaped':True,'construction_fuel_recipe':True,'layer_equipped':True,'orders_changed':True,'physical_psp_tested':False})
    (ROOT/'evidence/v060-depth-checks.json').write_text(json.dumps(e.events,indent=2)+'\n');print('DEPTH PSP CONTROLLER PASS',run,flush=True)
  finally:
   proc.terminate()

@@ -48,7 +48,7 @@ int dialogue_count(int actor) {
         return 0;
     int named = depth_named(actor);
     if (named >= 0 && named <= NPC_TAMSIN)
-        return named == NPC_NELL ? 5 : named == NPC_RELL ? 4 : 3;
+        return named == NPC_NELL ? 5 : (named == NPC_RELL || named == NPC_SORA) ? 4 : 3;
     int n = 0;
     while (n < 5 && services[npc_role(&g.actors[actor])][n] >= 0)
         n++;

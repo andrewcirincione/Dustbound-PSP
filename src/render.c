@@ -909,6 +909,8 @@ static void hud(void) {
         text(430, 221, "SNEAK", TEAL, 1);
     else
         text(430, 221, a->autoattack ? "FIGHT" : "FLEE", GOLD, 1);
+    if (a->bleed > .01f)
+        text(416, 234, "BLEEDING", RED, 1);
     if (ui.screen == SCREEN_WORLD) {
         text(8, 261, "\001 ACT  \004 PACK  \003 FIGHT  \002 SNEAK  \005 SQUAD  \006 PAUSE", MUTED, 1);
         text(352, 261, "\010 MAP \007 MENU", MUTED, 1);
@@ -919,6 +921,14 @@ static void hud(void) {
         char notice[64];
         snprintf(notice, sizeof(notice), "%.62s", ui.notice);
         text(12, 30, notice, TEXT, 1);
+    }
+    if (ui.screen == SCREEN_WORLD && ui.waypoint && a->active && !a->dead) {
+        const char *reason = travel_hold_reason(a);
+        if (reason) {
+            snprintf(b, sizeof(b), "ROUTE HELD / %s", reason);
+            panel(7, 44, 232, 16);
+            text(12, 49, b, GOLD, 1);
+        }
     }
     panel(67, 177, 346, 32);
     if (g.interiorBuilding) {
