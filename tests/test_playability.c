@@ -90,7 +90,7 @@ int main(void) {
     int roles[10] = {0};
     for (int i = 1; i < g.actorCount; i++) {
         Actor *n = &g.actors[i];
-        if (n->faction == HOSTILE || n->kind == BEAST)
+        if (n->faction == HOSTILE || n->kind == BEAST || depth_named(i)>=0)
             continue;
         int r = npc_role(n);
         roles[r]++;

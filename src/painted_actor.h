@@ -238,11 +238,18 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
     }
     uint32_t cloth = torso ? itemDefs[torso].color : 0x9b8670, lc = legs ? itemDefs[legs].color : 0x786d5e;
     if (a->dead || a->unconscious > 0 || a->taskKind == 3) {
-        part(tf, x - 9 * sc, y - 2 * sc, x + 6 * sc, y - 2 * sc, 8 * sc, cloth, li, itemDefs[torso].quality,
-             0, 0, 1);
-        part(64 + lf - 68, x - 9 * sc, y - 2 * sc, x - 18 * sc, y, 5 * sc, lc, li, 0, 0, 0, 1);
-        part(60, x + 7 * sc, y - 5 * sc, x + 11 * sc, y, 5 * sc, skin, li, 0, 0, 0, 1);
-        weapon_sprite(weapon, x, y + 3 * sc, sc, .15f, face, li);
+        /* Rotate the complete dressed rig: hats, boots and packs stay attached. */
+        static uint32_t prone[112*104];
+        Actor standing=*a;standing.dead=0;standing.unconscious=0;standing.taskKind=0;
+        standing.attackPhase=0;standing.movedTimer=0;standing.hitFlash=0;standing.sneaking=0;
+        uint32_t *oldfb=fb;int oldpitch=pitch,l=clipLeft,t=clipTop,r=clipRight,b=clipBottom;
+        memset(prone,0,sizeof(prone));fb=prone;pitch=112;clipLeft=clipTop=0;clipRight=112;clipBottom=104;
+        actor_painted(&standing,56,88,1,li);
+        fb=oldfb;pitch=oldpitch;clipLeft=l;clipTop=t;clipRight=r;clipBottom=b;
+        for(int sy=0;sy<104;sy++)for(int sx=0;sx<112;sx++)if(prone[sy*112+sx]) {
+            int dx=x+(68-sy)*sc,dy=y-3*sc+(sx-56)*sc/2;
+            for(int yy=0;yy<sc;yy++)for(int xx=0;xx<sc;xx++)if(dx+xx>=clipLeft&&dx+xx<clipRight&&dy+yy>=clipTop&&dy+yy<clipBottom)fb[(dy+yy)*pitch+dx+xx]=prone[sy*112+sx];
+        }
         return;
     }
     if (back) {

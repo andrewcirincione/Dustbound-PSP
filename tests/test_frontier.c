@@ -96,7 +96,7 @@ int main(void) {
     assert(save_game("build/v050-migrated.sav") && load_game("build/v050-migrated.sav") && g.actorCount == n);
     SaveInfo info;
     set_save_root("build");
-    assert(save_slot(1) && save_inspect(1, &info) && info.version == 5);
+    assert(save_slot(1) && save_inspect(1, &info) && info.version == 6);
     puts("PASS: frontier roles, 4 new families, regional stock, strength/injury penalties, "
          "hire/range/payment/follow/expiry/dismissal and genuine v4 migration.");
 }

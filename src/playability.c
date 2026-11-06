@@ -21,6 +21,9 @@ int npc_role(const Actor *a) {
     return ROLE_CITIZEN;
 }
 const char *npc_role_name(const Actor *a) {
+    if((uintptr_t)a>=(uintptr_t)g.actors&&(uintptr_t)a<(uintptr_t)(g.actors+MAX_ACTORS)){int n=depth_named((int)(a-g.actors));
+        if(n==NPC_SORA)return "ENGINEER";if(n==NPC_NELL)return "QUARTERMASTER";if(n==NPC_RELL)return "TOLL WARLORD";if(n==NPC_ORIN||n==NPC_TAMSIN)return "CHAIN YARD SURVIVOR";
+    }
     if (a->kind == RAIDER)
         return "RAIDER";
     if (a->kind == BEAST)
@@ -35,6 +38,8 @@ static const int services[][6] = {{6, 12, 8, -1},    {0, 6, 12, 8, -1}, {6, 12, 
 int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
         return 0;
+    int named=depth_named(actor);
+    if(named>=0&&named<=NPC_TAMSIN)return named==NPC_NELL?5:named==NPC_RELL?4:3;
     int n = 0;
     while (n < 5 && services[npc_role(&g.actors[actor])][n] >= 0)
         n++;
@@ -61,6 +66,7 @@ const char *dialogue_option(int actor, int row) {
                                    "Guard my camp. 180 silver / day",
                                    "End contract. No refund.",
                                    "Tell me about your faction."};
+    if(depth_named(actor)>=0&&depth_named(actor)<=NPC_TAMSIN)return depth_option(actor,row);
     int action = dialogue_action(actor, row);
     if (action == 6 && npc_role(&g.actors[actor]) == ROLE_RECRUIT)
         return "Join my expedition. 300 silver";
@@ -71,6 +77,7 @@ float context_distance(void) {
     int n = ui.contextIndex;
     if (n < 0)
         return 999;
+    if (ui.contextKind == 4) return distance(a->x,a->y,g.depth.siteX[n],g.depth.siteY[n]);
     if (ui.contextKind == 0)
         return distance(a->x, a->y, g.actors[n].x, g.actors[n].y);
     if (ui.contextKind == 1)
@@ -86,6 +93,7 @@ const char *context_name(void) {
     int n = ui.contextIndex;
     if (n < 0)
         return "NO NEARBY TARGET";
+    if (ui.contextKind == 4)return landmarkNames[n];
     if (ui.contextKind == 0)
         return g.actors[n].name;
     if (ui.contextKind == 1) {
@@ -102,10 +110,13 @@ const char *context_action(void) {
     int n = ui.contextIndex;
     if (n < 0)
         return "WALK TO A PERSON, DOOR OR RESOURCE";
+    if (ui.contextKind==4)return "INSPECT LANDMARK";
+    if ((ui.contextKind==2||ui.contextKind==3)&&!depth_build_ready(n))return "CONTINUE CONSTRUCTION";
     if (ui.contextKind == 3)
         return "ENTER";
     if (ui.contextKind == 0) {
         Actor *b = &g.actors[n];
+        if(depth_named(n)>=0&&depth_named(n)<=NPC_TAMSIN)return "STORY / RESCUE";
         return b->squad                        ? "RESCUE OPTIONS"
                : b->dead || b->unconscious > 0 ? "LOOT"
                : g.actors[g.selected].sneaking ? "PICKPOCKET"
@@ -591,11 +602,15 @@ int needs_aid(const Actor *a) {
     if (a->bleed > .1f)
         return 1;
     for (int i = 0; i < LIMBS; i++)
-        if (a->health[i] < 60 && (!(a->lostMask & (1 << i)) || (a->prostheticMask & (1 << i))))
+        if (a->health[i] < 60 && depth_can_heal(a,i))
             return 1;
     return 0;
 }
 const char *job_status(const Actor *a) {
+    if((uintptr_t)a>=(uintptr_t)g.actors&&(uintptr_t)a<(uintptr_t)(g.actors+MAX_ACTORS)){int i=a-g.actors;
+        if(g.depth.actors[i].captive)return "CAPTIVE - escape or send a rescuer";
+        if(g.depth.actors[i].paused)return "PAUSED - resume queue in Orders";
+    }
     if (a->dead)
         return "DEAD - recover equipment or dismiss";
     if (a->prisonTime > 0)
@@ -613,7 +628,7 @@ const char *job_status(const Actor *a) {
     if (a->job == JOB_HOLD)
         return "HOLDING - defends if combat stance is on";
     if (a->job == JOB_FOLLOW)
-        return a == &g.actors[g.selected] ? "LEADING - direct movement" : "FOLLOWING selected squad member";
+        return a == &g.actors[g.selected] ? "LEADING - direct movement" : "FOLLOWING this group leader";
     if (a->job == JOB_MEDIC) {
         if (!inventory_count(a, MEDKIT))
             return "BLOCKED - no field dressings";

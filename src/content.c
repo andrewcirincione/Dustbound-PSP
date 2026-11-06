@@ -232,7 +232,7 @@ const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE 
                                         "WOUNDS & RESCUE", "FOOD & SLEEP", "EQUIPMENT",          "MERCHANTS",
                                         "FORGING GEAR",    "CRAFTING",     "YOUR OUTPOST",       "SQUAD JOBS",
                                         "CRIME & STEALTH", "FACTIONS",     "CONTRACTS",          "SAVES",
-                                        "WEATHER",         "CAPTIVITY",    "BUILDING INTERIORS", "BACKPACKS"};
+                                        "WEATHER",         "CAPTIVITY",    "BUILDING INTERIORS", "BACKPACKS", "THE COPPER ROAD", "ORDERS & GROUPS", "CAMP WORK & FUEL", "TRAUMA & REPAIR", "ARMOR LAYERS"};
 const char *guideBodies[GUIDE_PAGES] = {
     "\011 or analog: move in screen direction. \001: nearby interaction. \004: pack. \003: "
     "fight/passive. \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
@@ -344,4 +344,10 @@ const char *guideBodies[GUIDE_PAGES] = {
     "people keep full weight. CARRY adds load allowance; LOAD previews a swap. All packs use the same "
     "24 inventory slots.\n"
     "FIGHT reduces melee attack/defence: travel -2, medicine 0, ore -7, bedroll -4. Bulky packs hurt "
-    "stealth. Medicine aids first aid; bedrolls improve rest but are not beds. Unworn packs give no bonus."};
+    "stealth. Medicine aids first aid; bedrolls improve rest but are not beds. Unworn packs give no bonus.",
+
+    "Copper Road is a voluntary expedition. Find the wreck between Dusk Haven and Copper Cross. Treat Sora, then escort her to Nell at the stores. Stay within 18m.\nRepair the culvert after bringing Sora home: 3 timber, 1 iron bar and tools. Or pay Rell 450 for a toll truce; challenge him; or carry him alive to Nell. Each route changes trade and patrols. Claim payment once. Raid reprisals can follow capture or death. The ledger locates leads without issuing movement.",
+    "Orders sets Balanced, Defensive, Keep range or Hold fire. Defensive gives +18 defence but never attacks. Ranged allies retreat if a foe closes within 3.5m. Projectiles travel and hit walls or allies: clear your firing line.\nAssign each survivor to one of three groups and choose its leader. In the atlas, hold \006 and press \001 for a group route. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume in Orders.",
+    "Construction consumes materials when a foundation is placed. Stay beside it to build; moving cancels work. Resume from the nearby action or Camp ledger. Unfinished stations and beds cannot work.\nCampfires and forges burn one charge per production action. Add clean timber for four charges or coal for ten. Stations lose a little condition with use. One timber repairs 35 condition. Town workshops supply their own fuel. Windpumps irrigate nearby farms. Queues skip unavailable jobs.",
+    "Bleeding drains blood and can kill. Dressings stop bleeding and treat organic wounds; trauma still limits maximum health. Food and bed rest slowly restore that limit.\nMechanical characters and prosthetics need spare parts. Medicine and sleep cannot repair metal. The Care panel shows health, trauma and armor condition. Cloth restores equipment condition.\nRaiders near the chain yard may carry a fallen survivor away. Escape takes time away from guards. Tools speed it up. Free allies can unlock captives. Escapees are remembered for a day.",
+    "Use Armor Layers to fit a light body garment under outer armor. Weight must be five or less. Swaps preserve stolen ownership and fail safely if your pack is full.\nOuter body covers 95% of chest hits and 65% of arm hits; headwear covers 85%, legwear 90%, boots 35%. An uncovered hit bypasses that piece. Blunt impacts use 72% of outer protection. Underlayers add reduced protection. Wear lowers protection to a minimum of 65%; maintain with cloth. Inspect both armor and movement before equipping."};

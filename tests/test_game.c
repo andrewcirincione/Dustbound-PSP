@@ -14,6 +14,11 @@ static int total, failed;
             printf("PASS %02d: %s\n", total, msg);                                                           \
     } while (0)
 static void fresh(void) { game_new(73819, 0); }
+static void finish_build(void) {
+    int b=g.buildingCount-1;
+    for(int i=0;i<1200&&g.depth.buildings[b].labor>0;i++)simulate(.1f);
+    if(g.buildings[b].type==CAMPFIRE||g.buildings[b].type==FORGE)depth_fuel(b);
+}
 static void clear_pack(Actor *a) { memset(a->pack, 0, sizeof(a->pack)); }
 static int find_kind(int k) {
     for (int i = 0; i < g.actorCount; i++)
@@ -180,6 +185,7 @@ int main(void) {
     fresh();
     a = &g.actors[0];
     int bc = g.buildingCount;
+    for(int i=1;i<g.actorCount;i++)g.actors[i].active=0; /* Isolate construction from random encounters. */
     CHECK(!build_structure(0) && g.buildingCount == bc, "town boundary prevents unauthorized construction");
     a->x = 42;
     a->y = 43;
@@ -190,6 +196,7 @@ int main(void) {
     inventory_add(a, MEAT, 2);
     inventory_add(a, WATER, 1);
     a->x += .5f; /* Walk into workstation reach. */
+    finish_build();
     CHECK(craft_item(1) && inventory_count(a, MEAT) == 0, "campfire recipe supports meat substitution");
     a->x = 60;
     a->y = 40;
@@ -199,12 +206,14 @@ int main(void) {
     inventory_add(a, ORE, 6);
     CHECK(build_structure(3), "forge can be constructed from timber and iron bars");
     a->x += .5f;
+    finish_build();
     CHECK(craft_item(0) && inventory_count(a, ORE) == 3, "forge smelts three ore into one iron bar");
     a->x = 66;
     CHECK(build_structure(4), "research bench can be built");
     inventory_add(a, RELIC, 3);
     g.money = 2000;
     a->x += .5f;
+    finish_build();
     CHECK(research_tech() && g.tech == 1 && inventory_count(a, RELIC) == 2,
           "research consumes relic and money and unlocks a tier");
     a->x = 60.5f;

@@ -250,6 +250,7 @@ int main(void) {
     CHECK(stored(0, GRAIN) < 18 && stored(0, WATER) < 6);
     CHECK(inventory_count(a, RATION) >= 2);
     CHECK(a->x > 42 && a->x < 49);
+    for(int i=0;i<LANDMARKS;i++)g.depth.siteBuilding[i]=-1; /* This fixture replaces all world buildings. */
     CHECK(save_game("build/v052-workers.sav"));
     int q = stored(0, RATION);
     CHECK(load_game("build/v052-workers.sav"));

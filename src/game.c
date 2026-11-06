@@ -183,6 +183,8 @@ float encumbrance(const Actor *a) {
     w *= backpack_load_percent(a->gear[5]) * .01f;
     for (int i = 0; i < GEARS; i++)
         w += itemDefs[a->gear[i]].weight;
+    if((uintptr_t)a>=(uintptr_t)g.actors && (uintptr_t)a<(uintptr_t)(g.actors+MAX_ACTORS))
+        w += itemDefs[g.depth.actors[a-g.actors].layer].weight;
     if (a->carrying >= 0)
         w += 40;
     return w;
@@ -198,6 +200,8 @@ float backpack_load_preview(const Actor *a, int item) {
     cargo += itemDefs[a->gear[5]].weight;
     for (int i = 0; i < GEARS - 1; i++)
         worn += itemDefs[a->gear[i]].weight;
+    if((uintptr_t)a>=(uintptr_t)g.actors && (uintptr_t)a<(uintptr_t)(g.actors+MAX_ACTORS))
+        worn += itemDefs[g.depth.actors[a-g.actors].layer].weight;
     return worn + cargo * backpack_load_percent(item) * .01f;
 }
 float movement_speed(const Actor *a) {
@@ -429,6 +433,7 @@ void game_new(uint32_t seed, int scenario) {
     spread_frontier(&g);
     place_wilderness_encounters();
     frontier_identity();
+    depth_init();
     ui.camX = a->x;
     ui.camY = a->y;
     ui.mapX = a->x;
@@ -438,8 +443,9 @@ void game_new(uint32_t seed, int scenario) {
 }
 
 int hostile(const Actor *a, const Actor *b) {
-    if (actor_inside(a) || actor_inside(b))
+    if (depth_room(a) != depth_room(b))
         return 0;
+    if (a->squad && b->squad) return 0;
     if (a->faction == b->faction)
         return 0;
     if (a->faction == HOSTILE || b->faction == HOSTILE || a->faction == WILDLIFE || b->faction == WILDLIFE)
@@ -450,19 +456,15 @@ int hostile(const Actor *a, const Actor *b) {
         return 1;
     return 0;
 }
-static int armor_at(const Actor *a, int limb) {
-    return limb >= LLEG ? itemDefs[a->gear[3]].armor / 2 + itemDefs[a->gear[4]].armor
-                        : itemDefs[a->gear[limb == HEAD ? 2 : 1]].armor;
-}
 void strike(int ai, int bi) {
     if (ai < 0 || bi < 0 || ai >= g.actorCount || bi >= g.actorCount || ai == bi)
         return;
     Actor *a = &g.actors[ai], *b = &g.actors[bi];
-    if (actor_inside(a) || actor_inside(b) || !conscious(a) || !conscious(b) || a->cooldown > 0 ||
+    if (depth_room(a) != depth_room(b) || !conscious(a) || !conscious(b) || g.depth.actors[ai].captive || a->cooldown > 0 ||
         a->attackPhase || a->prisonTime > 0)
         return;
     int w = a->gear[0], ranged = weapon_ranged(w);
-    if (distance(a->x, a->y, b->x, b->y) > (w ? itemDefs[w].range : 1.55f))
+    if (depth_distance(a, b) > (w ? itemDefs[w].range : 1.55f))
         return;
     if (ranged && !inventory_count(a, gear_family(w) >= 29 ? CARTRIDGE : BOLTS)) {
         if (inventory_add_owned(a, w, 1, a->gearStolen[0])) {
@@ -483,7 +485,7 @@ void strike(int ai, int bi) {
     a->attackDuration = a->attackClock = fmaxf(.16f, cadence * (ranged ? .46f : .28f));
     a->cooldown = cadence;
     a->taskKind = 0;
-    a->attackAngle = atan2f((b->x + b->y - a->x - a->y) * 11, (b->x - b->y - a->x + a->y) * 22);
+    a->attackAngle = atan2f((depth_x(b)+depth_y(b)-depth_x(a)-depth_y(a))*11, (depth_x(b)-depth_y(b)-depth_x(a)+depth_y(a))*22);
     a->facing = cosf(a->attackAngle) >= 0;
     if (distance(a->x, a->y, g.actors[g.selected].x, g.actors[g.selected].y) < 12)
         audio_event(ranged ? (gear_family(w) >= 29 ? 4 : 1) : 1);
@@ -492,18 +494,30 @@ static void resolve_strike(int ai, int bi) {
     if (ai < 0 || bi < 0 || ai >= g.actorCount || bi >= g.actorCount)
         return;
     Actor *a = &g.actors[ai], *b = &g.actors[bi];
-    if (actor_inside(a) || actor_inside(b) || !conscious(a) || b->dead || b->unconscious > 0)
+    if (depth_room(a) != depth_room(b) || !conscious(a) || b->dead || b->unconscious > 0)
         return;
     int w = a->attackWeapon, ranged = weapon_ranged(w);
-    if (distance(a->x, a->y, b->x, b->y) > (w ? itemDefs[w].range : 1.55f) + .3f)
+    if (depth_distance(a, b) > (w ? itemDefs[w].range : 1.55f) + .3f)
         return;
     if (ranged && !inventory_remove(a, gear_family(w) >= 29 ? CARTRIDGE : BOLTS, 1))
         return;
+    if (ranged) {
+        if (!depth_fire(ai, bi, w)) inventory_add(a, gear_family(w)>=29?CARTRIDGE:BOLTS, 1);
+        return;
+    }
+    combat_impact(ai, bi, w);
+}
+void combat_impact(int ai, int bi, int w) {
+    if(ai<0||bi<0||ai>=g.actorCount||bi>=g.actorCount)return;
+    Actor *a=&g.actors[ai], *b=&g.actors[bi];
+    if(b->dead||b->unconscious>0)return;
+    int ranged=weapon_ranged(w);
     int sk = ranged ? CROSSBOWS : w ? MELEE : MARTIAL;
     float atk = level(a, sk) + gear_bonus(a, 0), def = level(b, b->gear[0] ? DEFENCE : DODGE);
     if (!ranged)
         atk -= backpack_combat_penalty(a->gear[5]);
     def -= backpack_combat_penalty(b->gear[5]);
+    if(g.depth.actors[bi].order==ORDER_BLOCK) def+=18;
     for (int e = 0; e < GEARS; e++)
         if (itemDefs[b->gear[e]].effect == 4)
             def += itemDefs[b->gear[e]].potency;
@@ -534,7 +548,7 @@ static void resolve_strike(int ai, int bi) {
     float damage =
         (w ? itemDefs[w].power : 7 + level(a, MARTIAL) * .4f) + level(a, STRENGTH) * .16f + atk * .18f;
     damage *= .8f + rf() * .4f;
-    damage -= fmaxf(0, armor_at(b, limb) - itemDefs[w].penetration) * .65f;
+    damage -= fmaxf(0, depth_armor(b, limb, w, rnd()%100) - itemDefs[w].penetration) * .65f;
     if (itemDefs[w].effect == 3)
         b->stun = .3f + itemDefs[w].potency * .03f;
     damage = fmaxf(2, damage * (1 - level(b, TOUGHNESS) * .002f));
@@ -545,6 +559,7 @@ static void resolve_strike(int ai, int bi) {
     if (distance(b->x, b->y, g.actors[g.selected].x, g.actors[g.selected].y) < 12)
         audio_event(2);
     b->health[limb] -= damage;
+    depth_wound(b, limb, damage);
     b->taskKind = 0; /* A hit interrupts resting and gathering even in passive stance. */
     b->impactLimb = limb;
     b->impactDamage = (int)damage;
@@ -556,7 +571,7 @@ static void resolve_strike(int ai, int bi) {
     b->recoilX = dx / d;
     b->recoilY = dy / d;
     float knock = fminf(.28f, damage * .006f);
-    if (can_walk(b->x + dx / d * knock, b->y + dy / d * knock)) {
+    if (!actor_inside(b) && can_walk(b->x + dx / d * knock, b->y + dy / d * knock)) {
         b->x += dx / d * knock;
         b->y += dy / d * knock;
     }
@@ -567,7 +582,7 @@ static void resolve_strike(int ai, int bi) {
 
     gain(b, TOUGHNESS, damage * 1.3f);
     gain(b, DEFENCE, 4);
-    if (w && w != STAFF && !(gear_family(w) >= 14 && gear_family(w) <= 16))
+    if (depth_organic(b,limb) && w && w != STAFF && !(gear_family(w) >= 14 && gear_family(w) <= 16))
         b->bleed += damage * (itemDefs[w].effect == 0 ? .04f : .025f);
     b->target = ai;
     if (a->squad || b->squad)
@@ -595,12 +610,11 @@ static int heal_from(int mi, int pi, int kitSlot) {
     if (mi < 0 || pi < 0 || mi >= g.actorCount || pi >= g.actorCount)
         return 0;
     Actor *m = &g.actors[mi], *p = &g.actors[pi];
-    if (!conscious(m) || p->dead || actor_inside(m) != actor_inside(p) ||
-        distance(m->x, m->y, p->x, p->y) > TALK_REACH)
+    if (!conscious(m) || p->dead || depth_distance(m,p) > TALK_REACH)
         return 0;
     int hurt = p->bleed > .01f;
     for (int j = 0; j < LIMBS; j++)
-        if (p->health[j] < 98 && !(p->lostMask & (1 << j)))
+        if (p->health[j] < 98 && depth_can_heal(p,j))
             hurt = 1;
     if (!hurt)
         return 0;
@@ -613,8 +627,8 @@ static int heal_from(int mi, int pi, int kitSlot) {
     }
     p->bleed = 0;
     for (int j = 0; j < LIMBS; j++)
-        if (!(p->lostMask & (1 << j)))
-            p->health[j] = fminf(100, p->health[j] + 18 + level(m, MEDICINE) * .65f + gear_bonus(m, 5));
+        if (depth_can_heal(p,j))
+            p->health[j] = fminf(100-g.depth.actors[pi].trauma[j], p->health[j] + 18 + level(m, MEDICINE) * .65f + gear_bonus(m, 5));
     p->blood = fminf(100, p->blood + 10);
     gain(m, MEDICINE, 24);
     log_msg("%s bandaged %s. Bleeding stopped.", m->name, p->name);
@@ -655,6 +669,8 @@ void use_item(int s) {
         log_msg("Survey chart reveals the frontier.");
     } else if (it == MEDKIT)
         heal_from(g.selected, g.selected, s);
+    else if (it == PARTS)
+        depth_repair(g.selected,g.selected);
     else if (it == ARM || it == LEG) {
         int first = it == ARM ? LARM : LLEG, done = 0;
         for (int i = first; i < first + 2; i++)
@@ -795,8 +811,12 @@ int build_structure(int c) {
         g.baseY = y;
         g.raidTimer = 420;
     }
-    gain(a, ENGINEERING, 50);
-    log_msg("Built %s.", buildNames[c]);
+    g.depth.buildings[g.buildingCount-1].labor = buildTypes[c]==CAMPFIRE?12:buildTypes[c]==BED?16:35;
+    g.depth.buildings[g.buildingCount-1].fuel=0;
+    g.depth.buildings[g.buildingCount-1].condition=100;
+    a->taskKind=4;a->taskIndex=g.buildingCount-1;a->action=g.depth.buildings[a->taskIndex].labor+1;
+    gain(a, ENGINEERING, 10);
+    log_msg("%s placed. Stay nearby to finish construction.", buildNames[c]);
     return 1;
 }
 typedef struct {
@@ -825,7 +845,7 @@ int nearby_station(int type, float r) {
     }
     Actor *a = &g.actors[g.selected];
     for (int i = 0; i < g.buildingCount; i++)
-        if (g.buildings[i].type == type && distance(a->x, a->y, g.buildings[i].x, g.buildings[i].y) < r)
+        if (g.buildings[i].type == type && depth_build_ready(i) && distance(a->x, a->y, g.buildings[i].x, g.buildings[i].y) < r)
             return i;
     return -1;
 }
@@ -865,6 +885,7 @@ int craft_item(int c) {
         log_msg("Pack full.");
         return 0;
     }
+    if ((r->station==FORGE||r->station==CAMPFIRE)&&!depth_use_fuel(nearby_station(r->station,1.7f),1)){*a=old;return 0;}
     gain(a, r->skill, 35);
     log_msg("Crafted %d %s.", qty, itemDefs[r->output].name);
     return 1;
@@ -947,7 +968,7 @@ void find_context(void) {
         Actor *b = &g.actors[i];
         if (i == g.selected || !b->active || b->carriedBy >= 0 || actor_inside(a) != actor_inside(b))
             continue;
-        if (b->squad && !b->dead && b->unconscious <= 0) {
+        if (b->squad && !b->dead && b->unconscious <= 0 && !g.depth.actors[i].captive) {
             int hurt = b->bleed > .01f;
             for (int j = 0; j < LIMBS; j++)
                 if (b->health[j] < 98 && !(b->lostMask & (1 << j)))
@@ -956,7 +977,7 @@ void find_context(void) {
                 continue;
         }
         if (b->kind == TRADER || b->kind == RECRUIT || b->dead || b->unconscious > 0 || b->squad ||
-            b->kind == SETTLER || b->kind == GUARD || b->kind == CARAVAN)
+            b->kind == SETTLER || b->kind == GUARD || b->kind == CARAVAN || depth_named(i)>=0)
             add_context(0, i, distance(a->x, a->y, b->x, b->y), TALK_REACH);
     }
     for (int i = 0; i < g.nodeCount; i++)
@@ -969,6 +990,8 @@ void find_context(void) {
         if (b->type >= WELL && b->type != WALL && b->type != WINDMILL)
             add_context(2, i, distance(a->x, a->y, b->x, b->y), 1.7f);
     }
+    if (!actor_inside(a)) for(int i=0;i<LANDMARKS;i++)
+        add_context(4,i,distance(a->x,a->y,g.depth.siteX[i],g.depth.siteY[i]),1.7f);
     if (ui.contextCount) {
         ui.contextChoice %= ui.contextCount;
         ui.contextKind = candidates[ui.contextChoice].kind;
@@ -1008,12 +1031,15 @@ void interact(void) {
         log_msg("Move closer to %s before you %s.", context_name(), context_action());
         return;
     }
+    if (ui.contextKind == 4) { ui.depthSite=n;depth_open(SCREEN_ENCOUNTER);return; }
+    if ((ui.contextKind==2||ui.contextKind==3)&&!depth_build_ready(n)) {depth_build_action(n);return;}
     if (ui.contextKind == 3) {
         interior_enter(n);
         return;
     }
     if (ui.contextKind == 0) {
         Actor *b = &g.actors[n];
+        if (depth_named(n)>=0&&depth_named(n)<=NPC_TAMSIN) {dialogue_open(n);return;}
         if (b->squad) {
             ui.lootActor = n;
             ui.selection = 0;
@@ -1169,8 +1195,9 @@ static void reveal(Actor *a) {
         }
 }
 static void squad_job(Actor *a, float dt) {
-    if (a->taskKind)
+    if (a->taskKind||g.depth.actors[a-g.actors].paused)
         return;
+    if(depth_group_job(a,dt))return;
     if (a->job == JOB_FOLLOW) {
         Actor *l = &g.actors[g.selected];
         if (a != l && distance(a->x, a->y, l->x, l->y) > 2.2f)
@@ -1257,6 +1284,7 @@ void simulate(float dt) {
         g.hitstop = fmaxf(0, g.hitstop - dt);
         return;
     }
+    depth_tick(dt);
     tick_expansion(dt);
     g.time += dt;
     g.dayTime += dt / 75;
@@ -1267,6 +1295,7 @@ void simulate(float dt) {
     }
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
+        if (!depth_build_ready(i)) continue;
         if (b->type == FARM && b->stock)
             b->progress = fminf(100, b->progress + dt * .35f);
         if (b->type == WINDMILL && b->owner >= 0) {
@@ -1339,16 +1368,17 @@ void simulate(float dt) {
         if (a->unconscious > 0) {
             a->unconscious = fmaxf(0, a->unconscious - dt);
             if (a->bleed <= .01f) {
-                if (a->health[HEAD] < 35)
+                if (depth_organic(a,HEAD) && a->health[HEAD] < 35)
                     a->health[HEAD] = fminf(35, a->health[HEAD] + dt * .35f);
-                if (a->health[CHEST] < 35)
+                if (depth_organic(a,CHEST) && a->health[CHEST] < 35)
                     a->health[CHEST] = fminf(35, a->health[CHEST] + dt * .35f);
             }
             if (a->unconscious <= 0 && (a->health[HEAD] <= 0 || a->health[CHEST] <= 0 || a->blood < 25))
                 a->unconscious = 10;
             continue;
         }
-        if (a->squad) {
+        if(a->squad&&a->race==2)reveal(a);
+        if (a->squad && a->race!=2) {
             a->hunger = fmaxf(0, a->hunger - dt * .045f);
             a->fatigue = fminf(100, a->fatigue + dt * .008f);
             if (a->hunger < 40 && take_ration(a)) {
@@ -1372,14 +1402,14 @@ void simulate(float dt) {
                 a->fatigue = fmaxf(0, a->fatigue - dt * 1.8f);
                 if (a->bleed <= 0 && a->hunger >= 20)
                     for (int l = 0; l < LIMBS; l++)
-                        if (!(a->lostMask & (1 << l)) || (a->prostheticMask & (1 << l)))
+                        if (depth_can_heal(a,l))
                             a->health[l] = fminf(100, a->health[l] + dt * (.6f + gear_bonus(a, 6) * .015f));
             }
             a->action -= dt;
-            if (a->action <= 0)
+            if (a->action <= 0 && a->taskKind!=4)
                 complete_task(a);
         }
-        if (actor_inside(a) || !conscious(a))
+        if (actor_inside(a) || !conscious(a) || g.depth.actors[i].captive || (a->carrying>=0 && g.depth.actors[a->carrying].captive==2))
             continue;
         int target = -1;
         float best = weapon_ranged(a->gear[0]) ? itemDefs[a->gear[0]].range + 1 : 6.0f;
@@ -1405,6 +1435,7 @@ void simulate(float dt) {
             a->target = target;
             a->taskKind = 0;
             Actor *b = &g.actors[target];
+            if(depth_tactics(a,target,dt))continue;
             float range = (a->gear[0] ? itemDefs[a->gear[0]].range : 1.55f) - .2f;
             if (best > range) {
                 if (i != g.selected)
@@ -1427,8 +1458,10 @@ void simulate(float dt) {
             if (distance(a->x, a->y, x, y) > 2.5f)
                 route_toward(a, x, y, dt);
         } else if (a->squad) {
-            if (i != g.selected || a->job != JOB_FOLLOW)
+            if (i != g.selected || a->job != JOB_FOLLOW || g.depth.groupTravel[g.depth.actors[i].group])
                 squad_job(a, dt);
+        } else if (depth_named(i)>=0 && (depth_named(i)<=NPC_TAMSIN || depth_named(i)==NPC_CONVOY)) {
+            /* Authored residents and rescue movement are controlled by the expedition. */
         } else if (npc_role(a) == ROLE_MERCENARY || a->kind == GUARD) {
             if (distance(a->x, a->y, a->homeX, a->homeY) > 1)
                 route_toward(a, a->homeX, a->homeY, dt * .6f);
@@ -1487,6 +1520,7 @@ void simulate(float dt) {
                 log_msg("Raiders have found your camp.");
         }
     }
+    depth_after_tick(dt);
 }
 
 void set_save_root(const char *p) { snprintf(saveRoot, sizeof(saveRoot), "%s", p); }
@@ -1508,7 +1542,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 5, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 6, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1609,7 +1643,7 @@ static int validate_game(const Game *t) {
         if (a->carrying >= t->actorCount || a->carriedBy >= t->actorCount)
             return 0;
     }
-    return 1;
+    return depth_validate(t);
 }
 static int migrate_legacy(const LegacyGame *old) {
     if (old->actorCount < 1 || old->actorCount > 80 || old->buildingCount < 0 || old->buildingCount > 100 ||
@@ -1689,12 +1723,12 @@ static int migrate_legacy(const LegacyGame *old) {
     return validate_game(&g);
 }
 static int save_shape(uint32_t version, uint32_t size) {
-    return (version == 5 && size == sizeof(Game)) || ((version == 3 || version == 4) && size == 404460) ||
+    return (version == 6 && size == sizeof(Game)) || (version == 5 && size == offsetof(Game, depth)) || ((version == 3 || version == 4) && size == 404460) ||
            (version == 2 && size == 404444);
 }
 static int decode_modern(Game *out, const void *data, uint32_t version, uint32_t size) {
     memset(out, 0, sizeof(*out));
-    if (version == 5)
+    if (version >= 5)
         memcpy(out, data, size);
     else {
         const unsigned char *src = data;
@@ -1756,6 +1790,7 @@ int load_game(const char *path) {
     fclose(f);
     if (ok) {
         frontier_identity();
+        depth_init();
         memset(&ui, 0, sizeof(ui));
         ui.speed = 1;
         ui.slot = 1;
@@ -1852,7 +1887,7 @@ void game_tick(float dt, Input in) {
     int p = in.pressed;
     if (ui.screen != SCREEN_WORLD)
         ui.squadCyclePending = 0;
-    if (expansion_input(dt, in))
+    if (depth_input(dt,in) || expansion_input(dt, in))
         return;
     Actor *a = &g.actors[g.selected];
     if (ui.screen == SCREEN_TITLE) {
@@ -1932,7 +1967,7 @@ void game_tick(float dt, Input in) {
             count = recipeCount;
             break;
         case SCREEN_MENU:
-            count = 17;
+            count = 23;
             break;
         case SCREEN_HELP:
             count = GUIDE_PAGES;
@@ -2115,6 +2150,9 @@ void game_tick(float dt, Input in) {
                 case 16:
                     open_screen(SCREEN_LOG);
                     break;
+                case 17:case 18:case 19:case 20:case 21:
+                    depth_open(SCREEN_EXPEDITION+ui.selection-17);break;
+                case 22:depth_open(SCREEN_LAYERS);break;
                 }
             }
         }
@@ -2309,6 +2347,14 @@ void debug_snapshot(const char *path) {
     VALUE("stolen", a->stolen, sizeof(a->stolen));
     VALUE("job", &a->job, 4);
     VALUE("prison", &a->prisonTime, 4);
+    VALUE("depth_route", &g.depth.route, 4);
+    VALUE("depth_rescued", &g.depth.rescued, 4);
+    VALUE("depth_reported", &g.depth.reported, 4);
+    VALUE("depth_npcs", g.depth.npc, sizeof(g.depth.npc));
+    VALUE("depth_captive", &g.depth.actors[g.selected].captive, 4);
+    VALUE("depth_order", &g.depth.actors[g.selected].order, 4);
+    VALUE("depth_group", &g.depth.actors[g.selected].group, 4);
+    VALUE("depth_labor", &g.depth.buildings[a->taskIndex>=0&&a->taskIndex<MAX_BUILDINGS?a->taskIndex:0].labor, 4);
     for (int n = 0; n < g.buildingCount; n++)
         if (g.buildings[n].type == STORE) {
             VALUE("depot", g.buildings[n].storage, sizeof(g.buildings[n].storage));

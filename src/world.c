@@ -319,7 +319,7 @@ void init_expansion(void) {
 int item_price(int town, int it, int selling) {
     if (it <= 0 || it >= ITEMS || town < 0 || town >= TOWNS)
         return 0;
-    float mod = 1 + (60 - g.prosperity[town]) * .004f - g.rep[g.townOwner[town]] * .002f;
+    float mod = 1 + (town==1&&g.depth.route==ROUTE_TRUCE?.12f:0) + (60 - g.prosperity[town]) * .004f - g.rep[g.townOwner[town]] * .002f;
     mod = limit(mod, .65f, 1.6f);
     return (int)fmaxf(1, itemDefs[it].price * (selling ? .6f : 1) * mod);
 }
@@ -414,6 +414,7 @@ int forge_equipment(int it) {
         log_msg("Pack full. Forging cancelled.");
         return 0;
     }
+    if(!depth_use_fuel(nearby_workstation(FORGE),1)){*a=backup;return 0;}
     gain(a, SMITHING, 45 + d->quality * 20);
     log_msg("Forged %s.", d->name);
     return 1;
@@ -494,13 +495,14 @@ int doctor_heal(int town) {
         log_msg("Town treatment costs 80 silver.");
         return 0;
     }
+    if(a->race==2){log_msg("Mechanical bodies need spare parts, not a doctor.");return 0;}
     g.money -= 80;
     a->bleed = 0;
     a->blood = 100;
     a->exposure = 0;
     for (int i = 0; i < LIMBS; i++)
-        if (!(a->lostMask & (1 << i)) || (a->prostheticMask & (1 << i)))
-            a->health[i] = 100;
+        if (depth_can_heal(a,i))
+            a->health[i] = 100-g.depth.actors[g.selected].trauma[i];
     a->unconscious = 0;
     log_msg("Wounds treated. Lost limbs still need prosthetics.");
     return 1;
@@ -583,6 +585,7 @@ int complete_contract(int n) {
     return 1;
 }
 const char *dialogue_line(int n, int page) {
+    const char *authored=depth_line(n);if(authored)return authored;
     if (n < 0 || n >= g.actorCount)
         return "The road is quiet.";
     Actor *a = &g.actors[n];
@@ -772,7 +775,7 @@ static int worker_walk(Actor *a, int building, float dt) {
     return 1;
 }
 static void worker_production(Actor *a, float dt) {
-    if (actor_inside(a) || a->job < JOB_SMELT || a->taskKind || !conscious(a) || a->prisonTime > 0 ||
+    if (g.depth.actors[a-g.actors].paused || g.depth.actors[a-g.actors].captive || actor_inside(a) || a->job < JOB_SMELT || a->taskKind || !conscious(a) || a->prisonTime > 0 ||
         a->carriedBy >= 0 || a->target >= 0)
         return;
     int depot = worker_building(a, STORE),
@@ -825,6 +828,12 @@ static void worker_production(Actor *a, float dt) {
         g.selected = old;
         return;
     }
+    if(g.buildings[station].owner>=0&&g.depth.buildings[station].fuel<1) {
+        int fuel=inventory_count(a,COAL)?COAL:inventory_count(a,WOOD)?WOOD:0;
+        if(fuel){if(!worker_walk(a,station,dt))depth_fuel(station);}
+        else if(depot>=0&&!worker_walk(a,depot,dt)){for(int j=0;j<16;j++)if(g.buildings[depot].storage[j].item==COAL||g.buildings[depot].storage[j].item==WOOD){storage_transfer(depot,1,j);break;}}
+        g.selected=old;return;
+    }
     if (!worker_walk(a, station, dt)) {
         a->action -= dt;
         if (a->action <= 0) {
@@ -849,6 +858,7 @@ void tick_expansion(float dt) {
     if (g.eventTimer <= 0) {
         g.eventTimer = 220;
         int t = wrand() % TOWNS, k = wrand() % 4;
+        if(t==1)t=2; /* Copper follows its named road state, not random conquest. */
         g.townState[t] = k;
         g.prosperity[t] = (int)limit(g.prosperity[t] + (k == 0   ? 12
                                                         : k == 1 ? -12

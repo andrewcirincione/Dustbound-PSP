@@ -4,7 +4,7 @@ extern int conscious(const Actor *);
 int building_has_interior(int type) {
     return type <= TOWER || type == FORGE || type == BENCH || type == STORE;
 }
-int actor_inside(const Actor *a) { return g.interiorBuilding && a == &g.actors[g.interiorActor]; }
+int actor_inside(const Actor *a) { return depth_room(a); }
 int interior_props(int building, InteriorProp *p) {
     int type = g.buildings[building].type, n = 0;
     p[n++] = (InteriorProp){5.8f, .9f, .65f, .5f, 21, ROOM_NONE};
@@ -48,6 +48,7 @@ int interior_enter(int building) {
         log_msg("The occupants bar the door to your faction.");
         return 0;
     }
+    if(!depth_build_ready(building)) {log_msg("Finish construction before entering.");return 0;}
     g.interiorBuilding = building + 1;
     g.interiorActor = g.selected;
     g.interiorX = 3.5f;
@@ -57,6 +58,7 @@ int interior_enter(int building) {
     a->attackPhase = 0;
     a->target = -1;
     a->movedTimer = 0;
+    depth_enter_room(building);
     log_msg("Inside. Walk to a service; \001 use. Return to the door to leave.");
     return 1;
 }
@@ -69,6 +71,7 @@ void interior_leave(void) {
     a->y = b->y + .65f;
     a->taskKind = 0;
     a->target = -1;
+    depth_leave_room(g.interiorBuilding-1);
     g.interiorBuilding = 0;
     ui.waypoint = 0;
     log_msg("Back on the frontier.");
@@ -125,6 +128,7 @@ void interior_interact(void) {
         interior_leave();
         return;
     }
+    if(depth_room_interact())return;
     if (c < 0) {
         log_msg("Walk closer to a counter, bed or workstation.");
         return;
@@ -141,6 +145,7 @@ void interior_interact(void) {
             log_msg("No merchant works here.");
             break;
         }
+        if(!depth_trade_open(town))break;
         ui.tradeTown = town;
         ui.sell = ui.shopFilter = 0;
         ui.screen = SCREEN_TRADE;

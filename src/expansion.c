@@ -460,6 +460,7 @@ int expansion_input(float dt, Input in) {
             return 1;
         }
         Actor *b = &g.actors[n];
+        if(p&KEY_SQUARE){depth_repair(g.selected,n);return 1;}
         if (p & KEY_UP)
             ui.selection = wrapi(ui.selection - 1, 4);
         if (p & KEY_DOWN)
@@ -558,7 +559,7 @@ int expansion_input(float dt, Input in) {
             } else
                 switch (dialogue_action(n, choice)) {
                 case 0:
-                    if (town >= 0) {
+                    if (town >= 0 && depth_trade_open(town)) {
                         ui.tradeTown = town;
                         ui.sell = 0;
                         ui.shopFilter = 0;

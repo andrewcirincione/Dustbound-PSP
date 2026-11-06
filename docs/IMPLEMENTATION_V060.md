@@ -23,3 +23,7 @@ Physical PSP-3000 qualification remains outstanding.
 On 2026-11-06, Dustbound-PSP was added to the existing ChatGPT Codex Connector installation used for Rift-Ascent. This status update was published directly through the GitHub connector, verifying repository write access. Future source updates can use this connection instead of browser uploads.
 
 The implementation and validation checklist above remains outstanding; this access repair does not constitute a new game build.
+
+## Rebuild checkpoint — 2026-11-06
+
+Reconstructed the Copper Road expedition, named residents and branching consequences, six new gameplay panels, v6 save migration, construction/fuel, job queues and groups, trauma/robot repair, underlayers/coverage, captivity, room combat and moving projectiles. New native tests cover the branching route, transactional failure paths, save migration, seven simulated days and the whole catalog buy/resell spread. Regression work and controller playtests are in progress. This checkpoint is not release qualification.

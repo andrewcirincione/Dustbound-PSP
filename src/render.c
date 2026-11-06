@@ -482,7 +482,8 @@ static void building(int id) {
     project(g.actors[g.selected].x, g.actors[g.selected].y, &ax, &ay);
     int fade = building_has_interior(b->type) && abs(ax - x) < artSprites[sprite].w / 2 && ay < y + 16 &&
                ay > y - artSprites[sprite].ay;
-    art(sprite, x, y, light(), fade);
+    art(sprite, x, y, light(), fade || g.depth.buildings[id].labor>0);
+    if(g.depth.buildings[id].labor>0){bar(x-20,y-8,40,3,100-g.depth.buildings[id].labor/35*100,GOLD);text(x-24,y+5,"BUILDING",GOLD,1);}
     if (b->type == CAMPFIRE) {
         int flicker = (int)(g.time * 10) % 3;
         px(x - 2 + flicker, y - 13 - flicker, 0xe5b66a);
@@ -536,7 +537,7 @@ static void objects_draw(void) {
     }
     for (int i = 0; i < g.actorCount; i++) {
         Actor *a = &g.actors[i];
-        if (!a->active || a->carriedBy >= 0)
+        if (!a->active || a->carriedBy >= 0 || actor_inside(a))
             continue;
         int x, y;
         project(a->x, a->y, &x, &y);
@@ -590,6 +591,7 @@ static void objects_draw(void) {
         } else if (ui.contextKind == 1) {
             wx = g.nodes[id].x;
             wy = g.nodes[id].y;
+        } else if(ui.contextKind==4) {wx=g.depth.siteX[id];wy=g.depth.siteY[id];
         } else {
             wx = g.buildings[id].x + (ui.contextKind == 3 ? 1.45f : 0);
             wy = g.buildings[id].y + (ui.contextKind == 3 ? .65f : 0);
@@ -732,8 +734,10 @@ static void interior_draw(void) {
     room_project(3.8f, 3.6f, &x, &y);
     art(23, x, y + 10, .8f, 0);
     InteriorProp props[8];
-    int count = interior_props(id, props), order[10];
-    float depth[10];
+    int count = interior_props(id, props), order[MAX_ACTORS+10];
+    float depth[MAX_ACTORS+10];
+    int roomActor[MAX_ACTORS+10];
+    for(int i=0;i<MAX_ACTORS+10;i++)roomActor[i]=-1;
     for (int i = 0; i < count; i++) {
         order[i] = i;
         depth[i] = props[i].x + props[i].y;
@@ -750,10 +754,13 @@ static void interior_draw(void) {
                 break;
             }
     int keeper = -1;
-    if (b->type == SHOP || b->type == BAR) {
+    if (0) {
         keeper = count;
         order[count] = count;
         depth[count++] = b->type == SHOP ? 3.8f : 4.1f;
+    }
+    for(int i=0;i<g.actorCount;i++)if(i!=g.selected&&g.actors[i].active&&depth_room(&g.actors[i])==g.interiorBuilding){
+        roomActor[count]=i;order[count]=count;depth[count++]=depth_x(&g.actors[i])+depth_y(&g.actors[i]);
     }
     for (int i = 1; i < count; i++) {
         int a = order[i], j = i;
@@ -765,7 +772,8 @@ static void interior_draw(void) {
     }
     for (int k = 0; k < count; k++) {
         int i = order[k];
-        if (i == player) {
+        if(roomActor[i]>=0){Actor *resident=&g.actors[roomActor[i]];room_project(depth_x(resident),depth_y(resident),&x,&y);person(resident,x,y,1,0);}
+        else if (i == player) {
             if (sleepProp >= 0) {
                 room_project(props[sleepProp].x, props[sleepProp].y, &x, &y);
                 y -= 12;
@@ -1234,6 +1242,7 @@ static void map_screen(void) {
     for (int i = 0; i < g.actorCount; i++)
         if (g.actors[i].squad && !g.actors[i].dead && INMAP(g.actors[i].x, g.actors[i].y))
             rect(MAPX(g.actors[i].x) - 1, MAPY(g.actors[i].y) - 1, 3, 3, TEAL);
+    for(int i=0;i<LANDMARKS;i++)if(INMAP(g.depth.siteX[i],g.depth.siteY[i])){int x=MAPX(g.depth.siteX[i]),y=MAPY(g.depth.siteY[i]);diamond(x,y,3,2,GOLD);}
     if (g.baseExists && INMAP(g.baseX, g.baseY))
         frame(MAPX(g.baseX) - 3, MAPY(g.baseY) - 3, 7, 7, TEAL);
     Actor *leader = &g.actors[g.selected];
@@ -1276,6 +1285,7 @@ static void map_screen(void) {
                       ui.waypoint ? ui.travelY : ui.mapY),
              regionNames[biome(ui.mapX, ui.mapY)]);
     text(31, 222, b, TEAL, 1);
+    text(31,236,"GOLD: LANDMARK / HOLD \006 + \001: GROUP ROUTE",GOLD,1);
 #undef MAPX
 #undef MAPY
 #undef INMAP
@@ -1375,8 +1385,8 @@ static void menu_screen(void) {
                           "Factions and world news",
                           "Character appearance",
                           "Sleep in a nearby bed",
-                          "Recent messages"};
-    int first = start_row(ui.selection, 17, 9);
+                          "Recent messages", "Copper Road expedition", "Squad orders & job priorities", "Camp work & fuel", "Treatment & recovery", "Nearby landmark details", "Armor layers"};
+    int first = start_row(ui.selection, 23, 9);
     char b[30];
     for (int j = 0; j < 9; j++) {
         int i = first + j;
@@ -1678,6 +1688,7 @@ void render_title_art(uint32_t *pixels, int stride) {
     terrain();
     objects_draw();
 }
+#include "depth_render.h"
 void render_game(uint32_t *pixels, int stride) {
     fb = pixels;
     pitch = stride;
@@ -1703,10 +1714,13 @@ void render_game(uint32_t *pixels, int stride) {
                                   : shade(0xc7ba92, .85f));
         }
     }
+    depth_world_draw();
     if (ui.screen == SCREEN_WORLD && !g.interiorBuilding)
         speech_bubbles();
     hud();
     switch (ui.screen) {
+    case SCREEN_EXPEDITION:case SCREEN_ORDERS:case SCREEN_CAMP:case SCREEN_CARE:case SCREEN_ENCOUNTER:case SCREEN_LAYERS:
+        depth_screen();break;
     case SCREEN_CREATE:
         creator_screen();
         break;

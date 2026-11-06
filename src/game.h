@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.5.2"
+#define VERSION "0.6.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -21,7 +21,7 @@
 #define GEARS 6
 #define FACTIONS 8
 #define CONTRACTS 24
-#define GUIDE_PAGES 20
+#define GUIDE_PAGES 25
 #define SAVE_SLOTS 7
 #define TOWNS 16
 #define SQUAD 8
@@ -119,7 +119,7 @@ enum {
     SCREEN_EQUIPPED,
     SCREEN_LOOT,
     SCREEN_ASSIST,
-    SCREEN_LOG
+    SCREEN_LOG, SCREEN_EXPEDITION, SCREEN_ORDERS, SCREEN_CAMP, SCREEN_CARE, SCREEN_ENCOUNTER, SCREEN_LAYERS
 };
 enum {
     KEY_UP = 1,
@@ -189,6 +189,7 @@ typedef struct {
     int exists, valid, version, day, squad, money;
     char name[16];
 } SaveInfo;
+#include "depth_types.h"
 typedef struct {
     uint32_t seed, rng;
     float time, dayTime, raidTimer, autosave;
@@ -211,6 +212,8 @@ typedef struct {
     /* v5: autonomous hired guards; actor IDs use +1, zero means vacant. */
     int mercActor[4], mercMode[4], identityVersion;
     float mercUntil[4];
+    /* v6 append-only extension. v5 prefix is exactly 410656 bytes. */
+    FrontierDepth depth;
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -239,6 +242,7 @@ typedef struct {
     char createName[16];
     SaveInfo saves[SAVE_SLOTS];
     int helpSelection, helpScroll, saveReturn, saveExit, contextChoice, contextCount, squadCyclePending;
+    int depthSite, depthRow;
     float travelStall, travelLastX, travelLastY;
 } UI;
 typedef struct {
@@ -386,4 +390,5 @@ int doctor_heal(int town);
 void open_help(int topic);
 void render_catalog_scale(uint32_t *pixels, int stride, int item, int sc);
 void render_catalog_sample(uint32_t *pixels, int stride, int item);
+#include "depth.h"
 #endif
