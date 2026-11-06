@@ -11,6 +11,8 @@ static void open_view(int screen) {
 }
 void open_help(int topic) {
     ui.helpReturn = ui.screen;
+    ui.helpSelection = ui.selection;
+    ui.helpScroll = ui.scroll;
     ui.screen = SCREEN_HELP;
     ui.selection = topic;
 }
@@ -169,7 +171,9 @@ int expansion_input(float dt, Input in) {
     }
     if (ui.screen == SCREEN_HELP) {
         if (p & (KEY_CIRCLE | KEY_START)) {
-            open_view(ui.helpReturn ? ui.helpReturn : SCREEN_WORLD);
+            ui.screen = ui.helpReturn;
+            ui.selection = ui.helpSelection;
+            ui.scroll = ui.helpScroll;
             return 1;
         }
         if (p & (KEY_DOWN | KEY_R))
@@ -232,7 +236,8 @@ int expansion_input(float dt, Input in) {
             return 1;
         }
         if (!(p & (KEY_L | KEY_START | KEY_SELECT | KEY_TRIANGLE | KEY_R))) {
-            simulate(dt);
+            if (!ui.paused)
+                simulate(dt * ui.speed);
             return 1;
         }
     }
@@ -255,10 +260,7 @@ int expansion_input(float dt, Input in) {
             ui.selection = wrapi(ui.selection + 1, GEARS);
         if (p & KEY_CROSS) {
             int it = a->gear[ui.selection];
-            if (it && inventory_add(a, it, 1)) {
-                for (int j = 0; j < PACK; j++)
-                    if (a->pack[j].item == it)
-                        a->stolen[j] = a->gearStolen[ui.selection];
+            if (it && inventory_add_owned(a, it, 1, a->gearStolen[ui.selection])) {
                 a->gear[ui.selection] = 0;
                 a->gearStolen[ui.selection] = 0;
                 log_msg("Removed %s.", itemDefs[it].name);
@@ -362,13 +364,24 @@ int expansion_input(float dt, Input in) {
             ui.selection = wrapi(ui.selection - 1, count);
         if (p & KEY_DOWN)
             ui.selection = wrapi(ui.selection + 1, count);
-        if (p & KEY_CROSS)
-            storage_transfer(ui.storageIndex, ui.storageSide, ui.selection);
+        if (p & (KEY_CROSS | KEY_SQUARE)) {
+            int qty = p & KEY_SQUARE
+                          ? (ui.storageSide ? g.buildings[ui.storageIndex].storage[ui.selection].qty
+                                            : a->pack[ui.selection].qty)
+                          : 1;
+            int moved = 0;
+            while (moved < qty && storage_transfer(ui.storageIndex, ui.storageSide, ui.selection))
+                moved++;
+            if (moved > 1)
+                log_msg("Moved %d items. Remaining goods stay in their source stack.", moved);
+        }
         return 1;
     }
     if (ui.screen == SCREEN_SAVES) {
         if (p & (KEY_CIRCLE | KEY_START)) {
-            open_view(SCREEN_MENU);
+            open_view(ui.saveReturn);
+            ui.selection = ui.saveReturn == SCREEN_TITLE ? 2 : ui.saveExit ? 9 : ui.saveMode ? 4 : 5;
+            ui.saveExit = 0;
             return 1;
         }
         if (p & KEY_UP)
@@ -427,29 +440,65 @@ int expansion_input(float dt, Input in) {
             open_view(SCREEN_WORLD);
             return 1;
         }
-        Actor *b = &g.actors[n];
         int count = PACK + GEARS;
         if (p & KEY_UP)
             ui.selection = wrapi(ui.selection - 1, count);
         if (p & KEY_DOWN)
             ui.selection = wrapi(ui.selection + 1, count);
-        if (p & KEY_CROSS) {
-            int it = ui.selection < PACK ? b->pack[ui.selection].item : b->gear[ui.selection - PACK];
-            if (it && inventory_add(a, it, 1)) {
-                if (ui.selection < PACK)
-                    inventory_remove(b, it, 1);
-                else
-                    b->gear[ui.selection - PACK] = 0;
-                if (b->faction != HOSTILE && b->faction != WILDLIFE && !b->squad) {
-                    a->bounty += 20;
-                    for (int s = 0; s < PACK; s++)
-                        if (a->pack[s].item == it)
-                            a->stolen[s] = b->faction;
-                }
-                log_msg("Salvaged %s.", itemDefs[it].name);
-            } else
-                log_msg("No item, or your pack is full.");
+        if (p & (KEY_CROSS | KEY_SQUARE))
+            loot_take(ui.selection, !!(p & KEY_SQUARE));
+        return 1;
+    }
+    if (ui.screen == SCREEN_ASSIST) {
+        int n = ui.lootActor;
+        if (p & (KEY_CIRCLE | KEY_START)) {
+            open_view(SCREEN_WORLD);
+            return 1;
         }
+        if (n < 0 || n >= g.actorCount) {
+            open_view(SCREEN_WORLD);
+            return 1;
+        }
+        Actor *b = &g.actors[n];
+        if (p & KEY_UP)
+            ui.selection = wrapi(ui.selection - 1, 4);
+        if (p & KEY_DOWN)
+            ui.selection = wrapi(ui.selection + 1, 4);
+        if (p & KEY_CROSS) {
+            if (!conscious(a) || distance(a->x, a->y, b->x, b->y) > TALK_REACH ||
+                actor_inside(a) != actor_inside(b)) {
+                log_msg("Choose a conscious survivor within reach.");
+                return 1;
+            }
+            if (ui.selection == 0) {
+                if (!heal_actor(g.selected, n))
+                    log_msg(b->dead ? "Too late for first aid." : "Needs an injury and a field dressing.");
+            } else if (ui.selection == 1) {
+                if (b->dead || b->unconscious <= 0 || b->carriedBy >= 0 || a->carrying >= 0)
+                    log_msg("Carry needs an unconscious survivor and free arms.");
+                else {
+                    a->carrying = n;
+                    b->carriedBy = g.selected;
+                    a->taskKind = 0;
+                    ui.waypoint = 0;
+                    open_view(SCREEN_WORLD);
+                    log_msg("Carrying %s. \001 puts them down; speed is reduced.", b->name);
+                }
+            } else if (ui.selection == 2) {
+                if (!b->dead && b->unconscious <= 0)
+                    log_msg("Use their pack directly while they are conscious.");
+                else
+                    open_view(SCREEN_LOOT);
+            } else {
+                g.selected = n;
+                open_view(SCREEN_WORLD);
+            }
+        }
+        return 1;
+    }
+    if (ui.screen == SCREEN_LOG) {
+        if (p & (KEY_CIRCLE | KEY_START))
+            open_view(SCREEN_WORLD);
         return 1;
     }
     if (ui.screen == SCREEN_DIALOG) {

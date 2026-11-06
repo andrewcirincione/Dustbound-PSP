@@ -366,14 +366,14 @@ int shop_count(void) {
         }
     return n;
 }
-int nearby_workstation(int type) { return nearby_station(type, 6); }
+int nearby_workstation(int type) { return nearby_station(type, 1.7f); }
 int forge_equipment(int it) {
     Actor *a = &g.actors[g.selected];
     if (it < BASE_ITEMS || it >= ITEMS)
         return 0;
     ItemDef *d = &itemDefs[it];
     if (nearby_workstation(FORGE) < 0) {
-        log_msg("Stand within six paces of a forge.");
+        log_msg("Walk to the forge or its indoor workbench.");
         return 0;
     }
     int tech = d->material >= 4 ? 3 : d->material >= 2 ? 2 : 1, skill = d->quality * 12;
@@ -391,6 +391,14 @@ int forge_equipment(int it) {
         return 0;
     }
     Actor backup = *a;
+    int owner = 0;
+    for (int k = 0; k < PACK; k++)
+        if (a->stolen[k] && (a->pack[k].item == IRONBAR || (cloth && a->pack[k].item == CLOTH) ||
+                             (wood && a->pack[k].item == WOOD) || (relic && a->pack[k].item == RELIC) ||
+                             (coal && a->pack[k].item == COAL))) {
+            owner = a->stolen[k];
+            break;
+        }
     inventory_remove(a, IRONBAR, metal);
     if (cloth)
         inventory_remove(a, CLOTH, cloth);
@@ -400,7 +408,7 @@ int forge_equipment(int it) {
         inventory_remove(a, RELIC, relic);
     if (coal)
         inventory_remove(a, COAL, coal);
-    if (!inventory_add(a, it, 1)) {
+    if (!inventory_add_owned(a, it, 1, owner)) {
         *a = backup;
         log_msg("Pack full. Forging cancelled.");
         return 0;
@@ -414,8 +422,10 @@ int storage_transfer(int b, int from, int slot) {
         return 0;
     Actor *a = &g.actors[g.selected];
     Building *z = &g.buildings[b];
-    if (distance(a->x, a->y, z->x, z->y) > 6)
+    if (actor_inside(a) ? nearby_station(STORE, 1.7f) != b : distance(a->x, a->y, z->x, z->y) > 1.7f) {
+        log_msg("Walk to the depot before transferring goods.");
         return 0;
+    }
     if (from) {
         if (slot < 0 || slot >= 16 || !z->storage[slot].item)
             return 0;
@@ -451,13 +461,13 @@ int storage_transfer(int b, int from, int slot) {
     }
     z->storage[dest].item = it;
     z->storage[dest].qty++;
-    inventory_remove(a, it, 1);
+    inventory_remove_slot(a, slot, 1);
     log_msg("Stored %s.", itemDefs[it].name);
     return 1;
 }
 int start_sleep(int town) {
     Actor *a = &g.actors[g.selected];
-    int bed = nearby_station(BED, 12);
+    int bed = nearby_station(BED, 1.7f);
     if (bed < 0) {
         log_msg("Find an inn bed or build a shelter.");
         return 0;
@@ -700,7 +710,7 @@ int pickpocket(int n) {
     if (n < 0 || n >= g.actorCount || !a->sneaking)
         return 0;
     Actor *b = &g.actors[n];
-    if (b->squad || b->dead || b->kind == BEAST || distance(a->x, a->y, b->x, b->y) > 3)
+    if (b->squad || b->dead || b->kind == BEAST || distance(a->x, a->y, b->x, b->y) > TALK_REACH)
         return 0;
     gain(a, THEFT, 22);
     float chance = .25f + level(a, THEFT) * .007f + level(a, STEALTH) * .003f + gear_bonus(a, 2) * .003f;
@@ -712,63 +722,114 @@ int pickpocket(int n) {
         log_msg("Caught stealing! Bounty +80; faction standing -18.");
         return 0;
     }
-    int it = NONE;
+    int it = NONE, source = -1;
     for (int i = 0; i < PACK; i++)
         if (b->pack[i].item) {
             it = b->pack[i].item;
+            source = i;
             break;
         }
     if (!it) {
         log_msg("Their pockets are empty.");
         return 0;
     }
-    if (!inventory_add(a, it, 1)) {
+    if (!inventory_add_owned(a, it, 1, b->faction)) {
         log_msg("Your pack is full.");
         return 0;
     }
-    inventory_remove(b, it, 1);
-    for (int i = 0; i < PACK; i++)
-        if (a->pack[i].item == it)
-            a->stolen[i] = b->faction;
+    inventory_remove_slot(b, source, 1);
     log_msg("Lifted %s. Find a fence before selling it back.", itemDefs[it].name);
     return 1;
 }
-static void worker_production(Actor *a, float dt) {
-    if (actor_inside(a) || a->job < JOB_SMELT || a->taskKind || !conscious(a))
-        return;
-    a->action -= dt;
-    if (a->action > 0)
-        return;
-    a->action = 5;
-    int depot = -1;
-    for (int j = 0; j < g.buildingCount; j++)
-        if (g.buildings[j].type == STORE && distance(a->x, a->y, g.buildings[j].x, g.buildings[j].y) < 12) {
-            depot = j;
-            break;
+static int worker_building(const Actor *a, int type) {
+    int found = -1;
+    float best = 15;
+    for (int i = 0; i < g.buildingCount; i++) {
+        Building *b = &g.buildings[i];
+        float d = distance(a->x, a->y, b->x, b->y);
+        if (b->type == type && (b->owner >= 0 || g.rep[b->faction] >= -25) && d < best) {
+            found = i;
+            best = d;
         }
+    }
+    return found;
+}
+static int depot_has(int depot, int item) {
+    if (depot < 0)
+        return 0;
+    int n = 0;
+    for (int i = 0; i < 16; i++)
+        if (g.buildings[depot].storage[i].item == item)
+            n += g.buildings[depot].storage[i].qty;
+    return n;
+}
+static int worker_walk(Actor *a, int building, float dt) {
+    Building *b = &g.buildings[building];
+    if (distance(a->x, a->y, b->x, b->y) <= 1.5f)
+        return 0;
+    route_toward(a, b->x, b->y, dt);
+    return 1;
+}
+static void worker_production(Actor *a, float dt) {
+    if (actor_inside(a) || a->job < JOB_SMELT || a->taskKind || !conscious(a) || a->prisonTime > 0 ||
+        a->carriedBy >= 0 || a->target >= 0)
+        return;
+    int depot = worker_building(a, STORE),
+        station = worker_building(a, a->job == JOB_SMELT ? FORGE : CAMPFIRE);
     int old = g.selected;
     g.selected = (int)(a - g.actors);
-    if (a->job == JOB_HAUL && depot >= 0) {
-        for (int i = 0; i < PACK; i++)
-            if (a->pack[i].item == ORE || a->pack[i].item == COPPER || a->pack[i].item == WOOD ||
-                a->pack[i].item == GRAIN || a->pack[i].item == IRONBAR) {
-                if (distance(a->x, a->y, g.buildings[depot].x, g.buildings[depot].y) > 5)
-                    route_toward(a, g.buildings[depot].x, g.buildings[depot].y, 1);
-                else
+    int output = a->job == JOB_SMELT ? IRONBAR : RATION;
+    /* Finish one trip before seeking another task: unload production and raw haul cargo. */
+    for (int i = 0; i < PACK; i++) {
+        int it = a->pack[i].item;
+        int haul =
+            a->job == JOB_HAUL && (it == ORE || it == COPPER || it == WOOD || it == GRAIN || it == IRONBAR);
+        if (depot >= 0 && !a->stolen[i] &&
+            (haul || (a->job != JOB_HAUL && it == output && a->pack[i].qty > (output == RATION ? 2 : 0)))) {
+            if (!worker_walk(a, depot, dt)) {
+                a->action -= dt;
+                if (a->action <= 0) {
                     storage_transfer(depot, 0, i);
-                break;
+                    a->action = .5f;
+                }
             }
-    } else if (a->job == JOB_SMELT || a->job == JOB_COOK) {
-        int it = a->job == JOB_SMELT ? ORE : GRAIN, need = 3;
-        if (depot >= 0 && distance(a->x, a->y, g.buildings[depot].x, g.buildings[depot].y) < 6) {
-            for (int j = 0; j < 16; j++)
-                if (g.buildings[depot].storage[j].item == it)
-                    while (inventory_count(a, it) < need && g.buildings[depot].storage[j].qty > 0)
-                        if (!storage_transfer(depot, 1, j))
-                            break;
+            g.selected = old;
+            return;
         }
-        if (inventory_count(a, it) >= need)
+    }
+    if (a->job == JOB_HAUL || station < 0) {
+        g.selected = old;
+        return;
+    }
+    int ingredient = ORE, need = 3;
+    if (a->job == JOB_COOK) {
+        ingredient = GRAIN;
+        if (inventory_count(a, GRAIN) < 3 && inventory_count(a, GRAIN) + depot_has(depot, GRAIN) < 3 &&
+            inventory_count(a, MEAT) + depot_has(depot, MEAT) >= 2) {
+            ingredient = MEAT;
+            need = 2;
+        }
+    }
+    int missing = inventory_count(a, ingredient) < need              ? ingredient
+                  : a->job == JOB_COOK && !inventory_count(a, WATER) ? WATER
+                                                                     : 0;
+    if (missing) {
+        if (depot >= 0 && depot_has(depot, missing) && !worker_walk(a, depot, dt)) {
+            for (int j = 0; j < 16; j++)
+                if (g.buildings[depot].storage[j].item == missing) {
+                    storage_transfer(depot, 1, j);
+                    break;
+                }
+        }
+        g.selected = old;
+        return;
+    }
+    if (!worker_walk(a, station, dt)) {
+        a->action -= dt;
+        if (a->action <= 0) {
             craft_item(a->job == JOB_SMELT ? 0 : 1);
+            a->action = 5;
+        }
     }
     g.selected = old;
 }

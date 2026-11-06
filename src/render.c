@@ -939,6 +939,8 @@ static void hud(void) {
         center(240, 182, "FIND SUPPLIES, WORK OR A ROAD OUT", GOLD, 1);
         center(240, 195, "\010 ATLAS   \007 SERVICES & FIELD GUIDE", MUTED, 1);
     }
+    if (!g.interiorBuilding && ui.contextCount > 1)
+        text(69, 211, "HOLD \005 + TAP \001: NEXT TARGET", MUTED, 1);
     if (a->taskKind) {
         int w = 120;
         bar(180, 172, w, 3,
@@ -1047,6 +1049,8 @@ static void equipment_comparison(int it, int y) {
     int worn = a->gear[d->slot];
     ItemDef *old = &itemDefs[worn];
     snprintf(b, sizeof(b), "TRY  %s", d->name);
+    if (d->slot == 5 && d->effect >= 0 && item_effect_value(it))
+        snprintf(b, sizeof(b), "TRY %.37s / %.8s %d", d->name, effectNames[d->effect], item_effect_value(it));
     clipped(31, y, b, 68, TEXT);
     snprintf(b, sizeof(b), "WORN %s", worn ? old->name : "EMPTY SLOT");
     clipped(31, y + 12, b, 68, MUTED);
@@ -1090,7 +1094,7 @@ static void pack_screen(void) {
     overlay_header("PACK & EQUIPMENT", "\001 EQUIP / USE   \004 WORN GEAR   \003 PASS TO ALLY");
     int first = start_row(ui.selection, PACK, 6);
     for (int j = 0; j < 6; j++) {
-        int k = first + j, y = 84 + j * 14, id = a->pack[k].item;
+        int k = first + j, y = 84 + j * 13, id = a->pack[k].item;
         if (k == ui.selection)
             rect(25, y - 3, 244, 13, 0x4a4030);
         snprintf(b, sizeof(b), "%02d %.32s", k + 1, id ? itemDefs[id].name : "--");
@@ -1106,22 +1110,33 @@ static void pack_screen(void) {
     compare_portraits(&current, &preview);
     text(287, 82, "WORN", MUTED, 1);
     text(386, 82, "TRY ON", GOLD, 1);
+    if (a->stolen[ui.selection]) {
+        snprintf(b, sizeof(b), "STOLEN: %s", factionNames[a->stolen[ui.selection]]);
+        clipped(31, 160, b, 40, RED);
+    }
     equipment_comparison(it, 173);
 }
 
 static void skills_screen(void) {
     Actor *a = &g.actors[g.selected];
     char b[80];
-    overlay_header("SKILLS", "IMPROVE BY DOING. XP PERSISTS WITH EACH SQUAD MEMBER.");
+    overlay_header("SKILLS & TRAINING", "\015 SELECT SKILL   BARS SHOW PROGRESS TO THE NEXT LEVEL");
     for (int i = 0; i < SKILLS; i++) {
-        int col = i / 10, r = i % 10, x = 31 + col * 214, y = 84 + r * 14;
-        text(x, y, skillNames[i], TEXT, 1);
+        int x = 31 + (i / 10) * 214, y = 83 + (i % 10) * 11;
+        if (i == ui.selection)
+            rect(x - 3, y - 2, 199, 11, 0x4a4030);
+        text(x, y, skillNames[i], i == ui.selection ? TEXT : MUTED, 1);
         int lv = level(a, i);
-        snprintf(b, 80, "%02d", lv);
+        snprintf(b, sizeof(b), "%02d", lv);
         text(x + 147, y, b, GOLD, 1);
-        bar(x + 166, y + 2, 24, 3, lv, TEAL);
+        float low = 12.f * (lv - 1) * (lv - 1), high = 12.f * lv * lv;
+        bar(x + 166, y + 2, 24, 3, lv >= 100 ? 100 : 100 * (a->xp[i] - low) / (high - low), TEAL);
     }
-    text(31, 226, a->name, TEAL, 1);
+    int lv = level(a, ui.selection);
+    snprintf(b, sizeof(b), "%s  LEVEL %d  %s", skillNames[ui.selection], lv,
+             lv == 100 ? "MASTERED" : "LEARN BY DOING");
+    text(31, 199, b, GOLD, 1);
+    wrap(31, 213, 68, skill_training(ui.selection), TEXT);
 }
 static void health_screen(void) {
     Actor *a = &g.actors[g.selected];
@@ -1137,9 +1152,12 @@ static void health_screen(void) {
         if (a->lostMask & (1 << i))
             text(405, y, a->prostheticMask & (1 << i) ? "MECH" : "LOST", GOLD, 1);
     }
-    snprintf(b, 100, "BLOOD %d   BLEED %.1f   FATIGUE %d", (int)a->blood, a->bleed, (int)a->fatigue);
-    text(185, 205, b, a->bleed ? RED : MUTED, 1);
-    text(185, 219,
+    snprintf(b, 100, "BLOOD %d   BLEED %.1f", (int)a->blood, a->bleed);
+    text(185, 201, b, a->bleed ? RED : MUTED, 1);
+    snprintf(b, 100, "FOOD %d  FATIGUE %d  KITS %d", (int)a->hunger, (int)a->fatigue,
+             inventory_count(a, MEDKIT));
+    text(185, 213, b, MUTED, 1);
+    text(185, 225,
          a->dead              ? "DEAD"
          : a->unconscious > 0 ? "UNCONSCIOUS - NEEDS RESCUE"
                               : "CONSCIOUS",
@@ -1153,7 +1171,8 @@ static void squad_screen(void) {
     snprintf(b, 60, "%d / 8 SURVIVORS", g.squadCount);
     text(326, 85, b, GOLD, 1);
     for (int i = 0; i < 8; i++)
-        row(103 + i * 15, ui.selection == i, jobNames[i], a->job == i ? "ASSIGNED" : "");
+        row(101 + i * 13, ui.selection == i, jobNames[i], a->job == i ? "ASSIGNED" : "");
+    wrap(31, 211, 68, job_status(a), TEAL);
 }
 
 static void map_screen(void) {
@@ -1266,7 +1285,7 @@ static void trade_screen(void) {
     char b[100], v[70];
     static const char *titles[] = {"BUY / ALL STOCK", "BUY / SUPPLIES", "BUY / WEAPONS", "BUY / ARMOR",
                                    "BUY / BACKPACKS"};
-    int bags = !ui.sell && ui.shopFilter == 4;
+    int bags = !ui.sell && ui.shopFilter >= 2;
     overlay_header(ui.sell ? "SELL / CARRIED" : titles[ui.shopFilter],
                    ui.sell ? "\014 BUY-SELL   \001 SELL ONE"
                            : "\014 BUY-SELL   \005/\006 FILTER   \001 BUY ONE");
@@ -1289,7 +1308,7 @@ static void trade_screen(void) {
     if (bags) {
         Actor current = preview_actor(), preview = current;
         if (it)
-            preview.gear[5] = it;
+            preview.gear[itemDefs[it].slot] = it;
         compare_portraits(&current, &preview);
         text(287, 82, "WORN", MUTED, 1);
         text(386, 82, "TRY ON", GOLD, 1);
@@ -1302,26 +1321,23 @@ static void trade_screen(void) {
 static void build_screen(void) {
     char b[100];
     overlay_header("BUILD AN OUTPOST", "\001 PLACE BESIDE SELECTED MEMBER. OUTSIDE VILLAGES ONLY.");
-    static const int wood[] = {3, 5, 6, 8, 6, 3, 5, 8}, iron[] = {0, 0, 0, 3, 1, 0, 0, 3};
+    static const int iron[] = {0, 0, 0, 3, 1, 0, 0, 3};
     for (int i = 0; i < buildCount; i++) {
-        snprintf(b, 100, "%d TIMBER  %d IRON", wood[i], iron[i]);
+        snprintf(b, 100, "%d TIMBER  %d IRON", build_wood_cost(i), iron[i]);
         row(86 + i * 17, i == ui.selection, buildNames[i], b);
     }
-    text(31, 225, "BUILDINGS ATTRACT RAIDS. KEEP SUPPLIES AND A RETREAT ROUTE.", MUTED, 1);
+    Actor *a = &g.actors[g.selected];
+    snprintf(b, sizeof(b), "HELD: %d TIMBER / %d IRON / TIER %d / PLACE AT +2m EAST",
+             inventory_count(a, WOOD), inventory_count(a, IRONBAR), g.tech);
+    text(31, 225, b, MUTED, 1);
 }
 static void craft_screen(void) {
-    overlay_header("WORKSHOP", "\001 CRAFT. STAND NEAR THE CORRECT CAMP WORKSTATION.");
-    const char *cost[] = {"3 ORE / FORGE",
-                          "3 GRAIN OR 2 MEAT + 1 WATER",
-                          "2 CLOTH + 1 WATER / BENCH",
-                          "3 IRON + 1 TIMBER / TIER 1",
-                          "6 IRON + 2 CLOTH / TIER 2",
-                          "5 IRON + 1 RELIC / TIER 3",
-                          "5 IRON + 1 RELIC / TIER 3",
-                          "1 IRON + 1 TIMBER / FORGE"};
+    overlay_header("WORKSHOP", "\001 CRAFT   REQUIREMENTS SHOW HELD / NEEDED");
     for (int i = 0; i < recipeCount; i++)
-        row(87 + i * 17, i == ui.selection, recipeNames[i], NULL);
-    text(31, 225, cost[ui.selection], GOLD, 1);
+        row(84 + i * 13, i == ui.selection, recipeNames[i], NULL);
+    char info[240];
+    recipe_status(ui.selection, info, sizeof(info));
+    wrap(31, 196, 68, info, GOLD);
 }
 static void research_screen(void) {
     char b[100];
@@ -1332,9 +1348,14 @@ static void research_screen(void) {
         text(33, 94 + i * 31, tiers[i], g.tech > i ? TEAL : TEXT, 1);
         text(379, 94 + i * 31, g.tech > i ? "DONE" : "LOCKED", g.tech > i ? TEAL : MUTED, 1);
     }
-    snprintf(b, 100, "NEXT: 1 RELIC + %d SILVER", (g.tech + 1) * 150);
+    snprintf(b, 100, "HELD: %d/1 RELIC  %d/%d SILVER", inventory_count(&g.actors[g.selected], RELIC), g.money,
+             research_cost());
     text(33, 194, g.tech < 3 ? b : "RESEARCH COMPLETE", GOLD, 1);
-    text(33, 214, "\001 RESEARCH THE NEXT TIER", TEXT, 1);
+    text(33, 214,
+         g.tech >= 3                        ? "ALL TECHNOLOGY TIERS UNLOCKED"
+         : nearby_station(BENCH, 1.7f) >= 0 ? "\001 RESEARCH NEXT TIER - BENCH READY"
+                                            : "WALK TO A RESEARCH BENCH FIRST",
+         TEXT, 1);
 }
 static void menu_screen(void) {
     overlay_header("EXPEDITION", "\015 CHOOSE   \001 OPEN   \010 GUIDE");
@@ -1353,8 +1374,9 @@ static void menu_screen(void) {
                           "Road journal",
                           "Factions and world news",
                           "Character appearance",
-                          "Sleep in a nearby bed"};
-    int first = start_row(ui.selection, 16, 9);
+                          "Sleep in a nearby bed",
+                          "Recent messages"};
+    int first = start_row(ui.selection, 17, 9);
     char b[30];
     for (int j = 0; j < 9; j++) {
         int i = first + j;
@@ -1451,8 +1473,8 @@ static void equipped_screen(void) {
     }
     int it = a->gear[ui.selection];
     char b[100];
-    snprintf(b, sizeof(b), "%s | WT %d | %s +%d", slotNames[ui.selection], itemDefs[it].weight,
-             it >= BASE_ITEMS ? effectNames[itemDefs[it].effect] : "STANDARD", itemDefs[it].potency);
+    snprintf(b, sizeof(b), "%s / WT %d / %s +%d", slotNames[ui.selection], itemDefs[it].weight,
+             it >= BASE_ITEMS ? effectNames[itemDefs[it].effect] : "STANDARD", item_effect_value(it));
     clipped(30, 212, b, 68, TEAL);
 }
 static void forge_screen(void) {
@@ -1473,16 +1495,20 @@ static void forge_screen(void) {
         text(441 - strlen(values[i]) * 6, y, values[i], GOLD, 1);
     }
     char b[100];
-    snprintf(b, 100, "IRON %d  CLOTH %d  WOOD %d  RELIC %d  COAL %d", 2 + d->material + d->quality * 2,
-             d->slot ? 2 + d->quality : 0, d->slot == 0, d->material == 5, d->quality >= 2);
+    Actor *worker = &g.actors[g.selected];
+    snprintf(b, sizeof(b), "IRON %d/%d  CLOTH %d/%d  WOOD %d/%d", inventory_count(worker, IRONBAR),
+             2 + d->material + d->quality * 2, inventory_count(worker, CLOTH), d->slot ? 2 + d->quality : 0,
+             inventory_count(worker, WOOD), d->slot == 0);
     text(29, 205, b, TEXT, 1);
-    snprintf(b, 100, "RESEARCH %d / %d   SMITHING %d / %d", g.tech,
+    snprintf(b, sizeof(b), "RELIC %d/%d  COAL %d/%d  TIER %d/%d  SMITH %d/%d", inventory_count(worker, RELIC),
+             d->material == 5, inventory_count(worker, COAL), d->quality >= 2, g.tech,
              d->material >= 4   ? 3
              : d->material >= 2 ? 2
                                 : 1,
-             level(&g.actors[g.selected], SMITHING), d->quality * 12);
+             level(worker, SMITHING), d->quality * 12);
     text(29, 218, b, TEAL, 1);
-    snprintf(b, 100, "%s +%d   DMG %d  ARM %d", effectNames[d->effect], d->potency, d->power, d->armor);
+    snprintf(b, 100, "%s +%d   DMG %d  ARM %d", effectNames[d->effect], item_effect_value(it), d->power,
+             d->armor);
     text(201, 187, b, MUTED, 1);
 }
 static void dialogue_screen(void) {
@@ -1536,7 +1562,9 @@ static void journal_screen(void) {
         Contract *c = &g.contracts[k];
         if (c->active) {
             snprintf(b, sizeof(b), "%02d %s", k + 1, towns[c->town].name);
-            snprintf(v, 40, c->completed ? "COMPLETE" : "%d / %d  +%d", c->progress, c->needed, c->reward);
+            snprintf(v, 40, c->completed ? "COMPLETE" : "%d / %d  +%d",
+                     c->item ? inventory_count(&g.actors[g.selected], c->item) : c->progress, c->needed,
+                     c->reward);
         } else {
             snprintf(b, sizeof(b), "%02d NO CONTRACT", k + 1);
             v[0] = 0;
@@ -1577,7 +1605,7 @@ static void storage_screen(void) {
     Actor *a = &g.actors[g.selected];
     Building *z = &g.buildings[ui.storageIndex];
     overlay_header(ui.storageSide ? "DEPOT / WITHDRAW" : "DEPOT / DEPOSIT",
-                   "\014 CHOOSE SIDE   \001 MOVE ONE   \010 GUIDE");
+                   "\014 SIDE   \001 MOVE ONE   \003 MOVE STACK   \010 GUIDE");
     int count = ui.storageSide ? 16 : PACK, first = start_row(ui.selection, count, 9);
     char b[30];
     for (int j = 0; j < 9 && first + j < count; j++) {
@@ -1589,17 +1617,58 @@ static void storage_screen(void) {
 }
 static void loot_screen(void) {
     Actor *a = &g.actors[ui.lootActor];
-    overlay_header("SALVAGE THE FALLEN", "\001 TAKE ONE   \015 PACK AND WORN GEAR");
-    int first = start_row(ui.selection, PACK + GEARS, 9);
-    char b[80], v[30];
-    for (int j = 0; j < 9; j++) {
-        int k = first + j, it = k < PACK ? a->pack[k].item : a->gear[k - PACK];
-        snprintf(b, 80, "%s %.34s", k < PACK ? "PACK" : slotNames[k - PACK],
-                 it ? itemDefs[it].name : "EMPTY");
-        snprintf(v, 30, "\001%d", k < PACK ? a->pack[k].qty : 1);
-        row(85 + j * 15, k == ui.selection, b, it ? v : "");
+    overlay_header("SALVAGE & COMPARE", "\001 TAKE ONE   \003 TAKE STACK   \015 CHOOSE");
+    int first = start_row(ui.selection, PACK + GEARS, 6);
+    char b[80];
+    for (int j = 0; j < 6; j++) {
+        int k = first + j, id = k < PACK ? a->pack[k].item : a->gear[k - PACK], y = 84 + j * 13;
+        if (k == ui.selection)
+            rect(25, y - 3, 244, 13, 0x4a4030);
+        snprintf(b, sizeof(b), "%02d %.30s", k + 1, id ? itemDefs[id].name : "EMPTY");
+        text(31, y, b, k == ui.selection ? TEXT : MUTED, 1);
+        if (id) {
+            snprintf(b, sizeof(b), "%d", k < PACK ? a->pack[k].qty : 1);
+            text(263 - strlen(b) * 6, y, b, GOLD, 1);
+        }
     }
-    clipped(31, 223, a->name, 30, TEAL);
+    int it = ui.selection < PACK ? a->pack[ui.selection].item : a->gear[ui.selection - PACK];
+    Actor current = preview_actor(), preview = current;
+    if (it && itemDefs[it].slot >= 0)
+        preview.gear[itemDefs[it].slot] = it;
+    compare_portraits(&current, &preview);
+    text(287, 82, "WORN", MUTED, 1);
+    text(386, 82, "TRY ON", GOLD, 1);
+    clipped(31, 163,
+            !a->squad && a->faction != HOSTILE && a->faction != WILDLIFE
+                ? "LOOTING THIS PERSON COUNTS AS THEFT"
+                : a->name,
+            40, GOLD);
+    equipment_comparison(it, 173);
+}
+static void assist_screen(void) {
+    Actor *a = &g.actors[ui.lootActor];
+    overlay_header("RESCUE & RECOVERY", "\001 CHOOSE   BLEEDING CONTINUES WHEN YOU RESUME");
+    portrait_scale(a, 112, 110, 28, 83, 1);
+    clipped(151, 86, a->name, 32, TEAL);
+    char b[100];
+    snprintf(b, sizeof(b), "BLOOD %d  BLEED %.1f  %s", (int)a->blood, a->bleed,
+             a->dead              ? "DEAD"
+             : a->unconscious > 0 ? "DOWN"
+                                  : "AWAKE");
+    text(151, 102, b, a->bleed > 0 ? RED : MUTED, 1);
+    const char *opts[] = {"First aid - uses one field dressing", "Carry unconscious survivor",
+                          "Recover pack and worn equipment", "Take control of this squad member"};
+    for (int i = 0; i < 4; i++) {
+        if (i == ui.selection)
+            rect(146, 126 + i * 21, 300, 18, 0x4a4030);
+        text(152, 131 + i * 21, opts[i], i == ui.selection ? GOLD : MUTED, 1);
+    }
+    text(31, 223, "CARRYING SLOWS TRAVEL. \001 IN THE WORLD PUTS THEM DOWN.", TEXT, 1);
+}
+static void log_screen(void) {
+    overlay_header("RECENT MESSAGES", "NEWEST FIRST - CURRENT SESSION");
+    for (int i = 0; i < LOGS && i < ui.logCount; i++)
+        wrap(31, 85 + i * 24, 68, ui.logs[i], i ? MUTED : TEXT);
 }
 void render_title_art(uint32_t *pixels, int stride) {
     fb = pixels;
@@ -1665,6 +1734,12 @@ void render_game(uint32_t *pixels, int stride) {
     case SCREEN_STORAGE:
         storage_screen();
         break;
+    case SCREEN_ASSIST:
+        assist_screen();
+        break;
+    case SCREEN_LOG:
+        log_screen();
+        break;
     case SCREEN_LOOT:
         loot_screen();
         break;
@@ -1722,6 +1797,13 @@ void render_game(uint32_t *pixels, int stride) {
                                      : "Save to this slot? Its previous expedition will be replaced; the "
                                        "last version is kept as a backup.",
              TEXT);
+        if (ui.confirmAction != 1) {
+            char b[100];
+            SaveInfo *z = &ui.saves[ui.slot];
+            snprintf(b, sizeof(b), "SLOT %d: %s  DAY %d%s", ui.slot, z->exists ? z->name : "EMPTY", z->day,
+                     ui.saveExit ? " / THEN TITLE" : "");
+            text(31, 175, b, GOLD, 1);
+        }
         break;
     default:
         break;
