@@ -1962,6 +1962,22 @@ void game_tick(float dt, Input in) {
         ui.selection = 0;
         return;
     }
+    /* World D-pad is for information and menus. Handle it before captivity
+       input, without treating it as movement or cancelling travel/work. */
+    if (ui.screen == SCREEN_WORLD) {
+        if (p & KEY_UP)
+            ui.statusPanel = !ui.statusPanel;
+        else if (p & KEY_DOWN) {
+            open_screen(SCREEN_SKILLS);
+            return;
+        } else if (p & KEY_LEFT) {
+            open_screen(SCREEN_EQUIPPED);
+            return;
+        } else if (p & KEY_RIGHT) {
+            depth_open(SCREEN_ORDERS);
+            return;
+        }
+    }
     if (depth_input(dt,in) || expansion_input(dt, in))
         return;
     Actor *a = &g.actors[g.selected];
@@ -2212,14 +2228,6 @@ void game_tick(float dt, Input in) {
     if (ui.screen != SCREEN_WORLD || ui.paused)
         return;
     float dx = in.ax, dy = in.ay;
-    if (in.held & KEY_LEFT)
-        dx = -1;
-    if (in.held & KEY_RIGHT)
-        dx = 1;
-    if (in.held & KEY_UP)
-        dy = -1;
-    if (in.held & KEY_DOWN)
-        dy = 1;
     float step = dt * ui.speed;
     if (g.interiorBuilding) {
         interior_move(dx, dy, step);

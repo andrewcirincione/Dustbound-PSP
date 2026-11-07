@@ -1162,8 +1162,7 @@ int depth_input(float dt, Input in) {
             return 1;
         }
     }
-    if (ui.screen == SCREEN_WORLD &&
-        (fabsf(in.ax) + fabsf(in.ay) > .15f || (in.held & (KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT)))) {
+    if (ui.screen == SCREEN_WORLD && fabsf(in.ax) + fabsf(in.ay) > .15f) {
         if (z->queued && !z->paused) {
             z->paused = 1;
             log_msg("Job queue paused by movement. Resume in Orders.");

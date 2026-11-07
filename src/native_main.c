@@ -309,7 +309,10 @@ int main(int argc, char **argv) {
             if (k[keys[i]])
                 held |= 1 << i;
         unsigned now = SDL_GetTicks();
-        game_tick((now - last) / 1000.0f, (Input){held, held & ~old, 0, 0});
+        /* WASD stands in for the PSP analog stick; arrows remain the D-pad. */
+        float ax = (float)k[SDL_SCANCODE_D] - k[SDL_SCANCODE_A];
+        float ay = (float)k[SDL_SCANCODE_S] - k[SDL_SCANCODE_W];
+        game_tick((now - last) / 1000.0f, (Input){held, held & ~old, ax, ay});
         last = now;
         old = held;
         render_game(pixels, 480);

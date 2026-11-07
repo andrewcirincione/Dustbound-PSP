@@ -234,10 +234,10 @@ const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE 
                                         "CRIME & STEALTH", "FACTIONS",     "CONTRACTS",          "SAVES",
                                         "WEATHER",         "CAPTIVITY",    "BUILDING INTERIORS", "BACKPACKS", "THE COPPER ROAD", "ORDERS & GROUPS", "CAMP WORK & FUEL", "TRAUMA & REPAIR", "ARMOR LAYERS"};
 const char *guideBodies[GUIDE_PAGES] = {
-    "\011 or analog: move in screen direction. \001: nearby interaction. \004: pack. \003: "
+    "Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down: skills. Left: worn gear. Right: squad orders.\n\001: interact. \004: pack. \003: "
     "fight/passive. \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
-    "pause menu: \005/\006 change Pause, Squad and World tabs. Skills: \004 then \006, or Start > Squad > Skills.\nMenus pause time. \010 opens help. \005/\006 switch inventory "
-    "tabs or guide pages. Hold \005 and tap \001 to cycle nearby targets. Move to cancel work or travel.",
+    "pause menu: \005/\006 change Pause, Squad and World tabs. D-pad navigates menus.\nMenus pause time. \010 opens help. \005/\006 switch inventory "
+    "tabs or guide pages. Hold \005 and tap \001 to cycle nearby targets. Analog movement cancels work or travel.",
     "New expedition opens character creation. Choose a name, origin, ancestry, body, skin, hairstyle, hair "
     "color, beard and scars. \014 adjusts each choice; \001 edits your name or begins.\nOrigins change "
     "equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Ancestry "
@@ -333,7 +333,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "local bounty. Escape attempts use lockpicking, may fail and raise the bounty. The prison timer, "
     "injuries and inventory persist through saving.",
     "Approach a house, inn, shop, tower or workshop door and press \001 to enter. Walk around the room with "
-    "\011 or analog. Furniture blocks movement; use the aisles. \001 near the door returns outside.\n"
+    "the analog stick. Furniture blocks movement; use the aisles. \001 near the door returns outside.\n"
     "Counters open local trade. Beds cost 25 silver in town; owned beds are free. Workshop stations open "
     "forging, research or storage. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other "
     "groups and hired guards remain outside.\nSave games preserve the building and indoor position. Switching squad "

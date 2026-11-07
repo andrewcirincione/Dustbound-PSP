@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.6.1"
+#define VERSION "0.6.2"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -244,7 +244,7 @@ typedef struct {
     SaveInfo saves[SAVE_SLOTS];
     int helpSelection, helpScroll, saveReturn, saveExit, contextChoice, contextCount, squadCyclePending;
     int depthSite, depthRow;
-    int menuTab, menuRow, menuReturn;
+    int menuTab, menuRow, menuReturn, statusPanel;
     float travelStall, travelLastX, travelLastY;
 } UI;
 typedef struct {

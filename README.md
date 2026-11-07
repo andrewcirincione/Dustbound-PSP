@@ -2,11 +2,19 @@
 
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.6.1, compact UI — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.6.2, analog movement and D-pad menus — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 
 ![Copper Road rescue dialogue from the PSP EBOOT](evidence/v060-05-sora-wreck.png)
+
+## 0.6.2: analog movement and D-pad menus
+
+Only the analog stick moves the character, indoors and outdoors. In the world, D-pad Up toggles a live detailed status panel; Down opens Skills, Left opens worn equipment, and Right opens squad orders. Menu navigation continues to use the D-pad. Up does not pause time; R still provides tactical pause. The panel tracks the selected survivor and shows six limb health indicators, blood, food, fatigue, load and bleeding.
+
+D-pad shortcuts preserve job queues and travel destinations. Only analog movement manually interrupts them. The desktop development build maps WASD to the stick and arrow keys to the D-pad.
+
+![Detailed status toggled with D-pad Up, native renderer](evidence/v062-status.png)
 
 ## 0.6.1: compact UI
 
@@ -106,7 +114,7 @@ Walk through a door into a house, shop, inn, tower, smithy, workshop or depot. C
 ## Install on PSP
 
 1. Use a PSP already configured to run homebrew. This repository does not install or modify firmware.
-2. Download `Dustbound-0.6.1-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
+2. Download `Dustbound-0.6.2-PSP.zip` from the release and extract its `PSP` folder to the memory stick root.
 3. The executable should be at `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Launch it from **Game → Memory Stick**.
 4. Back up existing `DUST_*.sav` files before upgrading. v0.1 through v0.5.2 saves are supported. Older formats migrate when loaded; save the migrated game to a different slot first. Keep a backup before using an older executable. Older-format migration refreshes regional markets, town NPC outfits and medic positions once; existing v5 saves receive the backpack supplement and the new frontier state once, preserving inventory and item IDs. New saves use version 6. Do not remove the memory stick during a save.
 
@@ -116,7 +124,9 @@ The single EBOOT includes its art, catalog and sounds. No network access or exte
 
 | PSP input | Action |
 |---|---|
-| Analog / ![D-pad](assets/ui/dpad.svg) | Move in screen direction; navigate menus |
+| Analog stick | Move in screen direction |
+| D-pad in the world | Up: status panel; Down: skills; Left: worn gear; Right: squad orders |
+| D-pad in menus | Navigate menu entries and choices |
 | ![Cross](assets/ui/cross.svg) | Interact, confirm, equip/use, buy/sell |
 | ![Triangle](assets/ui/triangle.svg) | Pack; press again for worn equipment |
 | ![Square](assets/ui/square.svg) | Fight/passive stance; pass one item in pack; move a full stack in loot/storage |

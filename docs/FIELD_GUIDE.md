@@ -1,12 +1,14 @@
-# Dustbound field guide — 0.6.1
+# Dustbound field guide — 0.6.2
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
 ## 1. Controls
 
-![dpad](../assets/ui/dpad.svg) or analog: move in screen direction. ![cross](../assets/ui/cross.svg): nearby interaction. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): pause menu: ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) change Pause, Squad and World tabs. Skills: ![triangle](../assets/ui/triangle.svg) then ![r](../assets/ui/r.svg), or Start > Squad > Skills.
+Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down: skills. Left: worn gear. Right: squad orders.
 
-Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch inventory tabs or guide pages. Hold ![l](../assets/ui/l.svg) and tap ![cross](../assets/ui/cross.svg) to cycle nearby targets. Move to cancel work or travel.
+![cross](../assets/ui/cross.svg): interact. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): pause menu: ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) change Pause, Squad and World tabs. D-pad navigates menus.
+
+Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch inventory tabs or guide pages. Hold ![l](../assets/ui/l.svg) and tap ![cross](../assets/ui/cross.svg) to cycle nearby targets. Analog movement cancels work or travel.
 
 ## 2. Your Drifter
 
@@ -112,7 +114,7 @@ When imprisoned, movement is restricted to the holding area. ![cross](../assets/
 
 ## 19. Building Interiors
 
-Approach a house, inn, shop, tower or workshop door and press ![cross](../assets/ui/cross.svg) to enter. Walk around the room with ![dpad](../assets/ui/dpad.svg) or analog. Furniture blocks movement; use the aisles. ![cross](../assets/ui/cross.svg) near the door returns outside.
+Approach a house, inn, shop, tower or workshop door and press ![cross](../assets/ui/cross.svg) to enter. Walk around the room with the analog stick. Furniture blocks movement; use the aisles. ![cross](../assets/ui/cross.svg) near the door returns outside.
 
 Counters open local trade. Beds cost 25 silver in town; owned beds are free. Workshop stations open forging, research or storage. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other groups and hired guards remain outside.
 

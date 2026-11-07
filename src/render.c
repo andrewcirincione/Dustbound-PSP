@@ -832,6 +832,44 @@ static void mini_map(void) {
     frame(ox - 3, oy - 3, 72, 67, EDGE);
     text(ox + 28, oy - 1, "N", TEXT, 1);
 }
+static void detailed_status(void) {
+    Actor *a = &g.actors[g.selected];
+    char value[64];
+    panel(8, 44, 198, 186);
+    snprintf(value, sizeof(value), "%.16s", a->name);
+    text(16, 53, value, TEAL, 1);
+    text(160, 53, "STATUS", GOLD, 1);
+    line(16, 66, 198, 66, EDGE);
+    for (int i = 0; i < LIMBS; i++) {
+        int y = 74 + i * 12;
+        int missing = (a->lostMask & (1 << i)) && !(a->prostheticMask & (1 << i));
+        uint32_t color = missing || a->health[i] < 30 ? RED : a->health[i] < 75 ? GOLD : TEAL;
+        text(16, y, limbNames[i], MUTED, 1);
+        bar(86, y + 2, 66, 4, missing ? 0 : a->health[i], color);
+        if (missing) snprintf(value, sizeof(value), "LOST");
+        else snprintf(value, sizeof(value), "%d", (int)a->health[i]);
+        text(163, y, value, color, 1);
+    }
+    const char *labels[] = {"BLOOD", "FOOD", "FATIGUE"};
+    float values[] = {a->blood, a->hunger, a->fatigue};
+    for (int i = 0; i < 3; i++) {
+        int y = 151 + i * 13;
+        uint32_t color = i == 0 ? (a->bleed > .01f || a->blood < 50 ? RED : TEAL)
+                         : i == 1 ? (a->hunger < 25 ? RED : GOLD)
+                         : a->fatigue > 85 ? RED : MUTED;
+        text(16, y, labels[i], MUTED, 1);
+        bar(86, y + 2, 66, 4, values[i], color);
+        snprintf(value, sizeof(value), "%d", (int)values[i]);
+        text(163, y, value, color, 1);
+    }
+    int capacity = 30 + level(a, STRENGTH) * 2 + gear_bonus(a, 3);
+    float load = encumbrance(a);
+    snprintf(value, sizeof(value), "LOAD %.0f / %d", load, capacity);
+    text(16, 196, value, load > capacity ? RED : MUTED, 1);
+    snprintf(value, sizeof(value), "BLEED %.1f", a->bleed);
+    text(16, 208, value, a->bleed > .01f ? RED : MUTED, 1);
+    text(16, 221, "D-PAD UP: HIDE", GOLD, 1);
+}
 static void hud(void) {
     Actor *a = &g.actors[g.selected];
     char b[120];
@@ -937,6 +975,8 @@ static void hud(void) {
     if (a->taskKind)
         bar(180, 249, 120, 2,
             (1 - fminf(1, a->action / (a->taskKind == 3 ? 180 : a->taskKind == 2 ? 4.5f : 2.8f))) * 100, GOLD);
+    if (ui.statusPanel)
+        detailed_status();
 }
 static void title(void) {
     ui.camX = 28;

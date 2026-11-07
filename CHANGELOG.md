@@ -1,5 +1,9 @@
 # 0.5.2 — Reliable actions and recovery
 
+## 0.6.2 — Analog movement and D-pad menus
+
+Analog-only character movement, live status panel on D-pad Up, Skills on Down, worn gear on Left and squad orders on Right. D-pad shortcuts preserve job queues and travel. Desktop WASD emulates the stick. Save format unchanged.
+
 ## 0.6.1 — Compact UI
 
 20-pixel HUD; in-range-only prompts; full-width inventory/shop/loot lists without try-on models; tabbed Start menu with direct Skills access; explicit pickpocket attempt screen and owned-salvage labels. PSP compiled and static layouts inspected; no gameplay suites or emulator runs. Save format unchanged.
