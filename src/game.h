@@ -261,6 +261,7 @@ typedef struct {
     int depthSite, depthRow;
     int menuTab, menuRow, menuReturn, statusPanel;
     int journalTab,regionChoice,attackFocus;
+    int mapCategory,mapChoice;
     float travelStall, travelLastX, travelLastY;
 } UI;
 typedef struct {
@@ -456,6 +457,10 @@ int nearby_workstation(int type);
 int start_sleep(int town);
 int doctor_heal(int town);
 void open_help(int topic);
+int atlas_item(int row);
+int atlas_count(void);
+void atlas_select(int row);
+void atlas_sync(void);
 void render_catalog_scale(uint32_t *pixels, int stride, int item, int sc);
 void render_catalog_sample(uint32_t *pixels, int stride, int item);
 #include "depth.h"

@@ -1,0 +1,62 @@
+[
+  {
+    "eboot_sha256": "e81ad42682e466ded1ce72328b3d5f1916e9b8f27823c5de84d275ef63a6180e",
+    "version": "0.8.1"
+  },
+  {
+    "capture": "v081-psp-unexplored",
+    "screen": 5,
+    "expected": 5,
+    "frame": 439,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v081-psp-notice",
+    "screen": 5,
+    "expected": 5,
+    "frame": 968,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v081-psp-position",
+    "screen": 5,
+    "expected": 5,
+    "frame": 1239,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v081-psp-town",
+    "screen": 5,
+    "expected": 5,
+    "frame": 1652,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v081-psp-local",
+    "screen": 5,
+    "expected": 5,
+    "frame": 1662,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v081-psp-event",
+    "screen": 5,
+    "expected": 5,
+    "frame": 1745,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "completed": true,
+    "prepared_saves": [
+      4,
+      5
+    ],
+    "named_destination": "Black Mesa",
+    "category_switching": true,
+    "local_zoom_preserves_destination": true,
+    "event_zoom_preserves_destination": true,
+    "travel_matches_selected_pin": true,
+    "dpad_preserves_player_position": true,
+    "your_position_does_not_issue_travel": true
+  }
+]

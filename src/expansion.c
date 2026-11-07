@@ -4,6 +4,37 @@
 #include <string.h>
 extern int conscious(const Actor *);
 static int wrapi(int v, int n) { return (v % n + n) % n; }
+/* Named world destinations. Local view retains free cursor travel. */
+int atlas_item(int row) {
+    if(row==0)return -1; /* your position */
+    int at=1;
+    if(ui.mapCategory) {
+        for(int e=0;e<EVENTS;e++)if(!g.living.events[e].status){if(at++==row)return TOWNS+e;}
+    } else {
+        for(int t=0;t<TOWNS;t++)if(g.discovered[t]){if(at++==row)return t;}
+    }
+    return -2;
+}
+int atlas_count(void) {
+    int n=1;
+    if(ui.mapCategory){for(int e=0;e<EVENTS;e++)if(!g.living.events[e].status)n++;}
+    else {for(int t=0;t<TOWNS;t++)if(g.discovered[t])n++;}
+    return n;
+}
+void atlas_select(int row) {
+    ui.mapChoice=wrapi(row,atlas_count());int id=atlas_item(ui.mapChoice);
+    if(id==-1){ui.mapX=g.actors[g.selected].x;ui.mapY=g.actors[g.selected].y;}
+    else if(id<TOWNS){ui.mapTown=id;ui.mapX=towns[id].x;ui.mapY=towns[id].y;}
+    else {ui.mapX=g.living.events[id-TOWNS].x;ui.mapY=g.living.events[id-TOWNS].y;}
+}
+void atlas_sync(void) {
+    float best=distance(ui.mapX,ui.mapY,g.actors[g.selected].x,g.actors[g.selected].y);int category=0,row=0;
+    for(int c=0;c<2;c++){ui.mapCategory=c;for(int n=1;n<atlas_count();n++){
+        int id=atlas_item(n);float x=id<TOWNS?towns[id].x:g.living.events[id-TOWNS].x,y=id<TOWNS?towns[id].y:g.living.events[id-TOWNS].y;
+        float d=distance(ui.mapX,ui.mapY,x,y);if(d<best){best=d;category=c;row=n;}
+    }}
+    ui.mapCategory=category;atlas_select(row);
+}
 static void open_view(int screen) {
     ui.screen = screen;
     ui.selection = 0;
@@ -349,9 +380,16 @@ int expansion_input(float dt, Input in) {
             log_msg("\003 dismisses a fallen companion only.");
         return 1;
     }
+    if (ui.screen == SCREEN_MAP && !ui.mapZoom && (p & (KEY_UP|KEY_DOWN|KEY_LEFT|KEY_RIGHT|KEY_L|KEY_R))) {
+        if(p&(KEY_L|KEY_R|KEY_LEFT|KEY_RIGHT)){ui.mapCategory=1-ui.mapCategory;atlas_select(0);}
+        else atlas_select(ui.mapChoice+(p&KEY_UP?-1:1));
+        return 1;
+    }
     if (ui.screen == SCREEN_MAP && (p & (KEY_L | KEY_R | KEY_SQUARE | KEY_TRIANGLE))) {
-        if (p & KEY_TRIANGLE)
+        if (p & KEY_TRIANGLE) {
             ui.mapZoom = !ui.mapZoom;
+            if(!ui.mapZoom)atlas_sync();
+        }
         else if (p & KEY_SQUARE) {
             if (inventory_remove(a, MAPSCROLL, 1)) {
                 for (int i = 0; i < TOWNS; i++)
@@ -498,7 +536,7 @@ int expansion_input(float dt, Input in) {
                 ui.mapTown = town;
                 ui.mapX = towns[town].x;
                 ui.mapY = towns[town].y;
-                ui.mapZoom = 0;
+                ui.mapZoom = 1; /* A contract may name a town not yet discovered. Keep its exact pin. */
                 log_msg("Contract: %s. Choose travel on the map when ready.", towns[town].name);
             } else
                 log_msg("Select an active contract to locate its destination.");

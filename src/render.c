@@ -1171,7 +1171,109 @@ static void squad_screen(void) {
     rect(25,233,425,15,PANEL);
     text(31,237,a->dead?"\002 BACK   \003 DISMISS FALLEN   \010 GUIDE":"\002 BACK   \010 GUIDE   L/R CHANGES MEMBER",MUTED,1);
 }
+/* World overview: geography + a named destination browser, not a tiny free cursor. */
+static void atlas_name(int id,char *out,int size) {
+    if(id==-1)snprintf(out,size,"YOUR POSITION");
+    else if(id<TOWNS)snprintf(out,size,"%s",towns[id].name);
+    else living_title(id-TOWNS,out,size);
+}
+static void world_atlas(void) {
+    const int ox=14,oy=42,size=206;
+    Actor *a=&g.actors[g.selected];
+    int count=atlas_count();if(ui.mapChoice>=count)atlas_select(0);
+    int selected=atlas_item(ui.mapChoice);
+    rect(0,0,480,272,PANEL);
+    text(14,12,"WORLD ATLAS",TEXT,2);
+    text(341,17,"\003 USE CHART",MUTED,1);
+    static uint32_t pixels[206*206],cacheKey;static int ready;
+    uint32_t key=g.seed;
+    for(unsigned i=0;i<sizeof(g.seen);i++)key=(key^g.seen[i])*16777619u;
+    if(!ready||key!=cacheKey){
+        static const uint32_t terrain[]={0x697060,0x80715b,0x777a70,0x4d6c62,0x64645c,0x77735e,0xa9b0ad,0x465d51,0x79665d};
+        for(int y=0;y<size;y++)for(int x=0;x<size;x++){
+            float wx=x*(float)WORLD/size,wy=y*(float)WORLD/size;int q=((int)wy/4)*FOG_SIZE+(int)wx/4;
+            uint32_t c=0x242d2e;
+            if(g.seen[q>>3]&(1<<(q&7))){
+                unsigned r=0,gc=0,b=0;
+                for(int dy=-1;dy<=1;dy++)for(int dx=-1;dx<=1;dx++){uint32_t t=terrain[biome(wx+dx*26,wy+dy*26)];r+=(t>>16)&255;gc+=(t>>8)&255;b+=t&255;}
+                c=((r/9)<<16)|((gc/9)<<8)|(b/9);
+                if(terrain_water(wx,wy))c=0x427384;
+            }
+            pixels[y*size+x]=abgr(c);
+        }
+        cacheKey=key;ready=1;
+    }
+    for(int y=0;y<size;y++)memcpy(fb+(oy+y)*pitch+ox,pixels+y*size,size*sizeof(uint32_t));
+#define AX(v) (ox+(int)((v)*size/WORLD))
+#define AY(v) (oy+(int)((v)*size/WORLD))
+    int oldL=clipLeft,oldR=clipRight,oldT=clipTop,oldB=clipBottom;
+    clipLeft=ox;clipRight=ox+size;clipTop=oy;clipBottom=oy+size;
+    /* Same road graph as traversal, only through surveyed terrain. */
+    for(int t=1;t<TOWNS;t++){
+        int near=0;float best=1e9f;
+        for(int j=0;j<t;j++){float d=distance(towns[t].x,towns[t].y,towns[j].x,towns[j].y);if(d<best){best=d;near=j;}}
+        int steps=(int)best+1;
+        for(int k=0;k<steps;k++){
+            float u=k/(float)steps,v=(k+1)/(float)steps,wx=towns[t].x+(towns[near].x-towns[t].x)*u,wy=towns[t].y+(towns[near].y-towns[t].y)*u;
+            int q=((int)wy/4)*FOG_SIZE+(int)wx/4;
+            if(g.seen[q>>3]&(1<<(q&7)))line(AX(wx),AY(wy),AX(towns[t].x+(towns[near].x-towns[t].x)*v),AY(towns[t].y+(towns[near].y-towns[t].y)*v),0xc1b08a);
+        }
+    }
+    if(ui.waypoint){
+        float x=AX(a->x),y=AY(a->y),dx=AX(ui.travelX)-x,dy=AY(ui.travelY)-y,steps=fmaxf(fabsf(dx),fabsf(dy));
+        for(int k=0;k<steps;k+=6)line(x+dx*k/fmaxf(1,steps),y+dy*k/fmaxf(1,steps),x+dx*fminf(k+3,steps)/fmaxf(1,steps),y+dy*fminf(k+3,steps)/fmaxf(1,steps),0x72cfd2);
+    }
+    for(int t=0;t<TOWNS;t++)if(g.discovered[t]){int x=AX(towns[t].x),y=AY(towns[t].y);rect(x-3,y-3,7,7,INK);frame(x-2,y-2,5,5,ui.mapCategory?MUTED:TEXT);}
+    if(ui.mapCategory)for(int e=0;e<EVENTS;e++)if(!g.living.events[e].status){WorldEvent*w=&g.living.events[e];int x=AX(w->x),y=AY(w->y);diamond(x,y,4,4,INK);diamond(x,y,2,2,GOLD);}
+    int px=AX(a->x),py=AY(a->y);
+    triangle(px,py-6,px-5,py+4,px+5,py+4,TEXT);triangle(px,py-4,px-3,py+3,px+3,py+3,0x72cfd2);
+    int sx=AX(ui.mapX),sy=AY(ui.mapY);
+    frame(sx-6,sy-6,13,13,GOLD);
+    /* One named callout, bounded within the map. No numeric lookup or overlapping labels. */
+    char name[80];atlas_name(selected,name,sizeof(name));
+    int width=text_width(name)+8;if(width>198)width=198;
+    int lx=sx-width/2,ly=sy-25;if(lx<ox+3)lx=ox+3;if(lx+width>ox+size-3)lx=ox+size-3-width;
+    if(ly<oy+3)ly=sy+12;if(ly>oy+size-16)ly=oy+size-16;
+    line(sx,sy+(ly>sy?7:-7),sx,ly+(ly>sy?0:13),GOLD);
+    rect(lx,ly,width,13,INK);clipped(lx+4,ly+3,name,31,selected==-1?0x72cfd2:GOLD);
+
+    rect(18,230,51,15,INK);line(22,233,55,233,MUTED);text(22,237,"250m",MUTED,1);
+    clipLeft=oldL;clipRight=oldR;clipTop=oldT;clipBottom=oldB;
+    frame(ox-1,oy-1,size+2,size+2,EDGE);
+    text(198,18,"N",MUTED,1);line(211,15,211,26,MUTED);line(211,15,208,19,MUTED);line(211,15,214,19,MUTED);
+    text(235,35,"\005/\006",MUTED,1);text(263,35,"TOWNS",ui.mapCategory?MUTED:GOLD,1);text(309,35,"/",MUTED,1);text(325,35,"EVENTS",ui.mapCategory?GOLD:MUTED,1);
+    line(ui.mapCategory?325:263,45,ui.mapCategory?360:292,45,GOLD);
+    char info[100];snprintf(info,sizeof(info),"%d/%d",ui.mapChoice+1,count);text(470-text_width(info),35,info,MUTED,1);
+    int first=ui.mapChoice<7?0:ui.mapChoice-6;
+    for(int j=0;j<7&&first+j<count;j++){
+        int n=first+j,id=atlas_item(n),y=54+j*16;atlas_name(id,name,sizeof(name));
+        if(n==ui.mapChoice){rect(232,y-3,236,14,0x45473c);rect(232,y-3,2,14,GOLD);}
+        if(id==-1)triangle(242,y,239,y+6,245,y+6,0x72cfd2);
+        else if(id<TOWNS)frame(239,y+1,6,6,TEXT);else diamond(242,y+4,3,3,GOLD);
+        clipped(252,y,name,35,n==ui.mapChoice?TEXT:MUTED);
+    }
+    if(count==1)text(252,74,ui.mapCategory?"NO ACTIVE EVENTS":"NO KNOWN TOWNS",MUTED,1);
+    if(first>0)triangle(462,49,459,52,465,52,MUTED);
+    if(first+7<count)triangle(462,165,459,162,465,162,MUTED);
+    line(234,169,467,169,EDGE);
+    if(selected==-1){text(235,180,a->name,0x72cfd2,1);text(235,195,regionNames[biome(a->x,a->y)],MUTED,1);}
+    else {
+        if(selected<TOWNS)snprintf(info,sizeof(info),"HELD BY %s",factionNames[g.townOwner[selected]]);
+        else {WorldEvent*e=&g.living.events[selected-TOWNS];snprintf(info,sizeof(info),"TIER %d / %s",e->tier+1,e->type==1||e->type>=5?"COMBAT":e->type==2?"SUPPLY DELIVERY":e->type==4?"RESCUE":e->type==3?"SEARCH":"ESCORT");}
+        clipped(235,180,info,38,GOLD);
+        float dx=ui.mapX-a->x,dy=ui.mapY-a->y;const char*dir=fabsf(dx)<fabsf(dy)*.4f?(dy<0?"N":"S"):fabsf(dy)<fabsf(dx)*.4f?(dx<0?"W":"E"):dy<0?(dx<0?"NW":"NE"):(dx<0?"SW":"SE");
+        snprintf(info,sizeof(info),"%.0fm %s / DIRECT DISTANCE",distance(a->x,a->y,ui.mapX,ui.mapY),dir);text(235,195,info,MUTED,1);
+    }
+    triangle(239,214,235,221,243,221,0x72cfd2);text(250,215,"YOU",0x72cfd2,1);
+    frame(289,215,6,6,TEXT);text(301,215,"TOWN",TEXT,1);
+    diamond(346,218,3,3,GOLD);text(357,215,"EVENT",GOLD,1);
+    line(235,235,249,235,0xc1b08a);text(255,232,"ROAD",MUTED,1);text(301,232,"DARK: UNEXPLORED",MUTED,1);
+    text(14,257,selected==-1?"\011 SELECT   \004 LOCAL VIEW   \002 BACK":"\011 SELECT   \001 TRAVEL   \004 LOCAL VIEW   \002 BACK",TEXT,1);
+#undef AX
+#undef AY
+}
 static void map_screen(void) {
+    if(!ui.mapZoom){world_atlas();return;}
     overlay_header(ui.mapZoom ? "LOCAL ROUTES / FRONTIER" : "WORLD ATLAS / FRONTIER",
                    "\011 CURSOR  \001 TRAVEL  \005/\006 TOWNS  \004 ZOOM  \003 CHART");
     float nearest=1e9f;
@@ -1860,10 +1962,15 @@ void render_game(uint32_t *pixels, int stride) {
         break;
     }
     if (ui.screen != SCREEN_WORLD && ui.noticeTime > 0) {
-        rect(0, 253, 480, 19, INK);
         char message[76];
         snprintf(message, sizeof(message), "%.74s", ui.notice);
-        text(14, 258, message, GOLD, 1);
+        if(ui.screen==SCREEN_MAP&&!ui.mapZoom){
+            rect(232,174,238,33,PANEL);
+            wrap(235,177,38,message,GOLD);
+        } else {
+            rect(0, 253, 480, 19, INK);
+            text(14, 258, message, GOLD, 1);
+        }
     }
 }
 

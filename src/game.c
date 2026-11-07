@@ -1958,7 +1958,7 @@ static void pause_menu_open(void) {
     if (target == SCREEN_MAP) {
         ui.mapX = a->x;
         ui.mapY = a->y;
-        ui.mapZoom = 1;
+        ui.mapZoom = 0;atlas_sync();
     }
     if (target >= SCREEN_EXPEDITION && target <= SCREEN_LAYERS) depth_open(target);
     else open_screen(target);
@@ -2144,17 +2144,18 @@ void game_tick(float dt, Input in) {
             }
         } else if (ui.screen == SCREEN_MAP) {
             float sp = (ui.mapZoom ? 384 : WORLD) * .17f * dt;
-            if (in.held & KEY_LEFT)
+            if (ui.mapZoom && (in.held & KEY_LEFT))
                 ui.mapX -= sp;
-            if (in.held & KEY_RIGHT)
+            if (ui.mapZoom && (in.held & KEY_RIGHT))
                 ui.mapX += sp;
-            if (in.held & KEY_UP)
+            if (ui.mapZoom && (in.held & KEY_UP))
                 ui.mapY -= sp;
-            if (in.held & KEY_DOWN)
+            if (ui.mapZoom && (in.held & KEY_DOWN))
                 ui.mapY += sp;
             ui.mapX = clamp(ui.mapX, 3, WORLD - 4);
             ui.mapY = clamp(ui.mapY, 3, WORLD - 4);
             if (p & KEY_CROSS) {
+                if(!ui.mapZoom && ui.mapChoice==0)return;
                 if (actor_inside(a) || !conscious(a) || a->prisonTime > 0) {
                     log_msg("Leave the building and choose a free, conscious traveler.");
                     return;
@@ -2209,7 +2210,7 @@ void game_tick(float dt, Input in) {
     if (p & KEY_SELECT) {
         ui.mapX = a->x;
         ui.mapY = a->y;
-        ui.mapZoom = 1;
+        ui.mapZoom = 0;atlas_sync();
         open_screen(SCREEN_MAP);
         return;
     }
@@ -2383,6 +2384,9 @@ void debug_snapshot(const char *path) {
     VALUE("context", &ui.contextKind, 8);
     VALUE("task", &a->taskKind, 4);
     VALUE("mapzoom", &ui.mapZoom, 4);
+    VALUE("mapchoice", &ui.mapChoice, 4);
+    VALUE("mapcategory", &ui.mapCategory, 4);
+    VALUE("mappin", &ui.mapX, 8);
     VALUE("waypoint", &ui.waypoint, 4);
     VALUE("unconscious", &a->unconscious, 4);
     VALUE("travel", &ui.travelX, 8);

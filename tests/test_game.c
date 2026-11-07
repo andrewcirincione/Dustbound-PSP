@@ -274,6 +274,7 @@ int main(void) {
     press(KEY_CIRCLE);
     press(KEY_SELECT);
     CHECK(ui.screen == SCREEN_MAP, "select opens world map");
+    press(KEY_TRIANGLE); /* Free cursor travel is in local view. */
     ui.mapX = 40;
     ui.mapY = 40;
     press(KEY_CROSS);

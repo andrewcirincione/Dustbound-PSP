@@ -1,0 +1,4 @@
+PASS: atlas discovery filtering, named town/event selection, wraparound, zoom context, exact travel destination, empty event list and D-pad preserves player position.
+PASS: 1,200 event generations, all 32 mechanic/condition combinations, runtime renewal, 16-member formation, reward/loot gates, target retaliation, v7 migration and v8 persistence.
+61/61 passed
+50/50 expansion checks passed

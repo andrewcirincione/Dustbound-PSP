@@ -1,0 +1,10 @@
+{
+  "version": "0.8.1",
+  "eboot_sha256": "e81ad42682e466ded1ce72328b3d5f1916e9b8f27823c5de84d275ef63a6180e",
+  "eboot_bytes": 1492898,
+  "toolchain": "PSPDEV v20261101, archive SHA256 5dc9d785a5fd490ee9d5204b90f715efb6c46940ba3944036bbef9c993c17713",
+  "emulator": "PPSSPP 1.20.4 headless software renderer",
+  "controller_evidence_sha256": "eaf5331a771b466d126eb2070219b93c9ff51fcd4465d4018e54e2447aad6e9e",
+  "native_checks": "Atlas navigation and travel under AddressSanitizer/UndefinedBehaviorSanitizer; 61 core, 50 expansion, 1200 event generations",
+  "scope": "Focused atlas qualification with prepared saves; not a natural full campaign or physical PSP performance test."
+}

@@ -1,8 +1,12 @@
 # Dustbound — PSP frontier survival RPG
 
+## 0.8.1 — Readable world atlas
+
+World travel now uses named town/event selections beside a larger map. Select opens on your position; D-pad selects, L/R changes category, Cross travels, Triangle opens local view, and Square uses a survey chart. See [release notes](docs/RELEASE_NOTES.md).
+
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.8.0, living frontier — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.8.1, readable world atlas — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 

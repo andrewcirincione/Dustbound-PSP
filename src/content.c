@@ -257,8 +257,10 @@ const char *guideBodies[GUIDE_PAGES] = {
     "equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Ancestry "
     "changes starting strengths. A town barber can change your appearance later.",
     "The 1536 by 1536 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. "
-    "Rivers have fords near roads; hills rise into mesas and snowfields.\n\010 opens the atlas. Move the "
-    "cursor; \001 orders travel. \004 switches local/world views. \005/\006 selects known towns. \003 "
+    "Rivers have fords near roads; hills rise into mesas and snowfields.\n\010 opens the atlas. "
+    "D-pad selects a named destination; \005/\006 switches towns/events. The blue triangle is you, "
+    "white squares are towns, gold diamonds are events. Only the selected place is named on the map. "
+    "\001 orders travel. \004 opens local view: move its cursor freely; \005/\006 selects known towns. \003 "
     "reveals surveyed geography after buying a "
     "chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits "
     "persist.",
