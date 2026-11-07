@@ -1,0 +1,31 @@
+{
+  "version": "0.7.0",
+  "toolchain": "PSPDEV v20261101",
+  "eboot_size": 1452106,
+  "eboot_sha256": "84cdec5775a69f5dc1948b474063380c703ff5ceb8cfab840c38011fd7a2ea89",
+  "verification": [
+    "PSP compilation",
+    "PBP structural validation",
+    "13 prepared native-renderer layouts at 480x272"
+  ],
+  "not_performed": [
+    "gameplay suites",
+    "emulator playthrough",
+    "physical PSP qualification"
+  ],
+  "screenshots": {
+    "v070-health.png": "850d3d6460bef2d8e273df7f36ca9f21c649aae948ae99af3c56b28d0d2e233e",
+    "v070-inventory.png": "5e4fc8995d38be87ffca168a80d810b8b04d007b0909dd6524f65718618e5060",
+    "v070-loot.png": "7ede2d374031505e7f1438148249ede4ab97d78cd8b1b172633ab44d25717444",
+    "v070-map.png": "8a2186937bf08373f5757f4553346e571c37992a9c0620d35ed23c14c55f9365",
+    "v070-mesa.png": "1deb62438f73ee3c01dada9af86a2eae2a63e1fd4714f894b0569a93e77f2894",
+    "v070-pale-pass.png": "318b0dc6c855da526b0cd411e103028e4c214f102879c3baa1c5ac52b08d1567",
+    "v070-saltwatch.png": "7bddf86eca36faef0e0929db417c2d22f9b1c39225116f2dc3b60ca5dcf7a252",
+    "v070-skills.png": "2f16c938c40ccb97174b624b4948e59eb39b7d3ca8a278b36e1c68c9182e911f",
+    "v070-squad.png": "4fc077eb49e6811dab0c6f0e92bec66541a339fa3412db4ce49b8af393b365b6",
+    "v070-start-squad.png": "78fa6be21ff70a8f952f7a785312a597a482f02a47a45d13749ef7c91c3134bf",
+    "v070-start-world.png": "6cc82e2abd5bb2fc570a7c9b40f904d7a9c2b1cf9f99fb84cdf93c4595a6c748",
+    "v070-theft.png": "9869d1c27d7d2d97b54ee73904bd517a9c436837552728de5ee6fc01c271eb91",
+    "v070-world.png": "7c4970b9e9f427ad6d113c8b47ba2394312741137d88f472735370993b472d17"
+  }
+}

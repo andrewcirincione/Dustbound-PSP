@@ -2,11 +2,26 @@
 
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.6.2, analog movement and D-pad menus — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.7.0, focused UI and regional consequences — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 
 ![Copper Road rescue dialogue from the PSP EBOOT](evidence/v060-05-sora-wreck.png)
+
+## 0.7.0: focused menus and regional consequences
+
+Health & recovery combines injuries, treatment, mechanical repair and gear maintenance. Squad management combines immediate jobs, stances, travel groups and job priorities. L/R selects a member across character screens; D-pad Down opens Skills directly. Start retains Pause, Squad and World sections.
+
+Inventory, selling, storage and loot show occupied rows with compact capacity counts. Comparisons emphasize changes, actual attack delay and strength requirements; Skills explains practical effects. Characters have clearer silhouettes and selected-character contrast. The atlas preserves roads at every zoom, distinguishes settlements and sites, and shows a dashed planned course or a solid active course.
+
+Sneak beside a civilian and press Cross. Choose the item with the D-pad before stealing. The displayed odds account for the item, approach and visible witnesses.
+
+Start > World > Journal & local conflicts, then L/R, opens three permanent regional disputes: Saltwatch's water concession, Black Mesa's toll camp and Pale Pass's winter refuge. Residents in these towns offer a local-conflict dialogue option. Visit the town with the listed supplies, or defeat the toll collectors, then commit the chosen agreement. Outcomes change supplies, prices, water/bed access and faction allegiance. Square locates the town or toll camp.
+
+The compact HUD, in-range interaction prompts, analog-only movement and D-pad Up status toggle remain. New saves use format v7; the loader accepts previous formats through v6. See [release notes](docs/RELEASE_NOTES.md) and the current [validation limits](docs/VALIDATION_V070.md).
+
+![Compact inventory and comparison, native renderer](evidence/v070/v070-inventory.png)
+![Regional conflicts, native renderer](evidence/v070/v070-pale-pass.png)
 
 ## 0.6.2: analog movement and D-pad menus
 
@@ -20,7 +35,7 @@ D-pad shortcuts preserve job queues and travel destinations. Only analog movemen
 
 The bottom HUD is one 20-pixel strip. Interaction prompts appear only within usable reach, and disappear in open space. Inventory, shop and loot lists use the full panel width with numerical equipment comparisons; the duplicate try-on characters are removed.
 
-Start opens Pause, Squad and World tabs. L/R changes tabs; Circle returns to the menu from its subpages. Remote NPC service shortcuts have been removed: speak to the relevant NPC or use the workstation. **Skills: Triangle, then R once**, or **Start > Squad > Skills**.
+Start opens Pause, Squad and World tabs. L/R changes tabs; Circle returns to the menu from its subpages. Remote NPC service shortcuts have been removed: speak to the relevant NPC or use the workstation. **Skills: D-pad Down**, or **Start > Squad > Skills**.
 
 **Stealing:** press Circle to sneak, approach a civilian and press Cross to open Pickpocket. It shows the item, success chance and consequences. Cross attempts the theft; Circle cancels. Owned salvage explicitly says STEAL. Pickpocketing now works near indoor residents as well. Named story/rescue characters keep their authored interaction outdoors.
 

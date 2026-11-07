@@ -1,14 +1,14 @@
-# Dustbound field guide — 0.6.2
+# Dustbound field guide — 0.7.0
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
 ## 1. Controls
 
-Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down: skills. Left: worn gear. Right: squad orders.
+Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down: skills. Left: worn gear. Right: squad management.
 
 ![cross](../assets/ui/cross.svg): interact. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): pause menu: ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) change Pause, Squad and World tabs. D-pad navigates menus.
 
-Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch inventory tabs or guide pages. Hold ![l](../assets/ui/l.svg) and tap ![cross](../assets/ui/cross.svg) to cycle nearby targets. Analog movement cancels work or travel.
+Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch members or guide pages. Hold ![l](../assets/ui/l.svg) and tap ![cross](../assets/ui/cross.svg) to cycle nearby targets. Analog movement cancels work or travel.
 
 ## 2. Your Drifter
 
@@ -30,7 +30,7 @@ Armor protects specific body locations. Piercing weapons ignore some armor; serr
 
 ## 5. Wounds & Rescue
 
-Six body parts, blood and fatigue are separate. Head or chest failure knocks a survivor out. Bleeding can kill an unconscious character. ![triangle](../assets/ui/triangle.svg), Body, ![cross](../assets/ui/cross.svg) treats the selected survivor; ![cross](../assets/ui/cross.svg) near an injured ally opens First Aid, Carry and Recover Gear choices.
+Six body parts, blood and fatigue are separate. Head or chest failure knocks a survivor out. Bleeding can kill an unconscious character. Start > Squad > Health & recovery, ![cross](../assets/ui/cross.svg) treats the selected survivor; ![cross](../assets/ui/cross.svg) near an injured ally opens First Aid, Carry and Recover Gear choices.
 
 Dressings stop bleeding and restore some health. Sleeping restores the rest. A doctor charges for full treatment. Lost limbs require a mechanical replacement. Death is permanent; dismiss the body from Squad to free its slot.
 
@@ -72,13 +72,13 @@ Shelters heal; farms need water and yield grain; wind pumps irrigate nearby crop
 
 ## 12. Squad Jobs
 
-![triangle](../assets/ui/triangle.svg), Squad: choose a survivor with ![horizontal](../assets/ui/horizontal.svg), then assign a job with ![cross](../assets/ui/cross.svg). Follow trails the assigned group leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats injured allies.
+D-pad Right opens Squad management. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) chooses a member; ![vertical](../assets/ui/vertical.svg) selects a row; ![horizontal](../assets/ui/horizontal.svg) changes its value. Follow trails the assigned group leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats injured allies.
 
 Smelt and Cook use nearby stations and can collect ingredients from a nearby depot. Workers fetch water and ingredients, walk to stations, and store output; cooks keep two rations. Haul deposits raw cargo. Job status explains delays. Select a worker and move to interrupt their current action. Up to eight living members may join.
 
 ## 13. Crime & Stealth
 
-![circle](../assets/ui/circle.svg) sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and ![cross](../assets/ui/cross.svg) near a civilian to inspect a pickpocket attempt. The screen shows the item, success chance and penalty. Press ![cross](../assets/ui/cross.svg) again to steal, or ![circle](../assets/ui/circle.svg) to cancel. Owned salvage says STEAL; locked containers require tools and time.
+![circle](../assets/ui/circle.svg) sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and ![cross](../assets/ui/cross.svg) near a civilian to inspect a pickpocket attempt. Select an item with ![vertical](../assets/ui/vertical.svg). Risk reflects weight, value, approach and visible witnesses. Getting behind the target improves odds. ![cross](../assets/ui/cross.svg) steals one; ![circle](../assets/ui/circle.svg) cancels. Owned salvage says STEAL; locked containers require tools and time.
 
 Witnesses create a faction penalty and bounty. A theft can fail, drawing guards. Stolen stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a defeated wanted survivor; breaking out or paying bail is possible.
 
@@ -92,7 +92,7 @@ Contracts raise standing; theft lowers it. The Factions ledger shows specialties
 
 Marshals offer delivery, supply, hunt and relic contracts. Accept through dialogue; track objectives in the Journal. Deliveries require reaching another town. Supplies require the listed items. Hunts count victories after acceptance.
 
-Return to the issuing settlement and claim in the Journal with ![cross](../assets/ui/cross.svg). Rewards grant silver, reputation and experience. Contracts persist in saves. Complete contracts, research relic technology and survey the frontier to advance the expedition legacy. ![square](../assets/ui/square.svg) locates an active contract on the atlas; ![cross](../assets/ui/cross.svg) there starts travel when ready.
+Return to the issuing settlement and claim in the Journal with ![cross](../assets/ui/cross.svg). Rewards grant silver, reputation and experience. L/R opens Local conflicts: settle Saltwatch water rights, Black Mesa tolls and Pale Pass refuge. Choices permanently alter trade, access and allegiance. Complete contracts, research relic technology and survey the frontier to advance the expedition legacy. ![square](../assets/ui/square.svg) locates an active contract on the atlas; ![cross](../assets/ui/cross.svg) there starts travel when ready.
 
 ## 16. Saves
 
@@ -136,9 +136,9 @@ Repair the culvert after bringing Sora home: 3 timber, 1 iron bar and tools. Or 
 
 ## 22. Orders & Groups
 
-Orders sets Balanced, Defensive, Keep range or Hold fire. Defensive gives +18 defence but never attacks. Ranged allies retreat if a foe closes within 3.5m. Projectiles travel and hit walls or allies: clear your firing line.
+Squad management sets Balanced, Defensive, Keep range or Hold fire. Defensive gives +18 defence but never attacks. Ranged allies retreat if a foe closes within 3.5m. Projectiles travel and hit walls or allies: clear your firing line.
 
-Assign each survivor to one of three groups and choose its leader. In the atlas, hold ![r](../assets/ui/r.svg) and press ![cross](../assets/ui/cross.svg) for a group route. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume in Orders.
+Assign each survivor to one of three groups and choose its leader. In the atlas, hold ![r](../assets/ui/r.svg) and press ![cross](../assets/ui/cross.svg) for a group route. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume the Priority queue in Squad management.
 
 ## 23. Camp Work & Fuel
 
@@ -150,7 +150,7 @@ Campfires and forges burn one charge per production action. Add clean timber for
 
 Bleeding drains blood and can kill. Dressings stop bleeding and treat organic wounds; trauma still limits maximum health. Food and bed rest slowly restore that limit.
 
-Mechanical characters and prosthetics need spare parts. Medicine and sleep cannot repair metal. The Care panel shows health, trauma and armor condition. Cloth restores equipment condition.
+Mechanical characters and prosthetics need spare parts. Medicine and sleep cannot repair metal. Health & recovery shows health, trauma and armor condition. Cloth restores equipment condition.
 
 Raiders near the chain yard may carry a fallen survivor away. Escape takes time away from guards. Tools speed it up. Free allies can unlock captives. Escapees are remembered for a day.
 

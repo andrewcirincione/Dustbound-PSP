@@ -234,10 +234,9 @@ const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE 
                                         "CRIME & STEALTH", "FACTIONS",     "CONTRACTS",          "SAVES",
                                         "WEATHER",         "CAPTIVITY",    "BUILDING INTERIORS", "BACKPACKS", "THE COPPER ROAD", "ORDERS & GROUPS", "CAMP WORK & FUEL", "TRAUMA & REPAIR", "ARMOR LAYERS"};
 const char *guideBodies[GUIDE_PAGES] = {
-    "Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down: skills. Left: worn gear. Right: squad orders.\n\001: interact. \004: pack. \003: "
+    "Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down: skills. Left: worn gear. Right: squad management.\n\001: interact. \004: pack. \003: "
     "fight/passive. \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
-    "pause menu: \005/\006 change Pause, Squad and World tabs. D-pad navigates menus.\nMenus pause time. \010 opens help. \005/\006 switch inventory "
-    "tabs or guide pages. Hold \005 and tap \001 to cycle nearby targets. Analog movement cancels work or travel.",
+    "pause menu: \005/\006 change Pause, Squad and World tabs. D-pad navigates menus.\nMenus pause time. \010 opens help. \005/\006 switch members or guide pages. Hold \005 and tap \001 to cycle nearby targets. Analog movement cancels work or travel.",
     "New expedition opens character creation. Choose a name, origin, ancestry, body, skin, hairstyle, hair "
     "color, beard and scars. \014 adjusts each choice; \001 edits your name or begins.\nOrigins change "
     "equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Ancestry "
@@ -256,7 +255,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "blades bleed; staggering hits interrupt. Skills improve through use. Retreat from stronger opponents "
     "and use terrain.",
     "Six body parts, blood and fatigue are separate. Head or chest failure knocks a survivor out. Bleeding "
-    "can kill an unconscious character. \004, Body, \001 treats the selected survivor; \001 near an injured "
+    "can kill an unconscious character. Start > Squad > Health & recovery, \001 treats the selected survivor; \001 near an injured "
     "ally opens First Aid, Carry and Recover Gear choices.\nDressings stop bleeding and restore some health. Sleeping restores the "
     "rest. A doctor charges for full treatment. Lost limbs require a mechanical replacement. Death is "
     "permanent; dismiss the body from Squad to free its slot.",
@@ -294,13 +293,13 @@ const char *guideBodies[GUIDE_PAGES] = {
     "and yield grain; wind pumps irrigate nearby crops. Forges and benches unlock production. Depots hold "
     "sixteen clean stacks. \001 opens storage; \014 switches sides; \003 moves a full stack. Camps attract "
     "raiders, so keep medicine and a retreat route.",
-    "\004, Squad: choose a survivor with \014, then assign a job with \001. Follow trails the "
+    "D-pad Right opens Squad management. \005/\006 chooses a member; \015 selects a row; \014 changes its value. Follow trails the "
     "assigned group leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats "
     "injured allies.\nSmelt and Cook use nearby stations and can collect ingredients from a nearby depot. "
     "Workers fetch water and ingredients, walk to stations, and store output; cooks keep two rations. Haul deposits raw cargo. Job status explains delays. Select a worker and move "
     "to interrupt their current action. Up to eight living members may join.",
     "\002 sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and \001 near a "
-    "civilian to inspect a pickpocket attempt. The screen shows the item, success chance and penalty. Press \001 again to steal, or \002 to cancel. Owned salvage says STEAL; locked containers require tools "
+    "civilian to inspect a pickpocket attempt. Select an item with \015. Risk reflects weight, value, approach and visible witnesses. Getting behind the target improves odds. \001 steals one; \002 cancels. Owned salvage says STEAL; locked containers require tools "
     "and time.\nWitnesses create a faction penalty and bounty. A theft can fail, drawing guards. Stolen "
     "stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a "
     "defeated wanted survivor; breaking out or paying bail is possible.",
@@ -312,7 +311,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Marshals offer delivery, supply, hunt and relic contracts. Accept through dialogue; track "
     "objectives in the Journal. Deliveries require reaching another town. Supplies require the listed items. "
     "Hunts count victories after acceptance.\nReturn to the issuing settlement and claim in the Journal with "
-    "\001. Rewards grant silver, reputation and experience. Contracts persist in saves. Complete contracts, "
+    "\001. Rewards grant silver, reputation and experience. L/R opens Local conflicts: settle Saltwatch water rights, Black Mesa tolls and Pale Pass refuge. Choices permanently alter trade, access and allegiance. Complete contracts, "
     "research relic technology and survey the frontier to advance the expedition legacy. \003 locates an "
     "active contract on the atlas; \001 there starts travel when ready.",
     "Six manual slots plus autosave. \007, Save or Load opens a ledger with name, day, party size and "
@@ -347,7 +346,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "stealth. Medicine aids first aid; bedrolls improve rest but are not beds. Unworn packs give no bonus.",
 
     "Copper Road is a voluntary expedition. Find the wreck between Dusk Haven and Copper Cross. Treat Sora, then escort her to Nell at the stores. Stay within 18m.\nRepair the culvert after bringing Sora home: 3 timber, 1 iron bar and tools. Or pay Rell 450 for a toll truce; challenge him; or carry him alive to Nell. Each route changes trade and patrols. Claim payment once. Raid reprisals can follow capture or death. The ledger locates leads without issuing movement.",
-    "Orders sets Balanced, Defensive, Keep range or Hold fire. Defensive gives +18 defence but never attacks. Ranged allies retreat if a foe closes within 3.5m. Projectiles travel and hit walls or allies: clear your firing line.\nAssign each survivor to one of three groups and choose its leader. In the atlas, hold \006 and press \001 for a group route. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume in Orders.",
+    "Squad management sets Balanced, Defensive, Keep range or Hold fire. Defensive gives +18 defence but never attacks. Ranged allies retreat if a foe closes within 3.5m. Projectiles travel and hit walls or allies: clear your firing line.\nAssign each survivor to one of three groups and choose its leader. In the atlas, hold \006 and press \001 for a group route. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume the Priority queue in Squad management.",
     "Construction consumes materials when a foundation is placed. Stay beside it to build; moving cancels work. Resume from the nearby action or Camp ledger. Unfinished stations and beds cannot work.\nCampfires and forges burn one charge per production action. Add clean timber for four charges or coal for ten. Stations lose a little condition with use. One timber repairs 35 condition. Town workshops supply their own fuel. Windpumps irrigate nearby farms. Queues skip unavailable jobs.",
-    "Bleeding drains blood and can kill. Dressings stop bleeding and treat organic wounds; trauma still limits maximum health. Food and bed rest slowly restore that limit.\nMechanical characters and prosthetics need spare parts. Medicine and sleep cannot repair metal. The Care panel shows health, trauma and armor condition. Cloth restores equipment condition.\nRaiders near the chain yard may carry a fallen survivor away. Escape takes time away from guards. Tools speed it up. Free allies can unlock captives. Escapees are remembered for a day.",
+    "Bleeding drains blood and can kill. Dressings stop bleeding and treat organic wounds; trauma still limits maximum health. Food and bed rest slowly restore that limit.\nMechanical characters and prosthetics need spare parts. Medicine and sleep cannot repair metal. Health & recovery shows health, trauma and armor condition. Cloth restores equipment condition.\nRaiders near the chain yard may carry a fallen survivor away. Escape takes time away from guards. Tools speed it up. Free allies can unlock captives. Escapees are remembered for a day.",
     "Use Armor Layers to fit a light body garment under outer armor. Weight must be five or less. Swaps preserve stolen ownership and fail safely if your pack is full.\nOuter body covers 95% of chest hits and 65% of arm hits; headwear covers 85%, legwear 90%, boots 35%. An uncovered hit bypasses that piece. Blunt impacts use 72% of outer protection. Underlayers add reduced protection. Wear lowers protection to a minimum of 65%; maintain with cloth. Inspect both armor and movement before equipping."};

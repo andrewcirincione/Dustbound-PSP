@@ -39,7 +39,7 @@ int depth_named(int actor) {
     return -1;
 }
 void depth_open(int screen) {
-    ui.screen = screen;
+    ui.screen = screen == SCREEN_ORDERS ? SCREEN_SQUAD : screen == SCREEN_CARE ? SCREEN_HEALTH : screen;
     ui.selection = ui.scroll = 0;
 }
 static void clear_spot(float *x, float *y) {

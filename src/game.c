@@ -353,7 +353,7 @@ void restock(void) {
         }
     }
     for (int t = 0; t < TOWNS; t++)
-        frontier_restock(t);
+        {frontier_restock(t);regional_restock(t);}
     g.lastRestock = g.day;
 }
 void game_new(uint32_t seed, int scenario) {
@@ -453,6 +453,7 @@ void game_new(uint32_t seed, int scenario) {
     place_wilderness_encounters();
     frontier_identity();
     depth_init();
+    regional_init();
     ui.camX = a->x;
     ui.camY = a->y;
     ui.mapX = a->x;
@@ -465,6 +466,7 @@ int hostile(const Actor *a, const Actor *b) {
     if (depth_room(a) != depth_room(b))
         return 0;
     if (a->squad && b->squad) return 0;
+    if(regional_hostile(a,b)) return 1;
     /* Escapees remain recognizable to their former captors for one day. */
     if ((uintptr_t)b >= (uintptr_t)g.actors && (uintptr_t)b < (uintptr_t)(g.actors+g.actorCount) &&
         g.depth.actors[b-g.actors].recognized > 0 && (a->kind == GUARD || a->kind == RAIDER) &&
@@ -1121,6 +1123,7 @@ void interact(void) {
     }
     Building *b = &g.buildings[n];
     if (b->type == WELL) {
+        if(regional_well(a,b)) return;
         if (inventory_add(a, WATER, 2)) {
             gain(a, LABOUR, 6);
             log_msg("Drew 2 water.");
@@ -1315,6 +1318,7 @@ void simulate(float dt) {
     }
     depth_tick(dt);
     tick_expansion(dt);
+    regional_tick();
     g.time += dt;
     g.dayTime += dt / 75;
     if (g.dayTime >= 24) {
@@ -1516,7 +1520,7 @@ void simulate(float dt) {
             int spawned = 0;
             for (int i = 0; i < MAX_ACTORS && spawned < 2; i++) {
                 int n = -1;
-                if (i < g.actorCount && g.actors[i].dead && !g.actors[i].squad && depth_named(i) < 0 &&
+                if (i < g.actorCount && g.actors[i].dead && !g.actors[i].squad && depth_named(i) < 0 && !regional_named(i) &&
                     g.actors[i].carriedBy < 0 && merc_slot(&g.actors[i]) < 0)
                     n = i;
                 else if (g.actorCount < MAX_ACTORS) {
@@ -1559,7 +1563,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 6, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 7, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1660,7 +1664,7 @@ static int validate_game(const Game *t) {
         if (a->carrying >= t->actorCount || a->carriedBy >= t->actorCount)
             return 0;
     }
-    return depth_validate(t);
+    return depth_validate(t) && regional_validate(t);
 }
 static int migrate_legacy(const LegacyGame *old) {
     if (old->actorCount < 1 || old->actorCount > 80 || old->buildingCount < 0 || old->buildingCount > 100 ||
@@ -1737,10 +1741,11 @@ static int migrate_legacy(const LegacyGame *old) {
         if (expanded->nodes[i].x >= 128 || expanded->nodes[i].y >= 128)
             g.nodes[g.nodeCount++] = expanded->nodes[i];
     free(expanded);
+    memset(&g.regions,0,sizeof(g.regions));
     return validate_game(&g);
 }
 static int save_shape(uint32_t version, uint32_t size) {
-    return (version == 6 && size == sizeof(Game)) || (version == 5 && size == offsetof(Game, depth)) || ((version == 3 || version == 4) && size == 404460) ||
+    return (version == 7 && size == sizeof(Game)) || (version == 6 && size == offsetof(Game, regions)) || (version == 5 && size == offsetof(Game, depth)) || ((version == 3 || version == 4) && size == 404460) ||
            (version == 2 && size == 404444);
 }
 static int decode_modern(Game *out, const void *data, uint32_t version, uint32_t size) {
@@ -1808,6 +1813,7 @@ int load_game(const char *path) {
     if (ok) {
         frontier_identity();
         depth_init();
+    regional_init();
         memset(&ui, 0, sizeof(ui));
         ui.speed = 1;
         ui.slot = 1;
@@ -1882,28 +1888,26 @@ int load_slot(int n) {
     return ok;
 }
 static void open_screen(int s) {
-    ui.screen = s;
+    ui.screen = s == SCREEN_ORDERS ? SCREEN_SQUAD : s == SCREEN_CARE ? SCREEN_HEALTH : s;
     ui.selection = ui.scroll = 0;
 }
-static void cycle_squad(int direction) {
-    if (g.interiorBuilding)
-        interior_leave();
-    int n = g.selected;
-    for (int i = 0; i < g.actorCount; i++) {
-        n = (n + direction + g.actorCount) % g.actorCount;
-        if (g.actors[n].squad && !g.actors[n].dead) {
-            g.selected = n;
-            ui.waypoint = 0;
-            return;
+void cycle_squad(int direction) {
+    int n=g.selected;
+    for(int i=0;i<g.actorCount;i++) {
+        n=(n+direction+g.actorCount)%g.actorCount;
+        if(g.actors[n].squad && (!g.actors[n].dead || ui.screen!=SCREEN_WORLD)) {
+            if(n==g.selected)return;
+            if(g.interiorBuilding)interior_leave();
+            g.selected=n;ui.waypoint=0;return;
         }
     }
 }
 static const char *pauseLabels[3][8] = {
     {"Resume", "Save game", "Load game", "Game speed", "Controls & field guide", "Save and quit to title", "New wanderer"},
-    {"Inventory & equipment", "Skills", "Body & first aid", "Squad jobs", "Orders & priorities", "Treatment & recovery", "Armor layers", "Recent messages"},
-    {"Map & travel", "Copper Road expedition", "Contracts", "Factions", "Build a camp", "Camp upkeep", "Crafting recipes", "Research"}
+    {"Inventory & equipment", "Skills", "Health & recovery", "Squad management", "Armor layers", "Recent messages"},
+    {"Map & travel", "Copper Road expedition", "Journal & local conflicts", "Factions", "Build a camp", "Camp upkeep", "Crafting recipes", "Research"}
 };
-int pause_menu_count(void) { return ui.menuTab == 0 ? 7 : 8; }
+int pause_menu_count(void) { return ui.menuTab == 0 ? 7 : ui.menuTab == 1 ? 6 : 8; }
 const char *pause_menu_label(int row) {
     return row >= 0 && row < pause_menu_count() ? pauseLabels[ui.menuTab][row] : "";
 }
@@ -1930,7 +1934,7 @@ static void pause_menu_open(void) {
         return;
     }
     static const int screens[2][8] = {
-        {SCREEN_PACK, SCREEN_SKILLS, SCREEN_HEALTH, SCREEN_SQUAD, SCREEN_ORDERS, SCREEN_CARE, SCREEN_LAYERS, SCREEN_LOG},
+        {SCREEN_PACK, SCREEN_SKILLS, SCREEN_HEALTH, SCREEN_SQUAD, SCREEN_LAYERS, SCREEN_LOG},
         {SCREEN_MAP, SCREEN_EXPEDITION, SCREEN_JOURNAL, SCREEN_FACTIONS, SCREEN_BUILD, SCREEN_CAMP, SCREEN_CRAFT, SCREEN_RESEARCH}
     };
     ui.menuReturn = 1;
@@ -1947,6 +1951,14 @@ void game_tick(float dt, Input in) {
     dt = clamp(dt, 0, .1f);
     ui.noticeTime = fmaxf(0, ui.noticeTime - dt);
     int p = in.pressed;
+    if(ui.screen==SCREEN_ORDERS)ui.screen=SCREEN_SQUAD;
+    if(ui.screen==SCREEN_CARE)ui.screen=SCREEN_HEALTH;
+    item_view_normalize();
+    if(item_view_enabled()) {
+        if(p&KEY_UP)item_view_move(-1);
+        if(p&KEY_DOWN)item_view_move(1);
+        p &= ~(KEY_UP|KEY_DOWN); in.pressed=p;
+    }
     if (ui.screen != SCREEN_WORLD)
         ui.squadCyclePending = 0;
     if (ui.screen == SCREEN_WORLD) ui.menuReturn = 0;
@@ -1977,6 +1989,9 @@ void game_tick(float dt, Input in) {
             depth_open(SCREEN_ORDERS);
             return;
         }
+    }
+    if(((ui.screen>=SCREEN_PACK && ui.screen<=SCREEN_SQUAD) || ui.screen==SCREEN_EQUIPPED) && (p&(KEY_L|KEY_R))) {
+        cycle_squad(p&KEY_L?-1:1);item_view_normalize();return;
     }
     if (depth_input(dt,in) || expansion_input(dt, in))
         return;
@@ -2071,12 +2086,6 @@ void game_tick(float dt, Input in) {
                 ui.selection = (ui.selection + count - 1) % count;
             if (p & KEY_DOWN)
                 ui.selection = (ui.selection + 1) % count;
-        }
-        if (ui.screen >= SCREEN_PACK && ui.screen <= SCREEN_SQUAD) {
-            if (p & KEY_R)
-                open_screen(ui.screen == SCREEN_SQUAD ? SCREEN_PACK : ui.screen + 1);
-            if (p & KEY_L)
-                open_screen(ui.screen == SCREEN_PACK ? SCREEN_SQUAD : ui.screen - 1);
         }
         if (ui.screen == SCREEN_PACK) {
             if (p & KEY_CROSS)

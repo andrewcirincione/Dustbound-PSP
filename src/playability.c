@@ -59,7 +59,8 @@ int dialogue_action(int actor, int row) {
         return 8;
     if (npc_role(&g.actors[actor]) == ROLE_MERCENARY && merc_slot(&g.actors[actor]) >= 0 && row == 0)
         return 11;
-    return services[npc_role(&g.actors[actor])][row];
+    int action=services[npc_role(&g.actors[actor])][row];
+    return action==12 && regional_at(g.actors[actor].x,g.actors[actor].y)>=0 ? 13:action;
 }
 const char *dialogue_option(int actor, int row) {
     static const char *labels[] = {"Show me your stock.",
@@ -78,6 +79,8 @@ const char *dialogue_option(int actor, int row) {
     if (depth_named(actor) >= 0 && depth_named(actor) <= NPC_TAMSIN)
         return depth_option(actor, row);
     int action = dialogue_action(actor, row);
+    if(action==13)return "Discuss the local conflict.";
+    if(action==2 && !regional_bed_cost(town_near(g.actors[actor].x,g.actors[actor].y,14)))return "Rest at the sanctuary. Free";
     if (action == 6 && npc_role(&g.actors[actor]) == ROLE_RECRUIT)
         return "Join my expedition. 300 silver";
     return labels[action];
@@ -312,6 +315,8 @@ const char *faction_identity(int f) {
     return l[f >= 0 && f < FACTIONS ? f : 0];
 }
 const char *npc_rumor(const Actor *a) {
+    int r=regional_at(a->x,a->y);
+    if(r>=0) return g.regions.outcome[r]?regional_result(r,g.regions.outcome[r]-1):regional_story(r);
     switch (npc_role(a)) {
     case ROLE_MERCHANT:
         return a->faction == UNION ? "Compact stock includes greatswords and rifles. Copper Cross sells "
@@ -701,4 +706,79 @@ const char *job_status(const Actor *a) {
     if (a->job == JOB_COOK && inventory_count(a, GRAIN) < 3 && inventory_count(a, MEAT) < 2)
         return "FETCHING grain or meat; stock the depot";
     return "WORKING at station; unload finished goods";
+}
+
+/* Compact views preserve physical slots and ownership; only navigation changes. */
+int item_view_enabled(void) {
+    return ui.screen == SCREEN_PACK || ui.screen == SCREEN_LOOT || ui.screen == SCREEN_THEFT ||
+           ui.screen == SCREEN_STORAGE || ui.screen == SCREEN_LAYERS || (ui.screen == SCREEN_TRADE && ui.sell);
+}
+static int view_item(int slot) {
+    Actor *a = &g.actors[g.selected];
+    if (ui.screen == SCREEN_LOOT || ui.screen == SCREEN_THEFT) {
+        if (ui.lootActor < 0 || ui.lootActor >= g.actorCount) return 0;
+        a = &g.actors[ui.lootActor];
+        return slot < PACK ? a->pack[slot].item : a->gear[slot-PACK];
+    }
+    if (ui.screen == SCREEN_STORAGE && ui.storageSide)
+        return ui.storageIndex >= 0 && ui.storageIndex < g.buildingCount ? g.buildings[ui.storageIndex].storage[slot].item : 0;
+    int it = a->pack[slot].item;
+    if (ui.screen == SCREEN_LAYERS && (itemDefs[it].slot != 1 || itemDefs[it].weight > 5)) return 0;
+    return it;
+}
+static int view_limit(void) {
+    return ui.screen == SCREEN_LOOT ? PACK + GEARS : ui.screen == SCREEN_STORAGE && ui.storageSide ? 16 : PACK;
+}
+int item_view_count(void) {
+    int count = 0;
+    for (int i=0; i<view_limit(); i++) if (view_item(i)) count++;
+    return count;
+}
+int item_view_slot(int row) {
+    for (int i=0; i<view_limit(); i++) if (view_item(i) && row-- == 0) return i;
+    return -1;
+}
+int item_view_row(int slot) {
+    int row=0;
+    for (int i=0;i<view_limit();i++) if (view_item(i)) {if(i==slot)return row;row++;}
+    return -1;
+}
+void item_view_normalize(void) {
+    if (!item_view_enabled() || item_view_row(ui.selection)>=0) return;
+    /* After consuming a stack, prefer the following occupied slot. */
+    int next=-1;
+    for(int i=0;i<view_limit();i++)if(view_item(i)){if(next<0)next=i;if(i>=ui.selection){next=i;break;}}
+    ui.selection=next<0?0:next;
+}
+void item_view_move(int direction) {
+    int count=item_view_count();
+    if(!count){ui.selection=0;return;}
+    int row=item_view_row(ui.selection);if(row<0)row=0;
+    ui.selection=item_view_slot((row+direction+count)%count);
+}
+void skill_benefit(int skill, char *out, int size) {
+    Actor *a=&g.actors[g.selected];int lv=level(a,skill);
+    switch(skill) {
+    case ATHLETICS: snprintf(out,size,"Current movement %.2f m/s, including load and injuries",movement_speed(a));break;
+    case STRENGTH: snprintf(out,size,"Carry limit %d; weapon strength need %d",30+lv*2+gear_bonus(a,3),weapon_strength(a->gear[0]));break;
+    case DEXTERITY: snprintf(out,size,"Attack delay reduction %.2f sec before minimum/handling",lv*.003f);break;
+    case MELEE: snprintf(out,size,"Melee attack score %d before injuries",lv+gear_bonus(a,0)-backpack_combat_penalty(a->gear[5]));break;
+    case DEFENCE: snprintf(out,size,"Armed defence %d before stance and armor bonuses",lv-backpack_combat_penalty(a->gear[5]));break;
+    case TOUGHNESS: snprintf(out,size,"Incoming damage reduced by %.1f%%",lv*.2f);break;
+    case DODGE: snprintf(out,size,"Unarmed defence %d before stance bonuses",lv-backpack_combat_penalty(a->gear[5]));break;
+    case MARTIAL: snprintf(out,size,"Unarmed base damage %.1f, plus strength and attack",7+lv*.4f);break;
+    case STEALTH: snprintf(out,size,"Sneak detection range %.0f%% before weather",100*fmaxf(.12f,.5f-lv*.003f-gear_bonus(a,2)*.003f));break;
+    case THEFT: snprintf(out,size,"Base theft %.0f%%; item, approach and witnesses modify it",100*pickpocket_chance(a));break;
+    case LOCKPICK: snprintf(out,size,"Salvage lock success %.0f%% per attempt",100*fminf(1,.62f+lv*.008f));break;
+    case MEDICINE: snprintf(out,size,"Dressing heals up to %.1f HP per treatable limb",18+lv*.65f+gear_bonus(a,5));break;
+    case LABOUR: snprintf(out,size,"Gathering cycle %.2f seconds",fmaxf(.8f,2.8f-lv*.035f));break;
+    case FARMING: snprintf(out,size,"Harvest %d grain per crop",harvest_yield(a));break;
+    case COOKING: snprintf(out,size,"Cooked rations: +%d per batch",lv/35);break;
+    case SMITHING: if(lv>=36)snprintf(out,size,"All four quality grades unlocked; research gates materials");else snprintf(out,size,"Quality grade %d of 4; next grade at skill %d",1+lv/12,(lv/12+1)*12);break;
+    case ENGINEERING: snprintf(out,size,"Building timber discount %d (minimum cost 1)",lv/30);break;
+    case SCIENCE: snprintf(out,size,"Research discount %d%%; next tier %d silver",lv/5,research_cost());break;
+    case CROSSBOWS: snprintf(out,size,"Ranged attack score %.1f before weather and injuries",lv+gear_bonus(a,0)+level(a,PERCEPTION)*.15f);break;
+    case PERCEPTION: snprintf(out,size,"Ranged attack bonus +%.1f",lv*.15f);break;
+    default:out[0]=0;
+    }
 }

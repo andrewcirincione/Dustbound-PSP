@@ -1011,8 +1011,9 @@ static void overlay_header(const char *name, const char *sub) {
     text(28, 61, sub, MUTED, 1);
     line(27, 75, 451, 75, EDGE);
     text(28, 237, ui.menuReturn ? "\002 BACK   \010 GUIDE" : "\002 CLOSE   \010 GUIDE", MUTED, 1);
-    if (ui.screen >= SCREEN_PACK && ui.screen <= SCREEN_SQUAD)
-        text(249, 237, "\005 / \006: PACK  SKILLS  BODY  SQUAD", MUTED, 1);
+    if ((ui.screen >= SCREEN_PACK && ui.screen <= SCREEN_SQUAD) || ui.screen==SCREEN_EQUIPPED) {
+        char who[60];snprintf(who,sizeof(who),"\005/\006 MEMBER: %.16s",g.actors[g.selected].name);text(249,237,who,MUTED,1);
+    }
 }
 static int start_row(int selected, int max, int visible) {
     int first = selected - visible / 2;
@@ -1050,104 +1051,72 @@ static Actor preview_actor(void) {
     a.facing = 1;
     return a;
 }
-static void compare_number(int x, int y, const char *label, float old, float next, int decimals, int lower) {
-    char b[80];
-    float delta = next - old;
-    if (decimals)
-        snprintf(b, sizeof(b), "%s %.1f > %.1f (%+.1f)", label, old, next, delta);
-    else
-        snprintf(b, sizeof(b), "%s %d > %d (%+d)", label, (int)old, (int)next, (int)delta);
-    text(x, y, b, fabsf(delta) < .01f ? MUTED : ((delta > 0) != lower ? TEAL : RED), 1);
+static void compare_stat(int cell, int y, const char *label, float old, float next, int decimal, int lower) {
+    char b[80];float delta=next-old;int x=31+(cell%2)*211, yy=y+(cell/2)*12;
+    if(fabsf(delta)<.05f)snprintf(b,sizeof(b),decimal?"%s %.2f":"%s %.0f",label,next);
+    else snprintf(b,sizeof(b),decimal?"%s %.2f (%+.2f)":"%s %.0f (%+.0f)",label,next,delta);
+    clipped(x,yy,b,33,fabsf(delta)<.05f?MUTED:((delta>0)!=lower?TEAL:RED));
 }
 static void equipment_comparison(int it, int y) {
-    Actor *a = &g.actors[g.selected];
-    ItemDef *d = &itemDefs[it];
-    char b[110];
-    if (!it) {
-        text(31, y + 12, "SELECT AN ITEM TO INSPECT OR COMPARE.", MUTED, 1);
-        return;
-    }
-    if (d->slot < 0) {
-        snprintf(b, sizeof(b), "%s  /  WEIGHT %d", d->name, d->weight);
-        clipped(31, y, b, 68, TEXT);
-        wrap(31, y + 14, 67, d->desc, MUTED);
-        return;
-    }
-    int worn = a->gear[d->slot];
-    ItemDef *old = &itemDefs[worn];
-    snprintf(b, sizeof(b), "ITEM %s", d->name);
-    if (d->slot == 5 && d->effect >= 0 && item_effect_value(it))
-        snprintf(b, sizeof(b), "ITEM %.37s / %.8s %d", d->name, effectNames[d->effect], item_effect_value(it));
-    clipped(31, y, b, 68, TEXT);
-    snprintf(b, sizeof(b), "WORN %s", worn ? old->name : "EMPTY SLOT");
-    clipped(31, y + 12, b, 68, MUTED);
-    if (d->slot == 5) {
-        compare_number(31, y + 26, "CARRY", old->capacity, d->capacity, 0, 0);
-        compare_number(229, y + 26, "WT", old->weight, d->weight, 0, 1);
-        compare_number(31, y + 38, "LOAD", encumbrance(a), backpack_load_preview(a, it), 0, 1);
-        compare_number(229, y + 38, "FIGHT", -backpack_combat_penalty(worn), -backpack_combat_penalty(it), 0,
-                       0);
-        snprintf(b, sizeof(b), "CARGO %d%% > %d%%", backpack_load_percent(worn), backpack_load_percent(it));
-        text(31, y + 50, b, GOLD, 1);
-        compare_number(229, y + 50, "SNEAK", old->stealth, d->stealth, 0, 0);
-        return;
-    }
-    compare_number(31, y + 26, d->slot == 0 ? "DMG" : "ARM", d->slot == 0 ? old->power : old->armor,
-                   d->slot == 0 ? d->power : d->armor, 0, 0);
-    compare_number(229, y + 26, "WT", old->weight, d->weight, 0, 1);
-    if (d->slot == 0) {
-        compare_number(31, y + 38, "REACH", worn ? old->range : 1.55f, d->range, 1, 0);
-        compare_number(229, y + 38, "DELAY", worn ? old->cooldown : 1.2f, d->cooldown, 1, 1);
-        char handling[60];
-        snprintf(handling, sizeof(handling), "STR %d/%d  DELAY x%.2f", level(&g.actors[g.selected], STRENGTH),
-                 weapon_strength(it), weapon_handling(&g.actors[g.selected], it));
-        text(229, y + 50, handling, weapon_handling(&g.actors[g.selected], it) > 1.05f ? RED : TEAL, 1);
+    if(!it){text(31,y,"NO ITEMS",MUTED,1);return;}
+    Actor *a=&g.actors[g.selected];ItemDef *d=&itemDefs[it];char b[100];
+    if(d->slot<0){snprintf(b,sizeof(b),"%s / WEIGHT %d",d->name,d->weight);clipped(31,y,b,68,TEXT);wrap(31,y+14,67,d->desc,MUTED);return;}
+    int worn=a->gear[d->slot];ItemDef *old=&itemDefs[worn];
+    clipped(31,y,d->name,68,TEXT);
+    snprintf(b,sizeof(b),"WORN: %s",worn?old->name:"EMPTY");clipped(31,y+12,b,68,MUTED);
+    int cell=0;
+    compare_stat(cell++,y+26,d->slot==0?"DAMAGE":d->slot==5?"CAPACITY":"ARMOR",
+                 d->slot==0?old->power:d->slot==5?old->capacity:old->armor,
+                 d->slot==0?d->power:d->slot==5?d->capacity:d->armor,0,0);
+    compare_stat(cell++,y+26,"WEIGHT",old->weight,d->weight,0,1);
+    if(d->slot==0) {
+        if(fabsf(old->range-d->range)>.01f)compare_stat(cell++,y+26,"REACH",worn?old->range:1.55f,d->range,1,0);
+        float before=weapon_handling(a,worn)*fmaxf(.55f,(worn?old->cooldown:1)-level(a,DEXTERITY)*.003f);
+        float after=weapon_handling(a,it)*fmaxf(.55f,d->cooldown-level(a,DEXTERITY)*.003f);
+        if(fabsf(before-after)>.01f)compare_stat(cell++,y+26,"DELAY SEC",before,after,1,1);
+        if(weapon_strength(it)>level(a,STRENGTH)) {
+            snprintf(b,sizeof(b),"NEEDS STR %d / HAVE %d",weapon_strength(it),level(a,STRENGTH));
+            clipped(31+(cell%2)*211,y+26+(cell/2)*12,b,33,RED);cell++;
+        }
+    } else if(d->slot==5) {
+        compare_stat(cell++,y+26,"LOADED WT",encumbrance(a),backpack_load_preview(a,it),0,1);
+        if(backpack_combat_penalty(worn)!=backpack_combat_penalty(it))compare_stat(cell++,y+26,"COMBAT",-backpack_combat_penalty(worn),-backpack_combat_penalty(it),0,0);
+        if(backpack_load_percent(worn)!=backpack_load_percent(it))compare_stat(cell++,y+26,"CARGO WT %",backpack_load_percent(worn),backpack_load_percent(it),0,1);
+        if(cell<6&&old->stealth!=d->stealth)compare_stat(cell++,y+26,"STEALTH",old->stealth,d->stealth,0,0);
     } else {
-        compare_number(31, y + 38, "MOVE%", old->speed * .5f, d->speed * .5f, 1, 0);
-        compare_number(229, y + 38, "SNEAK", old->stealth, d->stealth, 0, 0);
-        if (old->capacity || d->capacity)
-            compare_number(229, y + 50, "CARRY", old->capacity, d->capacity, 0, 0);
-        else if (old->protection || d->protection)
-            compare_number(229, y + 50, "WEATHER", old->protection, d->protection, 0, 0);
+        if(old->speed!=d->speed)compare_stat(cell++,y+26,"MOVE %",old->speed*.5f,d->speed*.5f,1,0);
+        if(old->stealth!=d->stealth)compare_stat(cell++,y+26,"STEALTH",old->stealth,d->stealth,0,0);
+        if(old->capacity!=d->capacity)compare_stat(cell++,y+26,"CAPACITY",old->capacity,d->capacity,0,0);
+        if(cell<6&&old->protection!=d->protection)compare_stat(cell++,y+26,"WEATHER",old->protection,d->protection,0,0);
     }
-    snprintf(b, sizeof(b), "%.6s %d > %.6s %d", old->effect < 0 ? "NONE" : effectNames[old->effect],
-             item_effect_value(worn), d->effect < 0 ? "NONE" : effectNames[d->effect], item_effect_value(it));
-    clipped(31, y + 50, b, 30, GOLD);
+    if(cell<6&&d->effect>=0&&item_effect_value(it)&&(old->effect!=d->effect||item_effect_value(worn)!=item_effect_value(it))) {
+        snprintf(b,sizeof(b),"%s %d",effectNames[d->effect],item_effect_value(it));
+        clipped(31+(cell%2)*211,y+26+(cell/2)*12,b,33,GOLD);
+    }
 }
 static void pack_screen(void) {
-    Actor *a = &g.actors[g.selected];
-    char b[100];
-    int it = a->pack[ui.selection].item;
-    overlay_header("PACK & EQUIPMENT", "\001 EQUIP / USE   \004 WORN GEAR   \003 PASS TO ALLY");
-    int first = start_row(ui.selection, PACK, 6);
-    for (int j = 0; j < 6; j++) {
-        int k = first + j, y = 84 + j * 13, id = a->pack[k].item;
-        if (k == ui.selection)
-            rect(25, y - 3, 425, 13, 0x4a4030);
-        snprintf(b, sizeof(b), "%02d %.57s", k + 1, id ? itemDefs[id].name : "--");
-        text(31, y, b, k == ui.selection ? TEXT : MUTED, 1);
-        if (id) {
-            snprintf(b, sizeof(b), "%d", a->pack[k].qty);
-            text(442 - strlen(b) * 6, y, b, GOLD, 1);
-        }
+    Actor *a=&g.actors[g.selected];char b[100];int count=item_view_count(),it=count?a->pack[ui.selection].item:0;
+    overlay_header("PACK & EQUIPMENT","\001 EQUIP / USE   \004 WORN GEAR   \003 PASS TO ALLY");
+    int first=start_row(item_view_row(ui.selection),count,6);
+    for(int j=0;j<6&&first+j<count;j++) {
+        int k=item_view_slot(first+j),y=84+j*13,id=a->pack[k].item;
+        if(k==ui.selection)rect(25,y-3,425,13,0x4a4030);
+        clipped(31,y,itemDefs[id].name,59,k==ui.selection?TEXT:MUTED);
+        snprintf(b,sizeof(b),"%d",a->pack[k].qty);text(442-strlen(b)*6,y,b,GOLD,1);
     }
-    if (a->stolen[ui.selection]) {
-        snprintf(b, sizeof(b), "STOLEN: %s", factionNames[a->stolen[ui.selection]]);
-        clipped(31, 160, b, 40, RED);
-    }
-    snprintf(b, sizeof(b), "LOAD %.0f / %d", encumbrance(a), 30 + level(a, STRENGTH) * 2 + gear_bonus(a, 3));
-    text(322, 160, b, MUTED, 1);
-    equipment_comparison(it, 173);
+    snprintf(b,sizeof(b),"%d / %d SLOTS",count,PACK);text(31,160,b,MUTED,1);
+    if(count&&a->stolen[ui.selection])text(142,160,"STOLEN",RED,1);
+    snprintf(b,sizeof(b),"LOAD %.0f / %d",encumbrance(a),30+level(a,STRENGTH)*2+gear_bonus(a,3));text(322,160,b,MUTED,1);
+    equipment_comparison(it,173);
 }
-
 static void skills_screen(void) {
     Actor *a = &g.actors[g.selected];
     char b[80];
     overlay_header("SKILLS & TRAINING", "\015 SELECT SKILL   BARS SHOW PROGRESS TO THE NEXT LEVEL");
     for (int i = 0; i < SKILLS; i++) {
-        int x = 31 + (i / 10) * 214, y = 83 + (i % 10) * 11;
+        int x = 31 + (i / 10) * 214, y = 82 + (i % 10) * 10;
         if (i == ui.selection)
-            rect(x - 3, y - 2, 199, 11, 0x4a4030);
+            rect(x - 3, y - 2, 199, 10, 0x4a4030);
         text(x, y, skillNames[i], i == ui.selection ? TEXT : MUTED, 1);
         int lv = level(a, i);
         snprintf(b, sizeof(b), "%02d", lv);
@@ -1158,46 +1127,47 @@ static void skills_screen(void) {
     int lv = level(a, ui.selection);
     snprintf(b, sizeof(b), "%s  LEVEL %d  %s", skillNames[ui.selection], lv,
              lv == 100 ? "MASTERED" : "LEARN BY DOING");
-    text(31, 199, b, GOLD, 1);
-    wrap(31, 213, 68, skill_training(ui.selection), TEXT);
+    text(31, 187, b, GOLD, 1);
+    skill_benefit(ui.selection,b,sizeof(b));
+    clipped(31,201,b,68,TEAL);
+    wrap(31,215,68,skill_training(ui.selection),TEXT);
 }
 static void health_screen(void) {
-    Actor *a = &g.actors[g.selected];
-    char b[100];
-    overlay_header("BODY & FIRST AID", "\001 USE A FIELD DRESSING. LOST LIMBS NEED PROSTHETICS.");
-    portrait_scale(a, 132, 112, 29, 84, 1);
-    for (int i = 0; i < LIMBS; i++) {
-        int y = 88 + i * 18;
-        text(185, y, limbNames[i], TEXT, 1);
-        bar(266, y + 1, 100, 5, a->health[i], a->health[i] < 30 ? RED : TEAL);
-        snprintf(b, 100, "%d", (int)a->health[i]);
-        text(376, y, b, TEXT, 1);
-        if (a->lostMask & (1 << i))
-            text(405, y, a->prostheticMask & (1 << i) ? "MECH" : "LOST", GOLD, 1);
+    Actor *a=&g.actors[g.selected];DepthActor *z=&g.depth.actors[g.selected];char b[110];
+    overlay_header("HEALTH & RECOVERY",z->captive?"\001 ESCAPE   \003 REPAIR LIMBS   \004 MAINTAIN GEAR":"\001 BANDAGE   \003 REPAIR LIMBS   \004 MAINTAIN GEAR");
+    snprintf(b,sizeof(b),"%.16s / %s",a->name,a->dead?"DEAD":a->unconscious>0?"UNCONSCIOUS":"AWAKE");text(31,83,b,TEAL,1);
+    text(177,98,"HEALTH",MUTED,1);text(334,98,"TRAUMA",MUTED,1);
+    for(int i=0;i<LIMBS;i++) {
+        int y=111+i*13,missing=(a->lostMask&(1<<i))&&!(a->prostheticMask&(1<<i));
+        if(i==ui.selection)rect(25,y-2,425,12,0x4a4030);
+        text(31,y,limbNames[i],i==ui.selection?TEXT:MUTED,1);
+        bar(157,y+2,91,4,missing?0:a->health[i],a->health[i]<30||missing?RED:TEAL);
+        if(missing)snprintf(b,sizeof(b),"LOST");else snprintf(b,sizeof(b),"%.0f/%.0f",a->health[i],100-z->trauma[i]);
+        text(261,y,b,missing?RED:TEXT,1);
+        snprintf(b,sizeof(b),"%.0f%s",z->trauma[i],depth_organic(a,i)?"":" / MECH");text(337,y,b,MUTED,1);
     }
-    snprintf(b, 100, "BLOOD %d   BLEED %.1f", (int)a->blood, a->bleed);
-    text(185, 201, b, a->bleed ? RED : MUTED, 1);
-    snprintf(b, 100, "FOOD %d  FATIGUE %d  KITS %d", (int)a->hunger, (int)a->fatigue,
-             inventory_count(a, MEDKIT));
-    text(185, 213, b, MUTED, 1);
-    text(185, 225,
-         a->dead              ? "DEAD"
-         : a->unconscious > 0 ? "UNCONSCIOUS - NEEDS RESCUE"
-                              : "CONSCIOUS",
-         TEAL, 1);
+    snprintf(b,sizeof(b),"BLOOD %.0f  BLEED %.1f  FOOD %.0f  FATIGUE %.0f",a->blood,a->bleed,a->hunger,a->fatigue);text(31,194,b,a->bleed>.01f?RED:MUTED,1);
+    snprintf(b,sizeof(b),"DRESSINGS %d  GEAR CONDITION %.0f%%",inventory_count(a,MEDKIT),z->upkeep);text(31,207,b,GOLD,1);
+    text(31,221,z->captive?"Work shackles away from guards.":"Bandages stop bleeding. Rest repairs lasting trauma.",MUTED,1);
 }
 static void squad_screen(void) {
-    Actor *a = &g.actors[g.selected];
-    overlay_header("SQUAD ORDERS", "\014 MEMBER   \001 JOB   \003 DISMISS FALLEN");
-    clipped(31, 85, a->name, 16, TEAL);
-    char b[60];
-    snprintf(b, 60, "%d / 8 SURVIVORS", g.squadCount);
-    text(326, 85, b, GOLD, 1);
-    for (int i = 0; i < 8; i++)
-        row(101 + i * 13, ui.selection == i, jobNames[i], a->job == i ? "ASSIGNED" : "");
-    wrap(31, 211, 68, job_status(a), TEAL);
+    Actor *a=&g.actors[g.selected];DepthActor *z=&g.depth.actors[g.selected];char b[120];
+    overlay_header("SQUAD MANAGEMENT","\005/\006 MEMBER   \014 CHANGE   \001 SET   \004 PACK");
+    snprintf(b,sizeof(b),"%.16s / %s",a->name,job_status(a));clipped(31,83,b,68,TEAL);
+    const char *labels[]={"Immediate job","Combat stance","Travel group","Group leader","Priority queue","Priority 1","Priority 2","Priority 3","Priority 4"};
+    for(int i=0;i<9;i++) {
+        const char *value="";
+        if(i==0)value=jobNames[a->job];
+        if(i==1)value=orderNames[z->order];
+        if(i==2){snprintf(b,sizeof(b),"%d / 3",z->group+1);value=b;}
+        if(i==3)value=g.depth.groupLeader[z->group]==g.selected?"THIS MEMBER":"\001 SET THIS MEMBER";
+        if(i==4)value=!z->queued?"OFF / IMMEDIATE JOB":z->paused?"PAUSED":"RUNNING";
+        if(i>=5)value=jobNames[z->queue[i-5]];
+        row(101+i*14,i==ui.selection,labels[i],value);
+    }
+    rect(25,233,425,15,PANEL);
+    text(31,237,a->dead?"\002 BACK   \003 DISMISS FALLEN   \010 GUIDE":"\002 BACK   \010 GUIDE   L/R CHANGES MEMBER",MUTED,1);
 }
-
 static void map_screen(void) {
     overlay_header(ui.mapZoom ? "LOCAL ROUTES / FRONTIER" : "WORLD ATLAS / FRONTIER",
                    "\011 CURSOR  \001 TRAVEL  \005/\006 TOWNS  \004 ZOOM  \003 CHART");
@@ -1240,6 +1210,21 @@ static void map_screen(void) {
     }
     for (int y = 0; y < mh; y++)
         memcpy(fb + (oy + y) * pitch + ox, atlas + y * mw, mw * sizeof(uint32_t));
+    int oldL=clipLeft,oldR=clipRight,oldT=clipTop,oldB=clipBottom;
+    clipLeft=ox;clipRight=ox+mw;clipTop=oy;clipBottom=oy+mh;
+    for(int t=1;t<TOWNS;t++) {
+        int near=0;float best=1e9f;
+        for(int j=0;j<t;j++){float d=distance(towns[t].x,towns[t].y,towns[j].x,towns[j].y);if(d<best){best=d;near=j;}}
+        int steps=(int)best+1;
+        for(int k=0;k<steps;k++) {
+            float u=k/(float)steps,v=(k+1)/(float)steps;
+            float wx=towns[t].x+(towns[near].x-towns[t].x)*u,wy=towns[t].y+(towns[near].y-towns[t].y)*u;
+            int q=((int)wy/4)*FOG_SIZE+(int)wx/4;
+            if(INMAP(wx,wy) && (g.seen[q>>3]&(1<<(q&7))))
+                line(MAPX(wx),MAPY(wy),MAPX(towns[t].x+(towns[near].x-towns[t].x)*v),
+                     MAPY(towns[t].y+(towns[near].y-towns[t].y)*v),0xa29670);
+        }
+    }
     for (int t = 0; t < TOWNS; t++)
         if (g.discovered[t] && INMAP(towns[t].x, towns[t].y)) {
             int x = MAPX(towns[t].x), y = MAPY(towns[t].y);
@@ -1257,13 +1242,28 @@ static void map_screen(void) {
     for (int i = 0; i < g.actorCount; i++)
         if (g.actors[i].squad && !g.actors[i].dead && INMAP(g.actors[i].x, g.actors[i].y))
             rect(MAPX(g.actors[i].x) - 1, MAPY(g.actors[i].y) - 1, 3, 3, TEAL);
-    for(int i=0;i<LANDMARKS;i++)if(INMAP(g.depth.siteX[i],g.depth.siteY[i])){int x=MAPX(g.depth.siteX[i]),y=MAPY(g.depth.siteY[i]);diamond(x,y,3,2,GOLD);}
+    for(int i=0;i<LANDMARKS;i++)if(INMAP(g.depth.siteX[i],g.depth.siteY[i])) {
+        int x=MAPX(g.depth.siteX[i]),y=MAPY(g.depth.siteY[i]);diamond(x,y,4,3,0x151b19);diamond(x,y,2,2,GOLD);
+        if(ui.mapZoom && distance(ui.mapX,ui.mapY,g.depth.siteX[i],g.depth.siteY[i])<12)
+            clipped(x>ox+120?x-110:x+6,y+5,landmarkNames[i],18,GOLD);
+    }
+    for(int i=0;i<3;i++) {int t=regional_town(i);if(g.discovered[t] && INMAP(towns[t].x,towns[t].y))
+        text(MAPX(towns[t].x)+5,MAPY(towns[t].y)-8,g.regions.outcome[i]?"+":"!",g.regions.outcome[i]?TEAL:RED,1); }
+    if(INMAP(g.regions.campX,g.regions.campY) && (ui.mapTown==8 || g.discovered[8])) {
+        int cx=MAPX(g.regions.campX),cy=MAPY(g.regions.campY);diamond(cx,cy,4,3,g.regions.outcome[1]?TEAL:RED);
+        if(ui.mapZoom)clipped(cx+6,cy-9,g.regions.outcome[1]?"TOLL AGREEMENT":"TOLL CAMP",18,TEXT);
+    }
     if (g.baseExists && INMAP(g.baseX, g.baseY))
         frame(MAPX(g.baseX) - 3, MAPY(g.baseY) - 3, 7, 7, TEAL);
     Actor *leader = &g.actors[g.selected];
     int youx = MAPX(leader->x), youy = MAPY(leader->y);
     int x = MAPX(ui.mapX), y = MAPY(ui.mapY);
     if (INMAP(leader->x, leader->y)) {
+        if(!ui.waypoint) {
+            float dx=x-youx,dy=y-youy,steps=fmaxf(fabsf(dx),fabsf(dy));
+            for(int k=0;k<steps;k+=6) line(youx+dx*k/fmaxf(1,steps),youy+dy*k/fmaxf(1,steps),
+                youx+dx*fminf(k+3,steps)/fmaxf(1,steps),youy+dy*fminf(k+3,steps)/fmaxf(1,steps),GOLD);
+        }
         if (ui.waypoint) {
             int dx = MAPX(ui.travelX), dy = MAPY(ui.travelY);
             /* Clip the route to the visible map rectangle. */
@@ -1284,6 +1284,8 @@ static void map_screen(void) {
     }
     line(x - 5, y, x + 5, y, TEXT);
     line(x, y - 5, x, y + 5, TEXT);
+    if(INMAP(ui.mapX,ui.mapY))text(x<ox+mw-40?x+8:x-27,y>oy+12?y-9:y+8,"DEST",TEXT,1);
+    clipLeft=oldL;clipRight=oldR;clipTop=oldT;clipBottom=oldB;
     frame(ox - 1, oy - 1, mw + 2, mh + 2, EDGE);
     text(300, 84, "SETTLEMENTS", GOLD, 1);
     int first = start_row(ui.mapTown, TOWNS, 9);
@@ -1295,13 +1297,13 @@ static void map_screen(void) {
                 g.discovered[t] ? TEXT : MUTED);
     }
     char b[90];
-    snprintf(b, 90, "YOU %d,%d  DEST %.0fm  %s", (int)leader->x, (int)leader->y,
+    snprintf(b, 90, "%s %.0fm  / %s", ui.waypoint ? "TRAVELLING" : "PLANNED COURSE",
              distance(leader->x, leader->y, ui.waypoint ? ui.travelX : ui.mapX,
                       ui.waypoint ? ui.travelY : ui.mapY),
              regionNames[biome(ui.mapX, ui.mapY)]);
     text(31, 222, b, TEAL, 1);
     rect(25, 233, 425, 15, PANEL);
-    text(31, 237, "\002 CLOSE  \010 GUIDE  GOLD: LANDMARK  \006+\001 GROUP", GOLD, 1);
+    text(31, 237, "\002 BACK   TAN ROAD  GOLD SITE  ! CONFLICT  + RESOLVED", GOLD, 1);
 #undef MAPX
 #undef MAPY
 #undef INMAP
@@ -1314,9 +1316,9 @@ static void trade_screen(void) {
     overlay_header(ui.sell ? "SELL / CARRIED" : titles[ui.shopFilter],
                    ui.sell ? "\014 BUY-SELL   \001 SELL ONE"
                            : "\014 BUY-SELL   \005/\006 FILTER   \001 BUY ONE");
-    int count = ui.sell ? PACK : shop_count(), first = start_row(ui.selection, count, 6);
+    int count = ui.sell ? item_view_count() : shop_count(), first = start_row(ui.sell ? item_view_row(ui.selection) : ui.selection, count, 6);
     for (int j = 0; j < 6 && first + j < count; j++) {
-        int i = first + j, it = ui.sell ? g.actors[g.selected].pack[i].item : shop_item(i);
+        int i = ui.sell ? item_view_slot(first+j) : first+j, it = ui.sell ? g.actors[g.selected].pack[i].item : shop_item(i);
         snprintf(b, 100, "%.45s", it ? itemDefs[it].name : "--");
         snprintf(v, 70, "%d S  \001%d", item_price(ui.tradeTown, it, ui.sell),
                  ui.sell ? g.actors[g.selected].pack[i].qty : g.stock[ui.tradeTown][it]);
@@ -1383,18 +1385,21 @@ static void menu_screen(void) {
     }
 }
 static void theft_screen(void) {
-    Actor *a = &g.actors[g.selected], *target = &g.actors[ui.lootActor];
-    int it = pickpocket_item(ui.lootActor);
-    char b[100];
-    overlay_header("PICKPOCKET", "\001 STEAL ONE   \002 CANCEL");
-    snprintf(b, sizeof(b), "TARGET: %.24s / %.24s", target->name, factionNames[target->faction]);
-    text(31, 88, b, GOLD, 1);
-    snprintf(b, sizeof(b), "ITEM: %.60s", it ? itemDefs[it].name : "EMPTY POCKETS");
-    text(31, 111, b, TEXT, 1);
-    snprintf(b, sizeof(b), "SUCCESS CHANCE: %.0f%%", 100 * pickpocket_chance(a));
-    text(31, 139, b, TEAL, 1);
-    text(31, 164, "CAUGHT: +80 BOUNTY / -18 FACTION REPUTATION", RED, 1);
-    wrap(31, 186, 65, "Stolen goods keep their owner. Sell to a Black Mesa fence; selling back to the owner can expose you.", MUTED);
+    Actor *target=&g.actors[ui.lootActor];char b[100],v[30];
+    overlay_header("PICKPOCKET", "\015 SELECT ITEM   \001 STEAL ONE   \002 CANCEL");
+    snprintf(b,sizeof(b),"%.24s / %.24s",target->name,factionNames[target->faction]);text(31,85,b,GOLD,1);
+    int count=item_view_count(),first=start_row(item_view_row(ui.selection),count,5);
+    for(int j=0;j<5 && first+j<count;j++) {
+        int k=item_view_slot(first+j),it=target->pack[k].item;
+        snprintf(v,sizeof(v),"%d   %d KG",target->pack[k].qty,itemDefs[it].weight);
+        row(103+j*13,k==ui.selection,itemDefs[it].name,v);
+    }
+    if(!count) text(31,110,"EMPTY POCKETS",MUTED,1);
+    snprintf(b,sizeof(b),"SUCCESS %.0f%%   %s   %d WITNESSES",100*theft_chance(ui.lootActor,ui.selection),
+             theft_behind(ui.lootActor)?"BEHIND TARGET":"IN THEIR VIEW",theft_witnesses(ui.lootActor));
+    text(31,178,b,TEAL,1);
+    text(31,195,"HEAVY / VALUABLE ITEMS ARE HARDER TO LIFT.",MUTED,1);
+    text(31,212,"CAUGHT: +80 BOUNTY / -18 FACTION REPUTATION",RED,1);
 }
 
 static void help_screen(void) {
@@ -1485,8 +1490,10 @@ static void equipped_screen(void) {
     }
     int it = a->gear[ui.selection];
     char b[100];
-    snprintf(b, sizeof(b), "%s / WT %d / %s +%d", slotNames[ui.selection], itemDefs[it].weight,
-             it >= BASE_ITEMS ? effectNames[itemDefs[it].effect] : "STANDARD", item_effect_value(it));
+    if(!it) snprintf(b,sizeof(b),"%s: EMPTY",slotNames[ui.selection]);
+    else if(item_effect_value(it))snprintf(b,sizeof(b),"%s / WEIGHT %d / %s %d",slotNames[ui.selection],itemDefs[it].weight,
+        effectNames[itemDefs[it].effect],item_effect_value(it));
+    else snprintf(b,sizeof(b),"%s / WEIGHT %d",slotNames[ui.selection],itemDefs[it].weight);
     clipped(30, 212, b, 68, TEAL);
 }
 static void forge_screen(void) {
@@ -1565,8 +1572,20 @@ static void save_screen(void) {
     }
     text(31, 221, "AUTOSAVE IS SEPARATE FROM YOUR MANUAL SLOTS.", TEAL, 1);
 }
+static void regional_screen(void) {
+    char b[160];int r=ui.selection,c=g.regions.outcome[r]?g.regions.outcome[r]-1:ui.regionChoice;
+    overlay_header("JOURNAL / LOCAL CONFLICTS", "\005/\006 CONTRACTS   \015 REGION   \003 LOCATE");
+    for(int i=0;i<3;i++)row(83+i*14,i==r,regional_names[i],g.regions.outcome[i]?"RESOLVED":"OPEN");
+    wrap(31,129,68,regional_story(r),TEXT);
+    snprintf(b,sizeof(b),"%s%s",g.regions.outcome[r]?"AGREEMENT: ":"\014 ",regional_choice(r,c));text(31,166,b,GOLD,1);
+    if(!g.regions.outcome[r]){regional_requirements(r,c,b,sizeof(b));text(31,181,b,MUTED,1);}
+    wrap(31,g.regions.outcome[r]?185:198,68,regional_result(r,c),TEAL);
+    rect(25,233,425,15,PANEL);
+    snprintf(b,sizeof(b),"\002 BACK   %s",g.regions.outcome[r]?"THIS AGREEMENT IS PERMANENT":"\001 COMMIT AT TOWN (PERMANENT)");text(31,237,b,GOLD,1);
+}
 static void journal_screen(void) {
-    overlay_header("THE ROAD JOURNAL", "\001 CLAIM AT TOWN   \003 LOCATE ON MAP   \010 GUIDE");
+    if(ui.journalTab){regional_screen();return;}
+    overlay_header("THE ROAD JOURNAL", "\005/\006 CONFLICTS   \001 CLAIM   \003 LOCATE");
     char b[180], v[40];
     int first = start_row(ui.selection, CONTRACTS, 6);
     for (int j = 0; j < 6; j++) {
@@ -1618,38 +1637,30 @@ static void storage_screen(void) {
     Building *z = &g.buildings[ui.storageIndex];
     overlay_header(ui.storageSide ? "DEPOT / WITHDRAW" : "DEPOT / DEPOSIT",
                    "\014 SIDE   \001 MOVE ONE   \003 MOVE STACK   \010 GUIDE");
-    int count = ui.storageSide ? 16 : PACK, first = start_row(ui.selection, count, 9);
+    int count = item_view_count(), first = start_row(item_view_row(ui.selection), count, 9);
     char b[30];
+    if(!count)text(31,100,"NO ITEMS ON THIS SIDE",MUTED,1);
     for (int j = 0; j < 9 && first + j < count; j++) {
-        int k = first + j;
+        int k = item_view_slot(first+j);
         Stack st = ui.storageSide ? z->storage[k] : a->pack[k];
         snprintf(b, 30, "\001%d", st.qty);
         row(86 + j * 15, k == ui.selection, st.item ? itemDefs[st.item].name : "EMPTY", st.item ? b : "");
     }
 }
 static void loot_screen(void) {
-    Actor *a = &g.actors[ui.lootActor];
-    overlay_header("LOOT", "\001 TAKE ONE   \003 TAKE STACK   \015 CHOOSE");
-    int first = start_row(ui.selection, PACK + GEARS, 6);
-    char b[80];
-    for (int j = 0; j < 6; j++) {
-        int k = first + j, id = k < PACK ? a->pack[k].item : a->gear[k - PACK], y = 84 + j * 13;
-        if (k == ui.selection)
-            rect(25, y - 3, 425, 13, 0x4a4030);
-        snprintf(b, sizeof(b), "%02d %.57s", k + 1, id ? itemDefs[id].name : "EMPTY");
-        text(31, y, b, k == ui.selection ? TEXT : MUTED, 1);
-        if (id) {
-            snprintf(b, sizeof(b), "%d", k < PACK ? a->pack[k].qty : 1);
-            text(442 - strlen(b) * 6, y, b, GOLD, 1);
-        }
+    Actor *a=&g.actors[ui.lootActor];int count=item_view_count();char b[100];
+    int theft=!a->squad&&a->faction!=HOSTILE&&a->faction!=WILDLIFE;
+    overlay_header("LOOT",theft?"\001 STEAL ONE   \003 STEAL STACK   \015 CHOOSE":"\001 TAKE ONE   \003 TAKE STACK   \015 CHOOSE");
+    int first=start_row(item_view_row(ui.selection),count,6);
+    for(int j=0;j<6&&first+j<count;j++) {
+        int k=item_view_slot(first+j),id=k<PACK?a->pack[k].item:a->gear[k-PACK],y=84+j*13;
+        if(k==ui.selection)rect(25,y-3,425,13,0x4a4030);
+        snprintf(b,sizeof(b),"%s%.55s",k>=PACK?"WORN: ":"",itemDefs[id].name);clipped(31,y,b,62,k==ui.selection?TEXT:MUTED);
+        snprintf(b,sizeof(b),"%d",k<PACK?a->pack[k].qty:1);text(442-strlen(b)*6,y,b,GOLD,1);
     }
-    int it = ui.selection < PACK ? a->pack[ui.selection].item : a->gear[ui.selection - PACK];
-    clipped(31, 163,
-            !a->squad && a->faction != HOSTILE && a->faction != WILDLIFE
-                ? "LOOTING THIS PERSON COUNTS AS THEFT"
-                : a->name,
-            40, GOLD);
-    equipment_comparison(it, 173);
+    int it=!count?0:ui.selection<PACK?a->pack[ui.selection].item:a->gear[ui.selection-PACK];
+    snprintf(b,sizeof(b),"%d ITEMS / %.30s",count,a->name);text(31,160,b,MUTED,1);
+    equipment_comparison(it,173);
 }
 static void assist_screen(void) {
     Actor *a = &g.actors[ui.lootActor];
@@ -1688,6 +1699,9 @@ void render_title_art(uint32_t *pixels, int stride) {
 void render_game(uint32_t *pixels, int stride) {
     fb = pixels;
     pitch = stride;
+    if(ui.screen==SCREEN_CARE)ui.screen=SCREEN_HEALTH;
+    if(ui.screen==SCREEN_ORDERS)ui.screen=SCREEN_SQUAD;
+    item_view_normalize();
     if (ui.screen == SCREEN_TITLE) {
         title();
         return;

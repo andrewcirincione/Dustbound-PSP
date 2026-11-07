@@ -319,7 +319,7 @@ void init_expansion(void) {
 int item_price(int town, int it, int selling) {
     if (it <= 0 || it >= ITEMS || town < 0 || town >= TOWNS)
         return 0;
-    float mod = 1 + (town==1&&g.depth.route==ROUTE_TRUCE?.12f:0) + (60 - g.prosperity[town]) * .004f - g.rep[g.townOwner[town]] * .002f;
+    float mod = 1 + regional_price(town,it) + (town==1&&g.depth.route==ROUTE_TRUCE?.12f:0) + (60 - g.prosperity[town]) * .004f - g.rep[g.townOwner[town]] * .002f;
     mod = limit(mod, .65f, 1.6f);
     return (int)fmaxf(1, itemDefs[it].price * (selling ? .6f : 1) * mod);
 }
@@ -475,11 +475,12 @@ int start_sleep(int town) {
         return 0;
     }
     if (g.buildings[bed].owner < 0) {
-        if (town < 0 || g.money < 25) {
-            log_msg("An inn bed costs 25 silver.");
+        int cost=regional_bed_cost(town);
+        if (town < 0 || g.money < cost) {
+            log_msg("An inn bed costs %d silver.",cost);
             return 0;
         }
-        g.money -= 25;
+        g.money -= cost;
     }
     a->taskKind = 3;
     a->taskIndex = bed;
@@ -718,33 +719,67 @@ int pickpocket_item(int n) {
         if (g.actors[n].pack[i].item) return g.actors[n].pack[i].item;
     return NONE;
 }
-int pickpocket(int n) {
-    Actor *a = &g.actors[g.selected];
-    if (n < 0 || n >= g.actorCount || !a->sneaking || !conscious(a)) return 0;
-    Actor *b = &g.actors[n];
-    if (!b->active || b->squad || b->dead || b->unconscious > 0 || b->kind == BEAST || depth_distance(a, b) > TALK_REACH)
-        return 0;
-    int it = pickpocket_item(n), source = -1, room = 0;
-    if (!it) { log_msg("Their pockets are empty."); return 0; }
-    for (int i = 0; i < PACK; i++) {
-        if (source < 0 && b->pack[i].item == it) source = i;
-        if (!a->pack[i].item || (a->pack[i].item == it && a->stolen[i] == b->faction && a->pack[i].qty < 999)) room = 1;
+int theft_behind(int n) {
+    if(n<0 || n>=g.actorCount) return 0;
+    Actor *a=&g.actors[g.selected],*b=&g.actors[n];
+    float side=(depth_x(a)-depth_x(b))-(depth_y(a)-depth_y(b));
+    return b->facing ? side < -.25f : side > .25f;
+}
+static int theft_sight(const Actor *observer,const Actor *a) {
+    if(actor_inside(observer)!=actor_inside(a)) return 0;
+    float d=depth_distance(observer,a);
+    if(d>7) return 0;
+    float dx=depth_x(a)-depth_x(observer),dy=depth_y(a)-depth_y(observer);
+    if(d>2 && (observer->facing ? dx-dy<-.5f : dx-dy>.5f)) return 0;
+    /* Exterior walls occlude witnesses; people in the same room can see. */
+    if(!actor_inside(a)) for(int k=1;k<12;k++) {
+        float x=observer->x+dx*k/12.f,y=observer->y+dy*k/12.f;
+        for(int j=0;j<g.buildingCount;j++) {
+            Building *z=&g.buildings[j];
+            if(building_has_interior(z->type) && fabsf(x-z->x)<1.5f && fabsf(y-z->y)<1.3f) return 0;
+        }
     }
-    if (!room) { log_msg("Your pack is full."); return 0; }
-    float chance = pickpocket_chance(a);
-    gain(a, THEFT, 22);
-    if ((wrand() % 1000) / 1000.f >= chance) {
-        a->bounty += 80;
-        g.rep[b->faction] -= 18;
-        b->speech = 19;
-        b->speechTime = 5;
-        log_msg("Caught stealing! Bounty +80; faction standing -18.");
-        return 0;
-    }
-    if (!inventory_add_owned(a, it, 1, b->faction)) return 0;
-    inventory_remove_slot(b, source, 1);
-    log_msg("Lifted %s. Find a fence before selling it back.", itemDefs[it].name);
     return 1;
+}
+int theft_witnesses(int n) {
+    int count=0; Actor *a=&g.actors[g.selected];
+    for(int i=0;i<g.actorCount;i++) {
+        Actor *b=&g.actors[i];
+        if(i!=n && !b->squad && b->kind!=BEAST && b->active && conscious(b) && theft_sight(b,a)) count++;
+    }
+    return count;
+}
+float theft_chance(int n,int slot) {
+    if(n<0 || n>=g.actorCount || slot<0 || slot>=PACK) return 0;
+    int it=g.actors[n].pack[slot].item;
+    if(!it) return 0;
+    float penalty=fminf(.25f,itemDefs[it].weight*.018f+itemDefs[it].price/6000.f);
+    return limit(pickpocket_chance(&g.actors[g.selected]) + (theft_behind(n)?.16f:-.14f)
+                 - fminf(.6f,.15f*theft_witnesses(n))-penalty,.02f,.95f);
+}
+int pickpocket_slot(int n,int source) {
+    Actor *a=&g.actors[g.selected];
+    if(n<0 || n>=g.actorCount || source<0 || source>=PACK || !a->sneaking || !conscious(a)) return 0;
+    Actor *b=&g.actors[n];
+    if(!b->active || b->squad || b->dead || b->unconscious>0 || b->kind==BEAST || depth_distance(a,b)>TALK_REACH) return 0;
+    int it=b->pack[source].item,room=0;
+    if(!it) {log_msg("Their pockets are empty.");return 0;}
+    for(int i=0;i<PACK;i++) if(!a->pack[i].item || (a->pack[i].item==it && a->stolen[i]==b->faction && a->pack[i].qty<999)) room=1;
+    if(!room) {log_msg("Your pack is full.");return 0;}
+    float chance=theft_chance(n,source);
+    gain(a,THEFT,22);
+    if((wrand()%1000)/1000.f>=chance) {
+        a->bounty+=80;g.rep[b->faction]-=18;b->speech=19;b->speechTime=5;
+        log_msg("Caught stealing! Bounty +80; faction standing -18.");return 0;
+    }
+    if(!inventory_add_owned(a,it,1,b->faction)) return 0;
+    inventory_remove_slot(b,source,1);
+    log_msg("Lifted %s. Find a fence before selling it back.",itemDefs[it].name);return 1;
+}
+int pickpocket(int n) {
+    if(n<0 || n>=g.actorCount) return 0;
+    for(int i=0;i<PACK;i++) if(g.actors[n].pack[i].item) return pickpocket_slot(n,i);
+    log_msg("Their pockets are empty.");return 0;
 }
 static int worker_building(const Actor *a, int type) {
     int found = -1;
@@ -871,7 +906,7 @@ void tick_expansion(float dt) {
         snprintf(g.worldNews, sizeof(g.worldNews), "%s %s.", news[k], towns[t].name);
         if (k == 3) {
             g.factionWar[g.townOwner[t]] = 1;
-            if (g.prosperity[t] < 25 && g.day > 2 && t > 0) {
+            if (g.prosperity[t] < 25 && g.day > 2 && t > 0 && !(t==2 && g.regions.outcome[0]) && !(t==12 && g.regions.outcome[2])) {
                 g.townOwner[t] = g.townOwner[t] == HOSTILE ? towns[t].faction : HOSTILE;
                 snprintf(g.worldNews, sizeof(g.worldNews), "%s changed hands. Roads and trade are unsettled.",
                          towns[t].name);
@@ -971,3 +1006,5 @@ void tick_expansion(float dt) {
         log_msg("Expedition legacy advanced: %d/4. Patronage +150.", stage);
     }
 }
+
+#include "regional.h"

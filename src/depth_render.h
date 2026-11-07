@@ -120,9 +120,9 @@ static void depth_screen(void) {
         depth_header("ARMOR LAYERS", "\015 ITEM  \001 FIT UNDERLAYER  \003 REMOVE  \010 GUIDE");
         snprintf(buf, sizeof(buf), "UNDER: %.48s", z->layer ? itemDefs[z->layer].name : "NONE");
         text(31, 85, buf, TEAL, 1);
-        int first = start_row(ui.selection, PACK, 4);
-        for (int j = 0; j < 4; j++) {
-            int i = first + j, it = a->pack[i].item;
+        int count=item_view_count(), first = start_row(item_view_row(ui.selection), count, 4);
+        for (int j = 0; j < 4 && first+j<count; j++) {
+            int i = item_view_slot(first+j), it = a->pack[i].item;
             char value[40];
             snprintf(value, sizeof(value), "WT %d / ARM %d", itemDefs[it].weight, itemDefs[it].armor);
             row(103 + j * 16, ui.selection == i, it ? itemDefs[it].name : "EMPTY", it ? value : "");

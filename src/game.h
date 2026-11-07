@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.6.2"
+#define VERSION "0.7.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -191,6 +191,7 @@ typedef struct {
     char name[16];
 } SaveInfo;
 #include "depth_types.h"
+typedef struct { int version,outcome[3],toll[3]; float campX,campY; } RegionalState;
 typedef struct {
     uint32_t seed, rng;
     float time, dayTime, raidTimer, autosave;
@@ -215,6 +216,8 @@ typedef struct {
     float mercUntil[4];
     /* v6 append-only extension. v5 prefix is exactly 410656 bytes. */
     FrontierDepth depth;
+    /* v7 append-only regional consequences. */
+    RegionalState regions;
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -245,6 +248,7 @@ typedef struct {
     int helpSelection, helpScroll, saveReturn, saveExit, contextChoice, contextCount, squadCyclePending;
     int depthSite, depthRow;
     int menuTab, menuRow, menuReturn, statusPanel;
+    int journalTab,regionChoice;
     float travelStall, travelLastX, travelLastY;
 } UI;
 typedef struct {
@@ -277,6 +281,24 @@ int weapon_strength(int item);
 float weapon_handling(const Actor *a, int item);
 void frontier_identity(void);
 void frontier_restock(int town);
+extern const char *regional_names[3];
+int regional_town(int region);
+int regional_at(float x,float y);
+void regional_init(void);
+int regional_validate(const Game *state);
+int regional_named(int actor);
+int regional_hostile(const Actor *a,const Actor *b);
+int regional_toll_left(void);
+float regional_price(int town,int item);
+void regional_restock(int town);
+int regional_bed_cost(int town);
+int regional_well(Actor *actor,Building *well);
+const char *regional_story(int region);
+const char *regional_choice(int region,int choice);
+void regional_requirements(int region,int choice,char *out,int size);
+const char *regional_result(int region,int choice);
+int regional_resolve(int region,int choice);
+void regional_tick(void);
 void frontier_tick(float dt);
 int merc_slot(const Actor *a);
 int merc_hire(int actor, int mode);
@@ -379,6 +401,18 @@ int accept_contract(int town, int kind);
 int complete_contract(int index);
 void contract_description(int index, char *dst, int size);
 int pickpocket(int actor);
+int pickpocket_slot(int actor, int slot);
+float theft_chance(int actor, int slot);
+int theft_witnesses(int actor);
+int theft_behind(int actor);
+int item_view_enabled(void);
+int item_view_count(void);
+int item_view_slot(int row);
+int item_view_row(int slot);
+void item_view_normalize(void);
+void item_view_move(int direction);
+void cycle_squad(int direction);
+void skill_benefit(int skill, char *out, int size);
 float pickpocket_chance(const Actor *actor);
 int pickpocket_item(int actor);
 int pause_menu_count(void);

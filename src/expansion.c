@@ -184,11 +184,43 @@ int expansion_input(float dt, Input in) {
             ui.selection = wrapi(ui.selection - 1, GUIDE_PAGES);
         return 1;
     }
+    if (ui.screen == SCREEN_HEALTH && (p & (KEY_CROSS|KEY_SQUARE|KEY_TRIANGLE))) {
+        DepthActor *z=&g.depth.actors[g.selected];
+        if(p&KEY_CROSS) {if(z->captive)depth_capture_action(g.selected);else heal_actor(g.selected,g.selected);}
+        if(p&KEY_SQUARE)depth_repair(g.selected,g.selected);
+        if(p&KEY_TRIANGLE) {
+            if(z->upkeep>=100)log_msg("Equipment is already maintained.");
+            else if(inventory_remove(a,CLOTH,1)){z->upkeep=fminf(100,z->upkeep+40);log_msg("Equipment maintained.");}
+            else log_msg("Maintenance needs one cloth.");
+        }
+        return 1;
+    }
+    if(ui.screen==SCREEN_SQUAD && !(p&KEY_SQUARE)) {
+        if(p&(KEY_CIRCLE|KEY_START)){open_view(SCREEN_WORLD);return 1;}
+        if(p&KEY_TRIANGLE){open_view(SCREEN_PACK);return 1;}
+        if(p&KEY_L)cycle_squad(-1);
+        if(p&KEY_R)cycle_squad(1);
+        a=&g.actors[g.selected];DepthActor *z=&g.depth.actors[g.selected];
+        if(p&KEY_UP)ui.selection=wrapi(ui.selection-1,9);
+        if(p&KEY_DOWN)ui.selection=wrapi(ui.selection+1,9);
+        if(p&(KEY_LEFT|KEY_RIGHT|KEY_CROSS)) {
+            int d=p&KEY_LEFT?-1:1;
+            switch(ui.selection) {
+            case 0:a->job=wrapi(a->job+d,8);z->queued=0;z->paused=0;a->taskKind=0;break;
+            case 1:z->order=wrapi(z->order+d,4);a->autoattack=z->order!=ORDER_HOLD_FIRE;break;
+            case 2:z->group=wrapi(z->group+d,3);break;
+            case 3:g.depth.groupLeader[z->group]=g.selected;break;
+            case 4:{int mode=!z->queued?0:z->paused?2:1;mode=wrapi(mode+d,3);z->queued=mode!=0;z->paused=mode==2;a->taskKind=0;break;}
+            default:z->queue[ui.selection-5]=wrapi(z->queue[ui.selection-5]+d,8);break;
+            }
+        }
+        return 1;
+    }
     if (ui.screen == SCREEN_THEFT) {
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(SCREEN_WORLD);
         } else if (p & KEY_CROSS) {
-            pickpocket(ui.lootActor);
+            pickpocket_slot(ui.lootActor, ui.selection);
             open_view(SCREEN_WORLD);
         }
         return 1;
@@ -414,6 +446,22 @@ int expansion_input(float dt, Input in) {
         }
         return 1;
     }
+    if(ui.screen==SCREEN_JOURNAL && (p&(KEY_L|KEY_R))) {
+        ui.journalTab=1-ui.journalTab;ui.selection=ui.regionChoice=0;return 1;
+    }
+    if(ui.screen==SCREEN_JOURNAL && ui.journalTab) {
+        if(p&(KEY_CIRCLE|KEY_START)) {open_view(SCREEN_WORLD);return 1;}
+        if(p&KEY_UP){ui.selection=wrapi(ui.selection-1,3);ui.regionChoice=0;}
+        if(p&KEY_DOWN){ui.selection=wrapi(ui.selection+1,3);ui.regionChoice=0;}
+        if(p&(KEY_LEFT|KEY_RIGHT))ui.regionChoice=1-ui.regionChoice;
+        if(p&KEY_CROSS)regional_resolve(ui.selection,ui.regionChoice);
+        if(p&KEY_SQUARE) {
+            int r=ui.selection,t=regional_town(r);open_view(SCREEN_MAP);ui.mapTown=t;ui.mapZoom=1;
+            ui.mapX=r==1&&!g.regions.outcome[1]?g.regions.campX:towns[t].x;
+            ui.mapY=r==1&&!g.regions.outcome[1]?g.regions.campY:towns[t].y;
+        }
+        return 1;
+    }
     if (ui.screen == SCREEN_JOURNAL || ui.screen == SCREEN_FACTIONS) {
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(SCREEN_WORLD);
@@ -623,6 +671,11 @@ int expansion_input(float dt, Input in) {
                     break;
                 case 11:
                     merc_dismiss(n);
+                    break;
+                case 13:
+                    ui.journalTab=1;
+                    open_view(SCREEN_JOURNAL);
+                    ui.selection=regional_at(b->x,b->y);ui.regionChoice=0;
                     break;
                 case 12:
                     ui.dialogPage = 3;

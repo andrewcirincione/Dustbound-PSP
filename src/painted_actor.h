@@ -393,8 +393,10 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
         dressed.gear[1] = g.depth.actors[a-g.actors].layer;
         a = &dressed;
     }
-    float li = sc == 1 ? light() : 1;
+    float li = sc == 1 ? fminf(1.15f, light() + (chosen ? .16f : .06f)) : 1;
     if (chosen && sc == 1) {
+        line(x - 11, y + 2, x, y + 7, 0x101713);
+        line(x, y + 7, x + 11, y + 2, 0x101713);
         line(x - 10, y + 1, x, y + 6, TEAL);
         line(x, y + 6, x + 10, y + 1, TEAL);
     }
@@ -468,6 +470,17 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
                 *d = 0xff000000 | (((*d & 0xff00ff) * m >> 8) & 0xff00ff) |
                      (((*d & 0xff00) * m >> 8) & 0xff00);
             }
+    }
+    /* One-pixel silhouette edge separates clothing from earth without a panel. */
+    for(int yy=1;yy<ACT_H-1;yy++) for(int xx=1;xx<ACT_W-1;xx++) {
+        uint32_t *px=actorCache[slot].pixels;int k=yy*ACT_W+xx;
+        if((px[k]>>24)>24) continue;
+        int above=(px[k-ACT_W]>>24)>128,below=(px[k+ACT_W]>>24)>128,
+            left=(px[k-1]>>24)>128,right=(px[k+1]>>24)>128;
+        if(!above&&!below&&!left&&!right) continue;
+        int sx=x-ACT_W/2+xx,sy=y-68+yy;
+        if(sx>=clipLeft&&sx<clipRight&&sy>=clipTop&&sy<clipBottom)
+            rgba_over(fb+sy*pitch+sx,chosen && (below||right)?0x997aada1:0x99101513);
     }
     for (int yy = actorCache[slot].top; yy < actorCache[slot].bottom; yy++) {
         int sy = y - 68 + yy;
