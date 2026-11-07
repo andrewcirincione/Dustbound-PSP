@@ -814,7 +814,9 @@ static void mini_map(void) {
     for (int y = 0; y < 60; y += 3)
         for (int x = 0; x < 66; x += 3) {
             float wx = ui.camX + (x - 33) * .4f, wy = ui.camY + (y - 30) * .4f;
-            uint32_t c = ground(biome(wx, wy));
+            static const uint32_t terrain[]={0x606553,0x72634e,0x858477,0x4d655a,0x54534c,0x69675b,0x979c99,0x405349,0x71534c};
+                uint32_t c = terrain[biome(wx, wy)];
+                if(terrain_height(wx,wy)/4!=terrain_height(wx+1,wy)/4)c=shade(c,.8f);
             rect(ox + x, oy + y, 3, 3, shade(c, .55f));
         }
     for (int i = 0; i < g.buildingCount; i++) {
@@ -1063,6 +1065,7 @@ static void equipment_comparison(int it, int y) {
     if(d->slot<0){snprintf(b,sizeof(b),"%s / WEIGHT %d",d->name,d->weight);clipped(31,y,b,68,TEXT);wrap(31,y+14,67,d->desc,MUTED);return;}
     int worn=a->gear[d->slot];ItemDef *old=&itemDefs[worn];
     clipped(31,y,d->name,68,TEXT);
+    if(it>=CATALOG_ITEMS)text(374,y,it>=CATALOG_ITEMS+16?"SIGNATURE":"SPECIAL",GOLD,1);
     snprintf(b,sizeof(b),"WORN: %s",worn?old->name:"EMPTY");clipped(31,y+12,b,68,MUTED);
     int cell=0;
     compare_stat(cell++,y+26,d->slot==0?"DAMAGE":d->slot==5?"CAPACITY":"ARMOR",
@@ -1171,8 +1174,11 @@ static void squad_screen(void) {
 static void map_screen(void) {
     overlay_header(ui.mapZoom ? "LOCAL ROUTES / FRONTIER" : "WORLD ATLAS / FRONTIER",
                    "\011 CURSOR  \001 TRAVEL  \005/\006 TOWNS  \004 ZOOM  \003 CHART");
-    int ox = 29, oy = 82, mw = 256, mh = 136;
-    int spanX = ui.mapZoom ? 384 : WORLD, spanY = ui.mapZoom ? 204 : WORLD;
+    float nearest=1e9f;
+    for(int t=0;t<TOWNS;t++){float d=distance(ui.mapX,ui.mapY,towns[t].x,towns[t].y);if(d<nearest){nearest=d;ui.mapTown=t;}}
+    int ox = ui.mapZoom?29:105, oy = 82, mw = ui.mapZoom?288:136, mh = 136;
+    rect(29,82,288,136,0x252e2c);
+    int spanX = ui.mapZoom ? 384 : WORLD, spanY = ui.mapZoom ? 181 : WORLD;
     int left = ui.mapZoom ? (int)ui.mapX - spanX / 2 : 0, top = ui.mapZoom ? (int)ui.mapY - spanY / 2 : 0;
     if (left < 0)
         left = 0;
@@ -1185,7 +1191,7 @@ static void map_screen(void) {
 #define MAPX(wx) (ox + (int)(((wx) - left) * mw / spanX))
 #define MAPY(wy) (oy + (int)(((wy) - top) * mh / spanY))
 #define INMAP(wx, wy) ((wx) >= left && (wx) < left + spanX && (wy) >= top && (wy) < top + spanY)
-    static uint32_t atlas[256 * 136], cachedHash;
+    static uint32_t atlas[288 * 136], cachedHash;
     static int ready;
     uint32_t h = g.seed;
     h = (h ^ (unsigned)left) * 16777619u;
@@ -1198,12 +1204,17 @@ static void map_screen(void) {
             for (int x = 0; x < mw; x++) {
                 int wx = left + x * spanX / mw, wy = top + y * spanY / mh, k = (wy / 4) * FOG_SIZE + wx / 4,
                     known = g.seen[k >> 3] & (1 << (k & 7));
-                uint32_t c = ground(biome(wx, wy));
+                static const uint32_t terrain[]={0x606553,0x72634e,0x858477,0x4d655a,0x54534c,0x69675b,0x979c99,0x405349,0x71534c};
+                uint32_t c = terrain[biome(wx, wy)];
+                unsigned rr=0,gg=0,bb=0;
+                for(int sy=-1;sy<=1;sy++)for(int sx=-1;sx<=1;sx++){uint32_t z=terrain[biome(wx+sx*18,wy+sy*18)];rr+=(z>>16)&255;gg+=(z>>8)&255;bb+=z&255;}
+                c=((rr/9)<<16)|((gg/9)<<8)|(bb/9);
+                if(ui.mapZoom && terrain_height(wx,wy)/4!=terrain_height(wx+spanX/mw+1,wy)/4)c=shade(c,.8f);
                 if (terrain_water(wx, wy))
-                    c = 0x3f6464;
+                    c = 0x426e80;
                 else if (terrain_road(wx, wy))
                     c = shade(c, 1.3f);
-                atlas[y * mw + x] = abgr(shade(c, known ? 1 : .32f));
+                atlas[y * mw + x] = abgr(shade(c, known ? 1 : .38f));
             }
         cachedHash = h;
         ready = 1;
@@ -1230,14 +1241,9 @@ static void map_screen(void) {
             int x = MAPX(towns[t].x), y = MAPY(towns[t].y);
             rect(x - 2, y - 2, 5, 5, factionColors[g.townOwner[t]]);
             frame(x - 2, y - 2, 5, 5, GOLD);
-            if (ui.mapZoom && y > oy + 16) {
-                int lx = x < ox + 130 ? x + 5 : x - 76, ly = y - 8;
-                int px = MAPX(g.actors[g.selected].x), py = MAPY(g.actors[g.selected].y);
-                /* Keep the player marker and YOU label readable. Nearby town
-                   names remain available in the settlement list. */
-                if (lx + 72 < px - 8 || lx > px + 34 || ly + 8 < py - 10 || ly > py + 18)
-                    clipped(lx, ly, towns[t].name, 12, GOLD);
-            }
+            char label[28];snprintf(label,sizeof(label),"%02d",t+1);
+            if(ui.mapZoom||t==ui.mapTown)text(x+4,y-6,label,t==ui.mapTown?TEXT:GOLD,1);
+            if(t==ui.mapTown)frame(x-4,y-4,9,9,TEXT);
         }
     for (int i = 0; i < g.actorCount; i++)
         if (g.actors[i].squad && !g.actors[i].dead && INMAP(g.actors[i].x, g.actors[i].y))
@@ -1255,6 +1261,10 @@ static void map_screen(void) {
     }
     if (g.baseExists && INMAP(g.baseX, g.baseY))
         frame(MAPX(g.baseX) - 3, MAPY(g.baseY) - 3, 7, 7, TEAL);
+    for(int k=0;k<EVENTS;k++){WorldEvent*e=&g.living.events[k];if(!e->status&&INMAP(e->x,e->y)) {
+        int ex=MAPX(e->x),ey=MAPY(e->y);uint32_t col=e->faction==HOSTILE||e->type==6||e->type==5?RED:TEAL;
+        frame(ex-2,ey-2,5,5,col);if(ui.mapZoom){char n[8];snprintf(n,sizeof(n),"E%d",k+1);text(ex+4,ey+2,n,col,1);}
+    }}
     Actor *leader = &g.actors[g.selected];
     int youx = MAPX(leader->x), youy = MAPY(leader->y);
     int x = MAPX(ui.mapX), y = MAPY(ui.mapY);
@@ -1280,22 +1290,19 @@ static void map_screen(void) {
         }
         diamond(youx, youy, 5, 4, TEAL);
         frame(youx - 5, youy - 5, 11, 11, TEXT);
-        text(youx < 235 ? youx + 8 : youx - 25, youy < oy + 12 ? youy + 8 : youy - 8, "YOU", TEXT, 1);
     }
     line(x - 5, y, x + 5, y, TEXT);
     line(x, y - 5, x, y + 5, TEXT);
-    if(INMAP(ui.mapX,ui.mapY))text(x<ox+mw-40?x+8:x-27,y>oy+12?y-9:y+8,"DEST",TEXT,1);
     clipLeft=oldL;clipRight=oldR;clipTop=oldT;clipBottom=oldB;
     frame(ox - 1, oy - 1, mw + 2, mh + 2, EDGE);
-    text(300, 84, "SETTLEMENTS", GOLD, 1);
-    int first = start_row(ui.mapTown, TOWNS, 9);
-    for (int j = 0; j < 9; j++) {
-        int t = first + j;
-        if (t == ui.mapTown)
-            rect(298, 98 + j * 13, 148, 12, 0x3c4034);
-        clipped(303, 100 + j * 13, g.discovered[t] ? towns[t].name : "UNCHARTED", 23,
-                g.discovered[t] ? TEXT : MUTED);
-    }
+    text(328,84,"NEAREST TOWN",GOLD,1);
+    char info[80];snprintf(info,sizeof(info),"%02d %s",ui.mapTown+1,g.discovered[ui.mapTown]?towns[ui.mapTown].name:"UNCHARTED");wrap(328,100,19,info,TEXT);
+    text(328,131,"CONTROL",MUTED,1);wrap(328,143,19,g.discovered[ui.mapTown]?factionNames[g.townOwner[ui.mapTown]]:"Unknown",GOLD);
+    text(328,174,"MAP KEY",MUTED,1);
+    text(328,187,"01 Town   E Event",GOLD,1);
+    text(328,198,"Red: threat",RED,1);
+    text(328,209,"Teal: aid / you",TEAL,1);
+    if(!ui.mapZoom){text(38,89,"N",TEXT,1);line(41,103,41,116,TEXT);line(41,103,37,108,TEXT);line(41,103,45,108,TEXT);}
     char b[90];
     snprintf(b, 90, "%s %.0fm  / %s", ui.waypoint ? "TRAVELLING" : "PLANNED COURSE",
              distance(leader->x, leader->y, ui.waypoint ? ui.travelX : ui.mapX,
@@ -1303,7 +1310,7 @@ static void map_screen(void) {
              regionNames[biome(ui.mapX, ui.mapY)]);
     text(31, 222, b, TEAL, 1);
     rect(25, 233, 425, 15, PANEL);
-    text(31, 237, "\002 BACK   TAN ROAD  GOLD SITE  ! CONFLICT  + RESOLVED", GOLD, 1);
+    text(31, 237, "\002 BACK   PALE: ROAD   GOLD: SITE   DASHED: COURSE", GOLD, 1);
 #undef MAPX
 #undef MAPY
 #undef INMAP
@@ -1583,8 +1590,24 @@ static void regional_screen(void) {
     rect(25,233,425,15,PANEL);
     snprintf(b,sizeof(b),"\002 BACK   %s",g.regions.outcome[r]?"THIS AGREEMENT IS PERMANENT":"\001 COMMIT AT TOWN (PERMANENT)");text(31,237,b,GOLD,1);
 }
+static void living_screen(void){
+    char b[160],v[32];overlay_header("JOURNAL / LIVING FRONTIER","\005/\006 CHAPTER   \001 HELP / SEARCH   \003 LOCATE");
+    int first=start_row(ui.selection,EVENTS,6);
+    for(int j=0;j<6;j++){int k=first+j;WorldEvent*e=&g.living.events[k];char title[80];living_title(k,title,sizeof(title));snprintf(b,sizeof(b),"E%d %s",k+1,title);snprintf(v,sizeof(v),e->status?"ENDED":"T%d  %dm",e->tier+1,(int)distance(g.actors[g.selected].x,g.actors[g.selected].y,e->x,e->y));row(84+j*14,k==ui.selection,b,v);}
+    WorldEvent*e=&g.living.events[ui.selection];snprintf(b,sizeof(b),"TOWARD %s",towns[e->town].name);text(31,176,b,GOLD,1);
+    living_detail(ui.selection,b,sizeof(b));wrap(31,190,68,b,TEXT);
+    text(31,223,"New incidents replace resolved and expired opportunities.",MUTED,1);
+}
+static void engage_screen(void){
+    overlay_header("CHOOSE OPPONENT","\015 SELECT   \001 ATTACK   \002 CANCEL");char v[40];int count=combat_candidates(),first=start_row(ui.selection,count,7);
+    for(int j=0;j<7&&first+j<count;j++){int n=combat_candidate(first+j),rel=actor_relation(n);snprintf(v,sizeof(v),"%s  %.1fm",rel<0?"HOSTILE":rel>0?"FRIENDLY":"NEUTRAL",depth_distance(&g.actors[g.selected],&g.actors[n]));row(85+j*16,first+j==ui.selection,g.actors[n].name,v);}
+    if(!count)text(31,96,"Nobody within 14m.",MUTED,1);
+    if(ui.attackFocus>=0&&actor_relation(ui.attackFocus)>=0)text(31,211,"ASSAULT: +100 BOUNTY / -20 FACTION STANDING",RED,1);
+    else text(31,211,"Close to weapon reach to strike. Square stops attacking.",MUTED,1);
+}
 static void journal_screen(void) {
-    if(ui.journalTab){regional_screen();return;}
+    if(ui.journalTab==1){regional_screen();return;}
+    if(ui.journalTab==2){living_screen();return;}
     overlay_header("THE ROAD JOURNAL", "\005/\006 CONFLICTS   \001 CLAIM   \003 LOCATE");
     char b[180], v[40];
     int first = start_row(ui.selection, CONTRACTS, 6);
@@ -1737,6 +1760,7 @@ void render_game(uint32_t *pixels, int stride) {
     case SCREEN_NAME:
         name_screen();
         break;
+    case SCREEN_ENGAGE: engage_screen();break;
     case SCREEN_THEFT:
         theft_screen();
         break;

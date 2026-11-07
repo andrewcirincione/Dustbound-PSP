@@ -1008,3 +1008,5 @@ void tick_expansion(float dt) {
 }
 
 #include "regional.h"
+
+#include "living.h"

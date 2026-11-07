@@ -6,7 +6,7 @@ INCDIR = src
 CFLAGS = -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation
 LIBS = -lm -lpsppower -lpspaudio
 EXTRA_TARGETS = EBOOT.PBP
-PSP_EBOOT_TITLE = Dustbound 0.7.0
+PSP_EBOOT_TITLE = Dustbound 0.8.0
 PSP_EBOOT_ICON = assets/ICON0.png
 PSP_EBOOT_PIC1 = assets/PIC1.png
 PSP_LARGE_MEMORY = 0
@@ -24,3 +24,5 @@ PARAM.SFO: Makefile
 src/render.o: src/art_data.h src/painted_actor.h src/depth_render.h
 
 src/world.o: src/regional.h
+
+src/world.o: src/living.h

@@ -184,6 +184,14 @@ int expansion_input(float dt, Input in) {
             ui.selection = wrapi(ui.selection - 1, GUIDE_PAGES);
         return 1;
     }
+    if(ui.screen==SCREEN_ENGAGE) {
+        int count=combat_candidates();
+        if(p&(KEY_CIRCLE|KEY_START)){open_view(SCREEN_WORLD);return 1;}
+        if(count){if(p&KEY_UP)ui.selection=wrapi(ui.selection-1,count);if(p&KEY_DOWN)ui.selection=wrapi(ui.selection+1,count);if(ui.selection>=count)ui.selection=count-1;}
+        ui.attackFocus=combat_candidate(ui.selection);
+        if((p&KEY_CROSS)&&ui.attackFocus>=0){command_attack(ui.attackFocus);open_view(SCREEN_WORLD);}
+        return 1;
+    }
     if (ui.screen == SCREEN_HEALTH && (p & (KEY_CROSS|KEY_SQUARE|KEY_TRIANGLE))) {
         DepthActor *z=&g.depth.actors[g.selected];
         if(p&KEY_CROSS) {if(z->captive)depth_capture_action(g.selected);else heal_actor(g.selected,g.selected);}
@@ -447,9 +455,9 @@ int expansion_input(float dt, Input in) {
         return 1;
     }
     if(ui.screen==SCREEN_JOURNAL && (p&(KEY_L|KEY_R))) {
-        ui.journalTab=1-ui.journalTab;ui.selection=ui.regionChoice=0;return 1;
+        ui.journalTab=wrapi(ui.journalTab+(p&KEY_L?-1:1),3);ui.selection=ui.regionChoice=0;return 1;
     }
-    if(ui.screen==SCREEN_JOURNAL && ui.journalTab) {
+    if(ui.screen==SCREEN_JOURNAL && ui.journalTab==1) {
         if(p&(KEY_CIRCLE|KEY_START)) {open_view(SCREEN_WORLD);return 1;}
         if(p&KEY_UP){ui.selection=wrapi(ui.selection-1,3);ui.regionChoice=0;}
         if(p&KEY_DOWN){ui.selection=wrapi(ui.selection+1,3);ui.regionChoice=0;}
@@ -460,6 +468,14 @@ int expansion_input(float dt, Input in) {
             ui.mapX=r==1&&!g.regions.outcome[1]?g.regions.campX:towns[t].x;
             ui.mapY=r==1&&!g.regions.outcome[1]?g.regions.campY:towns[t].y;
         }
+        return 1;
+    }
+    if(ui.screen==SCREEN_JOURNAL && ui.journalTab==2){
+        if(p&(KEY_CIRCLE|KEY_START)){open_view(SCREEN_WORLD);return 1;}
+        if(p&KEY_UP)ui.selection=wrapi(ui.selection-1,EVENTS);
+        if(p&KEY_DOWN)ui.selection=wrapi(ui.selection+1,EVENTS);
+        if(p&KEY_CROSS)living_action(ui.selection);
+        if(p&KEY_SQUARE){WorldEvent*e=&g.living.events[ui.selection];ui.mapX=e->x;ui.mapY=e->y;ui.mapTown=e->town;ui.mapZoom=1;open_view(SCREEN_MAP);}
         return 1;
     }
     if (ui.screen == SCREEN_JOURNAL || ui.screen == SCREEN_FACTIONS) {

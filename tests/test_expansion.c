@@ -47,9 +47,9 @@ int main(void) {
         valid += d->name && d->name[0] && d->slot >= 0 && d->slot < GEARS && d->price > 0 && d->weight > 0 &&
                  d->effect >= 0 && d->effect < 12;
     }
-    CHECK(valid == FAMILIES * MATERIALS * QUALITIES,
-          "all 2,112 gear variants have valid slots, effects and prices");
-    CHECK(gear_id(FAMILIES - 1, 5, 3) == ITEMS - 1 && gear_id(-1, 0, 0) == NONE,
+    CHECK(valid == ITEMS - BASE_ITEMS,
+          "all catalog and specialist gear have valid slots, effects and prices");
+    CHECK(gear_id(FAMILIES - 1, 5, 3) == CATALOG_ITEMS - 1 && gear_id(-1, 0, 0) == NONE,
           "catalog boundaries are checked");
     character_begin(1);
     strcpy(ui.createName, "REN");

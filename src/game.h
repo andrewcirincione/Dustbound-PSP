@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.7.0"
+#define VERSION "0.8.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -17,7 +17,9 @@
 #define WEAPON_FAMILIES 36
 #define MATERIALS 6
 #define QUALITIES 4
-#define ITEMS (BASE_ITEMS + FAMILIES * MATERIALS * QUALITIES)
+#define CATALOG_ITEMS (BASE_ITEMS + FAMILIES * MATERIALS * QUALITIES)
+#define ITEMS (CATALOG_ITEMS + 24)
+#define EVENTS 8
 #define GEARS 6
 #define FACTIONS 8
 #define CONTRACTS 24
@@ -120,7 +122,7 @@ enum {
     SCREEN_LOOT,
     SCREEN_ASSIST,
     SCREEN_LOG, SCREEN_EXPEDITION, SCREEN_ORDERS, SCREEN_CAMP, SCREEN_CARE, SCREEN_ENCOUNTER, SCREEN_LAYERS,
-    SCREEN_THEFT
+    SCREEN_THEFT, SCREEN_ENGAGE
 };
 enum {
     KEY_UP = 1,
@@ -193,6 +195,15 @@ typedef struct {
 #include "depth_types.h"
 typedef struct { int version,outcome[3],toll[3]; float campX,campY; } RegionalState;
 typedef struct {
+    unsigned seed; int serial,type,modifier,faction,town,origin,tier,count,status,spawned,participated;
+    float x,y,age,presence; int members[16],stored,reserveAnger[16];
+    Actor reserve[16]; DepthActor reserveDepth[16];
+} WorldEvent;
+typedef struct {
+    int version,serial,history[16],historyPos,owned[MAX_ACTORS],anger[MAX_ACTORS],command[MAX_ACTORS];
+    float pulse; WorldEvent events[EVENTS];
+} LivingWorld;
+typedef struct {
     uint32_t seed, rng;
     float time, dayTime, raidTimer, autosave;
     int day, money, selected, squadCount, tech, rep[FACTIONS], kills, discovered[TOWNS], stock[TOWNS][ITEMS],
@@ -218,6 +229,7 @@ typedef struct {
     FrontierDepth depth;
     /* v7 append-only regional consequences. */
     RegionalState regions;
+    LivingWorld living;
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -248,7 +260,7 @@ typedef struct {
     int helpSelection, helpScroll, saveReturn, saveExit, contextChoice, contextCount, squadCyclePending;
     int depthSite, depthRow;
     int menuTab, menuRow, menuReturn, statusPanel;
-    int journalTab,regionChoice;
+    int journalTab,regionChoice,attackFocus;
     float travelStall, travelLastX, travelLastY;
 } UI;
 typedef struct {
@@ -280,6 +292,21 @@ int weapon_family_index(int i);
 int weapon_strength(int item);
 float weapon_handling(const Actor *a, int item);
 void frontier_identity(void);
+void living_init(void);
+void living_tick(float dt);
+int living_validate(const Game *s);
+void living_generate(int slot);
+int living_owned(int n);
+int living_hostile(const Actor *a,const Actor *b);
+int living_walk(int n,float dt);
+void living_loot(int n,int role,int tier);
+void living_title(int slot,char *out,int size);
+void living_detail(int slot,char *out,int size);
+void living_action(int slot);
+int combat_candidate(int row);
+int combat_candidates(void);
+void command_attack(int n);
+int actor_relation(int n);
 void frontier_restock(int town);
 extern const char *regional_names[3];
 int regional_town(int region);

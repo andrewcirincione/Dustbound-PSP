@@ -386,6 +386,18 @@ static uint64_t actor_key(const Actor *a, int lum) {
     return k ? k : 1;
 }
 static void person(Actor *a, int x, int y, int sc, int chosen) {
+    if(sc==1 && (uintptr_t)a>=(uintptr_t)g.actors && (uintptr_t)a<(uintptr_t)(g.actors+g.actorCount)) {
+        int n=(int)(a-g.actors),rel=actor_relation(n);
+        if(!a->squad&&!a->dead){uint32_t col=rel<0?RED:rel>0?TEAL:GOLD;
+            if(rel<0){line(x-3,y+3,x,y+6,col);line(x,y+6,x+3,y+3,col);}
+            else if(rel>0)line(x-3,y+4,x+3,y+4,col);else rect(x-1,y+3,2,2,col);
+        }
+        int target=g.living.command[g.selected]>=0?g.living.command[g.selected]:g.actors[g.selected].target;
+        if(n==target&&!a->dead){int left=x-11,right=x+11,top=y-37,bottom=y+2;
+            line(left,top,left+4,top,RED);line(left,top,left,top+4,RED);line(right-4,top,right,top,RED);line(right,top,right,top+4,RED);
+            line(left,bottom,left+4,bottom,RED);line(left,bottom-4,left,bottom,RED);line(right-4,bottom,right,bottom,RED);line(right,bottom-4,right,bottom,RED);
+        }
+    }
     Actor dressed;
     if (!a->gear[1] && (uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors+g.actorCount) &&
         g.depth.actors[a-g.actors].layer) {

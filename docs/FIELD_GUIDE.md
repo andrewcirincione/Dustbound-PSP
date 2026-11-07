@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.7.0
+# Dustbound field guide — 0.8.0
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -6,7 +6,7 @@ The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg
 
 Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down: skills. Left: worn gear. Right: squad management.
 
-![cross](../assets/ui/cross.svg): interact. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): pause menu: ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) change Pause, Squad and World tabs. D-pad navigates menus.
+![cross](../assets/ui/cross.svg): interact. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. Hold L + Square: choose someone to attack (also Start > Squad). ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): pause menu: ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) change Pause, Squad and World tabs. D-pad navigates menus.
 
 Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch members or guide pages. Hold ![l](../assets/ui/l.svg) and tap ![cross](../assets/ui/cross.svg) to cycle nearby targets. Analog movement cancels work or travel.
 
@@ -24,7 +24,7 @@ The 1536 by 1536 borderlands contain sixteen settlements and nine terrain region
 
 ## 4. Combat
 
-![square](../assets/ui/square.svg) toggles fighting. Move into weapon reach to attack automatically; followers engage nearby threats. ![r](../assets/ui/r.svg) pauses combat for orders. Heavy steel needs strength equal to twice its weight. Weak or injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords hit hard; anchor cleavers bleed. Guns use cartridges; bows use bolts.
+![square](../assets/ui/square.svg) toggles fighting. L + Square opens opponents; Cross orders an attack, including neutrals (assault adds bounty). Small feet marks: teal line friendly, gold dot neutral, red chevron hostile. Red corners mark your opponent. Move into weapon reach to attack automatically; followers engage nearby threats. ![r](../assets/ui/r.svg) pauses combat for orders. Heavy steel needs strength equal to twice its weight. Weak or injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords hit hard; anchor cleavers bleed. Guns use cartridges; bows use bolts.
 
 Armor protects specific body locations. Piercing weapons ignore some armor; serrated blades bleed; staggering hits interrupt. Skills improve through use. Retreat from stronger opponents and use terrain.
 
@@ -90,9 +90,11 @@ Contracts raise standing; theft lowers it. The Factions ledger shows specialties
 
 ## 15. Contracts
 
-Marshals offer delivery, supply, hunt and relic contracts. Accept through dialogue; track objectives in the Journal. Deliveries require reaching another town. Supplies require the listed items. Hunts count victories after acceptance.
+Marshals offer contracts. Claim completed work at its issuing town. Square locates it.
 
-Return to the issuing settlement and claim in the Journal with ![cross](../assets/ui/cross.svg). Rewards grant silver, reputation and experience. L/R opens Local conflicts: settle Saltwatch water rights, Black Mesa tolls and Pale Pass refuge. Choices permanently alter trade, access and allegiance. Complete contracts, research relic technology and survey the frontier to advance the expedition legacy. ![square](../assets/ui/square.svg) locates an active contract on the atlas; ![cross](../assets/ui/cross.svg) there starts travel when ready.
+Journal L/R switches Contracts, Local conflicts and Living frontier. Regional agreements are permanent. Living incidents continually renew: caravans, raiders, relief, caches, pilgrims, beasts, armies and warlords.
+
+Use Square to locate an incident. Cross delivers aid or searches a site in reach. Escort and combat resolve in the world. Failed attacks can leave relief appeals. Strong leaders wear signature loot. Armies can change town control.
 
 ## 16. Saves
 

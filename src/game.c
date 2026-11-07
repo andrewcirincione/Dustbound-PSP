@@ -280,7 +280,7 @@ void move_actor(Actor *a, float dx, float dy, float dt) {
         a->fatigue = clamp(a->fatigue + dt * .016f, 0, 100);
     }
 }
-static void init_actor(int n, const char *name, int kind, int faction, float x, float y, int skill) {
+void init_actor(int n, const char *name, int kind, int faction, float x, float y, int skill) {
     memset(&g.depth.actors[n], 0, sizeof(g.depth.actors[n]));
     g.depth.actors[n].upkeep = 100;
     for (int j = 0; j < 4; j++) g.depth.actors[n].queue[j] = JOB_HOLD;
@@ -360,6 +360,7 @@ void game_new(uint32_t seed, int scenario) {
     content_init();
     memset(&g, 0, sizeof(g));
     memset(&ui, 0, sizeof(ui));
+    ui.attackFocus=-1;
     world_layout(0);
     g.seed = g.rng = seed ? seed : 73819;
     g.day = 1;
@@ -454,6 +455,7 @@ void game_new(uint32_t seed, int scenario) {
     frontier_identity();
     depth_init();
     regional_init();
+    living_init();
     ui.camX = a->x;
     ui.camY = a->y;
     ui.mapX = a->x;
@@ -466,6 +468,7 @@ int hostile(const Actor *a, const Actor *b) {
     if (depth_room(a) != depth_room(b))
         return 0;
     if (a->squad && b->squad) return 0;
+    if(living_hostile(a,b)) return 1;
     if(regional_hostile(a,b)) return 1;
     /* Escapees remain recognizable to their former captors for one day. */
     if ((uintptr_t)b >= (uintptr_t)g.actors && (uintptr_t)b < (uintptr_t)(g.actors+g.actorCount) &&
@@ -996,6 +999,8 @@ void find_context(void) {
         Actor *b = &g.actors[i];
         if (i == g.selected || !b->active || b->carriedBy >= 0 || actor_inside(a) != actor_inside(b))
             continue;
+        if (conscious(b) && hostile(a, b) && (b->target >= 0 || a->target == i))
+            continue;
         if (b->squad && !b->dead && b->unconscious <= 0 && !g.depth.actors[i].captive) {
             int hurt = b->bleed > .01f;
             for (int j = 0; j < LIMBS; j++)
@@ -1319,6 +1324,7 @@ void simulate(float dt) {
     depth_tick(dt);
     tick_expansion(dt);
     regional_tick();
+    living_tick(dt);
     g.time += dt;
     g.dayTime += dt / 75;
     if (g.dayTime >= 24) {
@@ -1463,6 +1469,12 @@ void simulate(float dt) {
                 best = d;
             }
         }
+        int ordered=g.living.command[i];
+        if(a->squad && a->autoattack && ordered>=0 && ordered<g.actorCount) {
+            Actor *b=&g.actors[ordered];
+            if(b->active && conscious(b) && depth_room(a)==depth_room(b) && depth_distance(a,b)<24) {target=ordered;best=depth_distance(a,b);}
+            else g.living.command[i]=-1;
+        }
         if (target >= 0 && (a->kind == RAIDER || a->kind == BEAST || a->kind == GUARD || a->kind == CARAVAN ||
                             (a->squad && a->autoattack))) {
             a->target = target;
@@ -1477,7 +1489,7 @@ void simulate(float dt) {
                 strike(i, target);
             continue;
         }
-        if (target >= 0 && !a->squad && (npc_role(a) == ROLE_MERCHANT || npc_role(a) == ROLE_MEDIC)) {
+        if (target >= 0 && !a->squad && (npc_role(a) == ROLE_MERCHANT || npc_role(a) == ROLE_MEDIC || a->kind==SETTLER || a->kind==RECRUIT)) {
             Actor *foe = &g.actors[target];
             move_actor(a, a->x - foe->x, a->y - foe->y, dt);
             continue;
@@ -1490,6 +1502,7 @@ void simulate(float dt) {
             float y = g.mercMode[hired] ? g.baseY : leader->y;
             if (distance(a->x, a->y, x, y) > 2.5f)
                 route_toward(a, x, y, dt);
+        } else if (living_walk(i,dt)) {
         } else if (a->squad) {
             if (i != g.selected || a->job != JOB_FOLLOW || g.depth.groupTravel[g.depth.actors[i].group])
                 squad_job(a, dt);
@@ -1520,7 +1533,7 @@ void simulate(float dt) {
             int spawned = 0;
             for (int i = 0; i < MAX_ACTORS && spawned < 2; i++) {
                 int n = -1;
-                if (i < g.actorCount && g.actors[i].dead && !g.actors[i].squad && depth_named(i) < 0 && !regional_named(i) &&
+                if (i < g.actorCount && g.actors[i].dead && !g.actors[i].squad && depth_named(i) < 0 && !regional_named(i) && !living_owned(i) &&
                     g.actors[i].carriedBy < 0 && merc_slot(&g.actors[i]) < 0)
                     n = i;
                 else if (g.actorCount < MAX_ACTORS) {
@@ -1563,7 +1576,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 7, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 8, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1664,7 +1677,7 @@ static int validate_game(const Game *t) {
         if (a->carrying >= t->actorCount || a->carriedBy >= t->actorCount)
             return 0;
     }
-    return depth_validate(t) && regional_validate(t);
+    return depth_validate(t) && regional_validate(t) && living_validate(t);
 }
 static int migrate_legacy(const LegacyGame *old) {
     if (old->actorCount < 1 || old->actorCount > 80 || old->buildingCount < 0 || old->buildingCount > 100 ||
@@ -1742,22 +1755,23 @@ static int migrate_legacy(const LegacyGame *old) {
             g.nodes[g.nodeCount++] = expanded->nodes[i];
     free(expanded);
     memset(&g.regions,0,sizeof(g.regions));
+    memset(&g.living,0,sizeof(g.living));
     return validate_game(&g);
 }
-static int save_shape(uint32_t version, uint32_t size) {
-    return (version == 7 && size == sizeof(Game)) || (version == 6 && size == offsetof(Game, regions)) || (version == 5 && size == offsetof(Game, depth)) || ((version == 3 || version == 4) && size == 404460) ||
-           (version == 2 && size == 404444);
+static int save_shape(uint32_t version,uint32_t size) {
+    return (version==8 && size==sizeof(Game)) || (version==7 && size==435592) ||
+      (version==6 && size==435556) || (version==5 && size==410656) ||
+      ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
-static int decode_modern(Game *out, const void *data, uint32_t version, uint32_t size) {
-    memset(out, 0, sizeof(*out));
-    if (version >= 5)
-        memcpy(out, data, size);
+static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
+    memset(out,0,sizeof(*out));
+    if(version==8)memcpy(out,data,size);
     else {
-        const unsigned char *src = data;
-        memcpy(out, src, 144);
-        for (int t = 0; t < TOWNS; t++)
-            memcpy(out->stock[t], src + 144 + t * 2052 * 4, 2052 * 4);
-        memcpy((unsigned char *)out + offsetof(Game, lastRestock), src + 131472, size - 131472);
+        const unsigned char *src=data;int oldItems=version>=5?CATALOG_ITEMS:2052;
+        unsigned oldTail=144+TOWNS*oldItems*4;
+        memcpy(out,src,144);
+        for(int t=0;t<TOWNS;t++)memcpy(out->stock[t],src+144+t*oldItems*4,oldItems*4);
+        memcpy((unsigned char*)out+offsetof(Game,lastRestock),src+oldTail,size-oldTail);
     }
     return validate_game(out);
 }
@@ -1814,7 +1828,9 @@ int load_game(const char *path) {
         frontier_identity();
         depth_init();
     regional_init();
+    living_init();
         memset(&ui, 0, sizeof(ui));
+        ui.attackFocus=-1;
         ui.speed = 1;
         ui.slot = 1;
         ui.camX = g.actors[g.selected].x;
@@ -1904,10 +1920,10 @@ void cycle_squad(int direction) {
 }
 static const char *pauseLabels[3][8] = {
     {"Resume", "Save game", "Load game", "Game speed", "Controls & field guide", "Save and quit to title", "New wanderer"},
-    {"Inventory & equipment", "Skills", "Health & recovery", "Squad management", "Armor layers", "Recent messages"},
+    {"Inventory & equipment", "Skills", "Health & recovery", "Squad management", "Armor layers", "Recent messages", "Choose opponent"},
     {"Map & travel", "Copper Road expedition", "Journal & local conflicts", "Factions", "Build a camp", "Camp upkeep", "Crafting recipes", "Research"}
 };
-int pause_menu_count(void) { return ui.menuTab == 0 ? 7 : ui.menuTab == 1 ? 6 : 8; }
+int pause_menu_count(void) { return ui.menuTab == 0 ? 7 : ui.menuTab == 1 ? 7 : 8; }
 const char *pause_menu_label(int row) {
     return row >= 0 && row < pause_menu_count() ? pauseLabels[ui.menuTab][row] : "";
 }
@@ -1934,7 +1950,7 @@ static void pause_menu_open(void) {
         return;
     }
     static const int screens[2][8] = {
-        {SCREEN_PACK, SCREEN_SKILLS, SCREEN_HEALTH, SCREEN_SQUAD, SCREEN_LAYERS, SCREEN_LOG},
+        {SCREEN_PACK, SCREEN_SKILLS, SCREEN_HEALTH, SCREEN_SQUAD, SCREEN_LAYERS, SCREEN_LOG, SCREEN_ENGAGE},
         {SCREEN_MAP, SCREEN_EXPEDITION, SCREEN_JOURNAL, SCREEN_FACTIONS, SCREEN_BUILD, SCREEN_CAMP, SCREEN_CRAFT, SCREEN_RESEARCH}
     };
     ui.menuReturn = 1;
@@ -1976,6 +1992,9 @@ void game_tick(float dt, Input in) {
     }
     /* World D-pad is for information and menus. Handle it before captivity
        input, without treating it as movement or cancelling travel/work. */
+    if(ui.screen==SCREEN_WORLD && (in.held&KEY_L) && (p&KEY_SQUARE)) {
+        ui.squadCyclePending=0;open_screen(SCREEN_ENGAGE);ui.attackFocus=combat_candidate(0);return;
+    }
     if (ui.screen == SCREEN_WORLD) {
         if (p & KEY_UP)
             ui.statusPanel = !ui.statusPanel;
@@ -2219,6 +2238,7 @@ void game_tick(float dt, Input in) {
     }
     if (p & KEY_SQUARE) {
         a->autoattack = !a->autoattack;
+        if(!a->autoattack)g.living.command[g.selected]=-1;
         log_msg(a->autoattack ? "Combat stance: attack nearby hostiles."
                               : "Passive stance: flee or move freely.");
     }
@@ -2337,6 +2357,8 @@ void debug_snapshot(const char *path) {
         fputc('"', f);                                                                                       \
     } while (0)
     VALUE("screen", &ui.screen, 4);
+    VALUE("journalTab", &ui.journalTab, 4);
+    VALUE("command", &g.living.command[g.selected], 4);
     VALUE("money", &g.money, 4);
     VALUE("squad", &g.squadCount, 4);
     VALUE("position", &a->x, 8);

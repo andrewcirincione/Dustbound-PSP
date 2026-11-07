@@ -1,27 +1,21 @@
-# Dustbound 0.7.0 — focused UI and regional consequences
+# Dustbound 0.8.0 — Living frontier
 
-All eight approved critique areas are addressed:
+- A persistent event director renews eight concurrent incidents indefinitely, combining mechanics, conditions, factions, destinations, strength and enemy roles while avoiding recent combinations. Includes caravans, raids, relief appeals, caches, stranded pilgrims, beast packs, armies and warlords. Failed attacks can lead to relief appeals. This is endless recombination of supported mechanics, not infinitely many unique authored stories.
+- Incidents affect supplies, prosperity and faction control. Armies can take towns; visible formations must reach them and defeat the defending garrison. Off-screen movement and outcomes use a strategic abstraction.
+- Roaming groups: armies up to 16, raiders 10, warlord retinues 9, beast packs 7, caravans 6. Distant formations release physical slots while preserving their wounds, gear, inventory and hostility. Existing residents are not overwritten.
+- Five encounter strength tiers and eight enemy roles govern equipment and supplies. Very strong leaders wear signature gear. Added 16 specialist weapons/armor pieces and 8 signature pieces, using existing sprite families with distinct stats and trim.
+- Deliberate attack: hold L and press Square, or Start > Squad > Choose opponent. Select someone and press Cross. Neutral/friendly assault costs 100 bounty and 20 faction standing; the victim/group retaliates. Civilians flee. Move into weapon reach to strike; Square cancels the attack order.
+- Small allegiance marks: teal line friendly, gold dot neutral, red chevron hostile. Small red corner brackets show your opponent. Active opponents no longer advertise conversation or theft prompts during combat.
+- Map: undistorted scale, cartographic colors, local contours, clearer roads, incidents and cursor-relative town information. Whole-world clutter reduced.
 
-1. Health & recovery merges limb health, trauma, first aid, mechanical repair and gear maintenance. Squad management merges jobs, combat stances, travel groups and four job priorities. L/R consistently changes the member on character screens, including fallen members for inspection/dismissal.
-2. Pack, selling, storage, armor-layer and loot lists skip empty slots while retaining physical item slots and stolen ownership. Capacity remains visible.
-3. Equipment comparisons prioritize changed stats. Attack delay is in seconds; movement and cargo weight use percentages; strength warnings are explicit. Zero-value standard effects are suppressed.
-4. Skills shows the selected skill's practical contribution alongside level progress and training advice. D-pad Down opens it directly.
-5. Character silhouettes have a subtle edge and brighter lighting, with stronger selected-character contrast and a grounded marker.
-6. The atlas preserves thin roads at both zoom levels, distinguishes town/site/conflict markers, labels the destination, and shows a dashed planned course versus a solid active course. A course is a direct bearing, not a guaranteed safe path.
-7. Pickpocketing lets you choose the target's item. Odds include weight/value, approach from front/behind, and nearby witnesses with direction and exterior-wall sight checks. Full packs do not consume an attempt; stolen items retain their owner.
-8. Three persistent conflicts outside Copper Road change the world:
-   - Saltwatch: repair a public pump or grant Union water rights. Changes the working well, water charges, food/water supply, prices and standing.
-   - Black Mesa: defeat the northern toll collectors or back their syndicate. Changes passage, Black Mesa/Cinder Port supply and prices, and allegiance.
-   - Pale Pass: supply a sanctuary or accept Shogunate rule. Changes free beds, food/medicine supply, prices, ownership, guard equipment and the local arsenal.
+## Access
 
-## Controls and access
-
-Analog moves; D-pad Up toggles detailed live status, Down opens Skills, Left opens worn gear, Right opens Squad management. Start has Pause / Squad / World tabs. Health & recovery is in Squad; Journal & local conflicts is in World. In the journal, L/R switches Contracts / Local conflicts; left/right changes the proposed agreement, Cross commits at the relevant town, Square locates it. Regional residents also offer a conflict dialogue option. Agreements are permanent and display their costs and consequences before commitment.
+Start > World > Journal & local conflicts; L/R cycles Contracts, Local conflicts and Living frontier. Square locates an incident. Cross delivers aid or searches a site when nearby. Escort and combat incidents resolve through world actions. Analog remains movement; D-pad Up toggles detailed status, Down opens Skills, Left equipment, Right squad management.
 
 ## Install and saves
 
-Extract the PSP folder from Dustbound-0.7.0-PSP.zip to the memory-stick root, or replace PSP/GAME/DUSTBOUND/EBOOT.PBP. Keep existing saves. The loader supports the previous v6 format and older supported formats; new saves use v7 for regional state. A v7 save cannot be opened by an older executable.
+Extract PSP from Dustbound-0.8.0-PSP.zip to the memory-stick root, or replace PSP/GAME/DUSTBOUND/EBOOT.PBP. Keep your saves. Older supported formats through v7 migrate; new saves use v8. Older executables cannot read v8 saves.
 
-## Verification limits
+## Verification and limits
 
-PSP compilation, package validation and static native-renderer review at 480x272. No gameplay suites, emulator runs or physical PSP qualification were performed for this update. Screenshots are prepared native-renderer layouts, not emulator gameplay captures. Regional balance and controller playthroughs remain unverified.
+Focused PPSSPP controller playthrough and completed-EBOOT framebuffer screenshots; native event/regression checks with AddressSanitizer and UndefinedBehaviorSanitizer; core and expansion regression checks; package validation. Test scenes use prepared saves. No full natural campaign or physical PSP performance qualification is claimed. Large-group routing and long-session variety remain areas for further playtesting. See docs/DESIGN_REVIEW_V080.md.

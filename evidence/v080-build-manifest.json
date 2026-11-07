@@ -1,0 +1,21 @@
+{
+  "version": "0.8.0",
+  "eboot_sha256": "6e34e8dc9f3d9ceb789e039a837ce3e2de1b32803d50f5119f99eeda3fe2eed2",
+  "eboot_bytes": 1482274,
+  "toolchain": "PSPDEV v20261101 ubuntu x86_64",
+  "emulator": "PPSSPP 1.20.4 headless, software renderer",
+  "native_tests": {
+    "core": 61,
+    "expansion": 50,
+    "event_generations": 1200,
+    "mechanic_condition_pairs": 32,
+    "director_ticks": 5000,
+    "sanitizers": [
+      "address",
+      "undefined"
+    ]
+  },
+  "controller_evidence": "evidence/v080-controller-checks.json",
+  "controller_evidence_sha256": "0b9fc1d930ab74419aacb2bf3c3f0e9f6e45bc92e3958b7686fd77de258045ac",
+  "scope": "Focused changes with prepared saves; no full natural campaign or physical PSP performance qualification."
+}

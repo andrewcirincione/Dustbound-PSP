@@ -49,7 +49,7 @@ int gear_id(int f, int m, int q) {
     return BASE_ITEMS + (f * MATERIALS + m) * QUALITIES + q;
 }
 int gear_family(int it) {
-    return it >= BASE_ITEMS && it < ITEMS ? (it - BASE_ITEMS) / (MATERIALS * QUALITIES) : -1;
+    return it >= CATALOG_ITEMS && it < ITEMS ? itemDefs[it].family : it >= BASE_ITEMS && it < CATALOG_ITEMS ? (it - BASE_ITEMS) / (MATERIALS * QUALITIES) : -1;
 }
 int weapon_ranged(int it) { return it == CROSSBOW || (gear_family(it) >= 24 && gear_family(it) < 32); }
 int gear_bonus(const Actor *a, int stat) {
@@ -226,6 +226,21 @@ void content_init(void) {
                              backpack_load_percent(id), backpack_combat_penalty(id), d->stealth,
                              effectNames[d->effect], item_effect_value(id));
             }
+    static const char *special[24]={"Duelist's needle","Salt reaper","Gatebreaker","Pilgrim's reach","Trench hook","Ash longrifle","Caravan repeater","Raider's falx",
+        "Stormskin coat","Scout's reedweave","Siege cuirass","Surgeon's mantle","Gutter brigandine","Frostwatch haori","Runner's wraps","Marshal's harness",
+        "Vulture King's cleaver","Shogun's oathblade","Mesa executioner","Ashkeeper's staff","Iron captain's carapace","Reed stalker's shroud","Frostfang trophy","Caravan master's coat"};
+    static const int family[24]={3,86,85,5,17,29,25,87,32,43,38,39,36,44,46,45,87,0,84,16,47,40,55,42};
+    for(int i=0;i<24;i++) {
+        int id=CATALOG_ITEMS+i,f=family[i];ItemDef*d=&itemDefs[id];
+        *d=itemDefs[gear_id(f,i>=16?5:3,i>=16?3:2)];
+        d->name=special[i];d->desc=descriptions[id];d->trim=i>=16?0xe4bd70:0x81b2b3;
+        if(i<8){d->power+=4;d->penetration+=i==2?18:3;d->range+=i==3?.8f:0;if(i==0){d->cooldown=.62f;d->weight=2;d->power-=8;}}
+        if(i>=8&&i<16){d->armor+=i==10?16:3;d->protection+=i==8||i==13?30:0;d->stealth+=i==9||i==14?12:0;d->potency+=i==11?12:0;d->capacity+=i==15?20:0;}
+        if(i>=16){d->power+=d->slot==0?10:0;d->armor+=d->slot?10:0;d->potency+=5;}
+        d->price+=i>=16?1400:350;
+        snprintf(descriptions[id],112,"%s. %s %d; weight %d. %s %d.",i>=16?"Signature trophy":"Specialist equipment",d->slot==0?"Damage":"Armor",d->slot==0?d->power:d->armor,d->weight,effectNames[d->effect],item_effect_value(id));
+    }
+
 }
 
 const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE BORDERLANDS",    "COMBAT",
@@ -235,7 +250,7 @@ const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE 
                                         "WEATHER",         "CAPTIVITY",    "BUILDING INTERIORS", "BACKPACKS", "THE COPPER ROAD", "ORDERS & GROUPS", "CAMP WORK & FUEL", "TRAUMA & REPAIR", "ARMOR LAYERS"};
 const char *guideBodies[GUIDE_PAGES] = {
     "Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down: skills. Left: worn gear. Right: squad management.\n\001: interact. \004: pack. \003: "
-    "fight/passive. \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
+    "fight/passive. Hold L + Square: choose someone to attack (also Start > Squad). \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
     "pause menu: \005/\006 change Pause, Squad and World tabs. D-pad navigates menus.\nMenus pause time. \010 opens help. \005/\006 switch members or guide pages. Hold \005 and tap \001 to cycle nearby targets. Analog movement cancels work or travel.",
     "New expedition opens character creation. Choose a name, origin, ancestry, body, skin, hairstyle, hair "
     "color, beard and scars. \014 adjusts each choice; \001 edits your name or begins.\nOrigins change "
@@ -247,7 +262,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "reveals surveyed geography after buying a "
     "chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits "
     "persist.",
-    "\003 toggles fighting. Move into weapon reach to attack automatically; followers engage nearby "
+    "\003 toggles fighting. L + Square opens opponents; Cross orders an attack, including neutrals (assault adds bounty). Small feet marks: teal line friendly, gold dot neutral, red chevron hostile. Red corners mark your opponent. Move into weapon reach to attack automatically; followers engage nearby "
     "threats. \006 pauses combat for orders. Heavy steel needs strength equal to twice its weight. Weak or "
     "injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords "
     "hit hard; anchor cleavers bleed. Guns use cartridges; "
@@ -308,12 +323,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Contracts raise standing; theft lowers it. The Factions ledger shows specialties and controlled towns. "
     "Hired guards cost 240 silver for escort or 180 for camp duty: one simulated day. They fight and "
     "bandage independently, keep their gear, wait outside interiors and return home on expiry.",
-    "Marshals offer delivery, supply, hunt and relic contracts. Accept through dialogue; track "
-    "objectives in the Journal. Deliveries require reaching another town. Supplies require the listed items. "
-    "Hunts count victories after acceptance.\nReturn to the issuing settlement and claim in the Journal with "
-    "\001. Rewards grant silver, reputation and experience. L/R opens Local conflicts: settle Saltwatch water rights, Black Mesa tolls and Pale Pass refuge. Choices permanently alter trade, access and allegiance. Complete contracts, "
-    "research relic technology and survey the frontier to advance the expedition legacy. \003 locates an "
-    "active contract on the atlas; \001 there starts travel when ready.",
+    "Marshals offer contracts. Claim completed work at its issuing town. Square locates it.\nJournal L/R switches Contracts, Local conflicts and Living frontier. Regional agreements are permanent. Living incidents continually renew: caravans, raiders, relief, caches, pilgrims, beasts, armies and warlords.\nUse Square to locate an incident. Cross delivers aid or searches a site in reach. Escort and combat resolve in the world. Failed attacks can leave relief appeals. Strong leaders wear signature loot. Armies can change town control.",
     "Six manual slots plus autosave. \007, Save or Load opens a ledger with name, day, party size and "
     "silver. Choose a slot; \001 asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.\nSaves "
     "use version, size and checksum validation and preserve a previous .bak file. Invalid files never "

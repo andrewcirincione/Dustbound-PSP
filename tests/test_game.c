@@ -111,7 +111,7 @@ int main(void) {
     for (int i = 1; i < g.actorCount; i++)
         if (i != enemy)
             g.actors[i].active = 0;
-    e->kind = SETTLER;
+    e->kind = PLAYER; /* Stationary nonsquad training target; civilians now flee assault. */
     a->autoattack = 0;
     float health = 0;
     for (int i = 0; i < LIMBS; i++)
@@ -164,7 +164,7 @@ int main(void) {
     e->y = 40;
     a->gear[0] = CROSSBOW;
     inventory_add(a, BOLTS, 2);
-    e->kind = SETTLER;
+    e->kind = PLAYER; /* Stationary nonsquad training target; civilians now flee assault. */
     a->autoattack = 0;
     for (int i = 1; i < g.actorCount; i++)
         if (i != enemy)
@@ -256,9 +256,10 @@ int main(void) {
     press(KEY_TRIANGLE);
     CHECK(ui.screen == SCREEN_PACK, "triangle opens inventory");
     press(KEY_R);
-    CHECK(ui.screen == SCREEN_SKILLS, "R changes pack tab to skills");
-    press(KEY_R);
-    CHECK(ui.screen == SCREEN_HEALTH, "R changes skills tab to body");
+    CHECK(ui.screen == SCREEN_PACK, "R preserves the character screen while switching members");
+    press(KEY_CIRCLE);
+    press(KEY_DOWN);
+    CHECK(ui.screen == SCREEN_SKILLS, "world D-pad Down opens skills");
     press(KEY_CIRCLE);
     CHECK(ui.screen == SCREEN_WORLD, "circle closes an overlay");
     float time = g.time;

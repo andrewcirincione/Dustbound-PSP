@@ -1,0 +1,81 @@
+[
+  {
+    "eboot_sha256": "6e34e8dc9f3d9ceb789e039a837ce3e2de1b32803d50f5119f99eeda3fe2eed2",
+    "version": "0.8.0"
+  },
+  {
+    "capture": "v080-psp-skills",
+    "screen": 2,
+    "expected": 2,
+    "frame": 530,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v080-psp-opponents",
+    "screen": 34,
+    "expected": 34,
+    "frame": 656,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v080-psp-target",
+    "screen": 0,
+    "expected": 0,
+    "frame": 713,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v080-psp-events",
+    "screen": 19,
+    "expected": 19,
+    "frame": 1140,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v080-psp-map-local",
+    "screen": 5,
+    "expected": 5,
+    "frame": 1159,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v080-psp-map-world",
+    "screen": 5,
+    "expected": 5,
+    "frame": 1189,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v080-psp-army",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1680,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v080-psp-survey-local",
+    "screen": 5,
+    "expected": 5,
+    "frame": 1696,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v080-psp-survey-world",
+    "screen": 5,
+    "expected": 5,
+    "frame": 1714,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "completed": true,
+    "prepared_fixtures": [
+      2,
+      3
+    ],
+    "neutral_assault": true,
+    "target_cancel": true,
+    "dpad_preserved_position": true,
+    "living_journal_and_map": true,
+    "army_fixture": 16
+  }
+]

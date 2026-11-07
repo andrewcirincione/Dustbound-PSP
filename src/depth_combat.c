@@ -124,6 +124,9 @@ int depth_room_target(void) {
     float reach = TALK_REACH;
     for (int i = 0; i < g.actorCount; i++)
         if (i != g.selected && g.actors[i].active && depth_room(&g.actors[i]) == g.interiorBuilding) {
+            Actor *b = &g.actors[i];
+            if (conscious(b) && hostile(a, b) && (b->target >= 0 || a->target == i))
+                continue;
             float d = depth_distance(a, &g.actors[i]);
             if (d < reach) {
                 nearest = i;

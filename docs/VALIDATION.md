@@ -1,4 +1,4 @@
-Current release: [0.7.0 build and layout review](VALIDATION_V070.md). The records below qualify the older 0.6.0 executable only.
+Current release: [0.8.0 build, simulation and PSP controller validation](VALIDATION_V080.md). The records below qualify the older 0.6.0 executable only.
 
 # 0.6.0 validation record
 
