@@ -1,0 +1,24 @@
+#ifndef DUSTBOUND_SOCIETY_TYPES_H
+#define DUSTBOUND_SOCIETY_TYPES_H
+#define OLD_ITEMS (CATALOG_ITEMS+24)
+#define SCIMITAR_ITEMS OLD_ITEMS
+#define RAPIER_ITEMS (OLD_ITEMS+24)
+#define UNIQUE_ITEMS (OLD_ITEMS+48)
+#define WEAPON_CLASSES 11
+enum { WC_KATANAS,WC_SABRES,WC_HACKERS,WC_HEAVY,WC_BLUNT,WC_POLEARMS,WC_RAPIERS,WC_KNIVES,WC_BOWS,WC_CROSSBOWS,WC_FIREARMS };
+#define ACTION_LIMIT 32
+#define ACTION_QUEUE 4
+enum { ACTION_CONTEXT, ACTION_UNLOCK, ACTION_OPEN, ACTION_ATTACK, ACTION_STEAL, ACTION_EVENT, ACTION_JOB, ACTION_RESCUE, ACTION_CARRY, ACTION_RESCUED_FOLLOW, ACTION_RESCUED_LEAVE, ACTION_RESCUED_RECRUIT };
+typedef struct {int type,kind,target,room;} NearbyAction;
+typedef struct {
+ float weaponXP[MAX_ACTORS][WEAPON_CLASSES];
+ int version,lastEconomyDay,crisis[TOWNS],wanted[MAX_ACTORS][FACTIONS],cannibal[MAX_ACTORS];
+ float pulse,economyClock,recognized[MAX_ACTORS][FACTIONS],suspicion[MAX_ACTORS],eating[MAX_ACTORS],gateMessage[MAX_ACTORS];
+ int queueCount[MAX_ACTORS];NearbyAction queue[MAX_ACTORS][ACTION_QUEUE];
+ int jobActor[CONTRACTS],jobBond[CONTRACTS],jobStage[CONTRACTS];
+ int jobWarned[CONTRACTS];
+ float jobFar[CONTRACTS],jobWarning[CONTRACTS];
+ float jobElapsed[CONTRACTS],jobNear[CONTRACTS],jobPaid[CONTRACTS],jobDistance[CONTRACTS],jobX[CONTRACTS],jobY[CONTRACTS];
+ int rescueHelper[MAX_ACTORS],freed[MAX_ACTORS],captorFaction[MAX_ACTORS],prisonSeeded;
+} Society;
+#endif

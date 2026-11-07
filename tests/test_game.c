@@ -64,7 +64,8 @@ int main(void) {
     for (int i = 0; i < PACK; i++)
         if (a->pack[i].item == RAGS)
             slot = i;
-    CHECK(sell_item(0, slot) && g.money == m + 18, "selling pays the displayed resale price");
+    int quoted = item_price(0, RAGS, 1);
+    CHECK(sell_item(0, slot) && g.money == m + quoted, "selling pays the displayed resale price");
     g.money = 0;
     s = g.stock[0][RATION];
     CHECK(!buy_item(0, RATION) && g.stock[0][RATION] == s, "unaffordable trade cannot alter stock");

@@ -135,6 +135,12 @@ static int weapon_family(int item) {
 static void weapon_sprite(int item, float x, float y, int sc, float angle, int face, float li) {
     if (!item)
         return;
+    if(weapon_rapier(item)) {
+        float ca=cosf(angle),sa=sinf(angle),len=24*sc;uint32_t steel=shade(itemDefs[item].color,li);
+        for(int i=0;i<sc;i++)line((int)(x+ca*3*sc-sa*i),(int)(y+sa*3*sc+ca*i),(int)(x+ca*len),(int)(y+sa*len),steel);
+        line(x-sa*3*sc,y+ca*3*sc,x+sa*3*sc,y-ca*3*sc,shade(itemDefs[item].trim,li));
+        line(x,y,x-ca*4*sc,y-sa*4*sc,0x614a38);return;
+    }
     int f = weapon_family(item), id = WEAPON_ART_FIRST + f;
     const ArtSprite *s = &artSprites[id];
     const WeaponArt *w = &weaponArt[f];

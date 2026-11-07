@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.8.0"
+#define VERSION "0.9.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -18,7 +18,7 @@
 #define MATERIALS 6
 #define QUALITIES 4
 #define CATALOG_ITEMS (BASE_ITEMS + FAMILIES * MATERIALS * QUALITIES)
-#define ITEMS (CATALOG_ITEMS + 24)
+#define ITEMS (CATALOG_ITEMS + 88)
 #define EVENTS 8
 #define GEARS 6
 #define FACTIONS 8
@@ -122,7 +122,7 @@ enum {
     SCREEN_LOOT,
     SCREEN_ASSIST,
     SCREEN_LOG, SCREEN_EXPEDITION, SCREEN_ORDERS, SCREEN_CAMP, SCREEN_CARE, SCREEN_ENCOUNTER, SCREEN_LAYERS,
-    SCREEN_THEFT, SCREEN_ENGAGE
+    SCREEN_THEFT, SCREEN_ENGAGE, SCREEN_ACTIONS
 };
 enum {
     KEY_UP = 1,
@@ -203,6 +203,7 @@ typedef struct {
     int version,serial,history[16],historyPos,owned[MAX_ACTORS],anger[MAX_ACTORS],command[MAX_ACTORS];
     float pulse; WorldEvent events[EVENTS];
 } LivingWorld;
+#include "society_types.h"
 typedef struct {
     uint32_t seed, rng;
     float time, dayTime, raidTimer, autosave;
@@ -230,6 +231,7 @@ typedef struct {
     /* v7 append-only regional consequences. */
     RegionalState regions;
     LivingWorld living;
+    Society society;
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -251,6 +253,10 @@ typedef struct {
     float mapX, mapY, camX, camY, noticeTime, repeat, travelX, travelY;
     char logs[LOGS][80], notice[100];
     int logCount;
+    char feed[12][100];
+    unsigned char feedPriority[12];
+    int feedCount, wantedTown, wantedValue;
+    float feedClock, statusClock;
     int helpReturn, helpTopic, dialogActor, dialogPage, forgeSlot, forgeFamily, forgeMaterial, forgeQuality;
     int createRow, createOrigin, createBody, createSkin, createHair, createHairColor, createBeard, createScar,
         createRace;
@@ -261,7 +267,7 @@ typedef struct {
     int depthSite, depthRow;
     int menuTab, menuRow, menuReturn, statusPanel;
     int journalTab,regionChoice,attackFocus;
-    int mapCategory,mapChoice;
+    int mapCategory,mapChoice,skillPage;
     float travelStall, travelLastX, travelLastY;
 } UI;
 typedef struct {
@@ -390,6 +396,9 @@ int heal_actor(int medic, int patient);
 void interact(void);
 void find_context(void);
 void log_msg(const char *fmt, ...);
+void log_warn(const char *fmt, ...);
+void log_tick(float dt);
+const char *log_current(int *priority, int *offset);
 int save_game(const char *path);
 int load_game(const char *path);
 int save_slot(int slot);
@@ -413,6 +422,7 @@ void content_init(void);
 int gear_id(int family, int material, int quality);
 int gear_family(int item);
 int weapon_ranged(int item);
+int weapon_rapier(int item);
 int gear_bonus(const Actor *a, int stat);
 int item_price(int town, int item, int selling);
 int shop_count(void);
@@ -464,4 +474,5 @@ void atlas_sync(void);
 void render_catalog_scale(uint32_t *pixels, int stride, int item, int sc);
 void render_catalog_sample(uint32_t *pixels, int stride, int item);
 #include "depth.h"
+#include "society.h"
 #endif

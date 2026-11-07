@@ -58,6 +58,7 @@ static inline CombatPose pose_mix(CombatPose a, CombatPose b, float t) {
 }
 static inline int combat_style(int weapon) {
     int f = gear_family(weapon);
+    if (weapon_rapier(weapon))return 1;
     if (weapon_ranged(weapon))
         return 3;
     if (f == 86 || f == 5 || f == 16 || weapon == STAFF || weapon == NONE || f == 3 || f == 9)
@@ -67,6 +68,7 @@ static inline int combat_style(int weapon) {
     return 0;
 }
 static inline int combat_two_hands(int weapon) {
+    if(weapon_rapier(weapon))return 0;
     int f = gear_family(weapon);
     return f == 0 || f == 2 || (f >= 4 && f <= 6) || f == 14 || f == 15 || f == 16 || f == 20 ||
            (f >= 24 && f != 27 && f != 30) || weapon == STAFF || weapon == CROSSBOW;

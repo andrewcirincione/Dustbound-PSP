@@ -1,15 +1,19 @@
-# Dustbound 0.8.1 — Readable world atlas
+# Dustbound 0.9.0 — Trade, disguises and earned experience
 
-The old atlas squeezed the world into a small square, required numeric lookups, and showed a nearest-town panel even when selecting wilderness. This patch replaces the world view with a larger, named destination browser.
+The frontier now supports regional trading, paid field work, faction disguises and local warrants. Encounters remain renewable but are discovered in the world: event pins and the global incident browser are removed.
 
-- World geography expands from 136×136 to 206×206 pixels, preserving proportions. The map opens on your position.
-- D-pad Up/Down selects a named destination. L/R switches towns and active events. Only discovered towns appear. Empty event lists are explicit.
-- One on-map name and a gold outline identify the selected destination. Blue triangle = you; white square = town; gold diamond = event. There are no town numbers or E-number lookups in the world view.
-- The selected destination shows ownership or event purpose, plus direct distance and compass bearing. Nothing claims to be a planned route before you issue travel.
-- Cross travels to the selected town/event. Selecting your own position does not issue a travel order. Triangle opens the local cursor map at that location; Triangle returns to the corresponding world selection.
-- Temporary notifications stay in the detail area instead of covering atlas controls.
-- Square still consumes a purchased survey chart. Dark terrain is unexplored; pale lines are roads. Sites and other fine details remain in local view.
+- Cross opens a compact nearby-action list. Its height follows the number of options. While paused, queue up to four actions; R resumes and executes them in order. Locks and their contents can be selected separately. Movement cancels the queue.
+- Inventory uses one preview of the selected survivor. Hovering equipment changes that preview and shows stat differences and function text without equipping it. Worn and proposed disguises are identified separately.
+- Town exports, imports, stock and shortages affect prices. Green percentages favor the player (cheap buys or valuable sales); red indicates the reverse. Merchants offer actual current trade quotes. Background production and consumption run for all settlements.
+- Freight requires real cargo and a refundable deposit. Escort and patrol wages require staying near a moving employer. Employers warn when you fall behind and acknowledge your return. Named bounty contracts pay more for a living captive.
+- A single scrolling top-line log queues messages, prioritizes warnings and rotates local wanted status. It temporarily uses the existing header space instead of adding another permanent bar.
+- Three closed settlements require matching uniforms while their original garrison holds them: Ash Monastery, Shogun's Rest and Vulture Nest. Guards can expose disguises at close range. Warrants and recognition are faction-specific; bail clears that faction's charge.
+- Nearby actions can free other prisoners and enslaved survivors, including while paused. Lockpicking takes time; guards can interrupt and charge the rescuer. Some freed people flee for refuge; others choose to follow independently. Leave me alone dismisses a follower. Only the explicit Recruit action adds anyone to the controllable squad. Freedom does not require an empty squad slot.
+- Vulture Nest guards carry unconscious outsiders to a cooking ground, bind them and inflict repeated eating damage. Distracting or defeating guards allows shackle rescue or escape.
+- Scimitars and rapiers each have 24 material/quality variants. Sixteen more named equipment pieces appear on distant garrisons. Existing greatswords and other catalog weapons/armor retain 24 variants per design. This is 64 additional items, not 64 entirely new illustrations.
+- Eleven weapon-class proficiencies now train independently. Skills: D-pad Down, then Left/Right for core skills or weapon classes. Class levels improve damage and handling and persist when changing equipment.
+- Combat progression was checked against the Kenshi wiki. Stronger opponents accelerate combat training; blocked blows teach less; hits train defense or dodge plus toughness; armor no longer reduces toughness XP. Unarmed/staggered evasion and overburden penalties are accounted for. Dustbound's numeric balance remains its own.
 
-Install by extracting PSP from Dustbound-0.8.1-PSP.zip to the memory-stick root, or replace PSP/GAME/DUSTBOUND/EBOOT.PBP. Save format remains v8.
+Install `Dustbound-0.9.0-PSP.zip` at the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Save format is now v9. Older saves, including 0.8.1/v8, migrate on loading; retain a backup before overwriting. Weapon-class progress begins with this version; existing core skills remain intact.
 
-Verification: native sanitizer atlas checks, existing core/expansion/event regressions, final-EBOOT controller checks in PPSSPP with prepared saves, visual review of captured frames, and release hash matching. No physical PSP performance qualification or full natural campaign is claimed.
+Validation and remaining limitations are recorded in [VALIDATION_V090.md](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V090.md), [DESIGN_REVIEW_V090.md](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/DESIGN_REVIEW_V090.md) and [STATS_AUDIT_V090.md](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/STATS_AUDIT_V090.md). Physical PSP performance and a complete natural campaign are not claimed.

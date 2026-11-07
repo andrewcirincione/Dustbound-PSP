@@ -1,12 +1,12 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.8.1 — Readable world atlas
+## 0.9.0 — Trade, disguises and earned experience
 
-World travel now uses named town/event selections beside a larger map. Select opens on your position; D-pad selects, L/R changes category, Cross travels, Triangle opens local view, and Square uses a survey chart. See [release notes](docs/RELEASE_NOTES.md).
+Regional prices and trading tips, delivery/escort/patrol/bounty work, faction warrants and disguises, freeing prisoners/slaves without automatic recruitment, cannibal capture, compact queued actions, one inventory character preview, a scrolling top log and separate weapon-class progression. Events are discovered naturally and do not appear on maps. See [release notes](docs/RELEASE_NOTES.md), [stats audit](docs/STATS_AUDIT_V090.md), and [current critiques](docs/DESIGN_REVIEW_V090.md).
 
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.8.1, readable world atlas — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.9.0, trade and disguises — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 
@@ -16,11 +16,11 @@ An original isometric western–samurai squad RPG for PSP homebrew. Build a band
 
 An event director keeps eight incident slots renewing indefinitely. Caravans, raiders, relief appeals, caches, pilgrims, beasts, armies and warlords combine conditions, factions, destinations, strength tiers and equipment roles. Outcomes change trade and control; failed attacks can create relief appeals. Armies have up to sixteen members. Distant groups preserve their state while releasing actor slots.
 
-Twenty-four additional specialist/signature equipment pieces and five encounter tiers make strong enemies rewarding. Hold L + Square (or Start > Squad > Choose opponent) to deliberately attack someone. Small allegiance marks and red opponent brackets provide feedback without persistent labels. The atlas uses corrected scale and clearer terrain, roads, incidents and town information.
+Twenty-four additional specialist/signature equipment pieces and five encounter tiers make strong enemies rewarding. Hold L + Square (or Start > Squad > Choose opponent) to deliberately attack someone. Small allegiance marks and red opponent brackets provide feedback without persistent labels. The atlas uses corrected scale and clearer terrain, roads and town information.
 
-Open Start > World > Journal & local conflicts, then use L/R to reach Living frontier. [Review and remaining critiques](docs/DESIGN_REVIEW_V080.md) · [Validation scope](docs/VALIDATION_V080.md).
+In 0.9.0 incidents are encountered in the world; their old global journal tab is removed. [Review and remaining critiques](docs/DESIGN_REVIEW_V080.md) · [Validation scope](docs/VALIDATION_V080.md).
 
-![Living incidents in the PSP EBOOT](evidence/v080-psp-events.png)
+![Inventory and current disguise](evidence/v090-psp-inventory-worn.png)
 ![Sixteen-member formation in the PSP EBOOT](evidence/v080-psp-army.png)
 
 ## 0.7.0: focused menus and regional consequences

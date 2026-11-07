@@ -19,13 +19,11 @@ int main(void){
  int id=atlas_item(1);assert(ui.mapX==towns[id].x&&ui.mapY==towns[id].y);
  press(KEY_TRIANGLE);assert(ui.mapZoom&&ui.mapX==towns[id].x);press(KEY_TRIANGLE);assert(!ui.mapZoom);
  ui.mapCategory=0;atlas_select(0);press(KEY_UP);assert(ui.mapChoice==atlas_count()-1);press(KEY_DOWN);assert(ui.mapChoice==0);
- press(KEY_R);assert(ui.mapCategory==1&&ui.mapChoice==0);press(KEY_DOWN);assert(atlas_item(ui.mapChoice)>=TOWNS);
- int event=atlas_item(ui.mapChoice)-TOWNS;assert(ui.mapX==g.living.events[event].x);press(KEY_TRIANGLE);assert(ui.mapZoom);press(KEY_TRIANGLE);assert(!ui.mapZoom&&ui.mapCategory==1&&atlas_item(ui.mapChoice)==TOWNS+event);
- shot("event");
+ press(KEY_R);assert(ui.mapCategory==0);for(int i=0;i<atlas_count();i++)assert(atlas_item(i)<TOWNS);
  memset(g.discovered,1,sizeof(g.discovered));memset(g.seen,255,sizeof(g.seen));ui.mapCategory=0;assert(atlas_count()==TOWNS+1);atlas_select(9);shot("town");
  assert(atlas_item(9)==8);float tx=ui.mapX,ty=ui.mapY;assert(can_walk(tx,ty));press(KEY_CROSS);assert(ui.screen==SCREEN_WORLD&&ui.waypoint&&ui.travelX==tx&&ui.travelY==ty);
  assert(save_game("build/DUST_5.sav"));press(KEY_SELECT);assert(ui.screen==SCREEN_MAP);shot("travel");
- for(int e=0;e<EVENTS;e++)g.living.events[e].status=1;ui.mapCategory=1;atlas_select(0);assert(atlas_count()==1);press(KEY_UP);assert(ui.mapChoice==0);press(KEY_DOWN);assert(ui.mapChoice==0);shot("empty-events");
+ int count=atlas_count();for(int e=0;e<EVENTS;e++)g.living.events[e].status=1;ui.mapCategory=1;atlas_select(0);assert(atlas_count()==count&&ui.mapCategory==0);
  g.discovered[15]=0;g.contracts[0].active=1;g.contracts[0].type=0;g.contracts[0].progress=0;g.contracts[0].needed=1;g.contracts[0].target=15;ui.screen=SCREEN_JOURNAL;ui.journalTab=0;ui.selection=0;press(KEY_SQUARE);assert(ui.screen==SCREEN_MAP&&ui.mapZoom&&ui.mapX==towns[15].x&&ui.mapY==towns[15].y&&!g.discovered[15]);
- puts("PASS: atlas discovery filtering, named town/event selection, wraparound, zoom context, exact travel destination, empty event list and D-pad preserves player position.");
+ puts("PASS: atlas discovery filtering, named town selection, wraparound, zoom context, exact travel destination, events never enter atlas lists and D-pad preserves player position.");
 }

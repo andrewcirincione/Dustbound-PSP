@@ -51,6 +51,7 @@ int gear_id(int f, int m, int q) {
 int gear_family(int it) {
     return it >= CATALOG_ITEMS && it < ITEMS ? itemDefs[it].family : it >= BASE_ITEMS && it < CATALOG_ITEMS ? (it - BASE_ITEMS) / (MATERIALS * QUALITIES) : -1;
 }
+int weapon_rapier(int it) { return (it>=RAPIER_ITEMS&&it<RAPIER_ITEMS+24)||it==UNIQUE_ITEMS+1; }
 int weapon_ranged(int it) { return it == CROSSBOW || (gear_family(it) >= 24 && gear_family(it) < 32); }
 int gear_bonus(const Actor *a, int stat) {
     int v = 0;
@@ -95,7 +96,7 @@ int weapon_strength(int it) {
 }
 float weapon_handling(const Actor *a, int it) {
     float effective = level(a, STRENGTH) * (.35f + .65f * fminf(a->health[LARM], a->health[RARM]) / 100.f);
-    return 1 + fminf(1.4f, fmaxf(0, weapon_strength(it) - effective) * .035f);
+    return (1 + fminf(1.4f, fmaxf(0, weapon_strength(it) - effective) * .035f))*(1-(weapon_class_level(a,weapon_class(it))-1)*.0015f);
 }
 /* Garment profiles follow their construction, not their catalog position. */
 typedef struct {
@@ -241,6 +242,19 @@ void content_init(void) {
         snprintf(descriptions[id],112,"%s. %s %d; weight %d. %s %d.",i>=16?"Signature trophy":"Specialist equipment",d->slot==0?"Damage":"Armor",d->slot==0?d->power:d->armor,d->weight,effectNames[d->effect],item_effect_value(id));
     }
 
+    /* Two additional weapon types, each with all 24 material/quality variants. */
+    for(int type=0;type<2;type++)for(int m=0;m<MATERIALS;m++)for(int q=0;q<QUALITIES;q++) {
+        int id=OLD_ITEMS+type*24+m*4+q;ItemDef*d=&itemDefs[id];
+        *d=itemDefs[gear_id(type?0:18,m,q)];
+        snprintf(names[id],40,"%s %s %s",qualityNames[q],materialNames[m],type?"Rapier":"Scimitar");d->name=names[id];d->desc=descriptions[id];
+        d->power=(type?13:21)+m*2+q*4;d->weight=type?3:6;d->range=type?1.95f:1.7f;d->cooldown=type?.7f:1.1f;
+        d->effect=type?1:0;d->potency=4+q*2+m;d->penetration=type?12+q*3:0;d->accuracy=type?8:2;d->price=100+m*60+q*q*100+d->power*8;
+        snprintf(descriptions[id],112,type?"Thrusting blade. Fast, accurate, piercing; weight %d.":"Curved cutting blade. Serrated edge; weight %d.",d->weight);
+    }
+    static const char*unique[16]={"Saint's flensing knife","Gate commander's rapier","Red feast scimitar","Ferry watch greatsword","Cinder prospector's pick","Saltwind longbow","Black warrant rifle","Dusk warden's maul","Saint's ash vestments","Feastmaster's bone mantle","Gatekeeper's lamellar","Smuggler's reed coat","Saltwalker's plated coat","Caravan surgeon's robes","Prospector's ore frame","Pilgrim's veil"};
+    static const int uf[16]={9,0,18,84,12,28,29,85,39,37,34,43,42,39,79,57};
+    for(int i=0;i<16;i++){int id=UNIQUE_ITEMS+i;ItemDef*d=&itemDefs[id];*d=itemDefs[gear_id(uf[i],4,3)];d->name=unique[i];d->desc=descriptions[id];d->trim=0xd5ba78;d->power+=i<8?9:0;d->armor+=i>=8&&i!=14?8:0;d->stealth+=i==11||i==15?14:0;d->capacity+=i==14?12:0;d->price+=1200;snprintf(descriptions[id],112,"Named frontier equipment. %s +%d; weight %d.",effectNames[d->effect],item_effect_value(id),d->weight);}
+
 }
 
 const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE BORDERLANDS",    "COMBAT",
@@ -251,15 +265,15 @@ const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE 
 const char *guideBodies[GUIDE_PAGES] = {
     "Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down: skills. Left: worn gear. Right: squad management.\n\001: interact. \004: pack. \003: "
     "fight/passive. Hold L + Square: choose someone to attack (also Start > Squad). \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
-    "pause menu: \005/\006 change Pause, Squad and World tabs. D-pad navigates menus.\nMenus pause time. \010 opens help. \005/\006 switch members or guide pages. Hold \005 and tap \001 to cycle nearby targets. Analog movement cancels work or travel.",
+    "pause menu: \005/\006 change Pause, Squad and World tabs. D-pad navigates menus.\nMenus pause time. \010 opens help. \005/\006 switch members or guide pages. Cross opens nearby actions. Pause with R, choose an action to queue it, then R resumes. Four actions can wait; moving cancels them. Analog movement cancels work or travel.",
     "New expedition opens character creation. Choose a name, origin, ancestry, body, skin, hairstyle, hair "
     "color, beard and scars. \014 adjusts each choice; \001 edits your name or begins.\nOrigins change "
     "equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Ancestry "
     "changes starting strengths. A town barber can change your appearance later.",
     "The 1536 by 1536 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. "
     "Rivers have fords near roads; hills rise into mesas and snowfields.\n\010 opens the atlas. "
-    "D-pad selects a named destination; \005/\006 switches towns/events. The blue triangle is you, "
-    "white squares are towns, gold diamonds are events. Only the selected place is named on the map. "
+    "D-pad selects a known town; \005/\006 changes pages. The blue triangle is you; "
+    "white squares are towns. Incidents are discovered on the road and never marked on maps. "
     "\001 orders travel. \004 opens local view: move its cursor freely; \005/\006 selects known towns. \003 "
     "reveals surveyed geography after buying a "
     "chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits "
@@ -284,15 +298,14 @@ const char *guideBodies[GUIDE_PAGES] = {
     "simulation; menus and "
     "tactical pause stop time.",
     "Six slots: weapon, torso, head, boots, legs, back. Pack \001 equips; \003 passes one to an ally; \004 "
-    "switches carried/worn gear. \001 on worn gear removes it if space allows. ITEM / WORN compares stats "
-    "and actual bonuses.\nPlate protects more but slows movement and hinders stealth. Cloth is light; "
+    "switches carried/worn gear. \001 on worn gear removes it if space allows. Hovering equipment changes the single character preview and compares stats. WORN DISGUISE shows your current outfit; PREVIEW shows the hovered outfit. Equipping commits it.\nPlate protects more but slows movement and hinders stealth. Cloth is light; "
     "travel gear favors weather or movement. Higher grades improve the same role. Torso armor covers "
     "chest/arms; headgear covers head; leg armor and boots have separate coverage chances. MOVE% is the worn speed "
     "bonus. Weight above capacity slows you further.",
     "Talk to a trader and choose Trade. \014 switches buying and selling; \005/\006 filters supplies, "
     "weapons, armor or backpacks. \001 trades one item. Shops have finite stocks and refresh daily with "
     "different "
-    "gear.\nPrices depend on quality, faction relations, local prosperity. Hostile factions refuse trade. "
+    "gear.\nRegional exports are cheap; imports and shortages cost more. Green percentages mean a good buy or sale; red means poor, relative to ordinary buy/resale value. Ask merchants for trading tips. Hostile factions refuse trade unless fooled by a disguise. "
     "Selling stolen goods back to their owner can expose you; Black Mesa fences accept them. The item "
     "details show its stats and effects before purchase.",
     "Walk to a forge or ask a smith to use the smithy. Choose slot, design, "
@@ -319,17 +332,17 @@ const char *guideBodies[GUIDE_PAGES] = {
     "civilian to inspect a pickpocket attempt. Select an item with \015. Risk reflects weight, value, approach and visible witnesses. Getting behind the target improves odds. \001 steals one; \002 cancels. Owned salvage says STEAL; locked containers require tools "
     "and time.\nWitnesses create a faction penalty and bounty. A theft can fail, drawing guards. Stolen "
     "stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a "
-    "defeated wanted survivor; breaking out or paying bail is possible.",
+    "defeated wanted survivor; breaking out or paying bail is possible. Nearby actions free other prisoners or slaves. Work takes time and guards can catch you. Some freed people flee; others follow independently. Only Recruit adds them to your squad. Leave me alone dismisses a follower.",
     "Compact guards roads and wells; Rust Caravans trade salvage. Shogunate markets sell lamellar and "
     "glaives. Ash monks sell medicine; Black Mesa fences stolen goods. Vultures raid; wild packs hunt.\n"
-    "Contracts raise standing; theft lowers it. The Factions ledger shows specialties and controlled towns. "
+    "Contracts raise standing; theft lowers it. The Factions ledger shows separate wanted amounts. Ash Monastery, Shogun Rest and Vulture Nest require matching body armor and headwear; close inspections can expose a disguise. "
     "Hired guards cost 240 silver for escort or 180 for camp duty: one simulated day. They fight and "
     "bandage independently, keep their gear, wait outside interiors and return home on expiry.",
-    "Marshals offer contracts. Claim completed work at its issuing town. Square locates it.\nJournal L/R switches Contracts, Local conflicts and Living frontier. Regional agreements are permanent. Living incidents continually renew: caravans, raiders, relief, caches, pilgrims, beasts, armies and warlords.\nUse Square to locate an incident. Cross delivers aid or searches a site in reach. Escort and combat resolve in the world. Failed attacks can leave relief appeals. Strong leaders wear signature loot. Armies can change town control.",
+    "Ask merchants or marshals for work. Freight needs a refundable deposit and four real goods; deliver through Journal at the destination. Escort caravans or patrol beside a guard for 12 silver per 30 seconds of nearby movement, plus a completion bonus. Stay within 8m; the employer warns you when wages pause. Named bounties pay more alive: subdue, carry and claim.\nJournal shows contracts and local agreements. Incidents renew naturally; nearby actions reveal them only when encountered. Armies can change town control. Strong leaders carry signature loot.",
     "Six manual slots plus autosave. \007, Save or Load opens a ledger with name, day, party size and "
     "silver. Choose a slot; \001 asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.\nSaves "
     "use version, size and checksum validation and preserve a previous .bak file. Invalid files never "
-    "replace your running expedition. Older saves through 0.5.2 remain loadable. Back them up before "
+    "replace your running expedition. Older saves through 0.8.1 remain loadable. Back them up before "
     "overwriting. "
     "Autosave is slot zero and is never used for manual saving.",
     "Dust, rain, acid mist and snow change visibility, terrain colors and survival pressure. Storms reduce "
@@ -337,7 +350,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "you.\nTonics and rest help recover. Rain irrigates farms. The northern highlands are colder; the fen "
     "produces acid mist. Weather changes as time passes. The world ledger reports storms and settlement "
     "events so you can plan supplies and routes.",
-    "Wanted survivors defeated by lawful guards may wake in town custody. They lose stolen cargo and must "
+    "Vulture Nest cannibals carry defeated outsiders to their cooking ground, shackle and eat them. Kill or distract guards and pick the shackles to rescue a captive. Wanted survivors defeated by lawful guards may wake in town custody. They lose stolen cargo and must "
     "serve time, pay bail or attempt an escape. A conscious free companion can still be selected.\nWhen "
     "imprisoned, movement is restricted to the holding area. \001 opens the custody dialogue. Paying clears "
     "the "

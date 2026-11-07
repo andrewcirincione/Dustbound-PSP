@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.8.1
+# Dustbound field guide — 0.9.0
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -8,7 +8,7 @@ Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down:
 
 ![cross](../assets/ui/cross.svg): interact. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. Hold L + Square: choose someone to attack (also Start > Squad). ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): pause menu: ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) change Pause, Squad and World tabs. D-pad navigates menus.
 
-Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch members or guide pages. Hold ![l](../assets/ui/l.svg) and tap ![cross](../assets/ui/cross.svg) to cycle nearby targets. Analog movement cancels work or travel.
+Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch members or guide pages. Cross opens nearby actions. Pause with R, choose an action to queue it, then R resumes. Four actions can wait; moving cancels them. Analog movement cancels work or travel.
 
 ## 2. Your Drifter
 
@@ -20,7 +20,7 @@ Origins change equipment, supplies and skills. Outlaws begin with a bounty. Cara
 
 The 1536 by 1536 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. Rivers have fords near roads; hills rise into mesas and snowfields.
 
-![select](../assets/ui/select.svg) opens the atlas. D-pad selects a named destination; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switches towns/events. The blue triangle is you, white squares are towns, gold diamonds are events. Only the selected place is named on the map. ![cross](../assets/ui/cross.svg) orders travel. ![triangle](../assets/ui/triangle.svg) opens local view: move its cursor freely; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist.
+![select](../assets/ui/select.svg) opens the atlas. D-pad selects a known town; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) changes pages. The blue triangle is you; white squares are towns. Incidents are discovered on the road and never marked on maps. ![cross](../assets/ui/cross.svg) orders travel. ![triangle](../assets/ui/triangle.svg) opens local view: move its cursor freely; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist.
 
 ## 4. Combat
 
@@ -42,7 +42,7 @@ An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Sleepin
 
 ## 7. Equipment
 
-Six slots: weapon, torso, head, boots, legs, back. Pack ![cross](../assets/ui/cross.svg) equips; ![square](../assets/ui/square.svg) passes one to an ally; ![triangle](../assets/ui/triangle.svg) switches carried/worn gear. ![cross](../assets/ui/cross.svg) on worn gear removes it if space allows. ITEM / WORN compares stats and actual bonuses.
+Six slots: weapon, torso, head, boots, legs, back. Pack ![cross](../assets/ui/cross.svg) equips; ![square](../assets/ui/square.svg) passes one to an ally; ![triangle](../assets/ui/triangle.svg) switches carried/worn gear. ![cross](../assets/ui/cross.svg) on worn gear removes it if space allows. Hovering equipment changes the single character preview and compares stats. WORN DISGUISE shows your current outfit; PREVIEW shows the hovered outfit. Equipping commits it.
 
 Plate protects more but slows movement and hinders stealth. Cloth is light; travel gear favors weather or movement. Higher grades improve the same role. Torso armor covers chest/arms; headgear covers head; leg armor and boots have separate coverage chances. MOVE% is the worn speed bonus. Weight above capacity slows you further.
 
@@ -50,7 +50,7 @@ Plate protects more but slows movement and hinders stealth. Cloth is light; trav
 
 Talk to a trader and choose Trade. ![horizontal](../assets/ui/horizontal.svg) switches buying and selling; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) filters supplies, weapons, armor or backpacks. ![cross](../assets/ui/cross.svg) trades one item. Shops have finite stocks and refresh daily with different gear.
 
-Prices depend on quality, faction relations, local prosperity. Hostile factions refuse trade. Selling stolen goods back to their owner can expose you; Black Mesa fences accept them. The item details show its stats and effects before purchase.
+Regional exports are cheap; imports and shortages cost more. Green percentages mean a good buy or sale; red means poor, relative to ordinary buy/resale value. Ask merchants for trading tips. Hostile factions refuse trade unless fooled by a disguise. Selling stolen goods back to their owner can expose you; Black Mesa fences accept them. The item details show its stats and effects before purchase.
 
 ## 9. Forging Gear
 
@@ -80,27 +80,25 @@ Smelt and Cook use nearby stations and can collect ingredients from a nearby dep
 
 ![circle](../assets/ui/circle.svg) sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and ![cross](../assets/ui/cross.svg) near a civilian to inspect a pickpocket attempt. Select an item with ![vertical](../assets/ui/vertical.svg). Risk reflects weight, value, approach and visible witnesses. Getting behind the target improves odds. ![cross](../assets/ui/cross.svg) steals one; ![circle](../assets/ui/circle.svg) cancels. Owned salvage says STEAL; locked containers require tools and time.
 
-Witnesses create a faction penalty and bounty. A theft can fail, drawing guards. Stolen stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a defeated wanted survivor; breaking out or paying bail is possible.
+Witnesses create a faction penalty and bounty. A theft can fail, drawing guards. Stolen stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a defeated wanted survivor; breaking out or paying bail is possible. Nearby actions free other prisoners or slaves. Work takes time and guards can catch you. Some freed people flee; others follow independently. Only Recruit adds them to your squad. Leave me alone dismisses a follower.
 
 ## 14. Factions
 
 Compact guards roads and wells; Rust Caravans trade salvage. Shogunate markets sell lamellar and glaives. Ash monks sell medicine; Black Mesa fences stolen goods. Vultures raid; wild packs hunt.
 
-Contracts raise standing; theft lowers it. The Factions ledger shows specialties and controlled towns. Hired guards cost 240 silver for escort or 180 for camp duty: one simulated day. They fight and bandage independently, keep their gear, wait outside interiors and return home on expiry.
+Contracts raise standing; theft lowers it. The Factions ledger shows separate wanted amounts. Ash Monastery, Shogun Rest and Vulture Nest require matching body armor and headwear; close inspections can expose a disguise. Hired guards cost 240 silver for escort or 180 for camp duty: one simulated day. They fight and bandage independently, keep their gear, wait outside interiors and return home on expiry.
 
 ## 15. Contracts
 
-Marshals offer contracts. Claim completed work at its issuing town. Square locates it.
+Ask merchants or marshals for work. Freight needs a refundable deposit and four real goods; deliver through Journal at the destination. Escort caravans or patrol beside a guard for 12 silver per 30 seconds of nearby movement, plus a completion bonus. Stay within 8m; the employer warns you when wages pause. Named bounties pay more alive: subdue, carry and claim.
 
-Journal L/R switches Contracts, Local conflicts and Living frontier. Regional agreements are permanent. Living incidents continually renew: caravans, raiders, relief, caches, pilgrims, beasts, armies and warlords.
-
-Use Square to locate an incident. Cross delivers aid or searches a site in reach. Escort and combat resolve in the world. Failed attacks can leave relief appeals. Strong leaders wear signature loot. Armies can change town control.
+Journal shows contracts and local agreements. Incidents renew naturally; nearby actions reveal them only when encountered. Armies can change town control. Strong leaders carry signature loot.
 
 ## 16. Saves
 
 Six manual slots plus autosave. ![start](../assets/ui/start.svg), Save or Load opens a ledger with name, day, party size and silver. Choose a slot; ![cross](../assets/ui/cross.svg) asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.
 
-Saves use version, size and checksum validation and preserve a previous .bak file. Invalid files never replace your running expedition. Older saves through 0.5.2 remain loadable. Back them up before overwriting. Autosave is slot zero and is never used for manual saving.
+Saves use version, size and checksum validation and preserve a previous .bak file. Invalid files never replace your running expedition. Older saves through 0.8.1 remain loadable. Back them up before overwriting. Autosave is slot zero and is never used for manual saving.
 
 ## 17. Weather
 
@@ -110,7 +108,7 @@ Tonics and rest help recover. Rain irrigates farms. The northern highlands are c
 
 ## 18. Captivity
 
-Wanted survivors defeated by lawful guards may wake in town custody. They lose stolen cargo and must serve time, pay bail or attempt an escape. A conscious free companion can still be selected.
+Vulture Nest cannibals carry defeated outsiders to their cooking ground, shackle and eat them. Kill or distract guards and pick the shackles to rescue a captive. Wanted survivors defeated by lawful guards may wake in town custody. They lose stolen cargo and must serve time, pay bail or attempt an escape. A conscious free companion can still be selected.
 
 When imprisoned, movement is restricted to the holding area. ![cross](../assets/ui/cross.svg) opens the custody dialogue. Paying clears the local bounty. Escape attempts use lockpicking, may fail and raise the bounty. The prison timer, injuries and inventory persist through saving.
 

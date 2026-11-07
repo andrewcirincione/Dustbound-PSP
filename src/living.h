@@ -16,6 +16,8 @@ void living_loot(int n,int role,int tier){
     a->gear[2]=gear_id(48+role,m,q);a->gear[3]=gear_id(60+role,m,q);a->gear[4]=gear_id(68+role,m,q);
     if(tier==2)a->gear[role%2]=CATALOG_ITEMS+(role%2?8+role:role);
     if(tier>=3)a->gear[role>=4?1:0]=CATALOG_ITEMS+16+role;
+    if(role==0&&tier<3)a->gear[0]=SCIMITAR_ITEMS+(tier*7+n)%24;
+    if(role==1&&tier<3)a->gear[0]=RAPIER_ITEMS+(tier*7+n)%24;
     inventory_add(a,RATION,1+tier);inventory_add(a,MEDKIT,1+tier/2);
     if(weapon_ranged(a->gear[0]))inventory_add(a,gear_family(a->gear[0])>=29?CARTRIDGE:BOLTS,12+tier*8);
     if(role==2)inventory_add(a,IRONBAR,3+tier);
@@ -34,7 +36,7 @@ void living_detail(int slot,char*out,int size){
 }
 static int release_event(int slot){
     WorldEvent*e=&LW.events[slot];Actor*p=&g.actors[g.selected];
-    for(int i=0;i<16;i++){int n=e->members[i];if(n>=0&&(g.actors[n].carriedBy>=0||distance(p->x,p->y,g.actors[n].x,g.actors[n].y)<55))return 0;}
+    for(int i=0;i<16;i++){int n=e->members[i];if(n>=0&&(g.actors[n].carriedBy>=0||g.actors[n].squad||g.society.freed[n]||g.depth.actors[n].captive||distance(p->x,p->y,g.actors[n].x,g.actors[n].y)<55))return 0;}
     for(int i=0;i<16;i++){int n=e->members[i];if(n<0)continue;
         g.actors[n].active=0;LW.owned[n]=-1;LW.anger[n]=0;
         for(int j=0;j<g.actorCount;j++){if(g.actors[j].target==n)g.actors[j].target=-1;if(g.actors[j].attackTarget==n){g.actors[j].attackTarget=-1;g.actors[j].attackPhase=0;}if(LW.command[j]==n)LW.command[j]=-1;}
@@ -161,7 +163,7 @@ void living_tick(float dt){
             if(!fighting){float speed=e->modifier==1?.35f:e->modifier==2?.5f:.7f;e->x+=dx/fmaxf(.1f,d)*speed*step;e->y+=dy/fmaxf(.1f,d)*speed*step;}
         }
         if(e->spawned&&near>80){
-            int safe=1;for(int i=0;i<e->count;i++){int n=e->members[i];Actor*a=&g.actors[n];if(a->squad||a->carriedBy>=0||a->carrying>=0||g.depth.actors[n].captive||merc_slot(a)>=0||distance(p->x,p->y,a->x,a->y)<65)safe=0;}
+            int safe=1;for(int i=0;i<e->count;i++){int n=e->members[i];Actor*a=&g.actors[n];if(a->squad||g.society.freed[n]||a->carriedBy>=0||a->carrying>=0||g.depth.actors[n].captive||merc_slot(a)>=0||distance(p->x,p->y,a->x,a->y)<65)safe=0;}
             if(safe){for(int i=0;i<e->count;i++){int n=e->members[i];e->reserve[i]=g.actors[n];e->reserveDepth[i]=g.depth.actors[n];e->reserveAnger[i]=LW.anger[n];}
                 if(release_event(k)){for(int i=0;i<16;i++)e->members[i]=-1;e->stored=1;e->spawned=0;}
             }
@@ -197,7 +199,7 @@ int combat_candidate(int row){int ids[MAX_ACTORS],count=0;float ds[MAX_ACTORS];A
 int combat_candidates(void){return combat_candidate(-1);}
 int actor_relation(int n){if(n<0||n>=g.actorCount)return 0;Actor*a=&g.actors[n],*p=&g.actors[g.selected];return hostile(a,p)?-1:a->squad||a->faction==p->faction||g.rep[a->faction]>=15?1:0;}
 void command_attack(int n){Actor*a=&g.actors[g.selected];if(n<0||n>=g.actorCount||g.actors[n].squad||!conscious(a)||!conscious(&g.actors[n])||depth_distance(a,&g.actors[n])>14)return;
-    Actor*b=&g.actors[n];if(!hostile(a,b)){a->bounty+=100;g.rep[b->faction]-=20;log_msg("Assault: +100 bounty; faction standing -20.");}
+    Actor*b=&g.actors[n];if(!hostile(a,b)){crime_add(a,b->faction,100);g.rep[b->faction]-=20;log_msg("Assault: +100 bounty; faction standing -20.");}
     LW.anger[n]=1;int k=event_for(n);if(k>=0)for(int i=0;i<LW.events[k].count;i++){int j=LW.events[k].members[i];if(j>=0)LW.anger[j]=1;}
     LW.command[g.selected]=n;a->target=n;a->autoattack=1;ui.attackFocus=n;
 }

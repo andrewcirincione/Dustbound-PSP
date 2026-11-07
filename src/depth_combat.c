@@ -180,9 +180,9 @@ void depth_room_tick(float dt) {
                 if (before < 5 && z->trespass >= 5)
                     log_msg("Private property. Leave before the occupants raise alarm.");
                 if (before < 12 && z->trespass >= 12) {
-                    a->bounty += 80;
+                    crime_add(a,b->faction,80);
                     g.rep[b->faction] -= 30;
-                    log_msg("Trespass witnessed: bounty +80.");
+                    log_warn("Trespass witnessed: bounty +80.");
                 }
             } else
                 z->trespass = 0;

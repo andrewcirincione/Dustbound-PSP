@@ -5,36 +5,10 @@
 extern int conscious(const Actor *);
 static int wrapi(int v, int n) { return (v % n + n) % n; }
 /* Named world destinations. Local view retains free cursor travel. */
-int atlas_item(int row) {
-    if(row==0)return -1; /* your position */
-    int at=1;
-    if(ui.mapCategory) {
-        for(int e=0;e<EVENTS;e++)if(!g.living.events[e].status){if(at++==row)return TOWNS+e;}
-    } else {
-        for(int t=0;t<TOWNS;t++)if(g.discovered[t]){if(at++==row)return t;}
-    }
-    return -2;
-}
-int atlas_count(void) {
-    int n=1;
-    if(ui.mapCategory){for(int e=0;e<EVENTS;e++)if(!g.living.events[e].status)n++;}
-    else {for(int t=0;t<TOWNS;t++)if(g.discovered[t])n++;}
-    return n;
-}
-void atlas_select(int row) {
-    ui.mapChoice=wrapi(row,atlas_count());int id=atlas_item(ui.mapChoice);
-    if(id==-1){ui.mapX=g.actors[g.selected].x;ui.mapY=g.actors[g.selected].y;}
-    else if(id<TOWNS){ui.mapTown=id;ui.mapX=towns[id].x;ui.mapY=towns[id].y;}
-    else {ui.mapX=g.living.events[id-TOWNS].x;ui.mapY=g.living.events[id-TOWNS].y;}
-}
-void atlas_sync(void) {
-    float best=distance(ui.mapX,ui.mapY,g.actors[g.selected].x,g.actors[g.selected].y);int category=0,row=0;
-    for(int c=0;c<2;c++){ui.mapCategory=c;for(int n=1;n<atlas_count();n++){
-        int id=atlas_item(n);float x=id<TOWNS?towns[id].x:g.living.events[id-TOWNS].x,y=id<TOWNS?towns[id].y:g.living.events[id-TOWNS].y;
-        float d=distance(ui.mapX,ui.mapY,x,y);if(d<best){best=d;category=c;row=n;}
-    }}
-    ui.mapCategory=category;atlas_select(row);
-}
+int atlas_item(int row){if(row==0)return -1;for(int t=0;t<TOWNS;t++)if(g.discovered[t]&&--row==0)return t;return -2;}
+int atlas_count(void){int n=1;for(int t=0;t<TOWNS;t++)n+=!!g.discovered[t];return n;}
+void atlas_select(int row){ui.mapCategory=0;ui.mapChoice=wrapi(row,atlas_count());int id=atlas_item(ui.mapChoice);if(id<0){ui.mapX=g.actors[g.selected].x;ui.mapY=g.actors[g.selected].y;}else{ui.mapTown=id;ui.mapX=towns[id].x;ui.mapY=towns[id].y;}}
+void atlas_sync(void){float best=distance(ui.mapX,ui.mapY,g.actors[g.selected].x,g.actors[g.selected].y);int row=0;for(int n=1;n<atlas_count();n++){int id=atlas_item(n);float d=distance(ui.mapX,ui.mapY,towns[id].x,towns[id].y);if(d<best){best=d;row=n;}}atlas_select(row);}
 static void open_view(int screen) {
     ui.screen = screen;
     ui.selection = 0;
@@ -108,7 +82,7 @@ void character_finish(void) {
             g.money = 180;
             a->xp[STEALTH] = 1452;
             a->xp[THEFT] = 972;
-            a->bounty = 160;
+            crime_add(a,UNION,160);
             g.rep[UNION] = -20;
         }
         if (origin == 4)
@@ -213,6 +187,14 @@ int expansion_input(float dt, Input in) {
             ui.selection = wrapi(ui.selection + 1, GUIDE_PAGES);
         if (p & (KEY_UP | KEY_L))
             ui.selection = wrapi(ui.selection - 1, GUIDE_PAGES);
+        return 1;
+    }
+    if(ui.screen==SCREEN_ACTIONS){
+        int count=nearby_actions();
+        if(p&(KEY_CIRCLE|KEY_START)){open_view(SCREEN_WORLD);return 1;}
+        if(p&KEY_R){ui.paused=!ui.paused;if(!ui.paused){open_view(SCREEN_WORLD);return 1;}}
+        if(p&KEY_SQUARE){g.society.queueCount[g.selected]=0;log_msg("Queued actions cleared.");}
+        if(count){if(p&KEY_UP)ui.selection=wrapi(ui.selection-1,count);if(p&KEY_DOWN)ui.selection=wrapi(ui.selection+1,count);if(ui.selection>=count)ui.selection=count-1;if(p&KEY_CROSS)nearby_action_choose(ui.selection);}
         return 1;
     }
     if(ui.screen==SCREEN_ENGAGE) {
@@ -381,7 +363,7 @@ int expansion_input(float dt, Input in) {
         return 1;
     }
     if (ui.screen == SCREEN_MAP && !ui.mapZoom && (p & (KEY_UP|KEY_DOWN|KEY_LEFT|KEY_RIGHT|KEY_L|KEY_R))) {
-        if(p&(KEY_L|KEY_R|KEY_LEFT|KEY_RIGHT)){ui.mapCategory=1-ui.mapCategory;atlas_select(0);}
+        if(p&(KEY_L|KEY_R|KEY_LEFT|KEY_RIGHT))atlas_select(ui.mapChoice+(p&(KEY_L|KEY_LEFT)?-7:7));
         else atlas_select(ui.mapChoice+(p&KEY_UP?-1:1));
         return 1;
     }
@@ -493,7 +475,7 @@ int expansion_input(float dt, Input in) {
         return 1;
     }
     if(ui.screen==SCREEN_JOURNAL && (p&(KEY_L|KEY_R))) {
-        ui.journalTab=wrapi(ui.journalTab+(p&KEY_L?-1:1),3);ui.selection=ui.regionChoice=0;return 1;
+        ui.journalTab=wrapi(ui.journalTab+(p&KEY_L?-1:1),2);ui.selection=ui.regionChoice=0;return 1;
     }
     if(ui.screen==SCREEN_JOURNAL && ui.journalTab==1) {
         if(p&(KEY_CIRCLE|KEY_START)) {open_view(SCREEN_WORLD);return 1;}
@@ -506,14 +488,6 @@ int expansion_input(float dt, Input in) {
             ui.mapX=r==1&&!g.regions.outcome[1]?g.regions.campX:towns[t].x;
             ui.mapY=r==1&&!g.regions.outcome[1]?g.regions.campY:towns[t].y;
         }
-        return 1;
-    }
-    if(ui.screen==SCREEN_JOURNAL && ui.journalTab==2){
-        if(p&(KEY_CIRCLE|KEY_START)){open_view(SCREEN_WORLD);return 1;}
-        if(p&KEY_UP)ui.selection=wrapi(ui.selection-1,EVENTS);
-        if(p&KEY_DOWN)ui.selection=wrapi(ui.selection+1,EVENTS);
-        if(p&KEY_CROSS)living_action(ui.selection);
-        if(p&KEY_SQUARE){WorldEvent*e=&g.living.events[ui.selection];ui.mapX=e->x;ui.mapY=e->y;ui.mapTown=e->town;ui.mapZoom=1;open_view(SCREEN_MAP);}
         return 1;
     }
     if (ui.screen == SCREEN_JOURNAL || ui.screen == SCREEN_FACTIONS) {
@@ -530,8 +504,9 @@ int expansion_input(float dt, Input in) {
             complete_contract(ui.selection);
         if (ui.screen == SCREEN_JOURNAL && (p & KEY_SQUARE)) {
             Contract *c = &g.contracts[ui.selection];
+            if(c->active==1&&(c->type==5||c->type==6||c->type==7)){log_msg("Find the employer or quarry in the world; no live map tracking.");return 1;}
             if (c->active == 1) {
-                int town = c->type == 0 && c->progress < c->needed ? c->target : c->town;
+                int town = (c->type == 0 && c->progress < c->needed)||c->type==4 ? c->target : c->town;
                 open_view(SCREEN_MAP);
                 ui.mapTown = town;
                 ui.mapX = towns[town].x;
@@ -624,7 +599,7 @@ int expansion_input(float dt, Input in) {
         Actor *b = &g.actors[n];
         int town = town_near(a->x, a->y, 14), prison = a->prisonTime > 0 && n == g.selected,
             count = prison               ? 3
-                    : ui.dialogPage == 1 ? 5
+                    : ui.dialogPage == 1 ? 9
                                          : dialogue_count(n);
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(SCREEN_WORLD);
@@ -638,9 +613,9 @@ int expansion_input(float dt, Input in) {
             int choice = ui.selection;
             if (prison) {
                 if (choice == 0) {
-                    if (g.money >= a->bounty) {
-                        g.money -= a->bounty;
-                        a->bounty = 0;
+                    if (g.money >= wanted_amount(a,g.townOwner[a->prisonTown])) {
+                        g.money -= wanted_amount(a,g.townOwner[a->prisonTown]);
+                        crime_clear(a,g.townOwner[a->prisonTown]);
                         a->prisonTime = 0;
                         g.rep[g.townOwner[a->prisonTown]] = 0;
                         open_view(SCREEN_WORLD);
@@ -651,19 +626,19 @@ int expansion_input(float dt, Input in) {
                     if (inventory_count(a, TOOLS) && ((g.rng = g.rng * 1664525u + 1013904223u) % 100) <
                                                          (unsigned)(25 + level(a, LOCKPICK))) {
                         a->prisonTime = 0;
-                        a->bounty += 100;
+                        crime_add(a,g.townOwner[a->prisonTown],100);
                         g.rep[g.townOwner[a->prisonTown]] -= 18;
                         open_view(SCREEN_WORLD);
                         log_msg("Lock opened. Escape before the guards return.");
                     } else {
                         a->prisonTime += 20;
-                        a->bounty += 20;
-                        log_msg("Escape failed. Sentence and bounty increased.");
+                        crime_add(a,g.townOwner[a->prisonTown],20);
+                        log_warn("Escape failed. Sentence and bounty increased.");
                     }
                 } else
                     open_view(SCREEN_WORLD);
             } else if (ui.dialogPage == 1) {
-                if (choice < 4)
+                if (choice < 8)
                     accept_contract(town, choice);
                 else {
                     ui.dialogPage = 0;
@@ -671,6 +646,8 @@ int expansion_input(float dt, Input in) {
                 }
             } else
                 switch (dialogue_action(n, choice)) {
+                case 14:ui.dialogPage=4;ui.selection=0;break;
+                case 15:open_view(SCREEN_FACTIONS);break;
                 case 0:
                     if (town >= 0 && depth_trade_open(town)) {
                         ui.tradeTown = town;
@@ -691,9 +668,9 @@ int expansion_input(float dt, Input in) {
                     doctor_heal(town);
                     break;
                 case 4:
-                    if (town >= 0 && a->bounty > 0 && g.money >= a->bounty) {
-                        g.money -= a->bounty;
-                        a->bounty = 0;
+                    if (town >= 0 && wanted_amount(a,g.townOwner[town]) > 0 && g.money >= wanted_amount(a,g.townOwner[town])) {
+                        g.money -= wanted_amount(a,g.townOwner[town]);
+                        crime_clear(a,g.townOwner[town]);
                         g.rep[g.townOwner[town]] = 0;
                         log_msg("Bounty paid to the local authority.");
                     } else {

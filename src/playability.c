@@ -22,7 +22,10 @@ int npc_role(const Actor *a) {
 }
 const char *npc_role_name(const Actor *a) {
     if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + MAX_ACTORS)) {
-        int n = depth_named((int)(a - g.actors));
+        int ai=(int)(a-g.actors);
+        if(a->prisonTime>0)return "PRISONER";
+        if(g.society.freed[ai])return "FREED SURVIVOR";
+        int n = depth_named(ai);
         if (n == NPC_SORA)
             return "ENGINEER";
         if (n == NPC_NELL)
@@ -40,9 +43,9 @@ const char *npc_role_name(const Actor *a) {
                                   "MEDIC",    "SMITH",    "BARBER",  "SCOUT",   "CONTRACT GUARD"};
     return names[npc_role(a)];
 }
-static const int services[][6] = {
-    {6, 12, 8, -1},    {0, 6, 12, 8, -1}, {6, 12, 8, -1},    {1, 4, 6, 8, -1}, {2, 6, 12, 8, -1},
-    {3, 6, 12, 8, -1}, {7, 6, 12, 8, -1}, {5, 6, 12, 8, -1}, {6, 12, 8, -1},   {9, 10, 6, 12, 8}};
+static const int services[][7] = {
+ {6,12,8,-1}, {0,14,1,6,12,8,-1}, {6,12,8,-1}, {1,4,15,6,8,-1}, {2,1,6,12,8,-1},
+ {3,6,12,8,-1}, {7,1,6,12,8,-1}, {5,6,12,8,-1}, {1,14,6,12,8,-1}, {9,10,6,12,8,-1}};
 int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
         return 0;
@@ -50,7 +53,7 @@ int dialogue_count(int actor) {
     if (named >= 0 && named <= NPC_TAMSIN)
         return named == NPC_NELL ? 5 : (named == NPC_RELL || named == NPC_SORA) ? 4 : 3;
     int n = 0;
-    while (n < 5 && services[npc_role(&g.actors[actor])][n] >= 0)
+    while (n < 6 && services[npc_role(&g.actors[actor])][n] >= 0)
         n++;
     return n;
 }
@@ -75,7 +78,7 @@ const char *dialogue_option(int actor, int row) {
                                    "Escort me. 240 silver / day",
                                    "Guard my camp. 180 silver / day",
                                    "End contract. No refund.",
-                                   "Tell me about your faction."};
+                                   "Tell me about your faction.","Discuss the local conflict.","Trade routes and prices.","Who wants me?"};
     if (depth_named(actor) >= 0 && depth_named(actor) <= NPC_TAMSIN)
         return depth_option(actor, row);
     int action = dialogue_action(actor, row);
@@ -593,9 +596,9 @@ int loot_take(int slot, int all) {
             Actor *w = &g.actors[i];
             if (!w->squad && w->faction == b->faction && conscious(w) &&
                 depth_distance(a, w) < (a->sneaking ? 3 : 6)) {
-                a->bounty += 20;
+                crime_add(a,b->faction,20);
                 g.rep[b->faction] -= 4;
-                log_msg("Witnessed looting! Bounty +20; stolen goods stay marked.");
+                log_warn("Witnessed looting! Bounty +20; stolen goods stay marked.");
                 return 1;
             }
         }
@@ -606,12 +609,12 @@ int loot_take(int slot, int all) {
 const char *skill_training(int s) {
     static const char *text[SKILLS] = {
         "Travel on foot. Higher athletics increases walking speed.",
-        "Carry weight and mine. Strength raises load allowance and handles heavy weapons.",
-        "Land weapon hits. Dexterity improves attack timing.",
+        "Fight, block, carry weight and mine. Strength raises load allowance and handles heavy weapons.",
+        "Practice attacks, especially cutting blades. Dexterity improves speed and cutting damage.",
         "Fight with melee weapons. Practice improves your chance to hit.",
         "Face melee attacks. Defence improves blocks; heavy packs penalize it.",
         "Survive blows. Each toughness level reduces incoming damage by 0.2%, up to 20%.",
-        "Evade attacks while unarmed. Dodge replaces weapon defence when your weapon slot is empty.",
+        "Fight unarmed or dodge while staggered. Hits also train dodge. Excess load reduces evasion and XP.",
         "Fight with an empty weapon slot. Martial arts improves unarmed attacks.",
         "Walk while sneaking. Stealth reduces detection; bulky gear penalizes it.",
         "Pick pockets and steal salvage. Failure can trigger bounties and guards.",
@@ -765,7 +768,7 @@ void skill_benefit(int skill, char *out, int size) {
     case MELEE: snprintf(out,size,"Melee attack score %d before injuries",lv+gear_bonus(a,0)-backpack_combat_penalty(a->gear[5]));break;
     case DEFENCE: snprintf(out,size,"Armed defence %d before stance and armor bonuses",lv-backpack_combat_penalty(a->gear[5]));break;
     case TOUGHNESS: snprintf(out,size,"Incoming damage reduced by %.1f%%",lv*.2f);break;
-    case DODGE: snprintf(out,size,"Unarmed defence %d before stance bonuses",lv-backpack_combat_penalty(a->gear[5]));break;
+    case DODGE: snprintf(out,size,"Evasion %d before load and stance penalties",lv-backpack_combat_penalty(a->gear[5]));break;
     case MARTIAL: snprintf(out,size,"Unarmed base damage %.1f, plus strength and attack",7+lv*.4f);break;
     case STEALTH: snprintf(out,size,"Sneak detection range %.0f%% before weather",100*fmaxf(.12f,.5f-lv*.003f-gear_bonus(a,2)*.003f));break;
     case THEFT: snprintf(out,size,"Base theft %.0f%%; item, approach and witnesses modify it",100*pickpocket_chance(a));break;

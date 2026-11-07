@@ -1,0 +1,247 @@
+[
+  {
+    "eboot_sha256": "eb76a319a4f5f584471ddd7332a99a705bd3c97c493d89acb4459845d26ecfb3",
+    "version": "0.9.0"
+  },
+  {
+    "capture": "v090-psp-title",
+    "screen": 13,
+    "expected": 13,
+    "frame": 26,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-inventory-worn",
+    "screen": 1,
+    "expected": 1,
+    "frame": 338,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-inventory-rapier",
+    "screen": 1,
+    "expected": 1,
+    "frame": 366,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-inventory-armor",
+    "screen": 1,
+    "expected": 1,
+    "frame": 392,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-inventory-disguise",
+    "screen": 1,
+    "expected": 1,
+    "frame": 514,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-skills",
+    "screen": 2,
+    "expected": 2,
+    "frame": 569,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-weapon-classes",
+    "screen": 2,
+    "expected": 2,
+    "frame": 597,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-atlas",
+    "screen": 5,
+    "expected": 5,
+    "frame": 827,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-atlas-page",
+    "screen": 5,
+    "expected": 5,
+    "frame": 850,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-local-map",
+    "screen": 5,
+    "expected": 5,
+    "frame": 872,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-merchant",
+    "screen": 17,
+    "expected": 17,
+    "frame": 1102,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-buy-prices",
+    "screen": 6,
+    "expected": 6,
+    "frame": 1314,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-sell-prices",
+    "screen": 6,
+    "expected": 6,
+    "frame": 1342,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-trading-tip",
+    "screen": 17,
+    "expected": 17,
+    "frame": 1464,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-work",
+    "screen": 17,
+    "expected": 17,
+    "frame": 1702,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-job-accepted",
+    "screen": 17,
+    "expected": 17,
+    "frame": 1732,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-actions",
+    "screen": 35,
+    "expected": 35,
+    "frame": 2006,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-queued-actions",
+    "screen": 35,
+    "expected": 35,
+    "frame": 2168,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-lock-opened",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2482,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-employer-warning",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2754,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-wanted",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3296,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-faction-warrants",
+    "screen": 20,
+    "expected": 20,
+    "frame": 3511,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-cannibal-capture",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3911,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-cannibal-danger",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4637,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-combat-training",
+    "screen": 0,
+    "expected": 0,
+    "frame": 5062,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-trained-weapon",
+    "screen": 2,
+    "expected": 2,
+    "frame": 5122,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-free-prisoners",
+    "screen": 35,
+    "expected": 35,
+    "frame": 5389,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-queued-rescues",
+    "screen": 35,
+    "expected": 35,
+    "frame": 5578,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-freed-escape",
+    "screen": 0,
+    "expected": 0,
+    "frame": 5882,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-freed-options",
+    "screen": 35,
+    "expected": 35,
+    "frame": 5915,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v090-psp-explicit-recruitment",
+    "screen": 4,
+    "expected": 4,
+    "frame": 6022,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "completed": true,
+    "prepared_saves": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "hover_does_not_equip": true,
+    "town_only_atlas": true,
+    "queue_executed": true,
+    "employer_warning": true,
+    "cannibal_capture": true,
+    "queued_other_prisoner_rescues": true,
+    "following_does_not_join_squad": true,
+    "independent_flight_or_following": true,
+    "explicit_recruitment": true,
+    "weapon_xp_before": 0.0,
+    "weapon_xp_after": 23.68000030517578,
+    "eboot_sha256": "eb76a319a4f5f584471ddd7332a99a705bd3c97c493d89acb4459845d26ecfb3"
+  }
+]

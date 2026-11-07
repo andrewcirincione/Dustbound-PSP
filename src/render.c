@@ -929,51 +929,10 @@ static void hud(void) {
                          : a->sneaking ? "SNEAK" : a->autoattack ? "FIGHT" : "PASSIVE";
     text(472 - (int)strlen(status) * 6, 259, status, a->bleed > .01f || a->dead || a->unconscious > 0 ? RED : TEAL, 1);
 
-    if (ui.noticeTime > 0) {
-        rect(7, 26, 386, 14, PANEL);
-        char notice[64];
-        snprintf(notice, sizeof(notice), "%.62s", ui.notice);
-        text(12, 30, notice, TEXT, 1);
-    }
-    /* Only advertise actions that can actually be performed here. */
-    b[0] = 0;
-    int cycle = 0;
-    if (a->carrying >= 0)
-        snprintf(b, sizeof(b), "\001 PUT DOWN %.24s", g.actors[a->carrying].name);
-    else if (g.interiorBuilding) {
-        int target = interior_context() == -1 ? -1 : depth_room_target();
-        if (target >= 0) {
-            Actor *other = &g.actors[target];
-            const char *action = other->squad ? "ASSIST" : other->dead || other->unconscious > 0 ? "LOOT"
-                                 : a->sneaking ? "PICKPOCKET" : "TALK";
-            snprintf(b, sizeof(b), "\001 %s: %.24s%s", action, other->name,
-                     !a->sneaking && !other->squad && !other->dead && other->unconscious <= 0 ? "  \002 SNEAK TO STEAL" : "");
-        } else if (interior_context() != -2)
-            snprintf(b, sizeof(b), "\001 %s", interior_prompt());
-    } else if (ui.contextIndex >= 0 && context_distance() <= context_reach()) {
-        if (ui.contextKind == 3 && (a->target >= 0 || a->attackPhase))
-            snprintf(b, sizeof(b), "BREAK AWAY FROM COMBAT TO ENTER");
-        else {
-            int n = ui.contextIndex;
-            int civilian = ui.contextKind == 0 && !g.actors[n].squad && !g.actors[n].dead &&
-                           g.actors[n].unconscious <= 0 && !(depth_named(n) >= 0 && depth_named(n) <= NPC_TAMSIN);
-            snprintf(b, sizeof(b), "\001 %s: %.24s%s", context_action(), context_name(),
-                     civilian && !a->sneaking ? "  \002 SNEAK TO STEAL" : "");
-        }
-        cycle = ui.contextCount > 1;
-    }
-    if (b[0]) {
-        int width = (int)strlen(b) * 6 + 16;
-        if (width > (cycle ? 414 : 476)) width = cycle ? 414 : 476;
-        rect(4, 233, width, 15, PANEL);
-        char action[80];
-        snprintf(action, sizeof(action), "%.*s", cycle ? 66 : 76, b);
-        text(12, 237, action, TEXT, 1);
-        if (cycle) {
-            rect(420, 233, 56, 15, PANEL);
-            text(425, 237, "\005+\001 NEXT", MUTED, 1);
-        }
-    }
+    if(a->carrying>=0)snprintf(b,sizeof(b),"\001 PUT DOWN %.24s",g.actors[a->carrying].name);
+    else if(nearby_actions())snprintf(b,sizeof(b),"\001 NEARBY ACTIONS%s",a->sneaking?" / SNEAKING":"");
+    else b[0]=0;
+    if(b[0]){rect(4,233,(int)strlen(b)*6+16,15,PANEL);text(12,237,b,TEXT,1);}
     if (a->taskKind)
         bar(180, 249, 120, 2,
             (1 - fminf(1, a->action / (a->taskKind == 3 ? 180 : a->taskKind == 2 ? 4.5f : 2.8f))) * 100, GOLD);
@@ -1042,6 +1001,7 @@ static void clipped(int x, int y, const char *s, int chars, uint32_t c) {
 }
 static Actor preview_actor(void) {
     Actor a = g.actors[g.selected];
+    if(!a.gear[1]&&g.depth.actors[g.selected].layer)a.gear[1]=g.depth.actors[g.selected].layer;
     a.attackPhase = 0;
     a.hitFlash = 0;
     a.unconscious = 0;
@@ -1065,7 +1025,8 @@ static void equipment_comparison(int it, int y) {
     if(d->slot<0){snprintf(b,sizeof(b),"%s / WEIGHT %d",d->name,d->weight);clipped(31,y,b,68,TEXT);wrap(31,y+14,67,d->desc,MUTED);return;}
     int worn=a->gear[d->slot];ItemDef *old=&itemDefs[worn];
     clipped(31,y,d->name,68,TEXT);
-    if(it>=CATALOG_ITEMS)text(374,y,it>=CATALOG_ITEMS+16?"SIGNATURE":"SPECIAL",GOLD,1);
+    if(it>=CATALOG_ITEMS&&it<OLD_ITEMS)text(374,y,it>=CATALOG_ITEMS+16?"SIGNATURE":"SPECIAL",GOLD,1);
+    else if(it>=UNIQUE_ITEMS)text(404,y,"NAMED",GOLD,1);
     snprintf(b,sizeof(b),"WORN: %s",worn?old->name:"EMPTY");clipped(31,y+12,b,68,MUTED);
     int cell=0;
     compare_stat(cell++,y+26,d->slot==0?"DAMAGE":d->slot==5?"CAPACITY":"ARMOR",
@@ -1097,25 +1058,55 @@ static void equipment_comparison(int it, int y) {
         clipped(31+(cell%2)*211,y+26+(cell/2)*12,b,33,GOLD);
     }
 }
+static const char *item_function(int it){
+    ItemDef*d=&itemDefs[it];int f=gear_family(it);
+    if(d->slot<0)return d->desc;
+    if(it>=RAPIER_ITEMS&&it<RAPIER_ITEMS+24)return "Fast, precise thrusts that pierce armor.";
+    if(it>=SCIMITAR_ITEMS&&it<SCIMITAR_ITEMS+24)return "Curved cutting blade; serration causes bleeding.";
+    if(d->slot==0){if(weapon_ranged(it))return f>=29?"Ranged weapon. Consumes cartridges; needs a clear shot.":"Ranged weapon. Consumes bolts; keep enemies at a distance.";if(f==84)return "Heavy two-handed blade. Extra reach; needs strong arms.";if(f==85)return "Heavy impact weapon. Pierces armor and staggers enemies.";return d->effect==0?"Melee weapon. Serrated strikes cause bleeding.":d->effect==1?"Melee weapon. Piercing strikes bypass some armor.":d->effect==3?"Melee weapon. Heavy impacts can stagger enemies.":"Melee weapon. Reach, handling and strength affect combat.";}
+    if(d->slot==5)return "Carries supplies or grants outfit bonuses; compare load and penalties.";
+    if(d->slot==2)return "Protects your head; matching headwear helps complete a disguise.";
+    if(d->slot==1)return "Protects your torso; faction clothing can form a disguise.";
+    return d->slot==3?"Footwear affects protection and movement.":"Legwear protects your legs; weight affects travel.";
+}
 static void pack_screen(void) {
-    Actor *a=&g.actors[g.selected];char b[100];int count=item_view_count(),it=count?a->pack[ui.selection].item:0;
+    Actor *a=&g.actors[g.selected];char b[120];int count=item_view_count(),it=count?a->pack[ui.selection].item:0;
     overlay_header("PACK & EQUIPMENT","\001 EQUIP / USE   \004 WORN GEAR   \003 PASS TO ALLY");
-    int first=start_row(item_view_row(ui.selection),count,6);
-    for(int j=0;j<6&&first+j<count;j++) {
+    Actor preview=preview_actor();int wearable=it&&itemDefs[it].slot>=0;
+    if(wearable)preview.gear[itemDefs[it].slot]=it;
+    portrait_scale(&preview,103,69,28,81,1);
+    center(79,150,wearable?"PREVIEW":"WORN",wearable?GOLD:MUTED,1);
+    int first=start_row(item_view_row(ui.selection),count,5);
+    for(int j=0;j<5&&first+j<count;j++) {
         int k=item_view_slot(first+j),y=84+j*13,id=a->pack[k].item;
-        if(k==ui.selection)rect(25,y-3,425,13,0x4a4030);
-        clipped(31,y,itemDefs[id].name,59,k==ui.selection?TEXT:MUTED);
+        if(k==ui.selection){rect(139,y-3,310,13,0x4a4030);rect(139,y-3,2,13,TEAL);}
+        clipped(146,y,itemDefs[id].name,46,k==ui.selection?TEXT:MUTED);
         snprintf(b,sizeof(b),"%d",a->pack[k].qty);text(442-strlen(b)*6,y,b,GOLD,1);
     }
-    snprintf(b,sizeof(b),"%d / %d SLOTS",count,PACK);text(31,160,b,MUTED,1);
-    if(count&&a->stolen[ui.selection])text(142,160,"STOLEN",RED,1);
-    snprintf(b,sizeof(b),"LOAD %.0f / %d",encumbrance(a),30+level(a,STRENGTH)*2+gear_bonus(a,3));text(322,160,b,MUTED,1);
-    equipment_comparison(it,173);
+    snprintf(b,sizeof(b),"%d/%d SLOTS  LOAD %.0f/%d%s",count,PACK,encumbrance(a),30+level(a,STRENGTH)*2+gear_bonus(a,3),count&&a->stolen[ui.selection]?"  STOLEN":"");text(146,150,b,MUTED,1);
+    int wornDisguise=disguise_faction(a),nextDisguise=disguise_faction(&preview);
+    snprintf(b,sizeof(b),"WORN DISGUISE: %s%s",wornDisguise?factionNames[wornDisguise]:"NONE",wornDisguise&&g.society.recognized[g.selected][wornDisguise]>0?" / EXPOSED":"");clipped(31,163,b,69,TEAL);
+    if(wearable){snprintf(b,sizeof(b),"PREVIEW: %s%s",nextDisguise?factionNames[nextDisguise]:"NO DISGUISE",nextDisguise&&g.society.recognized[g.selected][nextDisguise]>0?" / RECOGNIZED":"");clipped(31,175,b,69,GOLD);}
+    if(!it){text(31,198,"Your pack is empty.",MUTED,1);return;}
+    ItemDef*d=&itemDefs[it];
+    if(!wearable){snprintf(b,sizeof(b),"%s / WEIGHT %d",d->name,d->weight);clipped(31,190,b,68,TEXT);wrap(31,204,68,item_function(it),MUTED);return;}
+    int before=a->gear[d->slot];ItemDef*old=&itemDefs[before];
+    compare_stat(0,190,d->slot==0?"DAMAGE":d->slot==5?"CAPACITY":"ARMOR",d->slot==0?old->power:d->slot==5?old->capacity:old->armor,d->slot==0?d->power:d->slot==5?d->capacity:d->armor,0,0);
+    compare_stat(1,190,"WEIGHT",old->weight,d->weight,0,1);
+    if(!d->slot){compare_stat(2,190,"REACH",before?old->range:1.55f,d->range,1,0);compare_stat(3,190,"DELAY",weapon_handling(a,before)*fmaxf(.55f,(before?old->cooldown:1)-level(a,DEXTERITY)*.003f),weapon_handling(a,it)*fmaxf(.55f,d->cooldown-level(a,DEXTERITY)*.003f),1,1);snprintf(b,sizeof(b),"REQUIRES STR %d / HAVE %d",weapon_strength(it),level(a,STRENGTH));text(31,214,b,weapon_strength(it)>level(a,STRENGTH)?RED:MUTED,1);}
+    else {compare_stat(2,190,"STEALTH",old->stealth,d->stealth,0,0);compare_stat(3,190,d->slot==5?"LOADED WT":"MOVE %",d->slot==5?encumbrance(a):old->speed*.5f,d->slot==5?backpack_load_preview(a,it):d->speed*.5f,1,d->slot==5);compare_stat(4,190,"WEATHER",old->protection,d->protection,0,0);compare_stat(5,190,"CAPACITY",old->capacity,d->capacity,0,0);}
+    clipped(31,226,item_function(it),69,TEXT);
 }
 static void skills_screen(void) {
     Actor *a = &g.actors[g.selected];
     char b[80];
-    overlay_header("SKILLS & TRAINING", "\015 SELECT SKILL   BARS SHOW PROGRESS TO THE NEXT LEVEL");
+    overlay_header(ui.skillPage?"SKILLS / WEAPON CLASSES":"SKILLS & TRAINING", "\014 CORE / WEAPONS   \015 SELECT   BARS SHOW NEXT LEVEL");
+    if(ui.skillPage){
+        if(ui.selection>=WEAPON_CLASSES)ui.selection=0;
+        for(int i=0;i<WEAPON_CLASSES;i++){int x=31+(i/6)*214,y=84+(i%6)*15,lv=weapon_class_level(a,i);if(i==ui.selection)rect(x-3,y-2,199,13,0x4a4030);text(x,y,weaponClassNames[i],i==ui.selection?TEXT:MUTED,1);snprintf(b,sizeof(b),"%02d",lv);text(x+147,y,b,GOLD,1);float low=12.f*(lv-1)*(lv-1),hi=12.f*lv*lv;bar(x+166,y+2,24,3,lv>=100?100:100*(g.society.weaponXP[g.selected][i]-low)/(hi-low),TEAL);}
+        int lv=weapon_class_level(a,ui.selection);snprintf(b,sizeof(b),"%s LEVEL %d / DAMAGE +%.1f%% / DELAY -%.1f%%",weaponClassNames[ui.selection],lv,(lv-1)*.25f,(lv-1)*.15f);clipped(31,187,b,68,GOLD);
+        wrap(31,203,68,"Use this weapon class. Strong opponents teach faster; blocked attacks teach less. Progress persists when switching weapons.",TEXT);return;
+    }
     for (int i = 0; i < SKILLS; i++) {
         int x = 31 + (i / 10) * 214, y = 82 + (i % 10) * 10;
         if (i == ui.selection)
@@ -1178,13 +1169,14 @@ static void atlas_name(int id,char *out,int size) {
     else living_title(id-TOWNS,out,size);
 }
 static void world_atlas(void) {
+    ui.mapCategory=0;
     const int ox=14,oy=42,size=206;
     Actor *a=&g.actors[g.selected];
     int count=atlas_count();if(ui.mapChoice>=count)atlas_select(0);
     int selected=atlas_item(ui.mapChoice);
     rect(0,0,480,272,PANEL);
-    text(14,12,"WORLD ATLAS",TEXT,2);
-    text(341,17,"\003 USE CHART",MUTED,1);
+    text(14,6,"WORLD ATLAS",TEXT,2);
+    text(341,8,"\003 USE CHART",MUTED,1);
     static uint32_t pixels[206*206],cacheKey;static int ready;
     uint32_t key=g.seed;
     for(unsigned i=0;i<sizeof(g.seen);i++)key=(key^g.seen[i])*16777619u;
@@ -1224,7 +1216,6 @@ static void world_atlas(void) {
         for(int k=0;k<steps;k+=6)line(x+dx*k/fmaxf(1,steps),y+dy*k/fmaxf(1,steps),x+dx*fminf(k+3,steps)/fmaxf(1,steps),y+dy*fminf(k+3,steps)/fmaxf(1,steps),0x72cfd2);
     }
     for(int t=0;t<TOWNS;t++)if(g.discovered[t]){int x=AX(towns[t].x),y=AY(towns[t].y);rect(x-3,y-3,7,7,INK);frame(x-2,y-2,5,5,ui.mapCategory?MUTED:TEXT);}
-    if(ui.mapCategory)for(int e=0;e<EVENTS;e++)if(!g.living.events[e].status){WorldEvent*w=&g.living.events[e];int x=AX(w->x),y=AY(w->y);diamond(x,y,4,4,INK);diamond(x,y,2,2,GOLD);}
     int px=AX(a->x),py=AY(a->y);
     triangle(px,py-6,px-5,py+4,px+5,py+4,TEXT);triangle(px,py-4,px-3,py+3,px+3,py+3,0x72cfd2);
     int sx=AX(ui.mapX),sy=AY(ui.mapY);
@@ -1240,9 +1231,8 @@ static void world_atlas(void) {
     rect(18,230,51,15,INK);line(22,233,55,233,MUTED);text(22,237,"250m",MUTED,1);
     clipLeft=oldL;clipRight=oldR;clipTop=oldT;clipBottom=oldB;
     frame(ox-1,oy-1,size+2,size+2,EDGE);
-    text(198,18,"N",MUTED,1);line(211,15,211,26,MUTED);line(211,15,208,19,MUTED);line(211,15,214,19,MUTED);
-    text(235,35,"\005/\006",MUTED,1);text(263,35,"TOWNS",ui.mapCategory?MUTED:GOLD,1);text(309,35,"/",MUTED,1);text(325,35,"EVENTS",ui.mapCategory?GOLD:MUTED,1);
-    line(ui.mapCategory?325:263,45,ui.mapCategory?360:292,45,GOLD);
+    text(198,8,"N",MUTED,1);line(211,5,211,20,MUTED);line(211,5,208,9,MUTED);line(211,5,214,9,MUTED);
+    text(235,35,"KNOWN TOWNS",GOLD,1);text(332,35,"\005/\006 PAGE",MUTED,1);
     char info[100];snprintf(info,sizeof(info),"%d/%d",ui.mapChoice+1,count);text(470-text_width(info),35,info,MUTED,1);
     int first=ui.mapChoice<7?0:ui.mapChoice-6;
     for(int j=0;j<7&&first+j<count;j++){
@@ -1266,7 +1256,7 @@ static void world_atlas(void) {
     }
     triangle(239,214,235,221,243,221,0x72cfd2);text(250,215,"YOU",0x72cfd2,1);
     frame(289,215,6,6,TEXT);text(301,215,"TOWN",TEXT,1);
-    diamond(346,218,3,3,GOLD);text(357,215,"EVENT",GOLD,1);
+
     line(235,235,249,235,0xc1b08a);text(255,232,"ROAD",MUTED,1);text(301,232,"DARK: UNEXPLORED",MUTED,1);
     text(14,257,selected==-1?"\011 SELECT   \004 LOCAL VIEW   \002 BACK":"\011 SELECT   \001 TRAVEL   \004 LOCAL VIEW   \002 BACK",TEXT,1);
 #undef AX
@@ -1363,10 +1353,6 @@ static void map_screen(void) {
     }
     if (g.baseExists && INMAP(g.baseX, g.baseY))
         frame(MAPX(g.baseX) - 3, MAPY(g.baseY) - 3, 7, 7, TEAL);
-    for(int k=0;k<EVENTS;k++){WorldEvent*e=&g.living.events[k];if(!e->status&&INMAP(e->x,e->y)) {
-        int ex=MAPX(e->x),ey=MAPY(e->y);uint32_t col=e->faction==HOSTILE||e->type==6||e->type==5?RED:TEAL;
-        frame(ex-2,ey-2,5,5,col);if(ui.mapZoom){char n[8];snprintf(n,sizeof(n),"E%d",k+1);text(ex+4,ey+2,n,col,1);}
-    }}
     Actor *leader = &g.actors[g.selected];
     int youx = MAPX(leader->x), youy = MAPY(leader->y);
     int x = MAPX(ui.mapX), y = MAPY(ui.mapY);
@@ -1401,9 +1387,9 @@ static void map_screen(void) {
     char info[80];snprintf(info,sizeof(info),"%02d %s",ui.mapTown+1,g.discovered[ui.mapTown]?towns[ui.mapTown].name:"UNCHARTED");wrap(328,100,19,info,TEXT);
     text(328,131,"CONTROL",MUTED,1);wrap(328,143,19,g.discovered[ui.mapTown]?factionNames[g.townOwner[ui.mapTown]]:"Unknown",GOLD);
     text(328,174,"MAP KEY",MUTED,1);
-    text(328,187,"01 Town   E Event",GOLD,1);
-    text(328,198,"Red: threat",RED,1);
-    text(328,209,"Teal: aid / you",TEAL,1);
+    text(328,187,"01 TOWN / + PIN",GOLD,1);
+    text(328,198,"PALE: ROAD",MUTED,1);
+    text(328,209,"TEAL: YOU",TEAL,1);
     if(!ui.mapZoom){text(38,89,"N",TEXT,1);line(41,103,41,116,TEXT);line(41,103,37,108,TEXT);line(41,103,45,108,TEXT);}
     char b[90];
     snprintf(b, 90, "%s %.0fm  / %s", ui.waypoint ? "TRAVELLING" : "PLANNED COURSE",
@@ -1428,13 +1414,14 @@ static void trade_screen(void) {
     int count = ui.sell ? item_view_count() : shop_count(), first = start_row(ui.sell ? item_view_row(ui.selection) : ui.selection, count, 6);
     for (int j = 0; j < 6 && first + j < count; j++) {
         int i = ui.sell ? item_view_slot(first+j) : first+j, it = ui.sell ? g.actors[g.selected].pack[i].item : shop_item(i);
-        snprintf(b, 100, "%.45s", it ? itemDefs[it].name : "--");
-        snprintf(v, 70, "%d S  \001%d", item_price(ui.tradeTown, it, ui.sell),
-                 ui.sell ? g.actors[g.selected].pack[i].qty : g.stock[ui.tradeTown][it]);
-        row(84 + j * 13, i == ui.selection, b, it ? v : "");
+        snprintf(b,100,"%.33s",it?itemDefs[it].name:"--");row(84+j*13,i==ui.selection,b,NULL);
+        snprintf(v,sizeof(v),"%d",ui.sell?g.actors[g.selected].pack[i].qty:g.stock[ui.tradeTown][it]);text(263,84+j*13,v,MUTED,1);
+        snprintf(v,sizeof(v),"%d S",item_price(ui.tradeTown,it,ui.sell));text(301,84+j*13,v,GOLD,1);
+        int pct=market_percent(ui.tradeTown,it,ui.sell);snprintf(v,sizeof(v),"%+d%%",pct);text(400,84+j*13,v,pct==0?MUTED:((ui.sell?pct>0:pct<0)?0x73c58b:0xde8375),1);
     }
     int it = ui.sell ? g.actors[g.selected].pack[ui.selection].item : shop_item(ui.selection);
     equipment_comparison(it, 173);
+    text(290,237,"GREEN GOOD / RED POOR",MUTED,1);
     snprintf(b, sizeof(b), "%d SILVER", g.money);
     text(360, 45, b, GOLD, 1);
 }
@@ -1650,11 +1637,11 @@ static void dialogue_screen(void) {
     clipped(30, 218, factionNames[a->faction], 16, factionColors[a->faction]);
     wrap(134, 85, 50, dialogue_line(n, ui.dialogPage), TEXT);
     const char *work[] = {"Carry a dispatch - 220 silver", "Bring eight ore - 240 silver",
-                          "Defeat three foes - 420 silver", "Recover a relic - 550 silver", "Back"};
+                          "Defeat three foes - 420 silver", "Recover a relic - 550 silver", "Freight delivery - deposit required", "Caravan escort - wages + bonus", "Mercenary patrol - wages + bonus", "Named bounty - bring the prisoner", "Back"};
     const char *prison[] = {"Pay my bail.", "Try the lock. Requires tools.", "Wait out the sentence."};
     int jailed = a->prisonTime > 0 && n == g.selected,
         count = jailed               ? 3
-                : ui.dialogPage == 1 ? 5
+                : ui.dialogPage == 1 ? 9
                                      : dialogue_count(n),
         first = start_row(ui.selection, count, 5);
     for (int j = 0; j < 5 && first + j < count; j++) {
@@ -1692,13 +1679,12 @@ static void regional_screen(void) {
     rect(25,233,425,15,PANEL);
     snprintf(b,sizeof(b),"\002 BACK   %s",g.regions.outcome[r]?"THIS AGREEMENT IS PERMANENT":"\001 COMMIT AT TOWN (PERMANENT)");text(31,237,b,GOLD,1);
 }
-static void living_screen(void){
-    char b[160],v[32];overlay_header("JOURNAL / LIVING FRONTIER","\005/\006 CHAPTER   \001 HELP / SEARCH   \003 LOCATE");
-    int first=start_row(ui.selection,EVENTS,6);
-    for(int j=0;j<6;j++){int k=first+j;WorldEvent*e=&g.living.events[k];char title[80];living_title(k,title,sizeof(title));snprintf(b,sizeof(b),"E%d %s",k+1,title);snprintf(v,sizeof(v),e->status?"ENDED":"T%d  %dm",e->tier+1,(int)distance(g.actors[g.selected].x,g.actors[g.selected].y,e->x,e->y));row(84+j*14,k==ui.selection,b,v);}
-    WorldEvent*e=&g.living.events[ui.selection];snprintf(b,sizeof(b),"TOWARD %s",towns[e->town].name);text(31,176,b,GOLD,1);
-    living_detail(ui.selection,b,sizeof(b));wrap(31,190,68,b,TEXT);
-    text(31,223,"New incidents replace resolved and expired opportunities.",MUTED,1);
+static void actions_screen(void){
+    int count=nearby_actions(),first=start_row(ui.selection,count,5);char b[100];
+    int height=43+13*(count<5?count:5),top=250-height;
+    panel(14,top,286,height);text(25,top+9,ui.paused?"NEARBY / QUEUE WHILE PAUSED":"NEARBY ACTIONS",GOLD,1);
+    for(int j=0;j<5&&first+j<count;j++){int k=first+j,y=top+26+j*13;if(k==ui.selection)rect(21,y-2,272,12,0x4a4030);nearby_action_label(k,b,sizeof(b));clipped(25,y,b,44,k==ui.selection?TEXT:MUTED);}
+    snprintf(b,sizeof(b),"\001 %s  \006 %s  \003 CLEAR (%d)",ui.paused?"QUEUE":"DO",ui.paused?"RESUME":"PAUSE",g.society.queueCount[g.selected]);text(25,237,b,MUTED,1);
 }
 static void engage_screen(void){
     overlay_header("CHOOSE OPPONENT","\015 SELECT   \001 ATTACK   \002 CANCEL");char v[40];int count=combat_candidates(),first=start_row(ui.selection,count,7);
@@ -1709,7 +1695,7 @@ static void engage_screen(void){
 }
 static void journal_screen(void) {
     if(ui.journalTab==1){regional_screen();return;}
-    if(ui.journalTab==2){living_screen();return;}
+    if(ui.journalTab>1)ui.journalTab=0;
     overlay_header("THE ROAD JOURNAL", "\005/\006 CONFLICTS   \001 CLAIM   \003 LOCATE");
     char b[180], v[40];
     int first = start_row(ui.selection, CONTRACTS, 6);
@@ -1718,7 +1704,7 @@ static void journal_screen(void) {
         Contract *c = &g.contracts[k];
         if (c->active) {
             snprintf(b, sizeof(b), "%02d %s", k + 1, towns[c->town].name);
-            snprintf(v, 40, c->completed ? "COMPLETE" : "%d / %d  +%d",
+            snprintf(v, 40, c->active==3 ? "FAILED" : c->completed ? "COMPLETE" : "%d / %d  +%d",
                      c->item ? inventory_count(&g.actors[g.selected], c->item) : c->progress, c->needed,
                      c->reward);
         } else {
@@ -1740,7 +1726,7 @@ static void factions_screen(void) {
         for (int t = 0; t < TOWNS; t++)
             if (g.townOwner[t] == f)
                 townsHeld++;
-        snprintf(b, 100, "%+d REP  %d TOWNS", g.rep[f], townsHeld);
+        snprintf(b, 100, "%+d REP  %d WANTED", g.rep[f], wanted_amount(&g.actors[g.selected],f));
         row(80 + f * 12, ui.selection == f, factionNames[f], b);
     }
     wrap(31, 183, 68, faction_identity(ui.selection), TEXT);
@@ -1863,6 +1849,7 @@ void render_game(uint32_t *pixels, int stride) {
         name_screen();
         break;
     case SCREEN_ENGAGE: engage_screen();break;
+    case SCREEN_ACTIONS: actions_screen();break;
     case SCREEN_THEFT:
         theft_screen();
         break;
@@ -1961,16 +1948,10 @@ void render_game(uint32_t *pixels, int stride) {
     default:
         break;
     }
-    if (ui.screen != SCREEN_WORLD && ui.noticeTime > 0) {
-        char message[76];
-        snprintf(message, sizeof(message), "%.74s", ui.notice);
-        if(ui.screen==SCREEN_MAP&&!ui.mapZoom){
-            rect(232,174,238,33,PANEL);
-            wrap(235,177,38,message,GOLD);
-        } else {
-            rect(0, 253, 480, 19, INK);
-            text(14, 258, message, GOLD, 1);
-        }
+    if(ui.screen!=SCREEN_TITLE&&ui.screen!=SCREEN_CREATE&&ui.screen!=SCREEN_NAME){
+        int priority,offset;const char*entry=log_current(&priority,&offset);
+        if(entry){char lineText[76];snprintf(lineText,sizeof(lineText),"%.75s",entry+offset);
+            rect(0,0,480,23,INK);rect(0,0,3,23,priority?RED:TEAL);text(9,8,lineText,priority?GOLD:TEXT,1);}
     }
 }
 

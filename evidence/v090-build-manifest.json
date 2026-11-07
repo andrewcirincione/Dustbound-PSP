@@ -1,0 +1,17 @@
+{
+  "version": "0.9.0",
+  "eboot_sha256": "eb76a319a4f5f584471ddd7332a99a705bd3c97c493d89acb4459845d26ecfb3",
+  "eboot_bytes": 1559098,
+  "save_version": 9,
+  "game_state_bytes": 618188,
+  "pspdev_release": "v20261101",
+  "pspdev_archive_sha256": "5dc9d785a5fd490ee9d5204b90f715efb6c46940ba3944036bbef9c993c17713",
+  "emulator": "PPSSPP 1.20.4, headless software renderer",
+  "validation_scripts": [
+    "scripts/validate_v080.sh",
+    "scripts/validate_v081.sh",
+    "scripts/validate_v090.sh",
+    "scripts/emulator_v090.py"
+  ],
+  "physical_psp_tested": false
+}

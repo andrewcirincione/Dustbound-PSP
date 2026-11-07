@@ -1,6 +1,8 @@
-Current atlas validation: [0.8.1](VALIDATION_V081.md).
+Current release validation: [0.9.0](VALIDATION_V090.md).
 
-Current release: [0.8.0 build, simulation and PSP controller validation](VALIDATION_V080.md). The records below qualify the older 0.6.0 executable only.
+Historical atlas validation: [0.8.1](VALIDATION_V081.md).
+
+Historical release: [0.8.0 build, simulation and PSP controller validation](VALIDATION_V080.md). The records below qualify the older 0.6.0 executable only.
 
 # 0.6.0 validation record
 

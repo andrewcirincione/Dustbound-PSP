@@ -319,9 +319,9 @@ void init_expansion(void) {
 int item_price(int town, int it, int selling) {
     if (it <= 0 || it >= ITEMS || town < 0 || town >= TOWNS)
         return 0;
-    float mod = 1 + regional_price(town,it) + (town==1&&g.depth.route==ROUTE_TRUCE?.12f:0) + (60 - g.prosperity[town]) * .004f - g.rep[g.townOwner[town]] * .002f;
+    float mod = 1 + regional_price(town,it) + (town==1&&g.depth.route==ROUTE_TRUCE?.12f:0) + (60 - g.prosperity[town]) * .004f + limit(g.rep[g.townOwner[town]]*.001f,-.15f,.1f)*(selling?.5f:-1);
     mod = limit(mod, .65f, 1.6f);
-    return (int)fmaxf(1, itemDefs[it].price * (selling ? .6f : 1) * mod);
+    return (int)fmaxf(1, itemDefs[it].price * (selling ? .75f : 1) * mod * market_factor(town,it));
 }
 int shop_item(int index) {
     if (ui.tradeTown < 0 || ui.tradeTown >= TOWNS)
@@ -509,6 +509,7 @@ int doctor_heal(int town) {
     return 1;
 }
 int accept_contract(int town, int kind) {
+    if(kind>=4)return society_contract(town,kind);
     if (town < 0 || town >= TOWNS || kind < 0 || kind > 3)
         return 0;
     for (int i = 0; i < CONTRACTS; i++)
@@ -545,6 +546,7 @@ void contract_description(int n, char *out, int size) {
         return;
     }
     Contract *c = &g.contracts[n];
+    if(c->type>=4){society_contract_text(n,out,size);return;}
     if (c->type == 0)
         snprintf(out, size, "Carry dispatch to %s; return to %s. %d silver.", towns[c->target].name,
                  towns[c->town].name, c->reward);
@@ -561,6 +563,7 @@ int complete_contract(int n) {
         return 0;
     Contract *c = &g.contracts[n];
     Actor *a = &g.actors[g.selected];
+    if(c->type>=4)return society_complete(n);
     if (town_near(a->x, a->y, 14) != c->town) {
         log_msg("Claim at %s.", towns[c->town].name);
         return 0;
@@ -594,10 +597,11 @@ const char *dialogue_line(int n, int page) {
         return "The marshal has your name. Pay the bail, wait out your sentence, or try the lock. A failed "
                "escape will cost you.";
     if (page == 1)
-        return "Work keeps this town alive. Carry a dispatch, bring ore, clear the roads, or recover a "
-               "relic. Read the terms in your journal.";
+        return "We need freight runners, caravan escorts, patrol mercenaries and bounty hunters. "
+               "Or bring supplies and salvage. Read each job in your journal.";
+    if (page == 4)return trade_tip(town_near(a->x,a->y,14));
     if (page == 2)
-        return npc_rumor(a);
+        return town_custom(town_near(a->x,a->y,14));
     if (page == 3)
         return faction_identity(a->faction);
     if (npc_role(a) == ROLE_MERCENARY) {
@@ -769,8 +773,8 @@ int pickpocket_slot(int n,int source) {
     float chance=theft_chance(n,source);
     gain(a,THEFT,22);
     if((wrand()%1000)/1000.f>=chance) {
-        a->bounty+=80;g.rep[b->faction]-=18;b->speech=19;b->speechTime=5;
-        log_msg("Caught stealing! Bounty +80; faction standing -18.");return 0;
+        crime_add(a,b->faction,80);g.rep[b->faction]-=18;b->speech=19;b->speechTime=5;
+        log_warn("Caught stealing! Bounty +80; faction standing -18.");return 0;
     }
     if(!inventory_add_owned(a,it,1,b->faction)) return 0;
     inventory_remove_slot(b,source,1);
@@ -811,7 +815,7 @@ static int worker_walk(Actor *a, int building, float dt) {
     return 1;
 }
 static void worker_production(Actor *a, float dt) {
-    if (g.depth.actors[a-g.actors].paused || g.depth.actors[a-g.actors].captive || actor_inside(a) || a->job < JOB_SMELT || a->taskKind || !conscious(a) || a->prisonTime > 0 ||
+    if (g.depth.actors[a-g.actors].paused || society_rescue_busy((int)(a-g.actors)) || g.depth.actors[a-g.actors].captive || actor_inside(a) || a->job < JOB_SMELT || a->taskKind || !conscious(a) || a->prisonTime > 0 ||
         a->carriedBy >= 0 || a->target >= 0)
         return;
     int depot = worker_building(a, STORE),
@@ -932,8 +936,6 @@ void tick_expansion(float dt) {
                 a->speechTime = 4;
             }
         }
-        if (!a->squad)
-            continue;
         if (a->prisonTime > 0) {
             a->prisonTime = fmaxf(0, a->prisonTime - dt);
             a->bleed = 0;
@@ -943,22 +945,23 @@ void tick_expansion(float dt) {
                 if (!(a->lostMask & (1 << j)))
                     a->health[j] = fmaxf(30, a->health[j]);
             if (a->prisonTime <= 0) {
-                a->bounty = 0;
-                g.rep[g.townOwner[a->prisonTown]] = 0;
+                crime_clear(a,g.townOwner[a->prisonTown]);
                 log_msg("%s served their sentence.", a->name);
             }
             continue;
         }
+        if (!a->squad)
+            continue;
         if (!actor_inside(a) && a->unconscious > 0 && a->bounty >= 80) {
             for (int j = 0; j < g.actorCount; j++) {
                 Actor *b = &g.actors[j];
                 if (b->kind == GUARD && b->faction != HOSTILE && conscious(b) &&
-                    distance(a->x, a->y, b->x, b->y) < 4) {
+                    wanted_amount(a,b->faction)>=80 && b->homeTown!=14 && distance(a->x, a->y, b->x, b->y) < 4) {
                     int t = b->homeTown;
                     if (t < 0)
                         continue;
                     a->prisonTown = t;
-                    a->prisonTime = 90 + a->bounty * .25f;
+                    a->prisonTime = 90 + wanted_amount(a,b->faction) * .25f;
                     a->x = towns[t].x - 6;
                     a->y = towns[t].y + 5;
                     for (int s = 0; s < PACK; s++)
@@ -966,7 +969,7 @@ void tick_expansion(float dt) {
                             a->pack[s] = (Stack){0, 0};
                             a->stolen[s] = 0;
                         }
-                    log_msg("%s taken into custody at %s.", a->name, towns[t].name);
+                    log_warn("%s taken into custody at %s.", a->name, towns[t].name);
                     break;
                 }
             }

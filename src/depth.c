@@ -161,7 +161,7 @@ int depth_validate(const Game *s) {
         const DepthActor *a = &d->actors[i];
         if (a->order < 0 || a->order > 3 || a->group < 0 || a->group > 2 || a->room < 0 ||
             a->room > s->buildingCount || a->layer < 0 || a->layer >= ITEMS || a->confiscated < 0 ||
-            a->confiscated >= ITEMS || a->captive < 0 || a->captive > 2 || !isfinite(a->upkeep) ||
+            a->confiscated >= ITEMS || a->captive < 0 || a->captive > 3 || !isfinite(a->upkeep) ||
             a->upkeep < 0 || a->upkeep > 100 || !isfinite(a->escape) || !isfinite(a->recognized) ||
             !isfinite(a->trespass) || !isfinite(a->rx) || !isfinite(a->ry))
             return 0;
@@ -682,12 +682,8 @@ int depth_capture_action(int n) {
     DepthActor *z = &D.actors[n];
     if (!conscious(a) || b->dead || depth_distance(a, b) > TALK_REACH)
         return 0;
-    if (z->captive) {
-        z->escape = 1;
-        log_msg("Working the shackles. Stay close; guards interrupt.");
-        depth_open(SCREEN_WORLD);
-        return 1;
-    }
+    if (z->captive || b->prisonTime > 0)
+        return society_rescue_start(n);
     if (!b->squad && g.squadCount < SQUAD) {
         b->squad = 1;
         b->kind = PLAYER;
@@ -700,16 +696,6 @@ int depth_capture_action(int n) {
         return 1;
     }
     log_msg("No room in the squad, or already recruited.");
-    return 0;
-}
-static int guard_near(const Actor *a, float reach) {
-    for (int j = 0; j < g.actorCount; j++) {
-        Actor *b = &g.actors[j];
-        if (!b->squad && (b->kind == GUARD || b->kind == RAIDER) &&
-            (b->faction == OUTLAWS || b->faction == HOSTILE) && conscious(b) &&
-            depth_distance(a, b) < reach)
-            return 1;
-    }
     return 0;
 }
 static void captivity(float dt) {
@@ -745,28 +731,6 @@ static void captivity(float dt) {
             if (a->unconscious > 0) {
                 a->health[HEAD] = fmaxf(5, a->health[HEAD]);
                 a->health[CHEST] = fmaxf(5, a->health[CHEST]);
-            }
-            if (z->escape > 0) {
-                Actor *helper = &g.actors[g.selected];
-                int self = helper == a;
-                if (!conscious(helper) || (!self && depth_distance(helper, a) > TALK_REACH) ||
-                    guard_near(a, 4)) {
-                    z->escape = 0;
-                    log_msg("Shackle work interrupted. Wait for a clear moment.");
-                } else {
-                    z->escape += dt * (inventory_count(helper, TOOLS) ? 2 : 1) *
-                                 (1 + level(helper, LOCKPICK) * .02f);
-                    gain(helper, LOCKPICK, dt * 2);
-                    if (z->escape >= 18) {
-                        z->escape = 0;
-                        z->captive = 0;
-                        z->recognized = 1800;
-                        a->bounty += 80;
-                        a->x += 1;
-                        D.freed++;
-                        log_msg("%s is free. Guards remember escapees for a day.", a->name);
-                    }
-                }
             }
         } else if (a->squad && a->unconscious > 0 && a->carriedBy < 0 && !actor_inside(a) &&
                    distance(a->x, a->y, D.siteX[3], D.siteY[3]) < 24) {

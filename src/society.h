@@ -1,0 +1,45 @@
+#ifndef DUSTBOUND_SOCIETY_H
+#define DUSTBOUND_SOCIETY_H
+extern const char *weaponClassNames[WEAPON_CLASSES];
+int weapon_class(int item);
+int weapon_class_level(const Actor*a,int category);
+void weapon_class_gain(Actor*a,int weapon,float amount);
+float weapon_cut_ratio(int item);
+float combat_learning(float learner,float opponent);
+int combat_evasion(const Actor*a);
+float dodge_mobility(const Actor*a);
+void society_init(void);
+void society_tick(float dt);
+int society_validate(const Game*s);
+int society_hostile(const Actor*a,const Actor*b);
+int society_gate(Actor*a,float x,float y);
+int disguise_faction(const Actor*a);
+int disguise_score(const Actor*a,int faction);
+int wanted_amount(const Actor*a,int faction);
+void crime_add(Actor*a,int faction,int amount);
+void crime_clear(Actor*a,int faction);
+float market_factor(int town,int item);
+int market_percent(int town,int item,int selling);
+const char *trade_tip(int town);
+const char *town_custom(int town);
+void society_stock(int town);
+int society_contract(int town,int kind);
+int society_complete(int n);
+int society_npc_job(int n,float dt);
+void society_contract_text(int n,char*out,int size);
+int bounty_contract_active(int actor);
+int nearby_actions(void);
+const NearbyAction *nearby_action(int row);
+void nearby_action_label(int row,char*out,int size);
+void nearby_action_choose(int row);
+void action_menu_open(void);
+void interact_context(int kind,int target);
+void society_queue_tick(void);
+void society_actor_reset(int actor);
+int society_rescue_start(int actor);
+int society_rescue_busy(int helper);
+void society_rescue_cancel(int helper);
+void society_rescue_order(int actor,int order);
+int living_local_count(void);
+int living_local_slot(int row);
+#endif
