@@ -1,3 +1,10 @@
+# 0.17.0 — Three Banners
+
+- Add Brass Junction, Vermilion Keep and Cinder Abbey, with distinct uniforms, civic layouts, markets and services.
+- Give the three powers persistent armies, rival patrol clashes, conquest with real garrison casualties and guarded labor yards that hold defeated soldiers.
+- Add overheard bandit warnings and military news from recent simulation events. Ask ordinary NPCs what they have heard.
+- Save v17 adds the new frontier to older expeditions while retaining towns, equipment and skill XP.
+
 # 0.16.3 — Crowded combat rendering
 
 - Restrict each raster row to the weapon's projected bounds and reuse column projections. Weapon textures, warp and fittings use the original sampling.

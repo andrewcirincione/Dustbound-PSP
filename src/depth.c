@@ -971,7 +971,7 @@ void depth_after_tick(float dt) {
                 a->y = D.siteY[7];
             }
         }
-        if (z->captive == 1 && n != NPC_RELL) {
+        if (z->captive == 1 && n != NPC_RELL && !g.war.prisonTown[i]) {
             a->x = D.siteX[3] + (n == NPC_TAMSIN ? 1.2f : 0);
             a->y = D.siteY[3];
         }

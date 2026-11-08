@@ -517,6 +517,12 @@ static void building(int id) {
     }
     if (b->type == SHOP || b->type == BAR) {
         const char *name = b->type == SHOP ? "TRADING POST" : "THE WAYWARD";
+        int town=b->owner<0?town_near(b->x,b->y,15):-1;
+        if(town>=OLD_TOWNS){
+            static const char *shops[]={"RAIL EXCHANGE","IRON TRIBUTE HALL","HERBAL DISPENSARY"};
+            static const char *inns[]={"PUMP HOUSE INN","COURT INN","PILGRIM HOSPICE"};
+            name=b->type==SHOP?shops[town-OLD_TOWNS]:inns[town-OLD_TOWNS];
+        }
         int w = text_width(name) + 8;
         rect(x - w / 2, y - artSprites[sprite].ay - 10, w, 11, INK);
         center(x, y - artSprites[sprite].ay - 8, name, GOLD, 1);
@@ -761,10 +767,12 @@ static void speech_bubbles(void) {
     float near = 7;
     for (int i = 0; i < g.actorCount; i++) {
         Actor *a = &g.actors[i];
-        if (!a->active || a->dead || a->squad || a->speechTime <= 0)
+        if (!a->active || a->dead || a->squad || a->speechTime <= 0 || actor_inside(a) ||
+            a->unconscious>0 || g.depth.actors[i].captive || population_hidden(i))
             continue;
         float d = distance(a->x, a->y, ui.camX, ui.camY);
-        if (d < near) {
+        if (d < 7 && (best<0 || (a->speech>=24 && g.actors[best].speech<24) ||
+            ((a->speech>=24)==(g.actors[best].speech>=24) && d<near))) {
             best = i;
             near = d;
         }
@@ -775,23 +783,41 @@ static void speech_bubbles(void) {
     int x, y;
     project(a->x, a->y, &x, &y);
     const char *words = ambient_line(best);
-    int w = strlen(words) * 6 + 12;
-    if (w > 260)
-        w = 260;
+    int w = text_width(words) + 16;
+    int h = w > 320 ? (w > 605 ? 36 : 25) : 17;
+    if (w > 320) w = 320;
     x -= w / 2;
     if (x < 8)
         x = 8;
-    if (x + w > 391)
-        x = 391 - w;
+    if (x + w > 392) x = 392 - w;
     y -= 64;
     if (y < 30)
         y = 30;
     if (y > 159)
         y = 159;
-    rect(x, y, w, 23, INK);
-    frame(x, y, w, 23, EDGE);
-    triangle(x + w / 2 - 3, y + 22, x + w / 2 + 3, y + 22, x + w / 2, y + 27, EDGE);
-    wrap(x + 6, y + 5, (w - 12) / 6, words, TEXT);
+    rect(x, y, w, h, INK);
+    frame(x, y, w, h, EDGE);
+    triangle(x + w / 2 - 3, y + h - 1, x + w / 2 + 3, y + h - 1, x + w / 2, y + h + 4, EDGE);
+    wrap(x + 6, y + 4, (w - 9) / 6, words, a->speech>=24?GOLD:TEXT);
+}
+
+static void civic_flag(int t){
+    int x,y,f=g.townOwner[t],side=war_faction_index(f);
+    project(towns[t].x+1,towns[t].y+2,&x,&y);
+    uint32_t flag=factionColors[f];
+    line(x,y,x,y-43,0xd0b88c);
+    if(side==0){
+        triangle(x,y-43,x+24,y-36,x,y-28,flag);
+        line(x+2,y-39,x+11,y-37,0xeac77a);
+    }else if(side==1){
+        rect(x+1,y-43,13,28,flag);
+        rect(x+5,y-35,6,5,0xe4b386);
+        line(x-3,y-43,x+16,y-43,0xe4b386);
+    }else{
+        rect(x+1,y-43,17,15,flag);
+        triangle(x+1,y-28,x+18,y-28,x+9,y-22,flag);
+        diamond(x+9,y-35,4,4,0x574840);
+    }
 }
 
 static void texture_plane(int id, float x, float y, float ux, float uy, float vx, float vy, float repeatU,
@@ -1400,7 +1426,11 @@ static void world_atlas(void) {
         float x=AX(a->x),y=AY(a->y),dx=AX(ui.travelX)-x,dy=AY(ui.travelY)-y,steps=fmaxf(fabsf(dx),fabsf(dy));
         for(int k=0;k<steps;k+=6)line(x+dx*k/fmaxf(1,steps),y+dy*k/fmaxf(1,steps),x+dx*fminf(k+3,steps)/fmaxf(1,steps),y+dy*fminf(k+3,steps)/fmaxf(1,steps),0x72cfd2);
     }
-    for(int t=0;t<TOWNS;t++)if(g.discovered[t]){int x=AX(towns[t].x),y=AY(towns[t].y);rect(x-3,y-3,7,7,INK);frame(x-2,y-2,5,5,ui.mapCategory?MUTED:TEXT);}
+    for(int t=0;t<TOWNS;t++)if(g.discovered[t]){
+        int x=AX(towns[t].x),y=AY(towns[t].y);
+        if(t>=OLD_TOWNS){diamond(x,y,5,5,INK);diamond(x,y,3,3,label_color(g.townOwner[t]));}
+        else{rect(x-3,y-3,7,7,INK);frame(x-2,y-2,5,5,label_color(g.townOwner[t]));}
+    }
     int px=AX(a->x),py=AY(a->y);
     triangle(px,py-6,px-5,py+4,px+5,py+4,TEXT);triangle(px,py-4,px-3,py+3,px+3,py+3,0x72cfd2);
     int sx=AX(ui.mapX),sy=AY(ui.mapY);
@@ -1424,7 +1454,8 @@ static void world_atlas(void) {
         int n=first+j,id=atlas_item(n),y=54+j*16;atlas_name(id,name,sizeof(name));
         if(n==ui.mapChoice){rect(232,y-3,236,14,0x45473c);rect(232,y-3,2,14,GOLD);}
         if(id==-1)triangle(242,y,239,y+6,245,y+6,0x72cfd2);
-        else if(id<TOWNS)frame(239,y+1,6,6,TEXT);else diamond(242,y+4,3,3,GOLD);
+        else if(id<OLD_TOWNS)frame(239,y+1,6,6,label_color(g.townOwner[id]));
+        else if(id<TOWNS)diamond(242,y+4,4,4,label_color(g.townOwner[id]));else diamond(242,y+4,3,3,GOLD);
         clipped(252,y,name,35,n==ui.mapChoice?TEXT:MUTED);
     }
     if(count==1)text(252,74,ui.mapCategory?"NO ACTIVE EVENTS":"NO KNOWN TOWNS",MUTED,1);
@@ -1441,6 +1472,7 @@ static void world_atlas(void) {
     }
     triangle(239,214,235,221,243,221,0x72cfd2);text(250,215,"YOU",0x72cfd2,1);
     frame(289,215,6,6,TEXT);text(301,215,"TOWN",TEXT,1);
+    diamond(346,218,4,4,GOLD);text(354,215,"CAPITAL",TEXT,1);
 
     line(235,235,249,235,0xc1b08a);text(255,232,"ROAD",MUTED,1);text(301,232,"DARK: UNEXPLORED",MUTED,1);
     text(14,257,selected==-1?"\011 SELECT   \004 LOCAL VIEW   \002 BACK":"\011 SELECT   \001 PIN   \004 LOCAL VIEW   \002 BACK",TEXT,1);
@@ -1516,8 +1548,8 @@ static void map_screen(void) {
     for (int t = 0; t < TOWNS; t++)
         if (g.discovered[t] && INMAP(towns[t].x, towns[t].y)) {
             int x = MAPX(towns[t].x), y = MAPY(towns[t].y);
-            rect(x - 2, y - 2, 5, 5, factionColors[g.townOwner[t]]);
-            frame(x - 2, y - 2, 5, 5, GOLD);
+            if(t>=OLD_TOWNS){diamond(x,y,5,5,INK);diamond(x,y,3,3,label_color(g.townOwner[t]));}
+            else{rect(x - 2, y - 2, 5, 5, factionColors[g.townOwner[t]]);frame(x - 2, y - 2, 5, 5, GOLD);}
             char label[28];snprintf(label,sizeof(label),"%02d",t+1);
             if(ui.mapZoom||t==ui.mapTown)text(x+4,y-6,label,t==ui.mapTown?TEXT:GOLD,1);
             if(t==ui.mapTown)frame(x-4,y-4,9,9,TEXT);
@@ -1940,7 +1972,7 @@ static void factions_screen(void) {
         for (int t = 0; t < TOWNS; t++)
             if (g.townOwner[t] == f)
                 townsHeld++;
-        snprintf(b, 100, "%+d REP  %d WANTED", g.rep[f], wanted_amount(&g.actors[g.selected],f));
+        snprintf(b, 100, "%d TOWNS  %+d REP  %d WANTED", townsHeld, g.rep[f], wanted_amount(&g.actors[g.selected],f));
         row(80 + f * 12, ui.selection == f, factionNames[f], b);
         rect(19,80+f*12,7,7,factionColors[f]);
     }
@@ -2054,6 +2086,15 @@ void render_game(uint32_t *pixels, int stride) {
     if(!g.interiorBuilding){
       for(int k=0;k<6;k++)if(g.trails.bed[k]){Building*b=&g.buildings[g.trails.bed[k]-1];if(distance(b->x,b->y,ui.camX,ui.camY)<13){int x,y;project(b->x,b->y,&x,&y);text(x-30,y-25,"WAYFARER REST",TEAL,1);}}
       for(int t=0;t<TOWNS;t++)if(g.life.towns[t].stage==2&&distance(towns[t].x,towns[t].y,ui.camX,ui.camY)<18){int x,y;project(towns[t].x+5,towns[t].y+5,&x,&y);line(x,y,x,y-35,TEXT);triangle(x,y-35,x+16,y-30,x,y-23,factionColors[g.townOwner[t]]);text(x-20,y+3,g.life.towns[t].policy==1?"RELIEF POST":g.life.towns[t].policy==2?"GARRISON":"TRADE COURT",GOLD,1);}
+      for(int t=OLD_TOWNS;t<TOWNS;t++)if(distance(towns[t].x,towns[t].y,ui.camX,ui.camY)<18)civic_flag(t);
+      int seenYards=0;
+      for(int n=0;n<g.actorCount;n++)if(g.war.prisonTown[n]&&!g.actors[n].dead){
+          int t=g.war.prisonTown[n]-1;
+          if(seenYards&(1<<t))continue;
+          seenYards|=1<<t;
+          float wx,wy;war_yard(t,&wx,&wy);
+          if(distance(wx,wy,ui.camX,ui.camY)<10){int x,y;project(wx,wy,&x,&y);center(x,y+9,"WORK YARD",GOLD,1);}
+      }
     }
     if (ui.screen == SCREEN_WORLD)
         nearby_labels(!!g.interiorBuilding);

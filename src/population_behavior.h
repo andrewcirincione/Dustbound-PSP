@@ -68,13 +68,103 @@ static int life_harvest_prey(int k,int prey){
   for(int i=0;i<e->count;i++){Actor*a=member(k,i);if(!a||a->dead||a->unconscious>0)continue;if(e->spawned&&distance(a->x,a->y,dead->x,dead->y)>TALK_REACH){pending=1;continue;}if(!dead->dead&&p->type==POP_BEASTS){dead->dead=1;dead->unconscious=0;P.deaths++;}if(!dead->dead)continue;taken+=life_take_pack(dead,a,MEAT,3);taken+=life_take_pack(dead,a,HIDE,2);}}
  if(taken){z->hunts++;L.hunts++;life_announce(k,"prey butchered; returning with meat and hides");}return pending;
 }
-static int life_enemy_town(int k){WorldEvent*e=&P.groups[k];int found=-1;float score=-1e9f;for(int t=0;t<TOWNS;t++){int f=g.townOwner[t];if(f==e->faction||f==FREE||f==SCAVENGERS||f==WILDLIFE)continue;if(e->faction!=HOSTILE&&!((e->faction==SHOGUN&&f==UNION)||(e->faction==UNION&&f==SHOGUN)))continue;float v=100-g.prosperity[t]-distance(e->x,e->y,towns[t].x,towns[t].y)*.15f;if(v>score){score=v;found=t;}}return found;}
+static int life_enemy_town(int k){
+ WorldEvent *e=&P.groups[k];int found=-1;float score=-1e9f;
+ for(int t=0;t<TOWNS;t++){
+  int f=g.townOwner[t];
+  if(e->faction==HOSTILE?(f==HOSTILE||f==FREE||f==SCAVENGERS||f==WILDLIFE):!war_rivals(e->faction,f))continue;
+  if((t==0&&g.day==1)||(t==2&&g.regions.outcome[0])||(t==12&&g.regions.outcome[2]))continue;
+  if(g.war.heldSince[t]>0&&g.time-g.war.heldSince[t]<650)continue;
+  float value=(100-g.prosperity[t])*.45f-distance(e->x,e->y,towns[t].x,towns[t].y)*.23f+(t>=OLD_TOWNS?14:0);
+  if(value>score){score=value;found=t;}
+ }
+ return found;
+}
 static void life_army_mission(int k){
- WorldEvent*e=&P.groups[k];GroupLife*z=&L.groups[k];int t=life_town(k,0,-1);float best=-1e9f;
- for(int j=0;j<TOWNS;j++)if(g.townOwner[j]==e->faction){float need=(100-g.prosperity[j])*2+(L.towns[j].stage==1?80:0)-distance(e->x,e->y,towns[j].x,towns[j].y)*.12f;if(need>best){best=need;t=j;}}
- int attack=life_enemy_town(k);if(attack>=0&&standing(k)>=8&&t>=0&&g.prosperity[t]>=65){life_target(k,LIFE_RAID,attack);return;}
+ WorldEvent*e=&P.groups[k];GroupLife*z=&L.groups[k];int t=-1,base=-1;float best=-1e9f,nearest=1e9f;
+ for(int j=0;j<TOWNS;j++)if(g.townOwner[j]==e->faction){
+  float d=distance(e->x,e->y,towns[j].x,towns[j].y);
+  float need=(100-g.prosperity[j])*2+(L.towns[j].stage==1?80:0)-d*.12f;
+  if(need>best){best=need;t=j;}
+  if(d<nearest&&g.prosperity[j]>=55&&g.stock[j][RATION]>=4){nearest=d;base=j;}
+ }
+ int side=war_faction_index(e->faction);
+ if(base>=0&&standing(k)>=7&&(side<0||g.time>=g.war.nextRaid[side])){
+  int attack=life_enemy_town(k);
+  if(attack>=0){
+   if(side>=0){g.war.nextRaid[side]=g.time+780+(e->serial%6)*35;g.stock[base][RATION]-=4;}
+   life_target(k,LIFE_RAID,attack);return;
+  }
+ }
  if(t>=0&&g.stock[t][RATION]<4){int source=-1;float d=1e9f;for(int j=0;j<TOWNS;j++)if(j!=t&&g.townOwner[j]==e->faction&&g.stock[j][RATION]>=8){float n=distance(e->x,e->y,towns[j].x,towns[j].y);if(n<d){d=n;source=j;}}if(source>=0){z->sourceTown=t;life_target(k,LIFE_RESUPPLY,source);return;}}
  if(t>=0)life_target(k,LIFE_REINFORCE,t);
+}
+
+static int town_defender(int n,int town,int faction){
+ Actor *a=&g.actors[n];
+ return !a->squad&&!living_owned(n)&&a->kind==GUARD&&a->homeTown==town&&a->faction==faction&&
+        !g.depth.actors[n].captive&&a->active&&!a->dead&&a->unconscious<=0&&a->carriedBy<0;
+}
+static int post_occupier(int k,int town){
+ WorldEvent *e=&P.groups[k];PopulationState *m=&P.state[k];GroupLife *z=&L.groups[k];
+ for(int i=0;i<e->count;i++){
+  Actor *a=member(k,i);
+  if(!a||!conscious(a)||member_depth(k,i)->captive||a->carrying>=0||life_carried(k,i)||z->carry[i]>=0)continue;
+  int n=e->members[i];
+  if(!e->spawned){
+   for(int j=0;j<g.actorCount;j++)if(g.living.owned[j]<0){n=j;break;}
+   if(n<0){if(g.actorCount>=MAX_ACTORS)return -1;n=g.actorCount++;}
+   social_load(k,i,n);
+   g.actors[n]=*a;
+   g.depth.actors[n]=*member_depth(k,i);
+   a=&g.actors[n];
+   war_yard(town,&a->x,&a->y);
+   a->y-=2;
+   clear_position(&a->x,&a->y);
+  }
+  m->detached|=1<<i;e->members[i]=-1;g.living.owned[n]=0;
+  g.living.anger[n]=0;g.living.command[n]=-1;
+  a->homeTown=town;a->homeX=a->tx=a->x;a->homeY=a->ty=a->y;
+  a->target=a->attackTarget=-1;a->attackPhase=a->taskKind=0;a->routeLen=a->routePos=0;
+  return n;
+ }
+ return -1;
+}
+static int life_siege(int k,int t,float dt){
+ WorldEvent *e=&P.groups[k];PopulationState *m=&P.state[k];GroupLife *z=&L.groups[k];
+ int owner=g.townOwner[t],first=-1,defenders=0;
+ for(int n=0;n<g.actorCount;n++)if(town_defender(n,t,owner)){if(first<0)first=n;defenders++;}
+ if(!defenders){
+  if(e->spawned){
+   int present=0;
+   for(int i=0;i<e->count;i++){
+    Actor *a=member(k,i);
+    if(a&&conscious(a)&&distance(a->x,a->y,towns[t].x,towns[t].y)<16){present=1;break;}
+   }
+   if(!present)return 0;
+  }
+  int guard=g.war.version&&war_rivals(e->faction,owner)?post_occupier(k,t):-1;
+  war_conquer(t,e->faction,guard);
+  z->missionDone++;L.missions++;z->goal=LIFE_RECOVER;z->clock=240;
+  return 1;
+ }
+ m->phase=POP_FIGHT;m->clock=0;
+ if(e->spawned)return 1;
+ z->clock+=dt;
+ if(z->clock<5)return 1;
+ z->clock=0;
+ war_report_clash(e->faction,owner,e->x,e->y);
+ Actor *d=&g.actors[first];
+ d->health[CHEST]-=fminf(22,standing(k)*1.7f/(1+itemDefs[d->gear[1]].armor*.02f));
+ if(d->health[CHEST]<=0){d->unconscious=180;d->target=-1;}
+ for(int i=0;i<e->count;i++){
+  Actor *a=member(k,(i+e->serial)%e->count);
+  if(!a||a->dead||a->unconscious>0)continue;
+  a->health[CHEST]-=fminf(18,5+defenders*1.5f);
+  if(a->health[CHEST]<=0)a->unconscious=120;
+  break;
+ }
+ return 1;
 }
 static void life_choose(int k){
  WorldEvent*e=&P.groups[k];GroupLife*z=&L.groups[k];
@@ -135,18 +225,17 @@ static void group_behavior(int k,float dt){
   if((!life_alive(prey)&&e->type!=POP_HUNTERS)||z->clock>240){m->targetX=m->siteX;m->targetY=m->siteY;z->goal=camp_type(e->type)?LIFE_RETURN:LIFE_ROAM;z->clock=0;}
  }
  if(camp_type(e->type)&&z->goal==LIFE_ROAM){m->phase=g.dayTime<6||g.dayTime>19?POP_REST:(int)(e->age/110)%3==0?POP_FORAGE:POP_REST;return;}
- if(z->goal==LIFE_RAID){int t=z->targetTown;if(t<0||g.townOwner[t]==e->faction){z->goal=LIFE_ROAM;return;}m->targetX=towns[t].x;m->targetY=towns[t].y;clear_position(&m->targetX,&m->targetY);
-  if(distance(e->x,e->y,towns[t].x,towns[t].y)<12){int defenders=0;for(int n=0;n<g.actorCount;n++){Actor*a=&g.actors[n];if(!a->squad&&!population_owned(n)&&a->active&&!a->dead&&a->unconscious<=0&&a->kind==GUARD&&a->homeTown==t&&a->faction==g.townOwner[t])defenders++;}
-   if(defenders){m->phase=POP_FIGHT;m->clock=0;if(!e->spawned){z->clock+=dt;if(z->clock>=5){z->clock=0;
-     for(int n=0;n<g.actorCount;n++){Actor*d=&g.actors[n];if(d->squad||!d->active||d->dead||d->unconscious>0||d->kind!=GUARD||d->homeTown!=t||d->faction!=g.townOwner[t])continue;
-      d->health[CHEST]-=fminf(22,standing(k)*1.7f/(1+itemDefs[d->gear[1]].armor*.02f));if(d->health[CHEST]<=0){d->unconscious=180;d->target=-1;}
-      for(int i=0;i<e->count;i++){Actor*a=member(k,(i+e->serial)%e->count);if(a&&!a->dead&&a->unconscious<=0){a->health[CHEST]-=fminf(18,5+defenders*1.5f);if(a->health[CHEST]<=0)a->unconscious=120;break;}}break;
-     }
-    }}return;}
-   politics_occupy(t,e->faction);z->missionDone++;L.missions++;z->goal=LIFE_RECOVER;z->clock=240;return;
-  }
+ if(z->goal==LIFE_RAID){
+  int t=z->targetTown;
+  if(t<0||g.townOwner[t]==e->faction||(g.war.heldSince[t]>0&&g.time-g.war.heldSince[t]<650)){z->goal=LIFE_ROAM;return;}
+  m->targetX=towns[t].x;m->targetY=towns[t].y;clear_position(&m->targetX,&m->targetY);
+  if(distance(e->x,e->y,towns[t].x,towns[t].y)<12&&life_siege(k,t,dt))return;
  }
- m->phase=POP_TRAVEL;float dx=m->targetX-e->x,dy=m->targetY-e->y,d=sqrtf(dx*dx+dy*dy);if(d<3){life_arrive(k);return;}
+ m->phase=POP_TRAVEL;
+ float tx=m->targetX,ty=m->targetY;
+ if(distance(e->x,e->y,tx,ty)<3){life_arrive(k);return;}
+ if(e->type==POP_ARMY)army_ford_waypoint(e->x,e->y,&tx,&ty);
+ float dx=tx-e->x,dy=ty-e->y,d=fmaxf(.01f,sqrtf(dx*dx+dy*dy));
  float speed=z->goal==LIFE_RETREAT?.9f:z->goal==LIFE_HUNT?1.05f:e->type==POP_ARMY?.55f:.75f;
  if(e->spawned){for(int i=0;i<e->count;i++){Actor*a=member(k,i);if(a&&!a->dead&&a->unconscious<=0){if(distance(a->x,a->y,e->x,e->y)>8)return;break;}}}
  float step=fminf(d,speed*dt),x=e->x+dx/d*step,y=e->y+dy/d*step;
@@ -161,7 +250,7 @@ int population_tactics(int n,float dt){
  if(z->goal==LIFE_AMBUSH&&z->ambushSprung==1&&z->clock>20){float x=g.actors[g.selected].x,y=g.actors[g.selected].y;if(z->targetGroup>=0&&P.groups[z->targetGroup].serial==z->targetSerial){x=P.groups[z->targetGroup].x;y=P.groups[z->targetGroup].y;}float side=i%2?1:-1;route_toward(a,x+side*3,y+(i%3-1)*2,dt);return 1;}
  if(life_threat(k,10)<0&&a->target<0){for(int j=0;j<e->count;j++){Actor*b=member(k,j);if(i==j||!b||b->dead||b->carriedBy>=0||(b->bleed<=.01f&&b->unconscious<=0))continue;if(inventory_count(a,MEDKIT)||b->unconscious>0){if(distance(a->x,a->y,b->x,b->y)>TALK_REACH)route_toward(a,b->x,b->y,dt);else{life_bandage(k,j,i);if(b->unconscious>0&&a->carrying<0&&!life_carried(k,i)){life_drop(k,j);z->carry[i]=j;a->carrying=e->members[j];b->carriedBy=n;}}return 1;}}}
  if(z->goal==LIFE_HUNT&&e->type==POP_HUNTERS&&z->targetGroup>=0&&P.groups[z->targetGroup].serial==z->targetSerial&&!standing(z->targetGroup)){WorldEvent*p=&P.groups[z->targetGroup];for(int j=0;j<p->count;j++){Actor*b=member(z->targetGroup,j);if(b&&(b->dead||b->unconscious>0)&&(inventory_count(b,MEAT)||inventory_count(b,HIDE))){route_toward(a,b->x,b->y,dt);return 1;}}}
- if(z->goal==LIFE_RAID&&z->targetTown>=0){int t=z->targetTown;for(int j=0;j<g.actorCount;j++){Actor*b=&g.actors[j];if(!b->squad&&b->active&&b->kind==GUARD&&b->homeTown==t&&b->faction==g.townOwner[t]&&conscious(b)){if(depth_distance(a,b)>5){route_toward(a,b->x,b->y,dt);return 1;}break;}}}
+ if(z->goal==LIFE_RAID&&z->targetTown>=0){int t=z->targetTown;if(distance(e->x,e->y,towns[t].x,towns[t].y)<30)for(int j=0;j<g.actorCount;j++)if(town_defender(j,t,g.townOwner[t])){Actor*b=&g.actors[j];if(depth_distance(a,b)>5){route_toward(a,b->x,b->y,dt);return 1;}break;}}
  return 0;
 }
 int population_hidden(int n){int k=population_owned(n)-1;if(k<0||!L.version)return 0;GroupLife*z=&L.groups[k];Actor*a=&g.actors[n];return z->goal==LIFE_AMBUSH&&!z->ambushSprung&&!a->dead&&observers(a->x,a->y)>5+level(&g.actors[g.selected],PERCEPTION)*.03f;}

@@ -23,6 +23,7 @@ int npc_role(const Actor *a) {
 const char *npc_role_name(const Actor *a) {
     if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + MAX_ACTORS)) {
         int ai=(int)(a-g.actors);
+        if(g.war.prisonTown[ai])return "ENSLAVED SOLDIER";
         if(a->prisonTime>0)return "PRISONER";
         if(limb_surgeon(ai))return "LIMB SURGEON";
         if(population_owned(ai))return population_actor_role(ai);
@@ -47,7 +48,7 @@ const char *npc_role_name(const Actor *a) {
     return names[npc_role(a)];
 }
 static const int services[][7] = {
- {6,12,8,-1}, {0,14,1,6,12,8,-1}, {6,12,8,-1}, {1,4,15,6,8,-1}, {2,1,6,12,8,-1},
+ {6,12,8,-1}, {0,14,1,6,12,8,-1}, {6,12,18,8,-1}, {1,4,15,6,8,-1}, {2,1,6,12,8,-1},
  {3,6,12,8,-1}, {7,1,6,12,8,-1}, {5,6,12,8,-1}, {1,14,6,12,8,-1}, {9,10,6,12,8,-1}};
 int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
@@ -89,6 +90,7 @@ const char *dialogue_option(int actor, int row) {
     int action = dialogue_action(actor, row);
     if(action==16)return "Removal surgery. 400 silver";
     if(action==17)return "Show me mechanical limbs.";
+    if(action==18)return "What have you heard?";
     if(action==13)return "Discuss the local conflict.";
     if(action==2 && !regional_bed_cost(town_near(g.actors[actor].x,g.actors[actor].y,14)))return "Rest at the sanctuary. Free";
     if (action == 6 && npc_role(&g.actors[actor]) == ROLE_RECRUIT)
@@ -315,11 +317,11 @@ static const int doctrine[FACTIONS][4] = {{8, 9, 16, 19},   {29, 8, 84, 30}, {85
 const char *faction_identity(int f) {
     static const char *l[] = {
         "FREE DRIFTERS: independent recruits and hired blades. No ruler, no uniform law.",
-        "COMPACT: rifle wardens and greatswords. Protects wells; arrests wanted drifters.",
+        "COMPACT: pump crews pooled their wells after the reservoirs failed. Elected wardens tax the roads. Captives work the depots.",
         "RUST CARAVANS: salvage, mauls and work gear. Bring ore; leave with tools.",
         "RED VULTURES: heavy scavenged blades. Attacks outsiders. Avoid their settlements.",
-        "SHOGUNATE: lamellar patrols, katanas and glaives. Honor buys trade; infamy draws steel.",
-        "ASH MONASTERY: robes, staves and medicine. Recovery supplies and pilgrim equipment.",
+        "SHOGUNATE: exiles from the eastern forts swore service to one commander. Iron and rice pay tribute. Captives work the forges.",
+        "ASH MONASTERY: quarantine surgeons built hospices after the Ash Fever. Healer councils ration medicine. Captives serve penance.",
         "BLACK MESA: pistols, hooks and contraband. Fences accept stolen goods.",
         "WILD PACKS: territorial predators. No trade, contracts or diplomatic protection."};
     return l[f >= 0 && f < FACTIONS ? f : 0];

@@ -23,6 +23,32 @@ static unsigned whash(int x, int y) {
     return v ^ (v >> 16);
 }
 static float limit(float v, float lo, float hi) { return v < lo ? lo : v > hi ? hi : v; }
+static const float riverFords[]={330,620,1000,1260};
+static const float brookFords[]={305,530,695};
+static float river_x(float y){return 4*(194+12*sinf((y+81)*.00625f))-78;}
+static float brook_y(float x){return 4*(139+9*sinf((x+78)*.00625f))-81;}
+void army_ford_waypoint(float x,float y,float *tx,float *ty){
+    float from=x-river_x(y),to=*tx-river_x(*ty);
+    if(from*to<0 || (fabsf(from)<12 && fabsf(to)>12)){
+        float best=1e9f,fx=*tx,fy=*ty;
+        for(unsigned i=0;i<sizeof(riverFords)/sizeof(riverFords[0]);i++){
+            float wy=riverFords[i],wx=river_x(wy)+(to>0?15:-15);
+            float cost=distance(x,y,wx,wy)+distance(wx,wy,*tx,*ty);
+            if(cost<best){best=cost;fx=wx;fy=wy;}
+        }
+        *tx=fx;*ty=fy;
+    }
+    if(x>750||*tx>752)return;
+    from=y-brook_y(x);to=*ty-brook_y(*tx);
+    if(from*to>=0 && (fabsf(from)>=9 || fabsf(to)<=9))return;
+    float best=1e9f,fx=*tx,fy=*ty;
+    for(unsigned i=0;i<sizeof(brookFords)/sizeof(brookFords[0]);i++){
+        float wx=brookFords[i],wy=brook_y(wx)+(to>0?12:-12);
+        float cost=distance(x,y,wx,wy)+distance(wx,wy,*tx,*ty);
+        if(cost<best){best=cost;fx=wx;fy=wy;}
+    }
+    *tx=fx;*ty=fy;
+}
 int biome(float x, float y) {
     if (world_is_expanded()) {
         x = (x + 78) / 4;
@@ -56,9 +82,16 @@ int biome(float x, float y) {
     return 1;
 }
 int terrain_road(float x, float y) {
+    if(world_is_expanded()){
+        if(x>625&&x<770)for(unsigned i=0;i<sizeof(riverFords)/sizeof(riverFords[0]);i++)
+            if(fabsf(y-riverFords[i])<1.65f&&fabsf(x-river_x(y))<18)return 1;
+        if(y>430&&y<535)for(unsigned i=0;i<sizeof(brookFords)/sizeof(brookFords[0]);i++)
+            if(fabsf(x-brookFords[i])<1.65f&&fabsf(y-brook_y(x))<15)return 1;
+    }
     int town=town_near(x,y,16);
     if(town>0){
         float dx=x-towns[town].x,dy=y-towns[town].y;int style=civil_style(town);
+        if(town==OLD_TOWNS&&fabsf(dx)<10&&(fabsf(dy-2)<1.1f||fabsf(dy+4)<.75f))return 1;
         if(style==1 && ((fabsf(dx)<2.2f && fabsf(dy)<14) || (fabsf(dy-5)<1.2f && fabsf(dx)<10)))return 1;
         if(style==2 && fabsf(dx)<6 && fabsf(dy)<6 && (fabsf(dx)>3.8f || fabsf(dy)>3.8f))return 1;
         if(style==4 && fabsf(dx)<10 && fabsf(dy)<10 && (fabsf(dx-1)<1.1f || fabsf(dy-2)<1.1f))return 1;
@@ -223,7 +256,7 @@ void init_expansion(void) {
     g.eventTimer = 220;
     g.difficulty = 1;
     snprintf(g.worldNews, sizeof(g.worldNews), "The old road is open. Work waits in the frontier towns.");
-    for (int t = 0; t < TOWNS; t++) {
+    for (int t = 0; t < OLD_TOWNS; t++) {
         float x = towns[t].x, y = towns[t].y;
         int f = towns[t].faction;
         if (t >= 5) {
@@ -611,6 +644,11 @@ const char *dialogue_line(int n, int page) {
         return "We need freight runners, caravan escorts, patrol mercenaries and bounty hunters. "
                "Or bring supplies and salvage. Read each job in your journal.";
     if (page == 4)return trade_tip(town_near(a->x,a->y,14));
+    if (page == 5){
+        const char *rumor=war_rumor(a);
+        int town=town_near(a->x,a->y,14);
+        return rumor?rumor:town>=0?town_custom(town):npc_rumor(a);
+    }
     if (page == 2)
         return town_custom(town_near(a->x,a->y,14));
     if (page == 3)
@@ -672,6 +710,8 @@ const char *dialogue_line(int n, int page) {
 }
 const char *ambient_line(int n) {
     if (n >= 0 && n < g.actorCount) {
+        const char *rumor=war_ambient(g.actors[n].speech,g.actors[n].faction);
+        if(rumor)return rumor;
         switch (npc_role(&g.actors[n])) {
         case ROLE_MERCHANT:
             return "Stock follows our flag. Inspect before buying.";
@@ -696,7 +736,7 @@ const char *ambient_line(int n) {
                                     "The old wells are running dry.",
                                     "Need another sword on the road?",
                                     "Nobody crosses the scar alone.",
-                                    "Heard gunfire out by the ford.",
+                                    "I count the mileposts to stay awake.",
                                     "A bowl of rice beats a grave.",
                                     "The Shogun taxes even the dead.",
                                     "Check your straps before dusk.",
@@ -924,17 +964,8 @@ void tick_expansion(float dt) {
         snprintf(g.worldNews, sizeof(g.worldNews), "%s %s.", news[k], towns[t].name);
         if (k == 3) {
             g.factionWar[g.townOwner[t]] = 1;
-            if (g.prosperity[t] < 25 && g.day > 2 && t > 0 && !(t==2 && g.regions.outcome[0]) && !(t==12 && g.regions.outcome[2])) {
-                g.townOwner[t] = g.townOwner[t] == HOSTILE ? towns[t].faction : HOSTILE;
-                snprintf(g.worldNews, sizeof(g.worldNews), "%s changed hands. Roads and trade are unsettled.",
-                         towns[t].name);
-                for (int i = 0; i < g.actorCount; i++)
-                    if (!g.actors[i].squad && g.actors[i].homeTown == t)
-                        g.actors[i].faction = g.townOwner[t];
-                for (int i = 0; i < g.buildingCount; i++)
-                    if (g.buildings[i].owner < 0 && town_near(g.buildings[i].x, g.buildings[i].y, 13) == t)
-                        g.buildings[i].faction = g.townOwner[t];
-            }
+            if (g.prosperity[t] < 25 && g.day > 2 && t > 0 && t < OLD_TOWNS && !(t==2 && g.regions.outcome[0]) && !(t==12 && g.regions.outcome[2]))
+                politics_occupy(t,g.townOwner[t] == HOSTILE ? towns[t].faction : HOSTILE);
         }
     }
     for (int i = 0; i < g.actorCount; i++) {
@@ -945,9 +976,12 @@ void tick_expansion(float dt) {
         a->speechCooldown -= dt;
         if (a->speechCooldown <= 0 && !a->squad && a->kind != BEAST) {
             a->speechCooldown = 18 + wrand() % 35;
-            if (distance(a->x, a->y, g.actors[g.selected].x, g.actors[g.selected].y) < 8) {
-                a->speech = (i + g.day + (int)(g.time / 10)) % 24;
-                a->speechTime = 4;
+            if (fabsf(a->x-g.actors[g.selected].x)<8 && fabsf(a->y-g.actors[g.selected].y)<8 &&
+                conscious(a) && !g.depth.actors[i].captive && a->prisonTime<=0 && !population_hidden(i) &&
+                distance(a->x, a->y, g.actors[g.selected].x, g.actors[g.selected].y) < 8) {
+                int rumor=war_chatter(i);
+                a->speech = rumor ? rumor : (i + g.day + (int)(g.time / 10)) % 24;
+                a->speechTime = rumor ? 6 : 4;
             }
         }
         if (a->prisonTime > 0) {

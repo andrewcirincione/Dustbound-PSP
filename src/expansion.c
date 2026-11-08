@@ -673,8 +673,8 @@ int expansion_input(float dt, Input in) {
                         g.rep[g.townOwner[town]] = 0;
                         log_msg("Bounty paid to the local authority.");
                     } else {
-                        ui.dialogPage = 2;
-                        log_msg("%s", g.worldNews);
+                        ui.dialogPage = 5;
+                        ui.selection = 0;
                     }
                     break;
                 case 5:
@@ -686,8 +686,8 @@ int expansion_input(float dt, Input in) {
                         if (recruit_actor(n))
                             open_view(SCREEN_WORLD);
                     } else {
-                        ui.dialogPage = 2;
-                        log_msg("%s", g.worldNews);
+                        ui.dialogPage = 5;
+                        ui.selection = 0;
                     }
                     break;
                 case 7:
@@ -709,6 +709,10 @@ int expansion_input(float dt, Input in) {
                     break;
                 case 12:
                     ui.dialogPage = 3;
+                    break;
+                case 18:
+                    ui.dialogPage = 5;
+                    ui.selection = 0;
                     break;
                 case 8:
                     open_view(SCREEN_WORLD);

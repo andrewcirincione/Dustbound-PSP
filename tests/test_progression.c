@@ -1,4 +1,5 @@
 #include "game.h"
+#include "save_fixture.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -34,21 +35,17 @@ static void merged_proficiencies(void) {
     memcpy(g.society.weaponXP[0], oldXP, sizeof(oldXP));
     memcpy(g.population.social[0][0].weaponXP, oldStoredXP, sizeof(oldStoredXP));
     const char *legacy = "build/progression-v15.sav";
-    assert(save_game(legacy));
-    FILE *file = fopen(legacy, "r+b");
-    uint32_t version = 15;
-    assert(file && fseek(file, 8, SEEK_SET) == 0);
-    assert(fwrite(&version, sizeof(version), 1, file) == 1 && fclose(file) == 0);
+    save_prior_fixture(legacy, 15);
 
     assert(load_game(legacy));
     assert(!memcmp(g.society.weaponXP[0], expected, sizeof(expected)));
     assert(!memcmp(g.population.social[0][0].weaponXP, expectedStored, sizeof(expectedStored)));
     assert(weapon_class_level(&g.actors[0], weapon_class(SABRE)) == 30);
     assert(weapon_class_level(&g.actors[0], WC_HEAVY) == 100);
-    assert(save_game("build/progression-v16.sav") && load_game("build/progression-v16.sav"));
+    assert(save_game("build/progression-v17.sav") && load_game("build/progression-v17.sav"));
     assert(!memcmp(g.society.weaponXP[0], expected, sizeof(expected)));
     assert(!memcmp(g.population.social[0][0].weaponXP, expectedStored, sizeof(expectedStored)));
-    puts("PASS: all six class mappings, shared XP, capped v15 migration of live and stored actors, and v16 reload.");
+    puts("PASS: all six class mappings, shared XP, capped v15 migration of live and stored actors, and v17 reload.");
 }
 int main(void){
  setvbuf(stdout,NULL,_IONBF,0);int w=gear_id(0,1,1);unsigned hit=outcome(w,SABRE,0,0),block=outcome(w,SABRE,1,0);

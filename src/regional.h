@@ -87,7 +87,7 @@ void regional_restock(int t) {
         if(o==2){g.stock[t][CARTRIDGE]=100;g.stock[t][gear_id(2,4,2)]=3;g.stock[t][gear_id(34,4,2)]=2;}
     }
 }
-int regional_bed_cost(int t) {return t==12&&g.regions.outcome[2]==1?0:25;}
+int regional_bed_cost(int t) {return (t==12&&g.regions.outcome[2]==1)||(t==OLD_TOWNS+2&&g.townOwner[t]==MONKS)?0:25;}
 int regional_well(Actor *a,Building *b) {
     if(regional_at(b->x,b->y)!=0) return 0;
     int o=g.regions.outcome[0];

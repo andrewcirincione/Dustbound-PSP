@@ -60,10 +60,11 @@ void living_generate(int slot){
     }
     LW.history[LW.historyPos++%16]=signature;LW.historyPos%=16;
     e->town=event_random(e)%TOWNS;e->origin=(e->town+1+event_random(e)%(TOWNS-1))%TOWNS;
-    e->faction=e->type==1||e->type==7?HOSTILE:e->type==5?WILDLIFE:e->type==6?(event_random(e)%2?UNION:SHOGUN):g.townOwner[e->town];
+    static const int banners[WAR_FACTIONS]={UNION,SHOGUN,MONKS};
+    e->faction=e->type==1||e->type==7?HOSTILE:e->type==5?WILDLIFE:e->type==6?banners[event_random(e)%WAR_FACTIONS]:g.townOwner[e->town];
     if(e->type==0||e->type==4||e->type==2)e->faction=SCAVENGERS;
     if(e->type==6){
-        for(int tries=0;tries<TOWNS;tries++){if(e->town>4&&g.townOwner[e->town]!=e->faction&&!(e->town==12&&g.regions.outcome[2]))break;e->town=(e->town+1)%TOWNS;}
+        for(int tries=0;tries<TOWNS;tries++){if(e->town>4&&war_rivals(e->faction,g.townOwner[e->town])&&!(e->town==12&&g.regions.outcome[2]))break;e->town=(e->town+1)%TOWNS;}
     }
     e->tier=(int)limit((e->town/4)+(g.day/12),0,3);if(e->type==7)e->tier=4;
     e->count=e->type==6?16:e->type==1?10:e->type==5?7:e->type==7?9:e->type==0?6:e->type==4?1:0;
@@ -152,15 +153,10 @@ void living_tick(float dt){
             int arrived=d<(e->type==6?2:9);
             if(arrived&&e->spawned){arrived=0;for(int i=0;i<e->count;i++){Actor*a=&g.actors[e->members[i]];if(a->active&&!a->dead&&a->unconscious<=0&&distance(a->x,a->y,towns[e->town].x,towns[e->town].y)<8)arrived=1;}}
             /* A visible invasion must defeat the defending garrison before occupation. */
-            if(arrived&&e->spawned&&e->type==6)for(int n=0;n<g.actorCount;n++){Actor*a=&g.actors[n];if(!living_owned(n)&&!a->squad&&a->active&&conscious(a)&&a->kind==GUARD&&a->homeTown==e->town&&a->faction!=e->faction&&distance(a->x,a->y,towns[e->town].x,towns[e->town].y)<20)arrived=0;}
+            if(arrived&&e->type==6)for(int n=0;n<g.actorCount;n++){Actor*a=&g.actors[n];if(!living_owned(n)&&!a->squad&&a->active&&!a->dead&&a->unconscious<=0&&!g.depth.actors[n].captive&&a->kind==GUARD&&a->homeTown==e->town&&a->faction!=e->faction)arrived=0;}
             if(arrived){
-                if(e->type==6 && !(e->town==12&&g.regions.outcome[2])) {
-                    g.townOwner[e->town]=e->faction;
-                    for(int n=0;n<g.actorCount;n++)if(!g.actors[n].squad&&!living_owned(n)&&g.actors[n].homeTown==e->town)g.actors[n].faction=e->faction;
-                    for(int n=0;n<g.buildingCount;n++)if(g.buildings[n].owner<0&&town_near(g.buildings[n].x,g.buildings[n].y,14)==e->town)g.buildings[n].faction=e->faction;
-                    frontier_restock(e->town);regional_restock(e->town);
-                    snprintf(g.worldNews,sizeof(g.worldNews),"%s now holds %s.",factionNames[e->faction],towns[e->town].name);
-                }
+                if(e->type==6 && war_rivals(e->faction,g.townOwner[e->town]) && !(e->town==12&&g.regions.outcome[2]) &&
+                   (!g.war.heldSince[e->town] || g.time-g.war.heldSince[e->town]>=650))war_conquer(e->town,e->faction,-1);
                 finish_event(e,e->type==0);if(e->type==0){g.stock[e->town][RATION]+=12;g.stock[e->town][MEDKIT]+=8;}continue;}
             /* Stop the formation anchor during nearby battle; members catch up. */
             int fighting=0;for(int i=0;i<e->count&&e->spawned;i++)if(g.actors[e->members[i]].target>=0)fighting=1;

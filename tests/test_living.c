@@ -1,4 +1,5 @@
 #include "game.h"
+#include "save_fixture.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,19 +8,10 @@
 extern int hostile(const Actor*,const Actor*);
 static uint32_t pixels[480*272];
 static void shot(const char*n){char path[200];snprintf(path,sizeof(path),"evidence/v080/%s.ppm",n);render_game(pixels,480);FILE*f=fopen(path,"wb");assert(f);fprintf(f,"P6\n480 272\n255\n");for(int i=0;i<480*272;i++){unsigned char b[3]={pixels[i]&255,(pixels[i]>>8)&255,(pixels[i]>>16)&255};fwrite(b,1,3,f);}fclose(f);}
-static uint32_t hash(const void*p,size_t n){uint32_t h=2166136261u;const unsigned char*b=p;while(n--)h=(h^*b++)*16777619u;return h;}
-static void v7fixture(void){/* Serialize the exact released v7 layout from the unchanged fields. */
-    unsigned char raw[435592];memcpy(raw,&g,144);
-    for(int t=0;t<TOWNS;t++)memcpy(raw+144+t*CATALOG_ITEMS*4,g.stock[t],CATALOG_ITEMS*4);
-    size_t tail=144+TOWNS*CATALOG_ITEMS*4;
-    memcpy(raw+tail,(char*)&g+offsetof(Game,lastRestock),sizeof(raw)-tail);
-    struct {char magic[8];unsigned version,size,hash;}h={{'D','U','S','T','S','A','V','E'},7,sizeof(raw),hash(raw,sizeof(raw))};
-    FILE*f=fopen("build/v7-living.sav","wb");fwrite(&h,sizeof(h),1,f);fwrite(raw,sizeof(raw),1,f);fclose(f);
-}
 int main(void){
     game_new(73819,0);assert(g.living.version==1&&living_validate(&g));
     for(int it=CATALOG_ITEMS;it<V100_ITEMS;it++){assert(gear_family(it)>=0&&gear_family(it)<FAMILIES);assert(itemDefs[it].price>0);}
-    g.money=777;g.stock[15][CATALOG_ITEMS-1]=9;g.regions.outcome[0]=1;v7fixture();
+    g.money=777;g.stock[15][CATALOG_ITEMS-1]=9;g.regions.outcome[0]=1;save_prior_fixture("build/v7-living.sav", 7);
     assert(load_game("build/v7-living.sav"));assert(g.money==777&&g.stock[15][CATALOG_ITEMS-1]==9&&g.regions.outcome[0]==1&&g.living.version==1);
     int ser=g.living.serial;assert(save_game("build/v8-living.sav"));assert(load_game("build/v8-living.sav"));assert(g.living.serial==ser);
     int seen[32]={0};for(int i=0;i<1200;i++){living_generate(i%EVENTS);WorldEvent*e=&g.living.events[i%EVENTS];seen[e->type*4+e->modifier]++;assert(living_validate(&g));}

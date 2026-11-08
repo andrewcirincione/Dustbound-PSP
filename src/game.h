@@ -1,13 +1,13 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.16.3"
+#define VERSION "0.17.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
 #define TALK_REACH 1.6f
 #define MAX_ACTORS 192
-#define MAX_BUILDINGS 320
+#define MAX_BUILDINGS 384
 #define MAX_NODES 640
 #define PACK 24
 #define SKILLS 20
@@ -34,7 +34,8 @@
 #define CONTRACTS 24
 #define GUIDE_PAGES 25
 #define SAVE_SLOTS 7
-#define TOWNS 16
+#define OLD_TOWNS 16
+#define TOWNS 19
 #define SQUAD 8
 #define LOGS 6
 enum {
@@ -250,6 +251,7 @@ typedef struct {
     FrontierLife life;
     FieldNotes fieldNotes;
     struct { int version, seen, bed[6], omit; } trails;
+    FrontierWar war;
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -299,8 +301,10 @@ extern volatile uint32_t display_buffer;
 extern volatile uint32_t rendered_frames;
 extern ItemDef itemDefs[ITEMS];
 extern Town towns[TOWNS];
+void restock_town(int town);
 void world_layout(int expanded);
 int world_is_expanded(void);
+void army_ford_waypoint(float x, float y, float *tx, float *ty);
 enum {
     ROLE_CITIZEN,
     ROLE_MERCHANT,

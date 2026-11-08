@@ -121,7 +121,9 @@ Town towns[TOWNS] = {{"DUSK HAVEN", 26, 27, UNION},       {"COPPER CROSS", 76, 3
                      {"BLACK MESA", 165, 150, OUTLAWS},   {"REED CROSSING", 65, 215, SCAVENGERS},
                      {"CINDER PORT", 138, 294, UNION},    {"SHOGUN'S REST", 278, 198, SHOGUN},
                      {"PALE PASS", 307, 322, MONKS},      {"DUSK FERRY", 228, 281, SCAVENGERS},
-                     {"VULTURE NEST", 338, 135, HOSTILE}, {"PINE REFUGE", 48, 333, MONKS}};
+                     {"VULTURE NEST", 338, 135, HOSTILE}, {"PINE REFUGE", 48, 333, MONKS},
+                     {"BRASS JUNCTION", 244, 250, UNION},  {"VERMILION KEEP", 350, 245, SHOGUN},
+                     {"CINDER ABBEY", 277, 359, MONKS}};
 
 static uint32_t rnd(void) {
     uint32_t x = g.rng;
@@ -426,8 +428,7 @@ void add_node(float x, float y, int type, int owner, int item, int qty) {
         (Node){x,    y,   type, type <= NODE_WOOD ? 20 : 1, type == NODE_LOCKED || type == NODE_RUIN, owner,
                item, qty, 0};
 }
-void restock(void) {
-    for (int t = 0; t < TOWNS; t++) {
+void restock_town(int t) {
         memset(g.stock[t], 0, sizeof(g.stock[t]));
         for (int j = 1; j < BASE_ITEMS; j++)
             g.stock[t][j] = j <= 10 ? 16 : (j == BOLTS || j == CARTRIDGE ? 60 : j == RELIC ? 1 : 3);
@@ -436,9 +437,10 @@ void restock(void) {
             int m = (t + j / 6 + g.day) % MATERIALS, q = (j + t + g.day) % QUALITIES;
             g.stock[t][gear_id(f, m, q)] = 1 + (j % 3);
         }
-    }
-    for (int t = 0; t < TOWNS; t++)
-        {frontier_restock(t);regional_restock(t);society_stock(t);civil_stock(t);limbs_stock(t);}
+    frontier_restock(t);regional_restock(t);society_stock(t);civil_stock(t);limbs_stock(t);
+}
+void restock(void) {
+    for (int t = 0; t < TOWNS; t++) restock_town(t);
     g.lastRestock = g.day;
 }
 void game_new(uint32_t seed, int scenario) {
@@ -548,6 +550,7 @@ void game_new(uint32_t seed, int scenario) {
     population_init();
     life_init();
     trail_init();
+    war_init();
     ui.camX = a->x;
     ui.camY = a->y;
     ui.mapX = a->x;
@@ -560,6 +563,12 @@ int hostile(const Actor *a, const Actor *b) {
     if (depth_room(a) != depth_room(b))
         return 0;
     if (a->squad && b->squad) return 0;
+    if (g.war.version && war_rivals(a->faction,b->faction)) {
+        uintptr_t lo=(uintptr_t)g.actors, hi=(uintptr_t)(g.actors+g.actorCount);
+        if (((uintptr_t)a>=lo&&(uintptr_t)a<hi&&g.war.prisonTown[a-g.actors]) ||
+            ((uintptr_t)b>=lo&&(uintptr_t)b<hi&&g.war.prisonTown[b-g.actors])) return 0;
+        if (a->kind == GUARD && b->kind == GUARD) return 1;
+    }
     if(living_hostile(a,b)) return 1;
     int civic=society_hostile(a,b);if(civic>=0)return civic;
     if(regional_hostile(a,b)) return 1;
@@ -617,6 +626,7 @@ void strike(int ai, int bi) {
     a->taskKind = 0;
     a->attackAngle = atan2f((depth_x(b)+depth_y(b)-depth_x(a)-depth_y(a))*11, (depth_x(b)-depth_y(b)-depth_x(a)+depth_y(a))*22);
     a->facing = cosf(a->attackAngle) >= 0;
+    if(a->kind==GUARD&&b->kind==GUARD&&war_rivals(a->faction,b->faction))war_report_clash(a->faction,b->faction,b->x,b->y);
     if (distance(a->x, a->y, g.actors[g.selected].x, g.actors[g.selected].y) < 12)
         audio_event(ranged ? (gear_family(w) >= 29 ? 4 : 1) : 1);
 }
@@ -1699,7 +1709,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 16 };
+enum { SAVE_VERSION = 17 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -1811,7 +1821,7 @@ static int validate_game(const Game *t) {
     if(t->trails.version<0||t->trails.version>1||t->trails.seen<0||t->trails.seen>63||t->trails.omit<0||t->trails.omit>0xffffff)return 0;
     for(int k=0;k<6;k++){int b=t->trails.bed[k];if(b<0||b>t->buildingCount||(b&&t->buildings[b-1].type!=BED)||(!t->trails.version&&b))return 0;}
     if(!t->trails.version&&(t->trails.seen||t->trails.omit))return 0;
-    return field_notes_valid(t) && depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t) && population_validate(t) && life_validate(t);
+    return field_notes_valid(t) && depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t) && population_validate(t) && life_validate(t) && war_validate(t);
 }
 static int migrate_legacy(const LegacyGame *old) {
     if (old->actorCount < 1 || old->actorCount > 80 || old->buildingCount < 0 || old->buildingCount > 100 ||
@@ -1884,10 +1894,12 @@ static int migrate_legacy(const LegacyGame *old) {
     memcpy(g.nodes, old->nodes, sizeof(LegacyNode) * old->nodeCount);
     spread_frontier(&g);
     for (int i = 46; i < expanded->actorCount && g.actorCount < MAX_ACTORS; i++)
-        g.actors[g.actorCount++] = expanded->actors[i];
+        if (expanded->actors[i].homeTown < OLD_TOWNS)
+            g.actors[g.actorCount++] = expanded->actors[i];
     for (int i = 35; i < expanded->buildingCount && g.buildingCount < MAX_BUILDINGS; i++){
         int shelter=0;for(int k=0;k<6;k++)if(expanded->trails.bed[k]==i+1)shelter=1;
-        if(!shelter)g.buildings[g.buildingCount++] = expanded->buildings[i];
+        if(!shelter && town_near(expanded->buildings[i].x,expanded->buildings[i].y,24)<OLD_TOWNS)
+            g.buildings[g.buildingCount++] = expanded->buildings[i];
     }
     for (int i = 0; i < expanded->nodeCount && g.nodeCount < MAX_NODES; i++){
         int cache=0;for(int k=0;k<6;k++)if(expanded->trails.bed[k]){Building*b=&expanded->buildings[expanded->trails.bed[k]-1];if(distance(b->x,b->y,expanded->nodes[i].x,expanded->nodes[i].y)<2)cache=1;}
@@ -1903,26 +1915,63 @@ static int migrate_legacy(const LegacyGame *old) {
     memset(&g.population,0,sizeof(g.population));
     memset(&g.life,0,sizeof(g.life));
     memset(&g.trails,0,sizeof(g.trails));
+    memset(&g.war,0,sizeof(g.war));
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
-    return ((version==SAVE_VERSION || version==15) && size==sizeof(Game)) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
+typedef struct {
+    const unsigned char *source;
+    unsigned char *dest;
+    size_t left;
+} SaveReader;
+static void read_save_span(SaveReader *reader, void *end) {
+    size_t count = (unsigned char *)end - reader->dest;
+    if (count > reader->left) count = reader->left;
+    memcpy(reader->dest, reader->source, count);
+    reader->source += count;
+    reader->left -= count;
+    reader->dest = end;
+}
+static void read_save_array(SaveReader *reader, void *array, size_t oldBytes, size_t bytes) {
+    read_save_span(reader, array);
+    read_save_span(reader, (unsigned char *)array + oldBytes);
+    reader->dest = (unsigned char *)array + bytes;
+}
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if(version>=11)memcpy(out,data,size);
+    if (version == SAVE_VERSION) memcpy(out, data, size);
     else {
-        const unsigned char *src=data;int oldItems=version==10?V100_ITEMS:version==9?V090_ITEMS:version==8?OLD_ITEMS:version>=5?CATALOG_ITEMS:2052;
-        unsigned oldTail=144+TOWNS*oldItems*4;
-        memcpy(out,src,144);
-        for(int t=0;t<TOWNS;t++)memcpy(out->stock[t],src+144+t*oldItems*4,oldItems*4);
-        memcpy((unsigned char*)out+offsetof(Game,lastRestock),src+oldTail,size-oldTail);
+        int oldItems = version>=11 ? ITEMS : version==10 ? V100_ITEMS : version==9 ? V090_ITEMS :
+                       version==8 ? OLD_ITEMS : version>=5 ? CATALOG_ITEMS : 2052;
+        SaveReader reader = {data, (unsigned char *)out, size};
+#define WIDEN(field, count) read_save_array(&reader, out->field, (count) * sizeof(out->field[0]), sizeof(out->field))
+        WIDEN(discovered, OLD_TOWNS);
+        for (int t = 0; t < OLD_TOWNS; ++t)
+            read_save_array(&reader, out->stock[t], oldItems * sizeof(int), sizeof(out->stock[t]));
+        reader.dest = (unsigned char *)&out->lastRestock;
+        WIDEN(buildings, 320);
+        WIDEN(townOwner, OLD_TOWNS);
+        WIDEN(prosperity, OLD_TOWNS);
+        WIDEN(townState, OLD_TOWNS);
+        WIDEN(depth.buildings, 320);
+        WIDEN(society.crisis, OLD_TOWNS);
+        WIDEN(population.groups, OLD_POP_GROUPS);
+        WIDEN(population.state, OLD_POP_GROUPS);
+        WIDEN(population.social, OLD_POP_GROUPS);
+        WIDEN(life.groups, OLD_POP_GROUPS);
+        WIDEN(life.towns, OLD_TOWNS);
+        WIDEN(fieldNotes.group, OLD_POP_GROUPS);
+#undef WIDEN
+        read_save_span(&reader, &out->war);
+        if (reader.left) return 0;
     }
     if (!validate_game(out))
         return 0;
-    if (version < SAVE_VERSION)
+    if (version < 16)
         weapon_xp_migrate(out);
     return 1;
 }
@@ -1988,6 +2037,7 @@ int load_game(const char *path) {
     population_init();
     life_init();
     trail_init();
+    war_init();
         memset(&ui, 0, sizeof(ui));
         ui.attackFocus=-1;
         ui.speed = 1;
@@ -2515,6 +2565,20 @@ void debug_snapshot(const char *path) {
     VALUE("pop_near",popInfo,sizeof(popInfo));VALUE("pop_position",popPosition,sizeof(popPosition));
     VALUE("fatigue",&a->fatigue,4);
     int lifeStats[8]={g.life.version,g.life.rescues,g.life.hunts,g.life.resupplies,g.life.relocations,g.life.settled,g.life.missions,g.life.succession};VALUE("life",lifeStats,sizeof(lifeStats));
+    int warStats[5]={g.war.version,TOWNS,0,0,0};
+    for(int i=0;i<g.actorCount;i++){
+        Actor *n=&g.actors[i];
+        warStats[2]+=g.war.prisonTown[i]>0&&!n->dead;
+        if(n->active&&!n->dead&&n->speech>=24&&n->speechTime>0&&distance(a->x,a->y,n->x,n->y)<7)
+            warStats[3]=n->speech;
+    }
+    for(int i=0;i<WAR_REPORTS;i++)warStats[4]+=g.war.report[i].kind==WAR_TAKEOVER;
+    VALUE("war_stats",warStats,sizeof(warStats));
+    VALUE("town_owners",g.townOwner,sizeof(g.townOwner));
+    if(ui.screen==SCREEN_DIALOG){
+        const char *line=dialogue_line(ui.dialogActor,ui.dialogPage);
+        VALUE("dialogue_text",line,strlen(line));
+    }
     int lifeNear[12]={0};if(popNear>=0){GroupLife*z=&g.life.groups[popNear];int v[12]={z->goal,z->camp,z->targetGroup,z->targetTown,z->losses,z->ambushSprung,z->rescues,z->hunts,z->supplies,z->settled,z->missionDone,z->relocations};memcpy(lifeNear,v,sizeof(v));}VALUE("life_near",lifeNear,sizeof(lifeNear));
     int lifeCarry[POP_MEMBERS*2];for(int j=0;j<POP_MEMBERS*2;j++)lifeCarry[j]=-1;if(popNear>=0){WorldEvent*e=&g.population.groups[popNear];for(int j=0;j<e->count;j++)if(e->spawned&&e->members[j]>=0){Actor*b=&g.actors[e->members[j]];lifeCarry[j*2]=b->carrying;lifeCarry[j*2+1]=b->carriedBy;}}VALUE("life_carry",lifeCarry,sizeof(lifeCarry));
     int council[10]={0};int councilTown=ui.tradeTown;if(councilTown>=0&&councilTown<TOWNS){TownPolitics*z=&g.life.towns[councilTown];int v[10]={councilTown,z->stage,z->support[0],z->support[1],z->pledge,z->relief,z->winner,z->leader,z->policy,g.townOwner[councilTown]};memcpy(council,v,sizeof(v));}VALUE("council",council,sizeof(council));

@@ -5,6 +5,7 @@
 #include <string.h>
 extern int conscious(const Actor*);
 extern int add_build(float,float,int,int,int);
+extern void init_actor(int,const char*,int,int,float,float,int);
 #define C (g.civil)
 const char *raceNames[SPECIES]={"LOWLANDER","ASHLANDER","CLOCKWORK","REEDKIN","STONEKIN"};
 const SpeciesDef speciesDefs[SPECIES]={
@@ -107,11 +108,125 @@ static void settlement_layout(void){
 }
 int civil_building_sprite(int n,int fallback){
  Building*b=&g.buildings[n];if(b->owner>=0)return fallback;int t=town_near(b->x,b->y,19);if(t<0)return fallback;int style=civil_style(t);
- if(b->type==HOUSE)return style==1?4:style==2?7:style==3?(n%2?5:0):style==4?0:style==5?5:fallback;
+ if(t==OLD_TOWNS && b->type==HOUSE)return 7;
+ if(t==OLD_TOWNS+1 && b->type==STORE)return 4;
+ if(t==OLD_TOWNS+2){
+  if(b->type==HOUSE || b->type==TOWER)return 0;
+  if(b->type==SHOP)return 7;
+  if(b->type==BAR)return 2;
+ }
+ if(b->type==HOUSE)return style==1?4:style==2?7:style==3?(n%2?5:0):style==4?0:style==5?5:n%3==0?7:0;
  if(b->type==TOWER&&style==3)return 5;if(b->type==TOWER&&style==2)return 4;
  if(b->type==BAR)return style==3||style==4?7:style==5?5:style==2?4:fallback;
  if(b->type==SHOP&&style==5)return 5;
  return fallback;
+}
+
+/* The capitals share services, but their streets and civic buildings are authored separately. */
+typedef struct { int type, x, y; } CivicBuilding;
+static const CivicBuilding capitals[WAR_FACTIONS][17] = {
+ {{SHOP,-4,-2},{BAR,4,-2},{WELL,0,1},{FORGE,5,4},{BENCH,-4,4},{STORE,7,7},
+  {WINDMILL,-7,6},{HOUSE,-8,1},{HOUSE,8,-1},{BED,4,0},{TOWER,-7,-5},
+  {WALL,-9,-7},{WALL,-7,-7},{WALL,7,-7},{WALL,9,-7},{-1}},
+ {{STORE,0,-7},{TOWER,-6,-5},{TOWER,6,-5},{SHOP,-5,1},{BAR,5,1},{FORGE,-6,6},
+  {WELL,0,-2},{BED,5,3},{HOUSE,7,-1},{BENCH,7,6},
+  {WALL,-7,8},{WALL,-5,8},{WALL,-3,8},{WALL,3,8},{WALL,5,8},{WALL,7,8},{-1}},
+ {{BAR,0,-6},{BED,2,-3},{BED,-2,-3},{SHOP,5,0},{HOUSE,-5,0},{HOUSE,5,5},
+  {WELL,0,0},{FARM,-4,4},{FARM,-2,6},{CAMPFIRE,0,6},{BENCH,-5,-4},
+  {WALL,-7,-5},{WALL,-7,-3},{WALL,7,-5},{WALL,7,-3},{-1}}
+};
+static const char *capitalCustoms[WAR_FACTIONS] = {
+ "BRASS JUNCTION: the Compact elects wardens at the well. Rifle crews guard the rail yard. Captured troops work the depot under guard.",
+ "VERMILION KEEP: the Iron houses bring rice and steel to the court. Wear lamellar and a Shogunate helm at the gate. Captives work the ironworks.",
+ "CINDER ABBEY: the healers keep a public hospice and herb beds. Pilgrims share the fire. Prisoners work the cloister as penance."
+};
+const char *war_capital_custom(int town) {
+ return town>=OLD_TOWNS && town<TOWNS ? capitalCustoms[town-OLD_TOWNS] : NULL;
+}
+void war_yard(int town, float *x, float *y) {
+ static const int dx[WAR_FACTIONS]={8,-8,-6}, dy[WAR_FACTIONS]={4,3,7};
+ int index=town-OLD_TOWNS;
+ *x=towns[town].x+(index>=0?dx[index]:-9);
+ *y=towns[town].y+(index>=0?dy[index]:6);
+}
+static int civic_build_clear(float x,float y) {
+ if(!can_walk(x,y))return 0;
+ for(int n=0;n<g.buildingCount;n++)
+  if(distance(x,y,g.buildings[n].x,g.buildings[n].y)<1.7f)return 0;
+ for(int n=0;n<g.actorCount;n++)
+  if(g.actors[n].active && g.actors[n].squad && distance(x,y,g.actors[n].x,g.actors[n].y)<1.8f)return 0;
+ return 1;
+}
+void war_build_capitals(void) {
+ for(int k=0;k<WAR_FACTIONS;k++){
+  int town=OLD_TOWNS+k, faction=towns[town].faction;
+  g.townOwner[town]=faction;
+  g.prosperity[town]=78;
+  restock_town(town);
+  for(const CivicBuilding *b=capitals[k];b->type>=0;b++){
+   float x=towns[town].x+b->x,y=towns[town].y+b->y;
+   if(b->type!=WALL && !civic_build_clear(x,y)){
+    static const int shift[8][2]={{2,0},{-2,0},{0,2},{0,-2},{3,3},{-3,3},{3,-3},{-3,-3}};
+    for(int j=0;j<8;j++)if(civic_build_clear(x+shift[j][0],y+shift[j][1])){x+=shift[j][0];y+=shift[j][1];break;}
+   }
+   if(civic_build_clear(x,y))add_build(x,y,b->type,faction,-1);
+  }
+ }
+}
+void war_outfit(Actor *a, int role, int variation, int quality) {
+ int side=war_faction_index(a->faction);
+ if(side<0)return;
+ static const int arms[WAR_FACTIONS][4]={{29,8,84,29},{5,0,5,2},{16,25,16,5}};
+ static const int body[WAR_FACTIONS]={42,34,39}, head[WAR_FACTIONS]={53,50,57};
+ static const int material[WAR_FACTIONS]={2,4,1};
+ int m=material[side], guard=role==ROLE_MARSHAL;
+ a->gear[0]=guard?gear_id(arms[side][variation%4],m,quality):NONE;
+ a->gear[1]=gear_id(body[side],m,quality);
+ a->gear[2]=gear_id(head[side],m,quality);
+ a->gear[3]=gear_id(side==1?63:side==2?61:60,m,quality);
+ a->gear[4]=gear_id(side==2?73:69,m,quality);
+ a->gear[5]=role==ROLE_MEDIC?gear_id(78,m,1):NONE;
+ if(weapon_ranged(a->gear[0])){
+  int ammo=gear_family(a->gear[0])>=29?CARTRIDGE:BOLTS;
+  if(!inventory_count(a,ammo))inventory_add(a,ammo,24);
+ }
+}
+void war_add_residents(void) {
+ static const char *names[WAR_FACTIONS][WAR_RESIDENTS]={
+  {"Warden Flint","Rail rifleman","Broker Keel","Medic Sable","Inn keeper"},
+  {"Lord Hideo","Iron spearman","Factor Aya","Medic Ren","Inn keeper"},
+  {"Prior Sol","Ash bowkeeper","Herbalist Fen","Sister Edda","Inn keeper"}
+ };
+ static const int kind[WAR_RESIDENTS]={GUARD,GUARD,TRADER,SETTLER,SETTLER};
+ static const int role[WAR_RESIDENTS]={ROLE_MARSHAL,ROLE_MARSHAL,ROLE_MERCHANT,ROLE_MEDIC,ROLE_INNKEEPER};
+ static const int station[WAR_RESIDENTS]={TOWER,FORGE,SHOP,BED,BAR};
+ for(int k=0;k<WAR_FACTIONS;k++){
+  int town=OLD_TOWNS+k;
+  for(int j=0;j<WAR_RESIDENTS;j++){
+   if(g.war.resident[k][j])continue;
+   int n=-1;
+   for(int i=0;i<g.actorCount;i++)if(g.living.owned[i]<0){n=i;break;}
+   if(n<0){if(g.actorCount>=MAX_ACTORS)return;n=g.actorCount++;}
+   float x=towns[town].x+2,y=towns[town].y+1;
+   for(int i=0;i<g.buildingCount;i++){
+    Building *b=&g.buildings[i];
+    if(b->owner<0 && b->type==station[j] && distance(b->x,b->y,x,y)<16){x=b->x+1.65f;y=b->y+.4f;break;}
+   }
+   clear_position(&x,&y);
+   init_actor(n,names[k][j],kind[j],g.townOwner[town],x,y,j==0?42:j==1?26:7);
+   Actor *a=&g.actors[n];
+   a->homeTown=town;
+   a->voice=role[j];
+   a->race=k==2?1:k==1&&j==1?4:0;
+   for(int l=0;l<LIMBS;l++)a->health[l]=species_health(a);
+   war_outfit(a,role[j],j,j==0?3:1);
+   if(role[j]==ROLE_MEDIC)inventory_add(a,MEDKIT,3);
+   g.living.owned[n]=0;
+   g.living.anger[n]=0;
+   g.living.command[n]=-1;
+   g.war.resident[k][j]=n+1;
+  }
+ }
 }
 void civil_stock(int t){for(int k=0;k<4;k++){int preferred=t==15?1:civil_style(t)==1?0:civil_style(t)==2?3:civil_style(t)==3?1:2;int v=(t*3+g.day+k*5)%24;g.stock[t][CIV_ARMOR_ITEMS+preferred*24+v]=1;}}
 int civil_elite_index(int n){if(n<0)return -1;for(int e=0;e<ELITES;e++)if(C.eliteActor[e]==n+1)return e;return -1;}

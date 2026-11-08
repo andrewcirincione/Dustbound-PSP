@@ -24,4 +24,19 @@ typedef struct {
 /* v14: observations are snapshots, never remote tracking of living groups. */
 typedef struct { int serial,goal,town,faction,type; float x,y,time; char name[32]; } FieldSighting;
 typedef struct { FieldSighting group[POP_GROUPS]; } FieldNotes;
+
+enum { WAR_FACTIONS = 3, WAR_RESIDENTS = 5, WAR_REPORTS = 16 };
+enum { WAR_TAKEOVER = 1, WAR_CLASH };
+typedef struct {
+ int kind, town, winner, other, prisoners;
+ float x, y, time;
+} WarReport;
+typedef struct {
+ int version, reportNext, lastSpoken;
+ int resident[WAR_FACTIONS][WAR_RESIDENTS];
+ int prisonTown[MAX_ACTORS]; /* Town index + 1. Zero means unchained. */
+ float nextRaid[WAR_FACTIONS], heldSince[TOWNS], yardClock;
+ float nextGossip;
+ WarReport report[WAR_REPORTS];
+} FrontierWar;
 #endif

@@ -80,8 +80,8 @@ float weapon_cut_ratio(int it) {
 float combat_learning(float learner,float opponent){float d=opponent-learner;return bound(1+d*(d>=0?.1f:.04f),.1f,6);}
 int combat_evasion(const Actor*a){return !a->gear[0]||weapon_ranged(a->gear[0])||a->stun>0;}
 float dodge_mobility(const Actor*a){float capacity=actor_capacity(a);return bound(1-fmaxf(0,encumbrance(a)-capacity)/fmaxf(1,capacity),.05f,1);}
-static const int exports[TOWNS]={GRAIN,COPPER,WATER,HIDE,MEAT,ORE,IRONBAR,CLOTH,PARTS,WOOD,COAL,IRONBAR,MEDKIT,GRAIN,MEAT,WOOD};
-static const int imports[TOWNS]={IRONBAR,WOOD,GRAIN,MEDKIT,CLOTH,WATER,COAL,MEAT,MEDKIT,IRONBAR,WOOD,PARTS,WATER,ORE,MEDKIT,PARTS};
+static const int exports[TOWNS]={GRAIN,COPPER,WATER,HIDE,MEAT,ORE,IRONBAR,CLOTH,PARTS,WOOD,COAL,IRONBAR,MEDKIT,GRAIN,MEAT,WOOD,PARTS,IRONBAR,MEDKIT};
+static const int imports[TOWNS]={IRONBAR,WOOD,GRAIN,MEDKIT,CLOTH,WATER,COAL,MEAT,MEDKIT,IRONBAR,WOOD,PARTS,WATER,ORE,MEDKIT,PARTS,COAL,GRAIN,WATER};
 static int commodity(int it){return it==RATION||it==MEDKIT||it==ORE||it==COPPER||it==WOOD||it==CLOTH||it==WATER||it==GRAIN||it==MEAT||it==IRONBAR||it==HIDE||it==COAL||it==PARTS||it==TONIC||it==RELIC;}
 float market_factor(int town,int item){
  if(!commodity(item))return 1;
@@ -126,6 +126,7 @@ int disguise_faction(const Actor*a){
 }
 int disguise_score(const Actor*a,int f){if(disguise_faction(a)!=f)return 0;int v=55+itemDefs[a->gear[1]].quality*5+level(a,STEALTH)/2-(a->sneaking?18:0)-(a->autoattack?12:0);if(f==MONKS&&a->prostheticMask)v=0;return (int)bound(v,0,95);}
 const char *town_custom(int t){
+ const char *capital=war_capital_custom(t);if(capital)return capital;
  if(t==7)return "ASH MONASTERY: only robed initiates enter. Robe and cowl required; exposed prosthetics are heresy. Lingering near inquisitors risks recognition.";
  if(t==11)return "SHOGUN'S REST: closed garrison. Lamellar or captain armor plus a shogunate helm opens the gate. Officers inspect strangers at close range.";
  if(t==14)return "VULTURE NEST: a flesh cult. Bone harness and oni mask blend in. Outsiders are beaten, carried to the cooking ground, bound and eaten. Rescue is possible.";
@@ -133,7 +134,7 @@ const char *town_custom(int t){
  if(t==12)return "PALE PASS: pilgrim sanctuary; medicine is produced here, water is scarce. Pilgrim clothing is sold openly.";
  return "Local production, shortages and faction control change trade. Ask merchants for a route and marshals for work.";
 }
-static int restricted(int t){return (t==7||t==11||t==14)&&g.townOwner[t]==towns[t].faction;}
+static int restricted(int t){return (t==7||t==11||t==14||t==OLD_TOWNS+1)&&g.townOwner[t]==towns[t].faction;}
 static int guard_exists(int t){for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(!b->squad&&b->kind==GUARD&&b->homeTown==t&&!b->dead&&b->unconscious<=0)return 1;}return 0;}
 int society_gate(Actor*a,float x,float y){
  int n=actor_no(a);if(n<0||!a->squad)return 1;
@@ -154,6 +155,7 @@ int society_hostile(const Actor*a,const Actor*b){
 }
 void society_actor_reset(int n){
  if(n<0||n>=MAX_ACTORS)return;
+ g.war.prisonTown[n]=0;
  memset(S.weaponXP[n],0,sizeof(S.weaponXP[n]));memset(S.wanted[n],0,sizeof(S.wanted[n]));memset(S.recognized[n],0,sizeof(S.recognized[n]));
  S.queueCount[n]=S.cannibal[n]=S.rescueHelper[n]=S.freed[n]=S.captorFaction[n]=0;
  S.eating[n]=S.suspicion[n]=S.gateMessage[n]=0;
@@ -188,13 +190,20 @@ static void rescue_refuge(Actor*a,int former){
 }
 static void rescue_finish(int n,int helper){
  Actor*a=&g.actors[n];DepthActor*z=&g.depth.actors[n];int faction=rescue_faction(n);
- z->escape=0;z->captive=0;z->recognized=1800;S.cannibal[n]=0;S.eating[n]=0;S.rescueHelper[n]=0;
+ z->escape=0;z->captive=0;z->recognized=helper>=0?1800:0;S.cannibal[n]=0;S.eating[n]=0;S.rescueHelper[n]=0;
+ g.war.prisonTown[n]=0;
  a->prisonTime=0;a->prisonTown=-1;a->target=-1;a->attackPhase=0;g.living.command[n]=-1;
- S.captorFaction[n]=faction;crime_add(a,faction,80);S.recognized[n][faction]=1800;g.depth.freed++;
+ S.captorFaction[n]=faction;
+ if(helper>=0){crime_add(a,faction,80);S.recognized[n][faction]=1800;g.depth.freed++;}
  if(z->confiscated&&!a->gear[0]){a->gear[0]=z->confiscated;a->gearStolen[0]=z->confiscatedOwner;z->confiscated=z->confiscatedOwner=0;}
- if(!a->squad){S.freed[n]=(g.seed+(unsigned)n)%3==0?1:2;a->kind=SETTLER;a->faction=FREE;a->autoattack=0;rescue_refuge(a,faction);}
- log_warn("%s is free.%s",a->name,a->squad?"":S.freed[n]==1?" They choose to follow. Recruit or dismiss through nearby actions.":" They are running for refuge.");
- (void)helper;
+ if(!a->squad){S.freed[n]=helper>=0&&(g.seed+(unsigned)n)%3==0?1:2;a->kind=SETTLER;a->faction=FREE;a->autoattack=0;rescue_refuge(a,faction);}
+ if(helper>=0)log_warn("%s is free.%s",a->name,a->squad?"":S.freed[n]==1?" They choose to follow. Recruit or dismiss through nearby actions.":" They are running for refuge.");
+}
+void society_release_war_prisoners(int town){
+ for(int n=0;n<g.actorCount;n++)if(g.war.prisonTown[n]==town+1&&S.captorFaction[n]!=g.townOwner[town]){
+  if(!g.actors[n].dead)rescue_finish(n,-1);
+  else g.war.prisonTown[n]=0;
+ }
 }
 void society_rescue_order(int n,int order){
  if(n<0||n>=g.actorCount)return;Actor*a=&g.actors[n],*p=&g.actors[g.selected];

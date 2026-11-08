@@ -39,6 +39,7 @@ void interact_context(int kind,int target);
 void society_queue_tick(void);
 void society_actor_reset(int actor);
 int society_rescue_start(int actor);
+void society_release_war_prisoners(int town);
 int society_rescue_busy(int helper);
 void society_rescue_cancel(int helper);
 void society_rescue_order(int actor,int order);

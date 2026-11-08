@@ -1,4 +1,5 @@
 #include "game.h"
+#include "save_fixture.h"
 #include <assert.h>
 #include <math.h>
 #include <stddef.h>
@@ -37,13 +38,6 @@ static void near_site(int n) {
     g.actors[0].x = D.siteX[n] + .3f;
     g.actors[0].y = D.siteY[n];
 }
-static uint32_t sum(const void *data, size_t n) {
-    const unsigned char *p = data;
-    uint32_t s = 2166136261u;
-    while (n--)
-        s = (s ^ *p++) * 16777619u;
-    return s;
-}
 static void ppm(const char *path) {
     static uint32_t buf[512 * 272];
     render_game(buf, 512);
@@ -59,7 +53,6 @@ static void ppm(const char *path) {
     fclose(f);
 }
 int main(int argc, char **argv) {
-    C(offsetof(Game, depth) == 410656);
     fresh();
     C(depth_validate(&g));
     C(D.npc[NPC_SORA] >= 0 && D.npc[NPC_RELL] >= 0);
@@ -106,15 +99,7 @@ int main(int argc, char **argv) {
     C(D.route == route && D.reported && g.actorCount == actors);
     /* Real v5 prefix migration: a second load must not duplicate residents. */
     fresh();
-    FrontierDepth empty = {0};
-    D = empty;
-    size_t prefix = offsetof(Game, depth);
-    uint32_t h[] = {5, (uint32_t)prefix, sum(&g, prefix)};
-    FILE *f = fopen("build/depth-v5.sav", "wb");
-    fwrite("DUSTSAVE", 8, 1, f);
-    fwrite(h, sizeof(h), 1, f);
-    fwrite(&g, prefix, 1, f);
-    fclose(f);
+    save_prior_fixture("build/depth-v5.sav", 5);
     C(load_game("build/depth-v5.sav"));
     C(D.version == 1);
     C(depth_validate(&g));

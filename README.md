@@ -1,10 +1,12 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.16.0 — Weight and motion
+## 0.17.0 — Three Banners
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
-[Download 0.16.0](https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v0.16.0) · [Release notes](docs/RELEASE_NOTES.md) · [Field guide](docs/FIELD_GUIDE.md) · [Animation validation](docs/VALIDATION_V160.md)
+[Download 0.17.0](https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v0.17.0) · [Three Banners design](docs/FRONTIER_WAR.md) · [Field guide](docs/FIELD_GUIDE.md)
+
+Nineteen settlements include Brass Junction, Vermilion Keep and Cinder Abbey. The Compact, Shogunate and Ash Monastery send armies against one another. Captured cities can have guarded labor yards, and nearby residents pass on news of actual raids and victories.
 
 ![Nearby roles and military equipment](evidence/v150-psp-army.png)
 
@@ -31,7 +33,7 @@ Weapon handling now changes the actual strike speed. Relaxed carry and combat gu
 
 ## Install
 
-Extract `Dustbound-0.16.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Format v15 reads prior saves; actual v14 and earlier migration fixtures are tested. Existing characters retain their earned and looted equipment; the new outfit rules apply to newly generated encounters.
+Extract `Dustbound-0.17.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v17 reads prior expeditions and adds the new capitals and armies. Existing equipment, training and town control carry over.
 
 ## Controls
 
@@ -52,9 +54,9 @@ The pause menu has Pause, Squad and World tabs. Factions and World activity are 
 
 ## Build and verify
 
-With PSPDEV available, run `make -j2`, then `python3 scripts/validate_pbp.py EBOOT.PBP`. The release workflow pins the compiler and checks that its executable matches the EBOOT tested in PPSSPP.
+With PSPDEV available, run `make -j2`, then `python3 scripts/validate_pbp.py EBOOT.PBP`. The PSP build uses PSPDEV v20261101.
 
-Run the regression gates from `scripts/validate_v080.sh` through `scripts/validate_v160.sh` listed in `.github/workflows/build.yml`. For current controller checks, run `python3 scripts/emulator_v160.py /path/to/PPSSPPHeadless` after the native gates generate ordinary test saves (Python dependencies: Pillow and websockets). Completed-frame captures and results are in `evidence/v160/` and `evidence/v160-controller-checks.json`. Run `python3 scripts/verify_release_v160.py` to check the compiled executable, build inputs and evidence against the release manifest.
+Run the regression gates from `scripts/validate_v080.sh` through `scripts/validate_v160.sh` listed in `.github/workflows/build.yml`. Run `bash scripts/validate_v170.sh path/to/v16.sav` to verify war behavior and older saves. Pass that same old save to `python3 scripts/emulator_v170.py /path/to/PPSSPPHeadless path/to/v16.sav` to check the compiled EBOOT using controller input (Python dependencies: Pillow and websockets).
 
 This remains a playable alpha. PPSSPP testing does not qualify physical PSP performance, and the focused controller scenarios are not a naturally played full campaign. Offline battles use a simplified model. See the current validation record for exact scope.
 
