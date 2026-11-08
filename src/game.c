@@ -1754,6 +1754,9 @@ static int migrate_legacy(const LegacyGame *old) {
         return 0;
     game_new(old->seed, 0);
     *expanded = g;
+    /* Recreate v15 landmarks after merging the legacy outpost, so their
+       building references and collision exclusions use the migrated world. */
+    for(int n=0;n<expanded->actorCount;n++)if(!expanded->actors[n].squad&&npc_role(&expanded->actors[n])==ROLE_MEDIC){inventory_remove(&expanded->actors[n],MEDKIT,3);inventory_remove(&expanded->actors[n],PARTS,2);}
     world_layout(0);
     g.seed = old->seed;
     g.rng = old->rng;
@@ -1811,11 +1814,15 @@ static int migrate_legacy(const LegacyGame *old) {
     spread_frontier(&g);
     for (int i = 46; i < expanded->actorCount && g.actorCount < MAX_ACTORS; i++)
         g.actors[g.actorCount++] = expanded->actors[i];
-    for (int i = 35; i < expanded->buildingCount && g.buildingCount < MAX_BUILDINGS; i++)
-        g.buildings[g.buildingCount++] = expanded->buildings[i];
-    for (int i = 0; i < expanded->nodeCount && g.nodeCount < MAX_NODES; i++)
-        if (expanded->nodes[i].x >= 128 || expanded->nodes[i].y >= 128)
+    for (int i = 35; i < expanded->buildingCount && g.buildingCount < MAX_BUILDINGS; i++){
+        int shelter=0;for(int k=0;k<6;k++)if(expanded->trails.bed[k]==i+1)shelter=1;
+        if(!shelter)g.buildings[g.buildingCount++] = expanded->buildings[i];
+    }
+    for (int i = 0; i < expanded->nodeCount && g.nodeCount < MAX_NODES; i++){
+        int cache=0;for(int k=0;k<6;k++)if(expanded->trails.bed[k]){Building*b=&expanded->buildings[expanded->trails.bed[k]-1];if(distance(b->x,b->y,expanded->nodes[i].x,expanded->nodes[i].y)<2)cache=1;}
+        if (!cache&&(expanded->nodes[i].x >= 128 || expanded->nodes[i].y >= 128))
             g.nodes[g.nodeCount++] = expanded->nodes[i];
+    }
     free(expanded);
     memset(&g.regions,0,sizeof(g.regions));
     memset(&g.living,0,sizeof(g.living));
@@ -1824,6 +1831,7 @@ static int migrate_legacy(const LegacyGame *old) {
     memset(&g.limbs,0,sizeof(g.limbs));
     memset(&g.population,0,sizeof(g.population));
     memset(&g.life,0,sizeof(g.life));
+    memset(&g.trails,0,sizeof(g.trails));
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {

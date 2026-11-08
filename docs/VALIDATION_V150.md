@@ -4,7 +4,7 @@
 
 The release gate runs validate_v080, v081, v090, v100, v110, v120, v130, v140 and v150. These include address/undefined-behavior sanitizers, equipment attachment rendering, combat/progression, captivity/rescue, crafting, limb surgery/replacements, population simulation, world-life endurance, manual map pins, council actions and save migration.
 
-The new frontier-review suite checks actual knockout thresholds, the AI melee attack window, windup duration, passive cancellation and cooldown, six usable shelters, repeat initialization, pass collision and bypasses, projectiles blocked by rocks, free rest recovery, emergency supplies consumed without healing, queued dressing save/reload, medic threat/reputation gates and supplies, clockwork rescue, physical political aftermath and a genuine v14 PSP-save migration. Long field-guide chapters are checked for bounded left/right paging and chapter resets. Renderer checks enforce the 480x272 framebuffer boundary.
+The new frontier-review suite checks actual knockout thresholds, the AI melee attack window, windup duration, passive cancellation and cooldown, six usable shelters, repeat initialization, pass collision and bypasses, projectiles blocked by rocks, free rest recovery, emergency supplies consumed without healing, queued dressing save/reload, medic threat/reputation gates and supplies, clockwork rescue, physical political aftermath and genuine v14 PSP-save migration, and the original v0.1 outpost import. The v0.1 path recreates roadside landmarks after merging old structures so bed references remain valid. The old outpost fixture already fills the building cap; additions are omitted safely rather than replacing existing structures. Long field-guide chapters are checked for bounded left/right paging and chapter resets. Renderer checks enforce the 480x272 framebuffer boundary.
 
 The existing world-life gate also runs 20 simulated minutes through full game ticks and ten game days through its endurance harness. These are simulation checks, not a human campaign playthrough.
 
@@ -23,7 +23,7 @@ Built with pinned PSPDEV v20261101. The EBOOT passes package validation. `eviden
 - Destroying actual worn rags to stop bleeding without restoring health.
 - A passing medic stabilizing the unconscious player.
 - Enemy combat cues, passive cancellation and manual retreat.
-- Occupied settlement, relief post, migrated v14 save and both pages of the recovery guide.
+- Occupied settlement, relief post, migrated v14 and v0.1 saves and both pages of the recovery guide.
 
 Results and completed-frame images are included in the screenshots release archive. Screenshot review prompted stronger enemy-bar contrast and a shorter dressing label before the final run.
 

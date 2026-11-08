@@ -31,7 +31,9 @@ static void combat(void){
  strike(1,g.selected);strike(2,g.selected);assert(g.actors[1].attackPhase==1&&g.actors[2].attackPhase==1&&g.actors[1].attackDuration>=.45f);strike(3,g.selected);assert(!g.actors[3].attackPhase);g.actors[1].attackPhase=0;strike(3,g.selected);assert(g.actors[3].attackPhase==1);
  a->health[HEAD]=species_health(a)*.2f;assert(fabsf(knockout_reserve(a)-20)<.01f);a->blood=24;assert(fabsf(knockout_reserve(a)-5)<.01f);a->blood=100;a->health[HEAD]=species_health(a);a->health[LARM]=-40;assert(knockout_reserve(a)==100);a->unconscious=30;assert(knockout_reserve(a)==0);a->unconscious=0;
  a->attackPhase=1;a->attackClock=a->attackDuration=.5f;press(KEY_SQUARE);assert(!a->autoattack&&!a->attackPhase&&a->cooldown>=.5f);
- a->health[HEAD]=100;g.actors[2].health[CHEST]=25;g.actors[2].blood=55;a->target=2;ui.feedCount=0;save("combat");shot("combat");
+ /* The controller combat fixture uses intact limbs and visible protective gear;
+    the crippled limb above belongs only to the knockout-math probe. */
+ for(int l=0;l<LIMBS;l++)a->health[l]=species_health(a);a->gear[1]=PLATE;a->gear[2]=HELM;g.actors[2].health[CHEST]=25;g.actors[2].blood=55;a->target=2;ui.feedCount=0;save("combat");shot("combat");
  puts("PASS: actual knockout thresholds, two simultaneous AI melee strikes, readable windup floor, passive cancellation with recovery cost, combat framebuffer bounds.");
 }
 static void roads(void){
@@ -60,6 +62,7 @@ static void aftermath(void){
  puts("PASS: conquest reassigns surviving guard posts and displaces civilians; relief medic actually walks to post; changes persist without respawning unique owners.");
 }
 static void migration(void){
+ assert(load_game("tests/fixtures/legacy-v01.dust"));assert(g.baseExists&&g.tech==3&&g.actors[0].gear[1]==PLATE);for(int k=0;k<6;k++){if(g.trails.bed[k])assert(g.buildings[g.trails.bed[k]-1].type==BED);else assert(g.buildingCount==MAX_BUILDINGS);}int oldBuildings=g.buildingCount;save("migrated-v01");assert(load_game("build/v150/migrated-v01.sav")&&g.buildingCount==oldBuildings);puts("PASS: v0.1 outpost retains equipment/research and existing structures; full building capacity safely omits additions; repeated reload remains valid.");
  assert(load_game("build/old-v14.sav"));int b=g.buildingCount,n=g.nodeCount;float x=g.actors[g.selected].x,y=g.actors[g.selected].y;assert(g.trails.version==1);save("migrated-v14");assert(load_game("build/v150/migrated-v14.sav"));assert(b==g.buildingCount&&n==g.nodeCount&&g.actors[g.selected].x==x&&g.actors[g.selected].y==y);int bed=g.trails.bed[0];g.trails.bed[0]=g.buildingCount+1;save("invalid-shelter");g.trails.bed[0]=bed;assert(!load_game("build/v150/invalid-shelter.sav"));assert(g.trails.bed[0]==bed);puts("PASS: genuine v14 PSP save migration, unchanged position, no duplicate shelters/supplies; invalid shelter references rejected without replacing current state.");
 }
 static void guide(void){fresh();open_help(4);shot("guide-wounds");assert(ui.helpTopic>0);press(KEY_RIGHT);assert(ui.scroll>0);shot("guide-wounds-continued");press(KEY_R);assert(ui.scroll==0&&ui.selection==5);puts("PASS: long guide chapters expose all recovery text through bounded left/right paging; chapter changes reset position.");}

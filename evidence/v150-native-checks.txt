@@ -242,6 +242,7 @@ PASS: actual knockout thresholds, two simultaneous AI melee strikes, readable wi
 PASS: six persistent shelters, idempotent initialization, open central lanes and bypasses, rock collision blocks projectiles, free bed recovery and save/reload.
 PASS: emergency dressing consumes cloth or actual worn rags without healing; safe medic assistance spends real supplies; threat/reputation gates; mechanical rescue uses parts.
 PASS: conquest reassigns surviving guard posts and displaces civilians; relief medic actually walks to post; changes persist without respawning unique owners.
+PASS: v0.1 outpost retains equipment/research and existing structures; full building capacity safely omits additions; repeated reload remains valid.
 PASS: genuine v14 PSP save migration, unchanged position, no duplicate shelters/supplies; invalid shelter references rejected without replacing current state.
 PASS: long guide chapters expose all recovery text through bounded left/right paging; chapter changes reset position.
 ALL V150 CHECKS PASSED Game=2148384

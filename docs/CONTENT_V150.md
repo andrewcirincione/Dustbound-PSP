@@ -27,7 +27,7 @@ Six persistent sites lie along these links:
 | Reed Crossing to Cinder Port | Rock pass and wayfarer bed |
 | Shogun's Rest to Dusk Ferry | Rock pass and wayfarer bed |
 
-Each pass has four rock formations. Their collision also blocks projectiles. Central lanes and outer bypasses remain open. Old saved characters and structures near proposed rocks cause those formations to be omitted permanently. Six free beds sit off the routes with two dressings, two rations and two machine parts each. These are finite loot nodes, not renewable supply generators.
+Each pass has four rock formations. Their collision also blocks projectiles. Central lanes and outer bypasses remain open. Old saved characters and structures near proposed rocks cause those formations to be omitted permanently. Where existing world space and building capacity permit, six free beds sit off the routes with two dressings, two rations and two machine parts each. These are finite loot nodes, not renewable supply generators.
 
 Approaching a shelter records it. When injured or exhausted, the HUD can show distance/direction to the nearest known shelter. No waypoint causes movement. These six authored landmarks supplement the existing rivers, fords, terrain regions and eighty persistent encounter groups; they are not a replacement of the entire world map.
 

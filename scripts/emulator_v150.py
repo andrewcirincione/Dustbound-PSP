@@ -114,6 +114,7 @@ async def main():
    await load(fixture='../v150/occupied-town.sav');await e.waitframes(120);await e.shot('v150-psp-occupied-town',0)
    await load(fixture='../v150/relief-post.sav');await e.shot('v150-psp-relief-post',0)
    await load(fixture='../v150/migrated-v14.sav');await e.shot('v150-psp-migrated-save',0)
+   await load(fixture='../v150/migrated-v01.sav');await e.shot('v150-psp-migrated-v01',0)
    await menu(0,4);await expect('screen',12);await choose(4);await e.shot('v150-psp-guide-wounds',12);await key('right');await e.shot('v150-psp-guide-continued',12);await key('circle')
    e.events.append({'v150_checks':True,'manual_pass_and_bypass':True,'free_shelter_health_and_fatigue_recovery':True,'shelter_save_reload':True,'rags_consumed_bleeding_stopped_without_healing':True,'passing_medic_stabilized_player':True,'combat_and_passive_cancellation':True,'occupation_and_migrated_v14_captured':True})
    e.events.append({'completed':True,'fresh_controller_walk':True,'save_reload':True,'prepared_saves':['inn-near-npc','starving-bandits','army','elites','downed','hidden-ambush','sighting','council'],'bed_and_recovery':True,'hidden_then_triggered_ambush':True,'sighting_pin_does_not_walk':True,'council_pledge_spent_once':True})

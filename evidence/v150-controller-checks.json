@@ -1,27 +1,27 @@
 [
   {
-    "eboot_sha256": "eb8cee056b31217642516073e0c2b7fe5a1e2454d05ca2f877b1a8a91a1f4dcb",
+    "eboot_sha256": "acf628f16497a61dd3c2eff6e52af48c3ab374d401222725be6859332af58b76",
     "version": "0.15.0"
   },
   {
     "capture": "v150-psp-title",
     "screen": 13,
     "expected": 13,
-    "frame": 22,
+    "frame": 15,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-fresh-world",
     "screen": 0,
     "expected": 0,
-    "frame": 202,
+    "frame": 234,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-map-pin",
     "screen": 5,
     "expected": 5,
-    "frame": 273,
+    "frame": 322,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
@@ -40,21 +40,21 @@
     "capture": "v150-psp-manual-walking",
     "screen": 0,
     "expected": 0,
-    "frame": 712,
+    "frame": 840,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-bed-beside-innkeeper",
     "screen": 35,
     "expected": 35,
-    "frame": 1452,
+    "frame": 1634,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-bed-rest",
     "screen": 0,
     "expected": 0,
-    "frame": 1636,
+    "frame": 1817,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
@@ -67,175 +67,182 @@
     "capture": "v150-psp-starving-bandits",
     "screen": 0,
     "expected": 0,
-    "frame": 1831,
+    "frame": 2023,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-army",
     "screen": 0,
     "expected": 0,
-    "frame": 2024,
+    "frame": 2218,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-elites",
     "screen": 0,
     "expected": 0,
-    "frame": 2198,
+    "frame": 2429,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-downed",
     "screen": 0,
     "expected": 0,
-    "frame": 2433,
+    "frame": 2700,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-ambush-hidden",
     "screen": 0,
     "expected": 0,
-    "frame": 2626,
+    "frame": 2900,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-ambush-sprung",
     "screen": 0,
     "expected": 0,
-    "frame": 2834,
+    "frame": 3047,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-last-seen",
     "screen": 40,
     "expected": 40,
-    "frame": 3327,
+    "frame": 3513,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-council-caretaker",
     "screen": 41,
     "expected": 41,
-    "frame": 3784,
+    "frame": 3980,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-council-challenger",
     "screen": 41,
     "expected": 41,
-    "frame": 3818,
+    "frame": 4014,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-factions",
     "screen": 20,
     "expected": 20,
-    "frame": 4154,
+    "frame": 4283,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-rock-pass",
     "screen": 0,
     "expected": 0,
-    "frame": 4367,
+    "frame": 4538,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-through-pass",
     "screen": 0,
     "expected": 0,
-    "frame": 4550,
+    "frame": 4736,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-outer-route",
     "screen": 0,
     "expected": 0,
-    "frame": 4902,
+    "frame": 5066,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-shelter-actions",
     "screen": 35,
     "expected": 35,
-    "frame": 5148,
+    "frame": 5336,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-shelter-rest",
     "screen": 0,
     "expected": 0,
-    "frame": 5399,
+    "frame": 5561,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-emergency-dressing",
     "screen": 35,
     "expected": 35,
-    "frame": 6204,
+    "frame": 6370,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-bandaged",
     "screen": 0,
     "expected": 0,
-    "frame": 6244,
+    "frame": 6408,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-passing-medic",
     "screen": 0,
     "expected": 0,
-    "frame": 6530,
+    "frame": 6712,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-combat",
     "screen": 0,
     "expected": 0,
-    "frame": 6759,
+    "frame": 6950,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-disengage",
     "screen": 0,
     "expected": 0,
-    "frame": 6876,
+    "frame": 7072,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-occupied-town",
     "screen": 0,
     "expected": 0,
-    "frame": 7176,
+    "frame": 7350,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-relief-post",
     "screen": 0,
     "expected": 0,
-    "frame": 7380,
+    "frame": 7552,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-migrated-save",
     "screen": 0,
     "expected": 0,
-    "frame": 7582,
+    "frame": 7750,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-migrated-v01",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7939,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-guide-wounds",
     "screen": 12,
     "expected": 12,
-    "frame": 7810,
+    "frame": 8116,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
     "capture": "v150-psp-guide-continued",
     "screen": 12,
     "expected": 12,
-    "frame": 7858,
+    "frame": 8142,
     "method": "EBOOT completed framebuffer; QA request does not modify state"
   },
   {
