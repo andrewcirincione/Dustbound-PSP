@@ -241,7 +241,7 @@ float backpack_load_preview(const Actor *a, int item) {
     return worn + cargo * backpack_load_percent(item) * .01f;
 }
 float movement_speed(const Actor *a) {
-    float cap = 30 + level(a, STRENGTH) * 2 + gear_bonus(a, 3);
+    float cap = actor_capacity(a);
     float f = 1.0f / (1 + fmaxf(0, encumbrance(a) - cap) / cap);
     if (a->health[LLEG] < 20 || a->health[RLEG] < 20)
         f *= .55f;
@@ -252,7 +252,7 @@ float movement_speed(const Actor *a) {
     if (a->fatigue > 85)
         f *= .75f;
     return (1.9f + level(a, ATHLETICS) * .027f) * f * (a->sneaking ? .55f : 1) *
-           (1 + gear_bonus(a, 1) * .005f);
+           (1 + gear_bonus(a, 1) * .005f) * speciesDefs[species_index(a)].move;
 }
 int town_near(float x, float y, float r) {
     for (int i = 0; i < TOWNS; i++)
@@ -268,7 +268,7 @@ int can_walk(float x, float y) {
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
         if (b->type == HOUSE || b->type == SHOP || b->type == BAR || b->type == TOWER || b->type == WALL) {
-            float r = b->type == TOWER ? .8f : b->type == WALL ? .55f : 1.25f;
+            float r = b->type == TOWER ? .8f : b->type == WALL ? 1.01f : 1.25f;
             if (fabsf(b->x - x) < r && fabsf(b->y - y) < r)
                 return 0;
         }
@@ -329,7 +329,7 @@ void init_actor(int n, const char *name, int kind, int faction, float x, float y
     a->blood = a->hunger = 100;
     a->target = a->carrying = a->carriedBy = a->attackTarget = -1;
     for (int i = 0; i < LIMBS; i++)
-        a->health[i] = 100;
+        a->health[i] = species_health(a);
     for (int i = 0; i < SKILLS; i++)
         a->xp[i] = 12 * (skill - 1) * (skill - 1);
     a->gear[0] = kind == BEAST ? NONE : kind == GUARD ? SABRE : kind == RAIDER ? RUSTSWORD : STAFF;
@@ -378,7 +378,7 @@ void restock(void) {
         }
     }
     for (int t = 0; t < TOWNS; t++)
-        {frontier_restock(t);regional_restock(t);society_stock(t);}
+        {frontier_restock(t);regional_restock(t);society_stock(t);civil_stock(t);}
     g.lastRestock = g.day;
 }
 void game_new(uint32_t seed, int scenario) {
@@ -482,6 +482,7 @@ void game_new(uint32_t seed, int scenario) {
     regional_init();
     living_init();
     society_init();
+    civil_init();
     ui.camX = a->x;
     ui.camY = a->y;
     ui.mapX = a->x;
@@ -680,7 +681,7 @@ static int heal_from(int mi, int pi, int kitSlot) {
         return 0;
     int hurt = p->bleed > .01f;
     for (int j = 0; j < LIMBS; j++)
-        if (p->health[j] < 98 && depth_can_heal(p,j))
+        if (p->health[j] < species_health(p)-g.depth.actors[pi].trauma[j]-2 && depth_can_heal(p,j))
             hurt = 1;
     if (!hurt)
         return 0;
@@ -694,7 +695,7 @@ static int heal_from(int mi, int pi, int kitSlot) {
     p->bleed = 0;
     for (int j = 0; j < LIMBS; j++)
         if (depth_can_heal(p,j))
-            p->health[j] = fminf(100-g.depth.actors[pi].trauma[j], p->health[j] + 18 + level(m, MEDICINE) * .65f + gear_bonus(m, 5));
+            p->health[j] = fminf(species_health(p)-g.depth.actors[pi].trauma[j], p->health[j] + 18 + level(m, MEDICINE) * .65f + gear_bonus(m, 5));
     p->blood = fminf(100, p->blood + 10);
     gain(m, MEDICINE, 24);
     log_msg("%s bandaged %s. Bleeding stopped.", m->name, p->name);
@@ -743,7 +744,7 @@ void use_item(int s) {
             if ((a->lostMask & (1 << i)) && !(a->prostheticMask & (1 << i))) {
                 inventory_remove_slot(a, s, 1);
                 a->prostheticMask |= 1 << i;
-                a->health[i] = 100;
+                a->health[i] = species_health(a);
                 done = 1;
                 log_msg("Fitted %s.", itemDefs[it].name);
                 break;
@@ -896,6 +897,15 @@ static const Recipe recipes[] = {{IRONBAR, 1, ORE, 3, NONE, 0, FORGE, SMITHING, 
                                  {ARM, 1, IRONBAR, 5, RELIC, 1, FORGE, ENGINEERING, 3},
                                  {LEG, 1, IRONBAR, 5, RELIC, 1, FORGE, ENGINEERING, 3},
                                  {BOLTS, 10, IRONBAR, 1, WOOD, 1, FORGE, SMITHING, 0}};
+int recipe_requirements(int c,CraftRequirements*out){
+    if(c<0||c>=recipeCount)return 0;
+    const Recipe*r=&recipes[c];memset(out,0,sizeof(*out));
+    out->output=r->output;out->qty=r->qty+(c==1?level(&g.actors[g.selected],COOKING)/35:0);
+    out->item[0]=r->in1;out->need[0]=r->n1;out->count=1;
+    if(r->in2){out->item[1]=r->in2;out->need[1]=r->n2;out->count++;}
+    if(c==1){out->alternate=MEAT;out->alternateNeed=2;}
+    out->station=r->station;out->tech=r->tech;return 1;
+}
 int nearby_station(int type, float r) {
     if (g.interiorBuilding && g.selected == g.interiorActor) {
         int id = g.interiorBuilding - 1;
@@ -1039,7 +1049,7 @@ void find_context(void) {
         if (b->squad && !b->dead && b->unconscious <= 0 && !g.depth.actors[i].captive) {
             int hurt = b->bleed > .01f;
             for (int j = 0; j < LIMBS; j++)
-                if (b->health[j] < 98 && !(b->lostMask & (1 << j)))
+                if (b->health[j] < species_health(b)-g.depth.actors[i].trauma[j]-2 && !(b->lostMask & (1 << j)))
                     hurt = 1;
             if (!hurt)
                 continue;
@@ -1362,6 +1372,7 @@ void simulate(float dt) {
     regional_tick();
     living_tick(dt);
     society_tick(dt);
+    civil_tick(dt);
     g.time += dt;
     g.dayTime += dt / 75;
     if (g.dayTime >= 24) {
@@ -1455,7 +1466,7 @@ void simulate(float dt) {
         }
         if(a->squad&&a->race==2)reveal(a);
         if (a->squad && a->race!=2) {
-            a->hunger = fmaxf(0, a->hunger - dt * .045f);
+            a->hunger = fmaxf(0, a->hunger - dt * .045f * species_food(a));
             a->fatigue = fminf(100, a->fatigue + dt * .008f);
             if (a->hunger < 40 && take_ration(a)) {
                 a->hunger = fminf(100, a->hunger + 48);
@@ -1479,7 +1490,7 @@ void simulate(float dt) {
                 if (a->bleed <= 0 && a->hunger >= 20)
                     for (int l = 0; l < LIMBS; l++)
                         if (depth_can_heal(a,l))
-                            a->health[l] = fminf(100, a->health[l] + dt * (.6f + gear_bonus(a, 6) * .015f));
+                            a->health[l] = fminf(species_health(a)-g.depth.actors[i].trauma[l], a->health[l] + dt * (.6f + gear_bonus(a, 6) * .015f));
             }
             a->action -= dt;
             if (a->action <= 0 && a->taskKind!=4)
@@ -1540,6 +1551,7 @@ void simulate(float dt) {
             if (distance(a->x, a->y, x, y) > 2.5f)
                 route_toward(a, x, y, dt);
         } else if (society_npc_job(i,dt)) {
+        } else if (civil_npc_job(i,dt)) {
         } else if (living_walk(i,dt)) {
         } else if (a->squad) {
             if (i != g.selected || a->job != JOB_FOLLOW || g.depth.groupTravel[g.depth.actors[i].group])
@@ -1571,7 +1583,7 @@ void simulate(float dt) {
             int spawned = 0;
             for (int i = 0; i < MAX_ACTORS && spawned < 2; i++) {
                 int n = -1;
-                if (i < g.actorCount && g.actors[i].dead && !g.actors[i].squad && depth_named(i) < 0 && !regional_named(i) && !living_owned(i) &&
+                if (i < g.actorCount && g.actors[i].dead && !g.actors[i].squad && depth_named(i) < 0 && !regional_named(i) && civil_elite_index(i)<0 && !living_owned(i) &&
                     g.actors[i].carriedBy < 0 && merc_slot(&g.actors[i]) < 0)
                     n = i;
                 else if (g.actorCount < MAX_ACTORS) {
@@ -1614,7 +1626,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 9, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 10, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1694,7 +1706,7 @@ static int validate_game(const Game *t) {
             return 0;
         if (!memchr(a->name, 0, sizeof(a->name)) || a->faction < 0 || a->faction >= FACTIONS || a->kind < 0 ||
             a->kind > CARAVAN || a->job < 0 || a->job > JOB_HAUL || a->skin < 0 || a->skin > 7 ||
-            a->hairColor < 0 || a->hairColor > 5 || a->routeLen < 0 || a->routeLen > 24 || a->routePos < 0 ||
+            a->race<0 || a->race>=SPECIES || a->hairColor < 0 || a->hairColor > 5 || a->routeLen < 0 || a->routeLen > 24 || a->routePos < 0 ||
             a->routePos > 24 || a->attackPhase < 0 || a->attackPhase > 3 || a->attackWeapon < 0 ||
             a->attackWeapon >= ITEMS || a->attackTarget >= t->actorCount || a->prisonTown >= TOWNS ||
             a->homeTown >= TOWNS || !isfinite(a->blood) || !isfinite(a->bleed) || !isfinite(a->hunger) ||
@@ -1715,7 +1727,7 @@ static int validate_game(const Game *t) {
         if (a->carrying >= t->actorCount || a->carriedBy >= t->actorCount)
             return 0;
     }
-    return depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t);
+    return depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t);
 }
 static int migrate_legacy(const LegacyGame *old) {
     if (old->actorCount < 1 || old->actorCount > 80 || old->buildingCount < 0 || old->buildingCount > 100 ||
@@ -1795,18 +1807,19 @@ static int migrate_legacy(const LegacyGame *old) {
     memset(&g.regions,0,sizeof(g.regions));
     memset(&g.living,0,sizeof(g.living));
     memset(&g.society,0,sizeof(g.society));
+    memset(&g.civil,0,sizeof(g.civil));
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
-    return (version==9 && size==sizeof(Game)) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version==10 && size==sizeof(Game)) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if(version==9)memcpy(out,data,size);
+    if(version==10)memcpy(out,data,size);
     else {
-        const unsigned char *src=data;int oldItems=version==8?OLD_ITEMS:version>=5?CATALOG_ITEMS:2052;
+        const unsigned char *src=data;int oldItems=version==9?V090_ITEMS:version==8?OLD_ITEMS:version>=5?CATALOG_ITEMS:2052;
         unsigned oldTail=144+TOWNS*oldItems*4;
         memcpy(out,src,144);
         for(int t=0;t<TOWNS;t++)memcpy(out->stock[t],src+144+t*oldItems*4,oldItems*4);
@@ -1869,6 +1882,7 @@ int load_game(const char *path) {
     regional_init();
     living_init();
     society_init();
+    civil_init();
         memset(&ui, 0, sizeof(ui));
         ui.attackFocus=-1;
         ui.speed = 1;
@@ -2400,6 +2414,10 @@ void debug_snapshot(const char *path) {
     } while (0)
     VALUE("screen", &ui.screen, 4);
     VALUE("skillpage", &ui.skillPage, 4);
+    VALUE("menutab", &ui.menuTab, 4);
+    VALUE("creator_species", &ui.createRace, 4);
+    VALUE("species", &a->race, 4);
+    VALUE("elite_actors",g.civil.eliteActor,sizeof(g.civil.eliteActor));
     VALUE("corexp", g.actors[g.selected].xp, sizeof(g.actors[0].xp));
     VALUE("weaponxp", g.society.weaponXP[g.selected], sizeof(g.society.weaponXP[0]));
     VALUE("journalTab", &ui.journalTab, 4);

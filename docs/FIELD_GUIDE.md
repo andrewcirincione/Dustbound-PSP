@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.9.0
+# Dustbound field guide — 0.10.0
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -12,9 +12,9 @@ Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/
 
 ## 2. Your Drifter
 
-New expedition opens character creation. Choose a name, origin, ancestry, body, skin, hairstyle, hair color, beard and scars. ![horizontal](../assets/ui/horizontal.svg) adjusts each choice; ![cross](../assets/ui/cross.svg) edits your name or begins.
+New expedition opens character creation. Choose a name, origin, species, body, skin, hairstyle, hair color, beard and scars. ![horizontal](../assets/ui/horizontal.svg) adjusts each choice; ![cross](../assets/ui/cross.svg) edits your name or begins.
 
-Origins change equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Ancestry changes starting strengths. A town barber can change your appearance later.
+Origins change equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Species changes health, carry, speed, appetite and starting skills. The preview shows your starting values. Clockworks need spare parts, not food or bandages. A town barber can change your appearance later.
 
 ## 3. The Borderlands
 
@@ -62,7 +62,7 @@ Walk to a forge or ask a smith to use the smithy. Choose slot, design, material 
 
 Crafting recipes make supplies, refined metal, ammunition and prosthetics. A forge smelts ore and shapes weapons. A campfire cooks grain or meat with water. A research bench makes dressings.
 
-Stand close to the station. The recipe screen lists costs and unlocks. Research consumes relics and silver in three tiers. Skills rise when crafting succeeds. A shared depot supplies worker jobs, but hand crafting uses the selected survivor's pack.
+Stand close to the station. Each ingredient shows HAVE/NEED: 6/3 means you own six and need three. Green means enough, including exact amounts; red means short. Research, station reach and fuel are also shown. ![square](../assets/ui/square.svg) switches recipes/equipment. Research consumes relics and silver in three tiers. Skills rise when crafting succeeds. A shared depot supplies worker jobs, but hand crafting uses the selected survivor's pack.
 
 ## 11. Your Outpost
 

@@ -26,7 +26,7 @@ void weapon_class_gain(Actor*a,int w,float amount){int n=actor_no(a),c=weapon_cl
 float weapon_cut_ratio(int it){int c=weapon_class(it);if(!it)return 1;if(c==WC_BLUNT)return .05f;if(it==STAFF||gear_family(it)==16)return .05f;return c==WC_HEAVY?.45f:c==WC_HACKERS?.55f:c==WC_KATANAS?.9f:c==WC_SABRES?.8f:c==WC_RAPIERS||c==WC_KNIVES?.95f:.75f;}
 float combat_learning(float learner,float opponent){float d=opponent-learner;return bound(1+d*(d>=0?.1f:.04f),.1f,6);}
 int combat_evasion(const Actor*a){return !a->gear[0]||weapon_ranged(a->gear[0])||a->stun>0;}
-float dodge_mobility(const Actor*a){float capacity=30+level(a,STRENGTH)*2+gear_bonus(a,3);return bound(1-fmaxf(0,encumbrance(a)-capacity)/fmaxf(1,capacity),.05f,1);}
+float dodge_mobility(const Actor*a){float capacity=actor_capacity(a);return bound(1-fmaxf(0,encumbrance(a)-capacity)/fmaxf(1,capacity),.05f,1);}
 static const int exports[TOWNS]={GRAIN,COPPER,WATER,HIDE,MEAT,ORE,IRONBAR,CLOTH,PARTS,WOOD,COAL,IRONBAR,MEDKIT,GRAIN,MEAT,WOOD};
 static const int imports[TOWNS]={IRONBAR,WOOD,GRAIN,MEDKIT,CLOTH,WATER,COAL,MEAT,MEDKIT,IRONBAR,WOOD,PARTS,WATER,ORE,MEDKIT,PARTS};
 static int commodity(int it){return it==RATION||it==MEDKIT||it==ORE||it==COPPER||it==WOOD||it==CLOTH||it==WATER||it==GRAIN||it==MEAT||it==IRONBAR||it==HIDE||it==COAL||it==PARTS||it==TONIC||it==RELIC;}
@@ -193,7 +193,7 @@ int society_contract(int town,int kind){
  if(slot<0){log_msg("Finish an active contract first.");return 0;}if((kind==5||kind==6)&&live>=4){log_msg("Four service jobs already active.");return 0;}
  int actor=-1;Actor*p=&g.actors[g.selected];
  if(kind>=5){for(int n=0;n<g.actorCount;n++){Actor*a=&g.actors[n];int used=0;for(int i=0;i<CONTRACTS;i++)if(g.contracts[i].active==1&&S.jobActor[i]==n+1)used=1;
-  if(used||a->squad||a->dead||a->unconscious>0||living_owned(n)||depth_named(n)>=0)continue;
+  if(used||a->squad||a->dead||a->unconscious>0||living_owned(n)||civil_elite_index(n)>=0||depth_named(n)>=0)continue;
   if(kind==7?(a->kind==RAIDER&&a->bountyReward>0):(a->homeTown==town&&a->kind==(kind==5?CARAVAN:GUARD))){actor=n;break;}}
   if(actor<0&&kind==5){int count=0;for(int n=0;n<g.actorCount;n++)if(g.actors[n].kind==CARAVAN&&!living_owned(n)&&depth_named(n)<0)count++;
    if(count<4&&g.actorCount<MAX_ACTORS){float x=towns[town].x,y=towns[town].y+12;for(int j=0;j<12&&!can_walk(x,y);j++)x+=1;
@@ -266,7 +266,7 @@ static void tick_cannibals(float dt){
  DepthActor*z=&g.depth.actors[n];a->target=-1;a->attackPhase=0;a->taskKind=0;
 
  if(near_guard(a,14,5)>=0){S.eating[n]+=dt;if(S.eating[n]>=45){S.eating[n]-=10;a->health[CHEST]-=12;a->blood-=15;a->unconscious=fmaxf(a->unconscious,12);if(a->squad)log_warn("Cannibals are eating %s!",a->name);if(a->blood<=0||a->health[CHEST]<-70){a->dead=1;a->unconscious=9999;z->captive=0;S.cannibal[n]=0;}}}
- }else if(a->squad&&!actor_inside(a)&&a->unconscious>0&&a->carriedBy<0&&!g.depth.actors[n].captive&&g.townOwner[14]==HOSTILE&&distance(a->x,a->y,towns[14].x,towns[14].y)<24){int c=near_guard(a,14,TALK_REACH);if(c>=0&&g.actors[c].carrying<0){g.actors[c].carrying=n;a->carriedBy=c;S.cannibal[n]=1;g.depth.actors[n].captive=3;a->bleed=0;log_warn("Cannibals seized %s and are carrying them to the fire.",a->name);}}
+ }else if(a->squad&&a->race!=2&&!actor_inside(a)&&a->unconscious>0&&a->carriedBy<0&&!g.depth.actors[n].captive&&g.townOwner[14]==HOSTILE&&distance(a->x,a->y,towns[14].x,towns[14].y)<24){int c=near_guard(a,14,TALK_REACH);if(c>=0&&g.actors[c].carrying<0){g.actors[c].carrying=n;a->carriedBy=c;S.cannibal[n]=1;g.depth.actors[n].captive=3;a->bleed=0;log_warn("Cannibals seized %s and are carrying them to the fire.",a->name);}}
  }
 }
 void society_tick(float dt){

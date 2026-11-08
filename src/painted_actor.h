@@ -1,6 +1,7 @@
 /* Articulated painted parts share the simulation's combat pose and rigid grip.
    Only world sprites are composed at 2x and filtered. Portraits sample the same
    indexed art directly; no runtime decoder, allocation or per-outfit atlas. */
+#include "weapon_design.h"
 static uint64_t partKeys[ART_COUNT];
 static uint32_t paintHair = 0x30251e;
 static void rgba_over(uint32_t *dst, uint32_t src) {
@@ -132,48 +133,96 @@ static int weapon_family(int item) {
         f = item == STAFF ? 16 : item == CROSSBOW ? 25 : item == CLEAVER ? 11 : item == SABRE ? 8 : 0;
     return f >= 84 && f < FAMILIES ? f - 52 : f < 32 ? f : 0;
 }
+/* Find the painted blade/barrel at a longitudinal station. Curved blades do
+   not lie on the grip axis; a fitting must meet the metal, not float beside it. */
+static float weapon_center(int item,float along){
+    if(weapon_rapier(item)||along<4)return 0;
+    int f=weapon_family(item);const ArtSprite*s=&artSprites[WEAPON_ART_FIRST+f];const WeaponArt*w=&weaponArt[f];
+    WeaponDesign d=weapon_design(item);float a=weapon_design_unalong(along,weapon_design_anchor(item),d);
+    int row=(int)(w->gripY-a/w->scale);if(row<0)row=0;if(row>=s->h)row=s->h-1;
+    int lo=s->rows[row*3+1],hi=s->rows[row*3+2];float total=0,weighted=0;
+    for(int i=lo;i<hi;i++){unsigned alpha=s->palette[s->pixels[s->rows[row*3]+i-lo]]>>24;weighted+=(i+.5f)*alpha;total+=alpha;}
+    float blend=weapon_design_blend(a),center=total?weighted/total-w->gripX:0;
+    return center*w->scale*w->edgeSide*(1+(d.width-1)*blend)+d.sweep*blend*blend;
+}
+/* Small forged fittings share the same rigid handle-to-tip axis as the paint. */
+static void weapon_fitting(int item,float x,float y,int sc,float angle,int face,float li,float tip){
+    WeaponDesign d=weapon_design(item);int p=d.pattern;float ca=cosf(angle),sa=sinf(angle);
+    uint32_t metal=shade(itemDefs[item].color,li*1.15f),trim=shade(itemDefs[item].trim,li),dark=shade(0x3e3025,li);
+#define WX(a,b) (x+(ca*(a)-sa*((b)+weapon_center(item,a))*face)*sc)
+#define WY(a,b) (y+(sa*(a)+ca*((b)+weapon_center(item,a))*face)*sc)
+#define WL(a,b,c,e,col) line(WX(a,b),WY(a,b),WX(c,e),WY(c,e),col)
+#define WQ(a,b,c,e,f,h,j,k,col) quad(WX(a,b),WY(a,b),WX(c,e),WY(c,e),WX(f,h),WY(f,h),WX(j,k),WY(j,k),col)
+    if(d.group==0){
+        float guard=(p==0?2:p==1?5:p==2?3:p==3?1.5f:p==4?4:p==5?2.5f:5.5f)*.7f;
+        WQ(1,-guard,2,-guard,2,guard,1,guard,trim);
+        if(p==6){WL(2,-guard,5,-guard,trim);WL(2,guard,5,guard,trim);}
+        if(p==7||p==10){int count=p==7?2:1;for(int r=0;r<count;r++)for(int i=0;i<12;i++){float a=i*.523599f,b=(i+1)*.523599f;WL(-1+cosf(a)*(3+r),sinf(a)*(3+r),-1+cosf(b)*(3+r),sinf(b)*(3+r),trim);}}
+        if(p==8){if(weapon_rapier(item)){WL(2,-guard,-4,-guard,trim);WL(-4,-guard,-5,0,trim);}else WQ(tip*.65f,0,tip*.78f,0,tip*.63f,2.5f,tip*.60f,2,metal);}
+        if(p==9){if(weapon_rapier(item)){WL(-2,-4,3,4,trim);WL(3,-4,-2,4,trim);}else for(int i=0;i<4;i++){float a=tip*.45f+i*tip*.1f;WQ(a,0,a+2,0,a+1,2,a,1,metal);}}
+        if(p==11){WQ(-5,-1,-6,-3,-8,0,-6,3,trim);WL(tip*.25f,0,tip*.65f,0,trim);}
+        WL(-1,-.7f,-4,-.7f,dark);if(p%3==1)WL(-4,-2,-4,2,trim);
+    }else if(d.group==1){
+        int f=gear_family(item);float at=tip*.72f;
+        WL(at,-2,at,2,trim);WL(at+1,-2,at+1,2,trim);
+        if(p==5||p==6||p==11){WQ(tip-3,-1,tip+2,0,tip-3,1,tip-4,0,metal);}
+        if(p==6||p==7||p==8){float span=p==7?4:3;WQ(at,-1,at+3,-span,at+5,-span,at+1,1,metal);if(p!=8)WQ(at,1,at+3,span,at+5,span,at+1,-1,metal);}
+        if(p==9)for(int i=0;i<4;i++){float a=tip*.55f+i*2;WQ(a,-3,a+1,-5,a+2,-3,a+1,3,metal);}
+        if(p==10)for(int k=0;k<4;k++)WL(tip*.4f+k*3,-3,tip*.4f+k*3,3,trim);
+        if(f==16&&p<5){WL(tip-1,-2,tip-1,2,trim);WL(-7,-2,-7,2,trim);}
+    }else if(d.group==2){
+        float at=tip*.65f;
+        if(p==6||p==8){WL(at,-2,tip+2,-4,trim);WL(at,2,tip+2,4,trim);}
+        if(p==7||p==10){WL(-5,-4,at,2,dark);WL(-5,4,at,-2,dark);}
+        if(p==5||p==9||p==11)for(int k=0;k<3;k++)WL(at-k*3,-2,at-k*3,2,trim);
+    }else{
+        if(p==5||p==9){WQ(tip-3,-1,tip+.5f,-1,tip+.5f,1,tip-3,1,metal);if(p==9)for(int k=0;k<4;k++)WL(tip-4-k*2,-1.5f,tip-4-k*2,1.5f,trim);}
+        if(p==6){WQ(5,2,tip,2,tip,4,5,4,metal);WL(5,3,tip,3,dark);}
+        if(p==7||p==8)WQ(-3,1,-8,5,-9,4,-5,0,dark);
+        if(p==10||p==11){WQ(3,-3,12,-3,12,-5,3,-5,metal);WL(5,-2,5,-4,trim);WL(10,-2,10,-4,trim);}
+    }
+#undef WX
+#undef WY
+#undef WL
+#undef WQ
+}
 static void weapon_sprite(int item, float x, float y, int sc, float angle, int face, float li) {
-    if (!item)
-        return;
-    if(weapon_rapier(item)) {
-        float ca=cosf(angle),sa=sinf(angle),len=24*sc;uint32_t steel=shade(itemDefs[item].color,li);
-        for(int i=0;i<sc;i++)line((int)(x+ca*3*sc-sa*i),(int)(y+sa*3*sc+ca*i),(int)(x+ca*len),(int)(y+sa*len),steel);
-        line(x-sa*3*sc,y+ca*3*sc,x+sa*3*sc,y-ca*3*sc,shade(itemDefs[item].trim,li));
-        line(x,y,x-ca*4*sc,y-sa*4*sc,0x614a38);return;
+    if (!item)return;
+    WeaponDesign design=weapon_design(item);float ca=cosf(angle),sa=sinf(angle),anchor=weapon_design_anchor(item);
+    if(weapon_rapier(item)){
+        float len=24*design.length;uint32_t steel=shade(itemDefs[item].color,li);
+        for(int i=0;i<(design.pattern==1?2:1)*sc;i++)line(x+ca*3*sc-sa*i,y+sa*3*sc+ca*i,x+ca*len*sc,y+sa*len*sc,steel);
+        line(x,y,x-ca*4*sc,y-sa*4*sc,0x614a38);
+        weapon_fitting(item,x,y,sc,angle,face,li,len);return;
     }
-    int f = weapon_family(item), id = WEAPON_ART_FIRST + f;
-    const ArtSprite *s = &artSprites[id];
-    const WeaponArt *w = &weaponArt[f];
-    float scale = w->scale * sc, ca = cosf(angle), sa = sinf(angle);
-    // Reflect across the handle-to-tip axis, never around the image centre:
-    // the cutting edge leads the stroke and both hands retain their pivots.
-    int parity = w->edgeSide * face;
-    float left = 1e6f, top = 1e6f, right = -1e6f, bottom = -1e6f;
-    for (int j = 0; j < 4; j++) {
-        float along = (w->gripY - ((j & 1) ? s->h : 0)) * scale;
-        float across = (((j & 2) ? s->w : 0) - w->gripX) * scale * parity;
-        float xx = x + ca * along - sa * across, yy = y + sa * along + ca * across;
-        left = fminf(left, xx);
-        right = fmaxf(right, xx);
-        top = fminf(top, yy);
-        bottom = fmaxf(bottom, yy);
+    int f=weapon_family(item),id=WEAPON_ART_FIRST+f;
+    const ArtSprite *s=&artSprites[id];const WeaponArt *w=&weaponArt[f];
+    float scale=w->scale,tip=weapon_design_along(w->gripY*scale,anchor,design);
+    int parity=w->edgeSide*face;
+    float left=1e6f,top=1e6f,right=-1e6f,bottom=-1e6f;
+    for(int j=0;j<4;j++){
+        float along=(w->gripY-((j&1)?s->h:0))*scale;
+        float across=(((j&2)?s->w:0)-w->gripX)*scale*parity;
+        /* Conservative bounds include the maximum sweep in either direction. */
+        along=weapon_design_along(along,anchor,design);
+        across*=fmaxf(1,design.width);
+        float xx=x+(ca*along-sa*across)*sc,yy=y+(sa*along+ca*across)*sc;
+        left=fminf(left,xx);right=fmaxf(right,xx);top=fminf(top,yy);bottom=fmaxf(bottom,yy);
     }
-    int x0 = (int)fmaxf(clipLeft, floorf(left)), x1 = (int)fminf(clipRight, ceilf(right));
-    int y0 = (int)fmaxf(clipTop, floorf(top)), y1 = (int)fminf(clipBottom, ceilf(bottom));
-    weapon_palette(id, &itemDefs[item], li);
-    float du = -sa / scale * parity, dv = -ca / scale;
-    for (int yy = y0; yy < y1; yy++) {
-        float u = w->gripX + (-(x0 + .5f - x) * sa + (yy + .5f - y) * ca) / scale * parity;
-        float v = w->gripY - ((x0 + .5f - x) * ca + (yy + .5f - y) * sa) / scale;
-        for (int xx = x0; xx < x1; xx++, u += du, v += dv) {
-            if (u < 0 || v < 0 || u >= s->w || v >= s->h)
-                continue;
-            int sx = (int)u, sy = (int)v, lo = s->rows[sy * 3 + 1];
-            if (sx < lo || sx >= s->rows[sy * 3 + 2])
-                continue;
-            rgba_over(fb + yy * pitch + xx, artPalette[id][s->pixels[s->rows[sy * 3] + sx - lo]]);
-        }
+    float margin=(fabsf(design.sweep)+1)*sc;
+    int x0=fmaxf(clipLeft,floorf(left-margin)),x1=fminf(clipRight,ceilf(right+margin));
+    int y0=fmaxf(clipTop,floorf(top-margin)),y1=fminf(clipBottom,ceilf(bottom+margin));
+    weapon_palette(id,&itemDefs[item],li);
+    for(int yy=y0;yy<y1;yy++)for(int xx=x0;xx<x1;xx++){
+        float dx=(xx+.5f-x)/sc,dy=(yy+.5f-y)/sc;
+        float along=weapon_design_unalong(dx*ca+dy*sa,anchor,design),blend=weapon_design_blend(along);
+        float cross=(-dx*sa+dy*ca-design.sweep*blend*blend*face)/(1+(design.width-1)*blend);
+        float u=w->gripX+cross/(scale*parity),v=w->gripY-along/scale;
+        if(u<0||v<0||u>=s->w||v>=s->h)continue;
+        int sx=u,sy=v,lo=s->rows[sy*3+1];if(sx<lo||sx>=s->rows[sy*3+2])continue;
+        rgba_over(fb+yy*pitch+xx,artPalette[id][s->pixels[s->rows[sy*3]+sx-lo]]);
     }
+    weapon_fitting(item,x,y,sc,angle,face,li,tip);
 }
 typedef struct {
     float offset, top, bottom, width;
@@ -210,6 +259,14 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
                                      0x744c36, 0x553d30, 0xc5b69b, 0x817a68};
     static const uint32_t hairs[] = {0x211e1b, 0x433026, 0x776047, 0xa4835c, 0xc1b5a0, 0x713e32};
     uint32_t skin = skins[a->skin % 8];
+    int race=species_index(a);
+    static const uint32_t ashSkin[]={0xa9a6a0,0x90877d,0x776f69,0x62615e,0x514e49,0x454446,0xc0b6a6,0x8b8580};
+    static const uint32_t reedSkin[]={0x9eaf7c,0x879967,0x6f8058,0x667756,0x536346,0x42513a,0xb3b58b,0x8b956c};
+    static const uint32_t stoneSkin[]={0xb3ad9d,0x9a9385,0x817b70,0x77766e,0x67655d,0x555952,0xc0bdad,0x8e9089};
+    if(race==1)skin=ashSkin[a->skin%8];
+    if(race==2)skin=stoneSkin[a->skin%8];
+    if(race==3)skin=reedSkin[a->skin%8];
+    if(race==4)skin=stoneSkin[a->skin%8];
     paintHair = hairs[a->hairColor % 6];
     int torso = a->gear[1], head = a->gear[2], legs = a->gear[4], back = a->gear[5], boots = a->gear[3];
     int tf = gear_family(torso), hf = gear_family(head), lf = gear_family(legs), bf = gear_family(back),
@@ -232,6 +289,7 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
     if (a->hitFlash > 0 && a->impactKind == 1)
         lean -= (a->recoilX - a->recoilY) * 3 * pose_ease(a->hitFlash / .38f);
     float crouch = rig.crouch + (a->sneaking ? 3 : 0), bw = a->body == 1 ? 5 : a->body == 2 ? 3.8f : 4.4f;
+    bw*=race==3?.85f:race==4?1.18f:1;
 #define RX(xx, yy) (x + ((xx) * (1 + rig.twist) + lean * fminf(1, fmaxf(0, -(yy) / 24.f))) * sc)
 #define RY(yy) (y + ((yy) + crouch * fminf(1, fmaxf(0, -(yy) / 13.f))) * sc)
 #define PART(id, xx, yy, xx1, yy1, w, tint, q)                                                               \
@@ -245,16 +303,16 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
     uint32_t cloth = torso ? itemDefs[torso].color : 0x9b8670, lc = legs ? itemDefs[legs].color : 0x786d5e;
     if (a->dead || a->unconscious > 0 || a->taskKind == 3) {
         /* Rotate the complete dressed rig: hats, boots and packs stay attached. */
-        static uint32_t prone[112*104];
+        static uint32_t prone[128*120];
         Actor standing=*a;standing.dead=0;standing.unconscious=0;standing.taskKind=0;
         standing.attackPhase=0;standing.movedTimer=0;standing.hitFlash=0;standing.sneaking=0;
         uint32_t *oldfb=fb;int oldpitch=pitch,l=clipLeft,t=clipTop,r=clipRight,b=clipBottom;
-        memset(prone,0,sizeof(prone));fb=prone;pitch=112;clipLeft=clipTop=0;clipRight=112;clipBottom=104;
-        actor_painted(&standing,56,88,1,li);
+        memset(prone,0,sizeof(prone));fb=prone;pitch=128;clipLeft=clipTop=0;clipRight=128;clipBottom=120;
+        actor_painted(&standing,64,104,1,li);
         fb=oldfb;pitch=oldpitch;clipLeft=l;clipTop=t;clipRight=r;clipBottom=b;
-        for(int sy=0;sy<104;sy++)for(int sx=0;sx<112;sx++)if(prone[sy*112+sx]) {
-            int dx=x+(68-sy)*sc,dy=y-3*sc+(sx-56)*sc/2;
-            for(int yy=0;yy<sc;yy++)for(int xx=0;xx<sc;xx++)if(dx+xx>=clipLeft&&dx+xx<clipRight&&dy+yy>=clipTop&&dy+yy<clipBottom)fb[(dy+yy)*pitch+dx+xx]=prone[sy*112+sx];
+        for(int sy=0;sy<120;sy++)for(int sx=0;sx<128;sx++)if(prone[sy*128+sx]) {
+            int dx=x+(84-sy)*sc,dy=y-3*sc+(sx-64)*sc/2;
+            for(int yy=0;yy<sc;yy++)for(int xx=0;xx<sc;xx++)if(dx+xx>=clipLeft&&dx+xx<clipRight&&dy+yy>=clipTop&&dy+yy<clipBottom)fb[(dy+yy)*pitch+dx+xx]=prone[sy*128+sx];
         }
         return;
     }
@@ -275,7 +333,7 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
         float foot = xx + (i ? 1 : -1) * rig.step * forward + off * .65f,
               knee = xx + rig.shift * forward + off * .35f;
         float lift = a->attackPhase ? 0 : fmaxf(0, off) * .4f;
-        int mech = a->prostheticMask & (1 << limb), id = mech ? 76 : 64 + lf - 68;
+        int mech = race==2 || (a->prostheticMask & (1 << limb)), id = mech ? 76 : 64 + lf - 68;
         part(id, RX(xx, -14), RY(-14), RX(knee, -7), RY(-7), 4.8f * sc, lc, li, itemDefs[legs].quality,
              face < 0, 0, mech ? 1 : .54f);
         part(mech ? 77 : id, RX(knee, -7.4f), RY(-7.4f), RX(foot, -2 - lift), RY(-2 - lift), 4.1f * sc, lc,
@@ -302,7 +360,7 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
               bend = sqrtf(fmaxf(0, 49 * sc * sc - d * d * .25f));
         float ex = (sx + hx) * .5f - (d > .01f ? dy / d : 0) * bend * (i ? 1 : -1) * face,
               ey = (sy + hy) * .5f + (d > .01f ? dx / d : 1) * bend * (i ? 1 : -1) * face;
-        int mech = a->prostheticMask & (1 << limb);
+        int mech = race==2 || (a->prostheticMask & (1 << limb));
         part(mech ? 76 : 72, sx, sy, ex, ey, 4 * sc, cloth, li, 0, i ^ (face < 0), 0, 1);
         part(mech ? 77 : 75, ex, ey, hx, hy, 3 * sc, mech ? 0x777b78 : skin, li, 0, i ^ (face < 0), 0, 1);
     }
@@ -313,9 +371,9 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
     PART(tf, 0, -26, coat ? -rig.shift * .35f * forward : 0, coat ? -5 : -12, bw * 2.8f, cloth,
          itemDefs[torso].quality);
     // Painted face with independently tinted hair and visible creator details.
-    int faceid = a->hair == 0 ? 61 : a->hair == 3 ? 62 : a->beard ? 63 : 60;
-    PART(faceid, 0, -33, 0, -25, 5.8f, skin, 0);
-    if (a->hair == 2 || a->hair == 4 || a->hair == 5 || a->hair == 6) {
+    int faceid = race==2 || a->hair == 0 ? 61 : a->hair == 3 ? 62 : a->beard ? 63 : 60;
+    PART(faceid, 0, -33, 0, -25, race==4?6.7f:race==3?5.1f:5.8f, skin, 0);
+    if (race!=2 && (a->hair == 2 || a->hair == 4 || a->hair == 5 || a->hair == 6)) {
         PART(72, -face * 2.2f, -31, -face * 3, -23, 1.8f, paintHair, 0);
         if (a->hair == 4)
             PART(72, face * 2.2f, -31, face * 3, -23, 1.8f, paintHair, 0);
@@ -324,8 +382,17 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
     }
     if (a->scar)
         line(RX(face, -29), RY(-29), RX(face * 1.5f, -27), RY(-27), shade(0x874b38, li));
-    if (a->race == 2)
-        px(RX(-face * 1.7f, -29), RY(-29), 0x8eae9e);
+    if(race==2){
+        line(RX(-1.8f,-29),RY(-29),RX(1.8f,-29),RY(-29),0x9ec1b6);
+        line(RX(-1.4f,-26),RY(-26),RX(1.4f,-26),RY(-26),shade(0x343d3c,li));
+    }
+    if(race==3)for(int side=-1;side<=1;side+=2){
+        PART(72,side*2,-29,side*5.5f,-32,1.8f,skin,0);
+    }
+    if(race==4)for(int side=-1;side<=1;side+=2){
+        PART(72,side*2.6f,-29,side*4,-31,2.8f,skin,0);
+        PART(72,side*3,-32,side*4.2f,-35,1.6f,0xaaa58f,0);
+    }
     if (head && hf >= 48) {
         float wide, top, bottom;
         head_attachment(hf, &wide, &top, &bottom);
@@ -344,8 +411,9 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
 #undef RX
 #undef RY
 }
-#define ACT_W 112
-#define ACT_H 104
+#define ACT_W 128
+#define ACT_H 120
+#define ACT_ANCHOR 152
 #define ACT_CACHE 24
 static uint32_t actorScratch[ACT_W * 2 * ACT_H * 2];
 static struct {
@@ -443,7 +511,7 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
         clipLeft = clipTop = 0;
         clipRight = ACT_W * 2;
         clipBottom = ACT_H * 2;
-        actor_painted(a, ACT_W, 136, 2, li);
+        actor_painted(a, ACT_W, ACT_ANCHOR, 2, li);
         fb = oldfb;
         pitch = oldpitch;
         clipLeft = l;
@@ -496,12 +564,12 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
         int above=(px[k-ACT_W]>>24)>128,below=(px[k+ACT_W]>>24)>128,
             left=(px[k-1]>>24)>128,right=(px[k+1]>>24)>128;
         if(!above&&!below&&!left&&!right) continue;
-        int sx=x-ACT_W/2+xx,sy=y-68+yy;
+        int sx=x-ACT_W/2+xx,sy=y-ACT_ANCHOR/2+yy;
         if(sx>=clipLeft&&sx<clipRight&&sy>=clipTop&&sy<clipBottom)
             rgba_over(fb+sy*pitch+sx,chosen && (below||right)?0x997aada1:0x99101513);
     }
     for (int yy = actorCache[slot].top; yy < actorCache[slot].bottom; yy++) {
-        int sy = y - 68 + yy;
+        int sy = y - ACT_ANCHOR / 2 + yy;
         if (sy < clipTop || sy >= clipBottom)
             continue;
         for (int xx = actorCache[slot].left; xx < actorCache[slot].right; xx++) {
@@ -541,7 +609,7 @@ static void portrait_source(Actor *a) {
     clipRight = ACT_W * 2;
     clipBottom = ACT_H * 2;
     memset(actorScratch, 0, sizeof(actorScratch));
-    actor_painted(a, ACT_W, 136, 2, 1);
+    actor_painted(a, ACT_W, ACT_ANCHOR, 2, 1);
     fb = oldfb;
     pitch = oldpitch;
     clipLeft = l;

@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.9.0"
+#define VERSION "0.10.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -18,7 +18,12 @@
 #define MATERIALS 6
 #define QUALITIES 4
 #define CATALOG_ITEMS (BASE_ITEMS + FAMILIES * MATERIALS * QUALITIES)
-#define ITEMS (CATALOG_ITEMS + 88)
+#define V090_ITEMS (CATALOG_ITEMS + 88)
+#define CIV_ARMOR_ITEMS V090_ITEMS
+#define REGALIA_ITEMS (CIV_ARMOR_ITEMS+96)
+#define ITEMS (REGALIA_ITEMS+36)
+#define SPECIES 5
+#define ELITES 18
 #define EVENTS 8
 #define GEARS 6
 #define FACTIONS 8
@@ -232,6 +237,7 @@ typedef struct {
     RegionalState regions;
     LivingWorld living;
     Society society;
+    struct { int version,eliteActor[ELITES],routeTown[ELITES],fallen[ELITES]; float pulse; } civil;
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -364,6 +370,14 @@ int nearby_service(int role);
 const char *job_status(const Actor *a);
 const char *skill_training(int skill);
 void recipe_status(int recipe, char *out, int size);
+typedef struct {
+    int output, qty, item[5], need[5], count, alternate, alternateNeed;
+    int station, tech, smithing;
+} CraftRequirements;
+int recipe_requirements(int recipe, CraftRequirements *out);
+int forge_requirements(int item, CraftRequirements *out);
+int forge_selection_item(void);
+const char *forge_selection_name(void);
 int nearby_station(int type, float radius);
 int build_wood_cost(int choice);
 int research_cost(void);
@@ -411,7 +425,7 @@ extern const char *recipeNames[];
 extern const int recipeCount, buildCount;
 
 extern const char *factionNames[FACTIONS], *regionNames[9], *weatherNames[5];
-extern const char *originNames[5], *raceNames[3], *effectNames[12], *materialNames[MATERIALS],
+extern const char *originNames[5], *raceNames[SPECIES], *effectNames[12], *materialNames[MATERIALS],
     *qualityNames[QUALITIES];
 extern const char *familyNames[FAMILIES], *guideTitles[GUIDE_PAGES], *guideBodies[GUIDE_PAGES];
 extern const uint32_t factionColors[FACTIONS];
@@ -475,4 +489,5 @@ void render_catalog_scale(uint32_t *pixels, int stride, int item, int sc);
 void render_catalog_sample(uint32_t *pixels, int stride, int item);
 #include "depth.h"
 #include "society.h"
+#include "civilization.h"
 #endif

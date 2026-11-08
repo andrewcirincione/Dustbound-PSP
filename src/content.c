@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include "weapon_design.h"
 
 extern const ItemDef baseDefs[BASE_ITEMS];
 ItemDef itemDefs[ITEMS];
@@ -15,7 +16,6 @@ const char *regionNames[9] = {"THE CINDER FRONTIER", "COPPER BADLANDS",  "DEAD S
                               "PALE HIGHLANDS",      "BLACK PINE REACH", "THE RED CANYONS"};
 const char *weatherNames[5] = {"CLEAR", "DUST STORM", "RAIN", "ACID MIST", "SNOW"};
 const char *originNames[5] = {"WANDERER", "RONIN", "PROSPECTOR", "OUTLAW", "CARAVAN"};
-const char *raceNames[3] = {"LOWLANDER", "ASHLANDER", "AUGMENTED"};
 const char *materialNames[MATERIALS] = {"Scrap", "Iron", "Bronze", "Steel", "Black", "Relic"};
 const char *qualityNames[QUALITIES] = {"Worn", "Field", "Fine", "Master"};
 const char *effectNames[12] = {"Serrated",    "Piercing",    "Balanced",     "Staggering",
@@ -95,7 +95,7 @@ int weapon_strength(int it) {
     return itemDefs[it].weight * 2;
 }
 float weapon_handling(const Actor *a, int it) {
-    float effective = level(a, STRENGTH) * (.35f + .65f * fminf(a->health[LARM], a->health[RARM]) / 100.f);
+    float effective = level(a, STRENGTH) * (.35f + .65f * fminf(a->health[LARM], a->health[RARM]) / species_health(a));
     return (1 + fminf(1.4f, fmaxf(0, weapon_strength(it) - effective) * .035f))*(1-(weapon_class_level(a,weapon_class(it))-1)*.0015f);
 }
 /* Garment profiles follow their construction, not their catalog position. */
@@ -255,6 +255,12 @@ void content_init(void) {
     static const int uf[16]={9,0,18,84,12,28,29,85,39,37,34,43,42,39,79,57};
     for(int i=0;i<16;i++){int id=UNIQUE_ITEMS+i;ItemDef*d=&itemDefs[id];*d=itemDefs[gear_id(uf[i],4,3)];d->name=unique[i];d->desc=descriptions[id];d->trim=0xd5ba78;d->power+=i<8?9:0;d->armor+=i>=8&&i!=14?8:0;d->stealth+=i==11||i==15?14:0;d->capacity+=i==14?12:0;d->price+=1200;snprintf(descriptions[id],112,"Named frontier equipment. %s +%d; weight %d.",effectNames[d->effect],item_effect_value(id),d->weight);}
 
+    civil_content();
+    for(int i=BASE_ITEMS;i<ITEMS;i++)if(itemDefs[i].slot==0){
+        WeaponDesign d=weapon_design(i);
+        if(!weapon_ranged(i))itemDefs[i].range*=1+(d.length-1)*.6f;
+        itemDefs[i].cooldown*=1+(d.length-1)*.18f+(d.width-1)*.08f;
+    }
 }
 
 const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE BORDERLANDS",    "COMBAT",
@@ -266,10 +272,10 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down: skills. Left: worn gear. Right: squad management.\n\001: interact. \004: pack. \003: "
     "fight/passive. Hold L + Square: choose someone to attack (also Start > Squad). \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
     "pause menu: \005/\006 change Pause, Squad and World tabs. D-pad navigates menus.\nMenus pause time. \010 opens help. \005/\006 switch members or guide pages. Cross opens nearby actions. Pause with R, choose an action to queue it, then R resumes. Four actions can wait; moving cancels them. Analog movement cancels work or travel.",
-    "New expedition opens character creation. Choose a name, origin, ancestry, body, skin, hairstyle, hair "
+    "New expedition opens character creation. Choose a name, origin, species, body, skin, hairstyle, hair "
     "color, beard and scars. \014 adjusts each choice; \001 edits your name or begins.\nOrigins change "
-    "equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Ancestry "
-    "changes starting strengths. A town barber can change your appearance later.",
+    "equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Species "
+    "changes health, carry, speed, appetite and starting skills. The preview shows your starting values. Clockworks need spare parts, not food or bandages. A town barber can change your appearance later.",
     "The 1536 by 1536 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. "
     "Rivers have fords near roads; hills rise into mesas and snowfields.\n\010 opens the atlas. "
     "D-pad selects a known town; \005/\006 changes pages. The blue triangle is you; "
@@ -315,7 +321,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "cancel the transaction without charging you.",
     "Crafting recipes make supplies, refined metal, ammunition and prosthetics. A forge smelts ore and "
     "shapes weapons. A campfire cooks grain or meat with water. A research bench makes dressings.\nStand "
-    "close to the station. The recipe screen lists costs and unlocks. Research consumes relics and silver in "
+    "close to the station. Each ingredient shows HAVE/NEED: 6/3 means you own six and need three. Green means enough, including exact amounts; red means short. Research, station reach and fuel are also shown. \003 switches recipes/equipment. Research consumes relics and silver in "
     "three tiers. Skills rise when crafting succeeds. A shared depot supplies worker jobs, but hand crafting "
     "uses the selected survivor's pack.",
     "Build outside settlement boundaries. Choose a structure and place it beside the selected character. "

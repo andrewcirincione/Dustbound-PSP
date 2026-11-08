@@ -1,3 +1,9 @@
+# Current continuation: 0.10.0
+
+The 0.10.0 release supersedes the historical handoff below. Current source adds five species, 18 persistent named owners/36 personal items, 96 armor variants, six settlement cultures, 12 constructions across all 38 weapon types, and explicit crafting requirements. Save v10 is 626,860 bytes; all prior readers remain. `docs/CONTENT_V100.md`, `DESIGN_REVIEW_V100.md`, `VALIDATION_V100.md` and `FEEDBACK_V100.md` are the current references. The qualified EBOOT digest is in `evidence/v100-build-manifest.json` and matches the completed 82-frame PSP controller run. Run 080, 081, 090 and 100 native suites and `scripts/emulator_v100.py` after relevant future changes. Do not describe prepared review saves or native benchmarks as a natural campaign or physical PSP qualification. Next design priorities: political succession, interdependent event mechanics, resident behavior, extended balance and stronger species anatomy.
+
+---
+
 # Kenshi working session 1 — recovered project context
 
 Recovered on 2026-11-06. This is the continuation record for **Dustbound**, the original PSP frontier survival RPG in [andrewcirincione/Dustbound-PSP](https://github.com/andrewcirincione/Dustbound-PSP). The conversation's project label is Kenshi; the game is not a port and uses original code and artwork.

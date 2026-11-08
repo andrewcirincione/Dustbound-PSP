@@ -1,12 +1,14 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.9.0 — Trade, disguises and earned experience
+## 0.10.0 — Peoples, courts and personal arms
 
-Regional prices and trading tips, delivery/escort/patrol/bounty work, faction warrants and disguises, freeing prisoners/slaves without automatic recruitment, cannibal capture, compact queued actions, one inventory character preview, a scrolling top log and separate weapon-class progression. Events are discovered naturally and do not appear on maps. See [release notes](docs/RELEASE_NOTES.md), [stats audit](docs/STATS_AUDIT_V090.md), and [current critiques](docs/DESIGN_REVIEW_V090.md).
+Five playable species with visible starting stats; different fortress, monastery, village, industrial and cannibal settlement plans; eighteen named rulers, champions and roaming elites with thirty-six personal equipment pieces; ninety-six additional cultural armor variants. Every one of the thirty-eight weapon types now has twelve distinct constructions across its twenty-four material/quality variants. Changes affect geometry and fittings as well as color, reach and handling.
+
+[Release notes](docs/RELEASE_NOTES.md) · [Species and named owners](docs/CONTENT_V100.md) · [Current critiques](docs/DESIGN_REVIEW_V100.md) · [PSP screenshots](docs/FEEDBACK_V100.md) · [Validation](docs/VALIDATION_V100.md)
 
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.9.0, trade and disguises — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.10.0, peoples and personal arms — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 

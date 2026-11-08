@@ -445,10 +445,9 @@ static void terrain(void) {
 }
 static int building_sprite(int id) {
     Building *b = &g.buildings[id];
-    if (b->type == HOUSE)
-        return b->faction == HOSTILE ? 5 : b->faction == SHOGUN ? 4 : id % 3 == 0 ? 7 : 0;
     static const int ids[] = {0, 1, 2, 3, 24, 25, 27, 26, 28, 6, 29, 30, 7};
-    return ids[b->type];
+    int base = b->type == HOUSE ? (b->faction == HOSTILE ? 5 : b->faction == SHOGUN ? 4 : id % 3 == 0 ? 7 : 0) : ids[b->type];
+    return civil_building_sprite(id,base);
 }
 static void art_shadow(int id, int x, int y) {
     if (id < 0 || id >= 32)
@@ -612,7 +611,7 @@ static void objects_draw(void) {
             Actor *a = &g.actors[o->index];
             person(a, o->x, o->y, 1, o->index == g.selected);
             if (a->target >= 0 || a->unconscious > 0 || a->squad) {
-                float hp = (a->health[HEAD] + a->health[CHEST]) * .5f;
+                float hp = (a->health[HEAD] + a->health[CHEST]) * 50 / species_health(a);
                 bar(o->x - 10, o->y - 43, 21, 2, hp, a->squad ? TEAL : RED);
             }
             if (!a->squad && a->kind != BEAST && a->kind != RAIDER && ui.contextKind == 0 &&
@@ -847,7 +846,7 @@ static void detailed_status(void) {
         int missing = (a->lostMask & (1 << i)) && !(a->prostheticMask & (1 << i));
         uint32_t color = missing || a->health[i] < 30 ? RED : a->health[i] < 75 ? GOLD : TEAL;
         text(16, y, limbNames[i], MUTED, 1);
-        bar(86, y + 2, 66, 4, missing ? 0 : a->health[i], color);
+        bar(86, y + 2, 66, 4, missing ? 0 : a->health[i]*100/species_health(a), color);
         if (missing) snprintf(value, sizeof(value), "LOST");
         else snprintf(value, sizeof(value), "%d", (int)a->health[i]);
         text(163, y, value, color, 1);
@@ -864,7 +863,7 @@ static void detailed_status(void) {
         snprintf(value, sizeof(value), "%d", (int)values[i]);
         text(163, y, value, color, 1);
     }
-    int capacity = 30 + level(a, STRENGTH) * 2 + gear_bonus(a, 3);
+    int capacity = actor_capacity(a);
     float load = encumbrance(a);
     snprintf(value, sizeof(value), "LOAD %.0f / %d", load, capacity);
     text(16, 196, value, load > capacity ? RED : MUTED, 1);
@@ -912,10 +911,10 @@ static void hud(void) {
             char name[9];
             snprintf(name, sizeof(name), "%.8s", m->name);
             text(x, 258, name, m->dead || m->unconscious > 0 ? RED : i == g.selected ? TEAL : MUTED, 1);
-            bar(x, 268, 48, 2, (m->health[HEAD] + m->health[CHEST]) * .5f, m->bleed > 0 ? RED : TEAL);
+            bar(x, 268, 48, 2, (m->health[HEAD] + m->health[CHEST]) * 50 / species_health(m), m->bleed > 0 ? RED : TEAL);
         }
     if (total == 1) {
-        snprintf(b, sizeof(b), "LOAD %.0f/%d", encumbrance(a), 30 + level(a, STRENGTH) * 2 + gear_bonus(a, 3));
+        snprintf(b, sizeof(b), "LOAD %.0f/%d", encumbrance(a), actor_capacity(a));
         text(78, 259, b, MUTED, 1);
     } else if (total > 4) {
         snprintf(b, sizeof(b), "%d/%d", page + 1, (total + 3) / 4);
@@ -1026,7 +1025,7 @@ static void equipment_comparison(int it, int y) {
     int worn=a->gear[d->slot];ItemDef *old=&itemDefs[worn];
     clipped(31,y,d->name,68,TEXT);
     if(it>=CATALOG_ITEMS&&it<OLD_ITEMS)text(374,y,it>=CATALOG_ITEMS+16?"SIGNATURE":"SPECIAL",GOLD,1);
-    else if(it>=UNIQUE_ITEMS)text(404,y,"NAMED",GOLD,1);
+    else if((it>=UNIQUE_ITEMS&&it<V090_ITEMS)||regalia_owner(it)>=0)text(404,y,"NAMED",GOLD,1);
     snprintf(b,sizeof(b),"WORN: %s",worn?old->name:"EMPTY");clipped(31,y+12,b,68,MUTED);
     int cell=0;
     compare_stat(cell++,y+26,d->slot==0?"DAMAGE":d->slot==5?"CAPACITY":"ARMOR",
@@ -1060,7 +1059,9 @@ static void equipment_comparison(int it, int y) {
 }
 static const char *item_function(int it){
     ItemDef*d=&itemDefs[it];int f=gear_family(it);
+    if(it>=CIV_ARMOR_ITEMS)return d->desc;
     if(d->slot<0)return d->desc;
+    if(d->slot==0){static char pattern[112];snprintf(pattern,sizeof(pattern),"%s construction. %s +%d. %s",weapon_design_name(it),d->effect>=0?effectNames[d->effect]:"Plain",item_effect_value(it),weapon_ranged(it)?"Needs ammunition.":"Reach and weight affect handling.");return pattern;}
     if(it>=RAPIER_ITEMS&&it<RAPIER_ITEMS+24)return "Fast, precise thrusts that pierce armor.";
     if(it>=SCIMITAR_ITEMS&&it<SCIMITAR_ITEMS+24)return "Curved cutting blade; serration causes bleeding.";
     if(d->slot==0){if(weapon_ranged(it))return f>=29?"Ranged weapon. Consumes cartridges; needs a clear shot.":"Ranged weapon. Consumes bolts; keep enemies at a distance.";if(f==84)return "Heavy two-handed blade. Extra reach; needs strong arms.";if(f==85)return "Heavy impact weapon. Pierces armor and staggers enemies.";return d->effect==0?"Melee weapon. Serrated strikes cause bleeding.":d->effect==1?"Melee weapon. Piercing strikes bypass some armor.":d->effect==3?"Melee weapon. Heavy impacts can stagger enemies.":"Melee weapon. Reach, handling and strength affect combat.";}
@@ -1083,7 +1084,7 @@ static void pack_screen(void) {
         clipped(146,y,itemDefs[id].name,46,k==ui.selection?TEXT:MUTED);
         snprintf(b,sizeof(b),"%d",a->pack[k].qty);text(442-strlen(b)*6,y,b,GOLD,1);
     }
-    snprintf(b,sizeof(b),"%d/%d SLOTS  LOAD %.0f/%d%s",count,PACK,encumbrance(a),30+level(a,STRENGTH)*2+gear_bonus(a,3),count&&a->stolen[ui.selection]?"  STOLEN":"");text(146,150,b,MUTED,1);
+    snprintf(b,sizeof(b),"%d/%d SLOTS  LOAD %.0f/%d%s",count,PACK,encumbrance(a),actor_capacity(a),count&&a->stolen[ui.selection]?"  STOLEN":"");text(146,150,b,MUTED,1);
     int wornDisguise=disguise_faction(a),nextDisguise=disguise_faction(&preview);
     snprintf(b,sizeof(b),"WORN DISGUISE: %s%s",wornDisguise?factionNames[wornDisguise]:"NONE",wornDisguise&&g.society.recognized[g.selected][wornDisguise]>0?" / EXPOSED":"");clipped(31,163,b,69,TEAL);
     if(wearable){snprintf(b,sizeof(b),"PREVIEW: %s%s",nextDisguise?factionNames[nextDisguise]:"NO DISGUISE",nextDisguise&&g.society.recognized[g.selected][nextDisguise]>0?" / RECOGNIZED":"");clipped(31,175,b,69,GOLD);}
@@ -1135,8 +1136,8 @@ static void health_screen(void) {
         int y=111+i*13,missing=(a->lostMask&(1<<i))&&!(a->prostheticMask&(1<<i));
         if(i==ui.selection)rect(25,y-2,425,12,0x4a4030);
         text(31,y,limbNames[i],i==ui.selection?TEXT:MUTED,1);
-        bar(157,y+2,91,4,missing?0:a->health[i],a->health[i]<30||missing?RED:TEAL);
-        if(missing)snprintf(b,sizeof(b),"LOST");else snprintf(b,sizeof(b),"%.0f/%.0f",a->health[i],100-z->trauma[i]);
+        bar(157,y+2,91,4,missing?0:a->health[i]*100/species_health(a),a->health[i]<30||missing?RED:TEAL);
+        if(missing)snprintf(b,sizeof(b),"LOST");else snprintf(b,sizeof(b),"%.0f/%.0f",a->health[i],species_health(a)-z->trauma[i]);
         text(261,y,b,missing?RED:TEXT,1);
         snprintf(b,sizeof(b),"%.0f%s",z->trauma[i],depth_organic(a,i)?"":" / MECH");text(337,y,b,MUTED,1);
     }
@@ -1439,13 +1440,44 @@ static void build_screen(void) {
              inventory_count(a, WOOD), inventory_count(a, IRONBAR), g.tech);
     text(31, 225, b, MUTED, 1);
 }
+static const char *craft_station_name(int type){return type==FORGE?"FORGE":type==CAMPFIRE?"CAMPFIRE":"RESEARCH BENCH";}
+static int craft_readiness(const CraftRequirements*r,char*out,int size){
+    Actor*a=&g.actors[g.selected];int station=nearby_workstation(r->station);
+    if(g.tech<r->tech){snprintf(out,size,"Research tier %d required (have %d).",r->tech,g.tech);return 0;}
+    if(level(a,SMITHING)<r->smithing){snprintf(out,size,"Smithing %d required (have %d).",r->smithing,level(a,SMITHING));return 0;}
+    for(int i=0;i<r->count;i++)if(inventory_count(a,r->item[i])<r->need[i]){
+        if(i==0&&r->alternate){if(inventory_count(a,r->alternate)>=r->alternateNeed)continue;snprintf(out,size,"Need %d grain OR %d raw meat.",r->need[0],r->alternateNeed);return 0;}
+        snprintf(out,size,"Missing %d %s.",r->need[i]-inventory_count(a,r->item[i]),itemDefs[r->item[i]].name);return 0;
+    }
+    if(station<0){snprintf(out,size,"Move beside a %s.",craft_station_name(r->station));return 0;}
+    if(!depth_build_ready(station)){snprintf(out,size,"Finish or repair the workstation.");return 0;}
+    if(r->station!=BENCH&&g.buildings[station].owner>=0&&g.depth.buildings[station].fuel<1){snprintf(out,size,"Add coal or timber in Camp upkeep.");return 0;}
+    Actor copy=*a;for(int i=0;i<r->count;i++){int it=r->item[i],qty=r->need[i];if(i==0&&r->alternate&&inventory_count(&copy,it)<qty){it=r->alternate;qty=r->alternateNeed;}inventory_remove(&copy,it,qty);}
+    if(!inventory_add(&copy,r->output,r->qty)){snprintf(out,size,"Make room for the crafted item.");return 0;}
+    snprintf(out,size,"Ready to craft.");return 1;
+}
 static void craft_screen(void) {
-    overlay_header("WORKSHOP", "\001 CRAFT   REQUIREMENTS SHOW HELD / NEEDED");
-    for (int i = 0; i < recipeCount; i++)
-        row(84 + i * 13, i == ui.selection, recipeNames[i], NULL);
-    char info[240];
-    recipe_status(ui.selection, info, sizeof(info));
-    wrap(31, 196, 68, info, GOLD);
+    overlay_header("WORKSHOP", "\001 CRAFT RECIPE   \003 EQUIPMENT FORGE");
+    for(int i=0;i<recipeCount;i++){
+        int y=86+i*16;if(i==ui.selection){rect(25,y-3,178,14,0x4a4030);rect(25,y-3,2,14,TEAL);}
+        text(31,y,recipeNames[i],i==ui.selection?TEXT:MUTED,1);
+    }
+    line(213,83,213,218,EDGE);CraftRequirements r;if(!recipe_requirements(ui.selection,&r))return;
+    Actor*a=&g.actors[g.selected];char b[120];snprintf(b,sizeof(b),"MAKES %d %s",r.qty,itemDefs[r.output].name);clipped(225,84,b,36,GOLD);
+    text(225,101,"INGREDIENT",MUTED,1);text(389,101,"HAVE/NEED",MUTED,1);
+    int row=0;
+    for(int i=0;i<r.count;i++){
+        int y=115+row++*13,have=inventory_count(a,r.item[i]);clipped(225,y,itemDefs[r.item[i]].name,24,TEXT);snprintf(b,sizeof(b),"%d/%d",have,r.need[i]);text(389,y,b,have>=r.need[i]?0x73c58b:RED,1);
+        if(i==0&&r.alternate){y=115+row++*13;snprintf(b,sizeof(b),"OR %s",itemDefs[r.alternate].name);clipped(225,y,b,24,TEXT);int alt=inventory_count(a,r.alternate);snprintf(b,sizeof(b),"%d/%d",alt,r.alternateNeed);text(389,y,b,alt>=r.alternateNeed?0x73c58b:RED,1);}
+    }
+    snprintf(b,sizeof(b),"RESEARCH %d/%d",g.tech,r.tech);text(225,158,b,g.tech>=r.tech?0x73c58b:RED,1);
+    int station=nearby_workstation(r.station);snprintf(b,sizeof(b),"%s: %s",craft_station_name(r.station),station>=0?"IN REACH":"TOO FAR");text(225,174,b,station>=0?TEAL:RED,1);
+    if(r.station==BENCH)snprintf(b,sizeof(b),"FUEL: NOT REQUIRED");
+    else if(station<0)snprintf(b,sizeof(b),"OWNED STATION: 1 FUEL / CRAFT");
+    else if(g.buildings[station].owner<0)snprintf(b,sizeof(b),"FUEL: TOWN SUPPLIED");
+    else snprintf(b,sizeof(b),"FUEL %.0f/1",floorf(g.depth.buildings[station].fuel));
+    text(225,188,b,station>=0&&r.station!=BENCH&&g.buildings[station].owner>=0?(g.depth.buildings[station].fuel>=1?0x73c58b:RED):MUTED,1);
+    int ready=craft_readiness(&r,b,sizeof(b));text(225,204,ready?"\001 READY TO CRAFT":"CANNOT CRAFT YET",ready?TEAL:RED,1);clipped(31,222,b,69,ready?TEAL:RED);
 }
 static void research_screen(void) {
     char b[100];
@@ -1518,20 +1550,26 @@ static void creator_screen(void) {
     a.race = ui.createRace;
     if (!ui.titleChoice) {
         const int w[] = {8, 0, 12, 9, 24}, t[] = {32, 34, 35, 46, 45}, h[] = {49, 48, 56, 51, 54};
-        a.gear[0] = gear_id(w[ui.createOrigin], 1, 1);
-        a.gear[1] = gear_id(t[ui.createOrigin], 1, 1);
+        a.gear[0] = gear_id(w[ui.createOrigin], ui.createOrigin==1?1:0, 1);
+        a.gear[1] = gear_id(t[ui.createOrigin], ui.createOrigin==1?1:0, 0);
         a.gear[2] = gear_id(h[ui.createOrigin], 0, 1);
-        a.gear[3] = gear_id(60, 0, 0);
-        a.gear[4] = gear_id(69, 0, 0);
-        a.gear[5] = gear_id(76, 0, 0);
+        a.gear[3] = gear_id(ui.createOrigin==1?63:60, 0, 0);
+        a.gear[4] = gear_id(ui.createOrigin==1?68:69, 0, 0);
+        a.gear[5] = gear_id(ui.createOrigin==2?79:76, 0, 0);
+        species_start(&a,ui.createOrigin,ui.createRace);
     }
-    portrait_scale(&a, 156, 112, 30, 85, 1);
-    center(105, 211, ui.createName, TEAL, 1);
+    int bareHead=ui.selection>=2&&ui.selection<=8;
+    if(bareHead)a.gear[2]=0;
+    portrait_scale(&a, 156, 89, 30, 80, 1);
+    center(108, 173, bareHead?"HEADWEAR HIDDEN":ui.createName, TEAL, 1);
+    char stats[100];const SpeciesDef *species=&speciesDefs[species_index(&a)];
+    snprintf(stats,sizeof(stats),"HP %d  LOAD %d",species->health,actor_capacity(&a));text(30,186,stats,TEAL,1);
+    snprintf(stats,sizeof(stats),"BASE MOVE %d%% FOOD %d%%",(int)roundf(species->move*100),(int)roundf(species->food*100));text(30,198,stats,MUTED,1);
     const char *labels[] = {
-        "NAME", "ORIGIN",    "ANCESTRY", "BUILD", "SKIN",
+        "NAME", "ORIGIN",    "SPECIES", "BUILD", "SKIN",
         "HAIR", "HAIR TONE", "BEARD",    "SCARS", ui.titleChoice ? "KEEP CHANGES" : "ENTER THE FRONTIER"};
     for (int i = 0; i < 10; i++) {
-        int y = 83 + i * 14;
+        int y = 82 + i * 13;
         char b[40];
         if (i == ui.selection) {
             rect(203, y - 3, 245, 13, 0x3c4034);
@@ -1560,6 +1598,9 @@ static void creator_screen(void) {
         }
         text(442 - (int)strlen(b) * 6, y, b, TEXT, 1);
     }
+    snprintf(stats,sizeof(stats),"STR %d  DEX %d  TOUGH %d  DODGE %d  ATH %d  SNEAK %d  ENG %d",level(&a,STRENGTH),level(&a,DEXTERITY),level(&a,TOUGHNESS),level(&a,DODGE),level(&a,ATHLETICS),level(&a,STEALTH),level(&a,ENGINEERING));
+    text(30,213,stats,TEAL,1);
+    clipped(30,225,species->trait,69,TEXT);
 }
 static void name_screen(void) {
     overlay_header("NAME YOUR DRIFTER", "\011 SELECT   \001 LETTER   \003 ERASE   \007 DONE");
@@ -1592,39 +1633,24 @@ static void equipped_screen(void) {
     else snprintf(b,sizeof(b),"%s / WEIGHT %d",slotNames[ui.selection],itemDefs[it].weight);
     clipped(30, 212, b, 68, TEAL);
 }
+static void requirement_cell(int cell,const char*label,int need,int have){
+    int x=29+(cell%2)*211,y=177+(cell/2)*13;char b[60];clipped(x,y,label,22,TEXT);snprintf(b,sizeof(b),"%d/%d",have,need);text(x+138,y,b,have>=need?0x73c58b:RED,1);
+}
 static void forge_screen(void) {
-    overlay_header("THE IRON TRADE", "\014 CONFIGURE   \001 FORGE   \010 GUIDE");
-    int it = gear_id(ui.forgeFamily, ui.forgeMaterial, ui.forgeQuality);
-    ItemDef *d = &itemDefs[it];
-    Actor a = preview_actor();
-    a.gear[d->slot] = it;
-    portrait_scale(&a, 150, 100, 30, 84, 1);
-    const char *labels[] = {"SLOT", "DESIGN", "MATERIAL", "QUALITY", "FORGE THIS PIECE"};
-    const char *values[] = {slotNames[ui.forgeSlot], familyNames[ui.forgeFamily],
-                            materialNames[ui.forgeMaterial], qualityNames[ui.forgeQuality], "\001"};
-    for (int i = 0; i < 5; i++) {
-        int y = 85 + i * 20;
-        if (i == ui.selection)
-            rect(195, y - 3, 253, 16, 0x3c4034);
-        text(202, y, labels[i], MUTED, 1);
-        text(441 - strlen(values[i]) * 6, y, values[i], GOLD, 1);
-    }
-    char b[100];
-    Actor *worker = &g.actors[g.selected];
-    snprintf(b, sizeof(b), "IRON %d/%d  CLOTH %d/%d  WOOD %d/%d", inventory_count(worker, IRONBAR),
-             2 + d->material + d->quality * 2, inventory_count(worker, CLOTH), d->slot ? 2 + d->quality : 0,
-             inventory_count(worker, WOOD), d->slot == 0);
-    text(29, 205, b, TEXT, 1);
-    snprintf(b, sizeof(b), "RELIC %d/%d  COAL %d/%d  TIER %d/%d  SMITH %d/%d", inventory_count(worker, RELIC),
-             d->material == 5, inventory_count(worker, COAL), d->quality >= 2, g.tech,
-             d->material >= 4   ? 3
-             : d->material >= 2 ? 2
-                                : 1,
-             level(worker, SMITHING), d->quality * 12);
-    text(29, 218, b, TEAL, 1);
-    snprintf(b, 100, "%s +%d   DMG %d  ARM %d", effectNames[d->effect], item_effect_value(it), d->power,
-             d->armor);
-    text(201, 187, b, MUTED, 1);
+    overlay_header("EQUIPMENT FORGE", "\014 CONFIGURE   \001 CHOOSE   \003 RECIPES");
+    int it=forge_selection_item();ItemDef*d=&itemDefs[it];Actor a=preview_actor();a.gear[d->slot]=it;
+    portrait_scale(&a,150,68,30,80,1);
+    char summary[60];snprintf(summary,sizeof(summary),"%s %d / WEIGHT %d",d->slot?"ARMOR":"DAMAGE",d->slot?d->armor:d->power,d->weight);text(30,152,summary,TEXT,1);
+    const char*labels[]={"SLOT","DESIGN","MATERIAL","QUALITY","FORGE THIS PIECE"};
+    const char*values[]={slotNames[ui.forgeSlot],forge_selection_name(),materialNames[ui.forgeMaterial],qualityNames[ui.forgeQuality],"\001"};
+    for(int i=0;i<5;i++){int y=84+i*14;if(i==ui.selection)rect(195,y-3,253,13,0x3c4034);text(202,y,labels[i],MUTED,1);text(441-strlen(values[i])*6,y,values[i],GOLD,1);}
+    text(29,163,"REQUIREMENTS                HAVE/NEED",MUTED,1);
+    CraftRequirements r;if(!forge_requirements(it,&r))return;Actor*worker=&g.actors[g.selected];int cell=0;
+    for(int i=0;i<r.count;i++)requirement_cell(cell++,itemDefs[r.item[i]].name,r.need[i],inventory_count(worker,r.item[i]));
+    requirement_cell(cell++,"Research tier",r.tech,g.tech);requirement_cell(cell++,"Smithing",r.smithing,level(worker,SMITHING));
+    int station=nearby_workstation(FORGE);if(station>=0&&g.buildings[station].owner>=0)requirement_cell(cell++,"Station fuel",1,(int)g.depth.buildings[station].fuel);
+    char b[120],reason[90];int ready=craft_readiness(&r,reason,sizeof(reason));
+    snprintf(b,sizeof(b),"FORGE %s / %s",station>=0?"IN REACH":"TOO FAR",reason);clipped(29,226,b,69,ready?TEAL:RED);
 }
 static void dialogue_screen(void) {
     int n = ui.dialogActor;

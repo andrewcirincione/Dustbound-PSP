@@ -63,6 +63,14 @@ int main(void) {
                 if (pixels[z] != 0xdeadbeef)
                     return 1;
         }
+    for(int race=0;race<SPECIES;race++)for(int body=0;body<3;body++)for(int pose=0;pose<3;pose++){
+        g.interiorBuilding=0;character_begin(0);ui.createRace=race;ui.createBody=body;
+        if(pose){ui.screen=SCREEN_PACK;g.actors[g.selected].race=race;g.actors[g.selected].body=body;g.actors[g.selected].unconscious=pose==2?10:0;}
+        for(unsigned z=0;z<sizeof(pixels)/sizeof(*pixels);z++)pixels[z]=0xdeadbeef;
+        render_game(pixels,512);frames++;
+        for(int y=0;y<272;y++)for(int x=480;x<512;x++)if(pixels[y*512+x]!=0xdeadbeef)return 1;
+        for(int z=512*272;z<512*272+32;z++)if(pixels[z]!=0xdeadbeef)return 1;
+    }
     printf("PASS: %d screen/biome/guide renders; 480x272 bounds and 512-pixel stride preserved.\n", frames);
     return 0;
 }

@@ -74,7 +74,7 @@ int main(void) {
                                 miny = dy;
                             if (dy > maxy)
                                 maxy = dy;
-                            if (dx < -ACT_W || dx >= ACT_W || dy < -136 || dy >= ACT_H * 2 - 136) {
+                            if (dx < -ACT_W || dx >= ACT_W || dy < -ACT_ANCHOR || dy >= ACT_H * 2 - ACT_ANCHOR) {
                                 fprintf(stderr,
                                         "Actor cache clipping: family=%d phase=%d direction=%d step=%d "
                                         "pixel=%d,%d\n",
@@ -92,16 +92,16 @@ int main(void) {
         a.gear[0] = gear_id(0, 1, 1);
         candidate.gear[0] = gear_id(weapon_family_index(family), 3, 2);
         memset(canvas, 0, sizeof(canvas));
-        compare_portraits(&a, &candidate);
+        portrait_scale(&candidate,103,69,28,81,1);
         uint64_t first = 0;
         for (int y = 0; y < 272; y++)
             for (int x = 0; x < 512; x++) {
-                int inside = y >= 92 && y < 168 && ((x >= 277 && x < 361) || (x >= 374 && x < 458));
+                int inside = y >= 81 && y < 150 && x >= 28 && x < 131;
                 assert(inside || canvas[y * 512 + x] == 0);
                 first = first * 31 + canvas[y * 512 + x];
             }
         memset(canvas, 0, sizeof(canvas));
-        compare_portraits(&a, &candidate);
+        portrait_scale(&candidate,103,69,28,81,1);
         uint64_t second = 0;
         for (int i = 0; i < 512 * 272; i++)
             second = second * 31 + canvas[i];

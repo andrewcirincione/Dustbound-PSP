@@ -605,7 +605,7 @@ int depth_repair(int mi, int pi) {
         return 0;
     int hurt = 0;
     for (int j = 0; j < LIMBS; j++)
-        if (!depth_organic(a, j) && (a->health[j] < 99 || D.actors[pi].trauma[j] > 0))
+        if (!depth_organic(a, j) && (a->health[j] < species_health(a)-1 || D.actors[pi].trauma[j] > 0))
             hurt = 1;
     if (!hurt) {
         log_msg("No mechanical damage to repair.");
@@ -619,7 +619,7 @@ int depth_repair(int mi, int pi) {
         if (!depth_organic(a, j)) {
             D.actors[pi].trauma[j] = fmaxf(0, D.actors[pi].trauma[j] - 20);
             a->health[j] =
-                fminf(100 - D.actors[pi].trauma[j], a->health[j] + 30 + level(m, ENGINEERING) * .5f);
+                fminf(species_health(a) - D.actors[pi].trauma[j], a->health[j] + 30 + level(m, ENGINEERING) * .5f);
         }
     if (a->race == 2)
         a->bleed = 0;
@@ -966,7 +966,7 @@ void depth_after_tick(float dt) {
         if (!a->active)
             continue;
         for (int j = 0; j < LIMBS; j++)
-            a->health[j] = fminf(a->health[j], 100 - z->trauma[j]);
+            a->health[j] = fminf(a->health[j], species_health(a) - z->trauma[j]);
         /* Named NPCs retain authored positions; escorts and convoy move in
          * depth_tick. */
         int n = depth_named(i);

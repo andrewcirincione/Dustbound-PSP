@@ -1,3 +1,7 @@
+# 0.10.0 — Peoples, courts and personal arms
+
+Five species with visible base stats; 18 named owners and 36 personal items; 96 cultural armor variants; distinct settlement plans; 12 constructions across all 38 weapon types; clear crafting and forging requirements. Save v10 with earlier-save migration. See docs/RELEASE_NOTES.md and docs/VALIDATION_V100.md.
+
 # 0.5.2 — Reliable actions and recovery
 
 ## 0.6.2 — Analog movement and D-pad menus

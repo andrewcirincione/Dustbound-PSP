@@ -1,0 +1,27 @@
+{
+  "verified_at_utc": "2026-11-08T00:39:57.512897+00:00",
+  "version": "0.10.0",
+  "clean_psp_rebuild": true,
+  "eboot_sha256": "02af5224b66e80639a2ee3d5c7faec5b77c76141907dd09ab368bd733dd9bf09",
+  "native_suites": {
+    "validate_v080.sh": {
+      "passed": true,
+      "log_sha256": "3ef8d1ec99b6286a6ab07f04e7451e4d032f581cda9608b2a2ee171673aba1dd"
+    },
+    "validate_v081.sh": {
+      "passed": true,
+      "log_sha256": "89f35259aa5a3339b894c968526443fc7af036d173de4fff1e622adac7b7ad4f"
+    },
+    "validate_v090.sh": {
+      "passed": true,
+      "log_sha256": "4f1856bb2c91bc1dc7f75600000fecb13e52625938edbefff1b0f299e787ba58"
+    },
+    "validate_v100.sh": {
+      "passed": true,
+      "log_sha256": "da04b5c598b3832b7f53d2673bc3c27a7c4ac450c3e4b83d6b6cdf0c3286dda9"
+    }
+  },
+  "controller_completed": true,
+  "controller_captures": 82,
+  "physical_psp_tested": false
+}

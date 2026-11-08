@@ -24,6 +24,7 @@ const char *npc_role_name(const Actor *a) {
     if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + MAX_ACTORS)) {
         int ai=(int)(a-g.actors);
         if(a->prisonTime>0)return "PRISONER";
+        int elite=civil_elite_index(ai);if(elite>=0)return eliteDefs[elite].title;
         if(g.society.freed[ai])return "FREED SURVIVOR";
         int n = depth_named(ai);
         if (n == NPC_SORA)

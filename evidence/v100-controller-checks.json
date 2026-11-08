@@ -1,0 +1,600 @@
+[
+  {
+    "eboot_sha256": "02af5224b66e80639a2ee3d5c7faec5b77c76141907dd09ab368bd733dd9bf09",
+    "version": "0.10.0"
+  },
+  {
+    "capture": "v100-psp-title",
+    "screen": 13,
+    "expected": 13,
+    "frame": 24,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-species-0",
+    "screen": 15,
+    "expected": 15,
+    "frame": 97,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-species-1",
+    "screen": 15,
+    "expected": 15,
+    "frame": 122,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-species-2",
+    "screen": 15,
+    "expected": 15,
+    "frame": 146,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-species-3",
+    "screen": 15,
+    "expected": 15,
+    "frame": 170,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-species-4",
+    "screen": 15,
+    "expected": 15,
+    "frame": 188,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-stonekin-health",
+    "screen": 0,
+    "expected": 0,
+    "frame": 394,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-stonekin-skills",
+    "screen": 2,
+    "expected": 2,
+    "frame": 421,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-town-fortress",
+    "screen": 0,
+    "expected": 0,
+    "frame": 683,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-town-village",
+    "screen": 0,
+    "expected": 0,
+    "frame": 958,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-town-temple",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1258,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-town-foundry",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1595,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-town-cannibals",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1931,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-town-grove",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2306,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-named-loot",
+    "screen": 24,
+    "expected": 24,
+    "frame": 2689,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-looted-weapon",
+    "screen": 24,
+    "expected": 24,
+    "frame": 2724,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-glass-horizon",
+    "screen": 1,
+    "expected": 1,
+    "frame": 2844,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-equipped-heirloom",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2912,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-00-00",
+    "screen": 1,
+    "expected": 1,
+    "frame": 3260,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-00-02",
+    "screen": 1,
+    "expected": 1,
+    "frame": 3320,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-00-06",
+    "screen": 1,
+    "expected": 1,
+    "frame": 3428,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-00-07",
+    "screen": 1,
+    "expected": 1,
+    "frame": 3459,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-00-09",
+    "screen": 1,
+    "expected": 1,
+    "frame": 3520,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-00-11",
+    "screen": 1,
+    "expected": 1,
+    "frame": 3580,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-equipped-00",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3654,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-12-00",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4028,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-12-02",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4081,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-12-06",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4194,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-12-07",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4231,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-12-09",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4290,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-12-11",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4347,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-equipped-12",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4405,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-16-00",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4772,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-16-02",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4830,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-16-06",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4942,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-16-07",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4975,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-16-09",
+    "screen": 1,
+    "expected": 1,
+    "frame": 5038,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-16-11",
+    "screen": 1,
+    "expected": 1,
+    "frame": 5096,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-equipped-16",
+    "screen": 0,
+    "expected": 0,
+    "frame": 5156,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-25-00",
+    "screen": 1,
+    "expected": 1,
+    "frame": 5538,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-25-02",
+    "screen": 1,
+    "expected": 1,
+    "frame": 5597,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-25-06",
+    "screen": 1,
+    "expected": 1,
+    "frame": 5706,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-25-07",
+    "screen": 1,
+    "expected": 1,
+    "frame": 5738,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-25-09",
+    "screen": 1,
+    "expected": 1,
+    "frame": 5792,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-25-11",
+    "screen": 1,
+    "expected": 1,
+    "frame": 5852,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-equipped-25",
+    "screen": 0,
+    "expected": 0,
+    "frame": 5909,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-29-00",
+    "screen": 1,
+    "expected": 1,
+    "frame": 6262,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-29-02",
+    "screen": 1,
+    "expected": 1,
+    "frame": 6314,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-29-06",
+    "screen": 1,
+    "expected": 1,
+    "frame": 6408,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-29-07",
+    "screen": 1,
+    "expected": 1,
+    "frame": 6434,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-29-09",
+    "screen": 1,
+    "expected": 1,
+    "frame": 6490,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-29-11",
+    "screen": 1,
+    "expected": 1,
+    "frame": 6545,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-equipped-29",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6601,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-32-00",
+    "screen": 1,
+    "expected": 1,
+    "frame": 6968,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-32-02",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7034,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-32-06",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7157,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-32-07",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7192,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-32-09",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7252,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-32-11",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7313,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-equipped-32",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7374,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-36-00",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7731,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-36-02",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7786,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-36-06",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7888,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-36-07",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7923,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-36-09",
+    "screen": 1,
+    "expected": 1,
+    "frame": 7985,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-36-11",
+    "screen": 1,
+    "expected": 1,
+    "frame": 8047,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-equipped-36",
+    "screen": 0,
+    "expected": 0,
+    "frame": 8118,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-37-00",
+    "screen": 1,
+    "expected": 1,
+    "frame": 8490,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-37-02",
+    "screen": 1,
+    "expected": 1,
+    "frame": 8548,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-37-06",
+    "screen": 1,
+    "expected": 1,
+    "frame": 8659,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-37-07",
+    "screen": 1,
+    "expected": 1,
+    "frame": 8692,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-37-09",
+    "screen": 1,
+    "expected": 1,
+    "frame": 8751,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-weapon-37-11",
+    "screen": 1,
+    "expected": 1,
+    "frame": 8803,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-equipped-37",
+    "screen": 0,
+    "expected": 0,
+    "frame": 8867,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-crafting-missing",
+    "screen": 9,
+    "expected": 9,
+    "frame": 9492,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-forging-missing",
+    "screen": 18,
+    "expected": 18,
+    "frame": 9524,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-crafting-away",
+    "screen": 9,
+    "expected": 9,
+    "frame": 10134,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-crafting-ready",
+    "screen": 9,
+    "expected": 9,
+    "frame": 10762,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-cooking-alternatives",
+    "screen": 9,
+    "expected": 9,
+    "frame": 10794,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-forging-ready",
+    "screen": 18,
+    "expected": 18,
+    "frame": 10998,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-forged-rapier",
+    "screen": 18,
+    "expected": 18,
+    "frame": 11056,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v100-psp-crafting-used-materials",
+    "screen": 9,
+    "expected": 9,
+    "frame": 11142,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "completed": true,
+    "prepared_town_saves": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "creator_species": 5,
+    "craft_requirements_and_real_rapier_forging": true,
+    "actual_stonekin_hp": 130,
+    "actual_stonekin_strength": 15,
+    "named_weapon_physically_looted_and_equipped": true,
+    "weapon_families_inspected": 8,
+    "patterns_per_family_inspected": 6,
+    "eboot_sha256": "02af5224b66e80639a2ee3d5c7faec5b77c76141907dd09ab368bd733dd9bf09"
+  }
+]

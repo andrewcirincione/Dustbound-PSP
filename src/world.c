@@ -55,6 +55,14 @@ int biome(float x, float y) {
     return 1;
 }
 int terrain_road(float x, float y) {
+    int town=town_near(x,y,16);
+    if(town>0){
+        float dx=x-towns[town].x,dy=y-towns[town].y;int style=civil_style(town);
+        if(style==1 && ((fabsf(dx)<2.2f && fabsf(dy)<14) || (fabsf(dy-5)<1.2f && fabsf(dx)<10)))return 1;
+        if(style==2 && fabsf(dx)<6 && fabsf(dy)<6 && (fabsf(dx)>3.8f || fabsf(dy)>3.8f))return 1;
+        if(style==4 && fabsf(dx)<10 && fabsf(dy)<10 && (fabsf(dx-1)<1.1f || fabsf(dy-2)<1.1f))return 1;
+        if(style==3 && fabsf(dx)<9 && fabsf(dy-dx*.45f)<.7f)return 1;
+    }
     /* A sparse road graph: each town joins the nearest earlier settlement. */
     static int neighbors[TOWNS], ready;
     if (!ready) {
@@ -367,48 +375,47 @@ int shop_count(void) {
     return n;
 }
 int nearby_workstation(int type) { return nearby_station(type, 1.7f); }
+int forge_selection_item(void){
+    int f=ui.forgeFamily;
+    return f==88?SCIMITAR_ITEMS+ui.forgeMaterial*4+ui.forgeQuality:
+           f==89?RAPIER_ITEMS+ui.forgeMaterial*4+ui.forgeQuality:
+           f>=90&&f<94?CIV_ARMOR_ITEMS+(f-90)*24+ui.forgeMaterial*4+ui.forgeQuality:
+           gear_id(f,ui.forgeMaterial,ui.forgeQuality);
+}
+const char *forge_selection_name(void){
+    static const char *extra[]={"Scimitar","Rapier","Court brigandine","Reed carapace","Basalt plate","Censor vestments"};
+    return ui.forgeFamily>=88&&ui.forgeFamily<94?extra[ui.forgeFamily-88]:familyNames[ui.forgeFamily];
+}
+int forge_requirements(int it,CraftRequirements*out){
+    if(it<BASE_ITEMS||it>=ITEMS||regalia_owner(it)>=0)return 0;
+    ItemDef*d=&itemDefs[it];memset(out,0,sizeof(*out));out->output=it;out->qty=1;out->station=FORGE;
+    out->tech=d->material>=4?3:d->material>=2?2:1;out->smithing=d->quality*12;
+    int items[]={IRONBAR,CLOTH,WOOD,RELIC,COAL},needs[]={2+d->material+d->quality*2,d->slot?2+d->quality:0,d->slot==0,d->material==5,d->quality>=2};
+    for(int i=0;i<5;i++)if(needs[i]){out->item[out->count]=items[i];out->need[out->count++]=needs[i];}return 1;
+}
 int forge_equipment(int it) {
     Actor *a = &g.actors[g.selected];
-    if (it < BASE_ITEMS || it >= ITEMS)
+    CraftRequirements requirements;
+    if (!forge_requirements(it,&requirements))
         return 0;
     ItemDef *d = &itemDefs[it];
     if (nearby_workstation(FORGE) < 0) {
         log_msg("Walk to the forge or its indoor workbench.");
         return 0;
     }
-    int tech = d->material >= 4 ? 3 : d->material >= 2 ? 2 : 1, skill = d->quality * 12;
+    int tech = requirements.tech, skill = requirements.smithing;
     if (g.tech < tech || level(a, SMITHING) < skill) {
         log_msg("Requires research %d and smithing %d.", tech, skill);
         return 0;
     }
-    int metal = 2 + d->material + d->quality * 2, cloth = d->slot ? 2 + d->quality : 0,
-        wood = d->slot == 0 ? 1 : 0;
-    int relic = d->material == 5 ? 1 : 0, coal = d->quality >= 2 ? 1 : 0;
-    if (inventory_count(a, IRONBAR) < metal || inventory_count(a, CLOTH) < cloth ||
-        inventory_count(a, WOOD) < wood || inventory_count(a, RELIC) < relic ||
-        inventory_count(a, COAL) < coal) {
-        log_msg("Need %d iron, %d cloth, %d wood, %d relic, %d coal.", metal, cloth, wood, relic, coal);
-        return 0;
+    for(int i=0;i<requirements.count;i++)if(inventory_count(a,requirements.item[i])<requirements.need[i]){
+        log_msg("Missing %d %s.",requirements.need[i]-inventory_count(a,requirements.item[i]),itemDefs[requirements.item[i]].name);return 0;
     }
-    Actor backup = *a;
-    int owner = inventory_input_owner(a, IRONBAR, metal);
-    if (!owner)
-        owner = inventory_input_owner(a, CLOTH, cloth);
-    if (!owner)
-        owner = inventory_input_owner(a, WOOD, wood);
-    if (!owner)
-        owner = inventory_input_owner(a, RELIC, relic);
-    if (!owner)
-        owner = inventory_input_owner(a, COAL, coal);
-    inventory_remove(a, IRONBAR, metal);
-    if (cloth)
-        inventory_remove(a, CLOTH, cloth);
-    if (wood)
-        inventory_remove(a, WOOD, wood);
-    if (relic)
-        inventory_remove(a, RELIC, relic);
-    if (coal)
-        inventory_remove(a, COAL, coal);
+    Actor backup = *a;int owner=0;
+    for(int i=0;i<requirements.count;i++){
+        if(!owner)owner=inventory_input_owner(a,requirements.item[i],requirements.need[i]);
+        inventory_remove(a,requirements.item[i],requirements.need[i]);
+    }
     if (!inventory_add_owned(a, it, 1, owner)) {
         *a = backup;
         log_msg("Pack full. Forging cancelled.");
@@ -503,7 +510,7 @@ int doctor_heal(int town) {
     a->exposure = 0;
     for (int i = 0; i < LIMBS; i++)
         if (depth_can_heal(a,i))
-            a->health[i] = 100-g.depth.actors[g.selected].trauma[i];
+            a->health[i] = species_health(a)-g.depth.actors[g.selected].trauma[i];
     a->unconscious = 0;
     log_msg("Wounds treated. Lost limbs still need prosthetics.");
     return 1;
@@ -604,6 +611,8 @@ const char *dialogue_line(int n, int page) {
         return town_custom(town_near(a->x,a->y,14));
     if (page == 3)
         return faction_identity(a->faction);
+    int elite=civil_elite_index(n);
+    if(elite>=0)return eliteDefs[elite].story;
     if (npc_role(a) == ROLE_MERCENARY) {
         static char terms[190];
         int s = merc_slot(a);

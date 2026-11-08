@@ -87,13 +87,7 @@ void character_finish(void) {
         }
         if (origin == 4)
             inventory_add(a, BOLTS, 50);
-        if (race == 1) {
-            a->xp[TOUGHNESS] += 300;
-            a->xp[STEALTH] += 150;
-        } else if (race == 2) {
-            a->xp[STRENGTH] += 300;
-            a->xp[ENGINEERING] += 250;
-        }
+        species_start(a,origin,race);
         g.playOrigin = origin;
     }
     open_view(SCREEN_WORLD);
@@ -145,7 +139,7 @@ static void adjust_creator(int d) {
         break;
     case 2:
         if (!ui.titleChoice)
-            ui.createRace = wrapi(ui.createRace + d, 3);
+            ui.createRace = wrapi(ui.createRace + d, SPECIES);
         break;
     case 3:
         ui.createBody = wrapi(ui.createBody + d, 3);
@@ -391,8 +385,10 @@ int expansion_input(float dt, Input in) {
         }
         return 1;
     }
+    if(ui.screen==SCREEN_CRAFT&&(p&KEY_SQUARE)){open_view(SCREEN_FORGE);return 1;}
     if (ui.screen == SCREEN_FORGE) {
-        static const int first[GEARS] = {0, 32, 48, 60, 68, 76}, counts[GEARS] = {36, 16, 12, 8, 8, 8};
+        if(p&KEY_SQUARE){open_view(SCREEN_CRAFT);return 1;}
+        static const int first[GEARS] = {0, 32, 48, 60, 68, 76}, counts[GEARS] = {38, 20, 12, 8, 8, 8};
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(SCREEN_WORLD);
             return 1;
@@ -408,9 +404,9 @@ int expansion_input(float dt, Input in) {
                 ui.forgeFamily = first[ui.forgeSlot];
             }
             if (ui.selection == 1) {
-                int index = ui.forgeFamily >= 84 ? ui.forgeFamily - 52 : ui.forgeFamily - first[ui.forgeSlot];
+                int index = ui.forgeFamily >= 90 ? ui.forgeFamily-90+16 : ui.forgeFamily >= 84 ? ui.forgeFamily - 52 : ui.forgeFamily - first[ui.forgeSlot];
                 index = wrapi(index + d, counts[ui.forgeSlot]);
-                ui.forgeFamily = ui.forgeSlot == 0 ? weapon_family_index(index) : first[ui.forgeSlot] + index;
+                ui.forgeFamily = ui.forgeSlot == 0 ? (index>=36?index+52:weapon_family_index(index)) : ui.forgeSlot==1&&index>=16?index-16+90:first[ui.forgeSlot]+index;
             }
             if (ui.selection == 2)
                 ui.forgeMaterial = wrapi(ui.forgeMaterial + d, MATERIALS);
@@ -418,7 +414,7 @@ int expansion_input(float dt, Input in) {
                 ui.forgeQuality = wrapi(ui.forgeQuality + d, QUALITIES);
         }
         if ((p & KEY_CROSS) && ui.selection == 4)
-            forge_equipment(gear_id(ui.forgeFamily, ui.forgeMaterial, ui.forgeQuality));
+            forge_equipment(forge_selection_item());
         return 1;
     }
     if (ui.screen == SCREEN_STORAGE) {

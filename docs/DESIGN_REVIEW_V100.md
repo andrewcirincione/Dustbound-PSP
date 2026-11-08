@@ -1,0 +1,24 @@
+# Critical review — 0.10.0
+
+The biggest problem was apparent variety without enough differences in play or appearance. Most towns shared one plan. Species were weakly explained. Many weapons changed finish and numbers while retaining one silhouette. Named garrison equipment did not establish a cast of memorable owners.
+
+## Addressed in this release
+
+- All 38 weapon types retain 24 stable material/quality variants and now use 12 constructions with different geometry and fittings. The changes include blade width/length/curvature, guards and pommels, polearm heads, bow limbs and bracing, barrels and stocks. Each construction has two quality finishes. Melee reach and attack delay account for the construction. These are procedural variations of the existing painted art, not 912 separately illustrated weapons.
+- Eighteen persistent individuals now physically own 36 personal weapons and armor pieces: six rulers, six regional champions and six travelers. Defeating, robbing or looting them produces the equipment they actually carry. Death and removed equipment remain removed after loading. Travelers move through the world; they are not atlas markers.
+- Four additional armor profiles have 24 variants each: court brigandine, reed carapace, basalt plate and censor vestments. Their weight, protection, movement, stealth and regional availability differ. They reuse existing garment art families.
+- Fortress towns have walls, open gate approaches and a central court; monasteries arrange buildings around a cloister; scrap villages have irregular cottages and shacks; foundries cluster workshops; cannibal camps organize around an open cooking ground. Services remain reachable. These changes preserve player-built structures and existing building references.
+- Five species choices expose health, load, speed, appetite and starting skills before creation. Starting statistics also depend on origin. The portrait hides headwear while editing appearance so faces, ears and head details can be seen. Clockworks need spare parts and do not eat or bleed; reedkin are quick and fragile; stonekin are slow, strong and hungry. Healing and HUD limits respect species health.
+- Reviewing actual frames caught detached fittings on curved weapons, an ornate village tavern, and long weapons clipping during attack animations. Fittings now follow painted metal; village taverns use cottages; render caches accommodate the larger attack bounds.
+- Crafting previously compressed quantities, research and station information into a sentence and omitted fuel. Recipes now show owned/required beside each ingredient, green when sufficient and red when short, plus alternatives and a specific blocking reason. Equipment forging uses the same requirement vocabulary and directly connects to recipes with Square.
+
+## Current critiques, in priority order
+
+1. **Political consequences remain shallow.** Killing a ruler records the loss and damages town prosperity, but does not produce a succession struggle, a new claimant, civil war or a lasting new government. The new leaders need meaningful choices and consequences around them.
+2. **Renewal is broader than encounter depth.** The event director renews indefinitely, but still recombines eight underlying incident mechanics. More interactions between those mechanics would matter more than adding another list of event names.
+3. **Civilizations need different daily behavior as well as plans.** Layouts, markets, restrictions, disguises and cannibal behavior differ. Residents still lack rich schedules, religious services, courts, caste rules and individual offscreen careers. Town production remains an aggregate simulation.
+4. **The equipment system needs a longer balance pass.** There are many silhouettes, effects and tradeoffs, but that does not establish that every weapon class has an equally interesting tactical role. Endgame armor, elite difficulty, reach and attack-delay tradeoffs need extended natural play. Named owners also need more distinctive dialogue and stories.
+5. **Species need stronger visual identity.** They now have different palettes, body proportions and head/mechanical details, but share the articulated rig and most clothing. Unique anatomy and movement would make them more convincing at PSP size.
+6. **Hardware performance is still unqualified.** The actor pool remains bounded and the new state is small. Emulator and native tests pass, but neither is a substitute for an extended session on a physical PSP. The larger weapon render bounds increase cache memory and compositing work.
+
+The next most useful work is consequences and behavior around the existing content: a king's death changing who controls a town, an elite with a reason to travel, and professions and equipment enabling a materially different route through the world.
