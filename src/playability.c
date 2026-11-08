@@ -24,6 +24,7 @@ const char *npc_role_name(const Actor *a) {
     if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + MAX_ACTORS)) {
         int ai=(int)(a-g.actors);
         if(a->prisonTime>0)return "PRISONER";
+        if(limb_surgeon(ai))return "LIMB SURGEON";
         int elite=civil_elite_index(ai);if(elite>=0)return eliteDefs[elite].title;
         if(g.society.freed[ai])return "FREED SURVIVOR";
         int n = depth_named(ai);
@@ -50,6 +51,7 @@ static const int services[][7] = {
 int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
         return 0;
+    if(limb_surgeon(actor))return 5;
     int named = depth_named(actor);
     if (named >= 0 && named <= NPC_TAMSIN)
         return named == NPC_NELL ? 5 : (named == NPC_RELL || named == NPC_SORA) ? 4 : 3;
@@ -61,6 +63,7 @@ int dialogue_count(int actor) {
 int dialogue_action(int actor, int row) {
     if (row < 0 || row >= dialogue_count(actor))
         return 8;
+    if(limb_surgeon(actor)){static const int actions[]={16,17,3,6,8};return actions[row];}
     if (npc_role(&g.actors[actor]) == ROLE_MERCENARY && merc_slot(&g.actors[actor]) >= 0 && row == 0)
         return 11;
     int action=services[npc_role(&g.actors[actor])][row];
@@ -83,6 +86,8 @@ const char *dialogue_option(int actor, int row) {
     if (depth_named(actor) >= 0 && depth_named(actor) <= NPC_TAMSIN)
         return depth_option(actor, row);
     int action = dialogue_action(actor, row);
+    if(action==16)return "Removal surgery. 400 silver";
+    if(action==17)return "Show me mechanical limbs.";
     if(action==13)return "Discuss the local conflict.";
     if(action==2 && !regional_bed_cost(town_near(g.actors[actor].x,g.actors[actor].y,14)))return "Rest at the sanctuary. Free";
     if (action == 6 && npc_role(&g.actors[actor]) == ROLE_RECRUIT)
@@ -341,9 +346,7 @@ const char *npc_rumor(const Actor *a) {
                "whole "
                "road. Hire an escort before leaving alone.";
     case ROLE_MEDIC:
-        return "First aid stops bleeding; a bed finishes recovery. Injured arms slow heavy weapons even "
-               "when "
-               "your strength is high.";
+        return "Surgeon Venn works in Dusk Haven. Copper Cross sells reinforced limbs; Iron Gate sells precision limbs; Black Mesa sells relic limbs. Fit replacements with two machine parts.";
     case ROLE_SMITH:
         return "Greatswords need strength; mauls defeat armor; glaives trade impact for reach. Choose a "
                "weapon your injured arms can still lift.";
@@ -397,6 +400,7 @@ void frontier_restock(int t) {
         g.stock[t][IRONBAR] = 20;
         g.stock[t][TOOLS] = 8;
     }
+    limbs_stock(t);
 }
 static void identity_outfit(Actor *a) {
     int f = a->faction, role = npc_role(a), m = f == SHOGUN ? 4 : f == OUTLAWS ? 0 : 1;
@@ -569,16 +573,16 @@ int nearby_service(int role) {
 }
 int loot_take(int slot, int all) {
     Actor *a = &g.actors[g.selected];
-    if (ui.lootActor < 0 || ui.lootActor >= g.actorCount || slot < 0 || slot >= PACK + GEARS)
+    if (ui.lootActor < 0 || ui.lootActor >= g.actorCount || slot < 0 || slot >= PACK + GEARS + 4)
         return 0;
     Actor *b = &g.actors[ui.lootActor];
     if (!conscious(a) || (!b->dead && b->unconscious <= 0) || depth_distance(a, b) > TALK_REACH) {
         log_msg("Salvage needs a fallen target within reach.");
         return 0;
     }
-    int it = slot < PACK ? b->pack[slot].item : b->gear[slot - PACK];
+    int it = limb_loot_item(b,slot);
     int qty = slot < PACK && all ? b->pack[slot].qty : 1;
-    int owner = slot < PACK ? b->stolen[slot] : b->gearStolen[slot - PACK];
+    int owner = slot < PACK ? b->stolen[slot] : slot<PACK+GEARS?b->gearStolen[slot-PACK]:limb_owner(b,LARM+slot-PACK-GEARS);
     int theft = !b->squad && b->faction != HOSTILE && b->faction != WILDLIFE;
     if (theft)
         owner = b->faction;
@@ -588,6 +592,7 @@ int loot_take(int slot, int all) {
     }
     if (slot < PACK)
         inventory_remove_slot(b, slot, qty);
+    else if(slot>=PACK+GEARS){int l=LARM+slot-PACK-GEARS;limb_set(b,l,0,0);b->health[l]=0;g.depth.actors[ui.lootActor].trauma[l]=0;}
     else {
         b->gear[slot - PACK] = 0;
         b->gearStolen[slot - PACK] = 0;
@@ -722,7 +727,7 @@ static int view_item(int slot) {
     if (ui.screen == SCREEN_LOOT || ui.screen == SCREEN_THEFT) {
         if (ui.lootActor < 0 || ui.lootActor >= g.actorCount) return 0;
         a = &g.actors[ui.lootActor];
-        return slot < PACK ? a->pack[slot].item : a->gear[slot-PACK];
+        return limb_loot_item(a,slot);
     }
     if (ui.screen == SCREEN_STORAGE && ui.storageSide)
         return ui.storageIndex >= 0 && ui.storageIndex < g.buildingCount ? g.buildings[ui.storageIndex].storage[slot].item : 0;
@@ -731,7 +736,7 @@ static int view_item(int slot) {
     return it;
 }
 static int view_limit(void) {
-    return ui.screen == SCREEN_LOOT ? PACK + GEARS : ui.screen == SCREEN_STORAGE && ui.storageSide ? 16 : PACK;
+    return ui.screen == SCREEN_LOOT ? PACK + GEARS + 4 : ui.screen == SCREEN_STORAGE && ui.storageSide ? 16 : PACK;
 }
 int item_view_count(void) {
     int count = 0;

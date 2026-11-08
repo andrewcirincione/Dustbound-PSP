@@ -42,12 +42,12 @@ int main(void) {
     fresh();
     Actor *a = &g.actors[0];
     int valid = 0;
-    for (int it = BASE_ITEMS; it < ITEMS; it++) {
+    for (int it = BASE_ITEMS; it < V100_ITEMS; it++) {
         ItemDef *d = &itemDefs[it];
         valid += d->name && d->name[0] && d->slot >= 0 && d->slot < GEARS && d->price > 0 && d->weight > 0 &&
                  d->effect >= 0 && d->effect < 12;
     }
-    CHECK(valid == ITEMS - BASE_ITEMS,
+    CHECK(valid == V100_ITEMS - BASE_ITEMS,
           "all catalog and specialist gear have valid slots, effects and prices");
     CHECK(gear_id(FAMILIES - 1, 5, 3) == CATALOG_ITEMS - 1 && gear_id(-1, 0, 0) == NONE,
           "catalog boundaries are checked");
@@ -250,7 +250,7 @@ int main(void) {
     a->cooldown = 0;
     a->lostMask = 1 << RARM;
     strike(0, 1);
-    CHECK(a->attackWeapon == NONE, "a missing weapon arm forces unarmed attacks");
+    CHECK(a->attackWeapon == a->gear[0], "a missing right arm transfers the weapon to the remaining hand");
     fresh();
     a = &g.actors[0];
     e = &g.actors[1];

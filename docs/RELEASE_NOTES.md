@@ -1,20 +1,17 @@
-# Dustbound 0.10.0 — Peoples, courts and personal arms
+# Dustbound 0.11.0 — Flesh and iron
 
-Weapon variants now change construction across every weapon type. Civilizations have different settlement plans, named individuals carry personal equipment, and species choices visibly explain their starting strengths and needs.
+Limbs can now be severed, individually replaced, surgically removed and physically looted from equipped wanderers.
 
-- All **38 weapon types** have **24 material/quality variants**, now using **12 distinct constructions per type** with two quality finishes each. Blades, heads, guards, grips, bow limbs, barrels and stocks vary. Melee reach and attack delay account for the changed proportions. Existing item IDs are preserved.
-- **18 named rulers, regional champions and elite wanderers** carry **36 personal weapons and armor pieces**. Examples include Shogun Raizen's Last Edict, the Vulture King's Hunger, Glass Ronin's Glass Horizon and the Hollow Prince's Empty Crown. Six elites travel between regions. Their equipment can be physically taken; death and looting do not reset on reload.
-- **96 additional armor variants** cover court brigandine, reed carapace, basalt plate and censor vestments, with different protection, weight, mobility, stealth and regional stock.
-- Fortress courts, temple cloisters, irregular scrap villages, foundry enclaves and cannibal camps use different arrangements and appropriate building silhouettes. Fortresses have actual walls and open gates. Existing player buildings are preserved.
-- **Lowlander, Ashlander, Clockwork, Reedkin and Stonekin** have different base health, strength, dexterity, toughness, movement, appetite and other skill adjustments. Creation shows the resulting starting stats, including the chosen origin. Clockworks repair with parts and do not eat or bleed; Reedkin favor speed and evasion; Stonekin favor health and carrying strength.
-- Species-aware healing, mechanical repair and health bars replace old 100-HP assumptions. Creation previews now match the real starting equipment. Headwear is hidden only while editing appearance.
-- Crafting separates recipe selection from compact owned/required ratios, green when sufficient (including exact amounts) and red when short, shows output quantity, ingredient alternatives, research, workstation reach and fuel, and explains why a recipe cannot be made. Square switches recipes and equipment forging. The forge now includes scimitars, rapiers and all four new armor profiles; personal elite regalia cannot be forged.
-- Existing compact controls, naturally encountered events, regional trade, independent freed prisoners and explicit recruitment remain.
+- **Five grades of arms and legs:** Scrap, Standard, Reinforced, Precision and Relic. Different durability, strength/dexterity, movement and carrying bonuses. Individual left/right fitting with old/new stat comparison.
+- **Regional limb shops:** basic replacements in Dusk Haven, Reinforced in Copper Cross/Red Gulch, Precision in Iron Gate/Shogun's Rest, and Relic in Black Mesa. Markets have a dedicated Mechanical Limbs filter and stock repair/fitting parts.
+- **Surgeon Venn in Dusk Haven:** permanent arm or leg removal for 400 silver, with an explicit confirmation. The wound is closed; buy a replacement before surgery.
+- **Crawling:** losing either leg changes movement and posture; losing both is slower still. Fitting replacements restores standing movement.
+- **Remaining-hand combat:** either hand can retain a weapon. Missing an arm reduces two-handed damage and accuracy and increases attack delay. One-handed weapons avoid those missing-arm penalties.
+- **Lootable fitted limbs:** six named wanderers carry real mechanical parts. Taking a fitted part from a fallen owner removes that owner's function and keeps ordinary theft provenance. Loss and looting persist through saves.
+- **Permanent consequences:** organic severing leaves a physical limb and bleeding. Mechanical destruction leaves parts. Bandages cannot regrow limbs or repair metal. Replacements require two parts per fitting; ordinary mechanical repairs use parts.
 
-The weapon constructions use the original painted sprites with procedural geometry and fittings. Armor profiles share existing garment families. These counts are gameplay variants, not counts of separately illustrated assets.
+Install `Dustbound-0.11.0-PSP.zip` at the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Save format is v11; an actual v10 save was migrated and reloaded. Earlier readers remain supported. Back up saves before overwriting them with a newer version.
 
-Install `Dustbound-0.10.0-PSP.zip` at the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Save format is v10. Earlier formats remain supported; an actual v9 save was migrated and reloaded during validation. Existing expeditions receive the settlement/content migration once. Keep a copy of an old save before overwriting it.
+[Grades, locations and controls](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/CONTENT_V110.md) · [PSP screenshots](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/FEEDBACK_V110.md) · [Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V110.md)
 
-[Content and named owners](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/CONTENT_V100.md) · [PSP screenshots](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/FEEDBACK_V100.md) · [Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V100.md) · [Remaining critiques](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/DESIGN_REVIEW_V100.md)
-
-This remains an alpha. Ruler succession, detailed resident schedules, a full natural campaign balance pass and physical PSP qualification are not claimed.
+Verified with native simulation/sanitizer suites and a controller-driven PPSSPP walkthrough of prepared saves. Physical PSP testing and a full naturally played campaign balance pass are not claimed. This remains a playable alpha.

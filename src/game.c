@@ -221,6 +221,7 @@ float encumbrance(const Actor *a) {
         w += itemDefs[a->gear[i]].weight;
     if((uintptr_t)a>=(uintptr_t)g.actors && (uintptr_t)a<(uintptr_t)(g.actors+MAX_ACTORS))
         w += itemDefs[g.depth.actors[a-g.actors].layer].weight;
+    for(int l=LARM;l<=RLEG;l++) w+=itemDefs[limb_installed(a,l)].weight;
     if (a->carrying >= 0)
         w += 40;
     return w;
@@ -238,21 +239,22 @@ float backpack_load_preview(const Actor *a, int item) {
         worn += itemDefs[a->gear[i]].weight;
     if((uintptr_t)a>=(uintptr_t)g.actors && (uintptr_t)a<(uintptr_t)(g.actors+MAX_ACTORS))
         worn += itemDefs[g.depth.actors[a-g.actors].layer].weight;
+    for(int l=LARM;l<=RLEG;l++)worn+=itemDefs[limb_installed(a,l)].weight;
     return worn + cargo * backpack_load_percent(item) * .01f;
 }
 float movement_speed(const Actor *a) {
     float cap = actor_capacity(a);
     float f = 1.0f / (1 + fmaxf(0, encumbrance(a) - cap) / cap);
-    if (a->health[LLEG] < 20 || a->health[RLEG] < 20)
+    if ((!limb_missing(a,LLEG)&&a->health[LLEG]<20) || (!limb_missing(a,RLEG)&&a->health[RLEG]<20))
         f *= .55f;
-    if ((a->lostMask & 48) & ~a->prostheticMask)
-        f *= .22f;
+    if (limb_crawling(a))
+        f *= limb_missing(a,LLEG)&&limb_missing(a,RLEG)?.12f:.22f;
     if (a->hunger < 20)
         f *= .7f;
     if (a->fatigue > 85)
         f *= .75f;
     return (1.9f + level(a, ATHLETICS) * .027f) * f * (a->sneaking ? .55f : 1) *
-           (1 + gear_bonus(a, 1) * .005f) * speciesDefs[species_index(a)].move;
+           (1 + gear_bonus(a, 1) * .005f) * speciesDefs[species_index(a)].move * limb_move_bonus(a);
 }
 int town_near(float x, float y, float r) {
     for (int i = 0; i < TOWNS; i++)
@@ -378,7 +380,7 @@ void restock(void) {
         }
     }
     for (int t = 0; t < TOWNS; t++)
-        {frontier_restock(t);regional_restock(t);society_stock(t);civil_stock(t);}
+        {frontier_restock(t);regional_restock(t);society_stock(t);civil_stock(t);limbs_stock(t);}
     g.lastRestock = g.day;
 }
 void game_new(uint32_t seed, int scenario) {
@@ -483,6 +485,7 @@ void game_new(uint32_t seed, int scenario) {
     living_init();
     society_init();
     civil_init();
+    limbs_init();
     ui.camX = a->x;
     ui.camY = a->y;
     ui.mapX = a->x;
@@ -523,6 +526,7 @@ void strike(int ai, int bi) {
         a->attackPhase || a->prisonTime > 0)
         return;
     int w = a->gear[0], ranged = weapon_ranged(w);
+    if (!limb_arms(a)) { if(limb_missing(a,LLEG)&&limb_missing(a,RLEG))return; w=NONE; ranged=0; }
     if (depth_distance(a, b) > (w ? itemDefs[w].range : 1.55f))
         return;
     if (ranged && !inventory_count(a, gear_family(w) >= 29 ? CARTRIDGE : BOLTS)) {
@@ -534,10 +538,8 @@ void strike(int ai, int bi) {
             log_msg("%s needs ammunition.", a->name);
         return;
     }
-    if ((a->lostMask & (1 << RARM)) && !(a->prostheticMask & (1 << RARM)))
-        w = NONE;
     float cadence =
-        weapon_handling(a, w) * fmaxf(.55f, (w ? itemDefs[w].cooldown : 1.0f) - level(a, DEXTERITY) * .003f);
+        weapon_handling(a, w) * fmaxf(.55f, (w ? itemDefs[w].cooldown : 1.0f) - effective_level(a, DEXTERITY) * .003f);
     a->attackPhase = 1;
     a->attackTarget = bi;
     a->attackWeapon = w;
@@ -586,10 +588,9 @@ void combat_impact(int ai, int bi, int w) {
         atk += level(a, PERCEPTION) * .15f;
     if (ranged && g.weather)
         atk -= 7;
-    if (a->health[LARM] < 30)
-        atk -= 15;
-    if ((a->lostMask & (1 << LARM)) && !(a->prostheticMask & (1 << LARM)))
-        atk -= 15;
+    if (limb_arm_condition(a,w)<.3f && limb_arms(a)>0) atk-=15;
+    atk-=limb_attack_penalty(a,w);
+    if(limb_crawling(b))def*=.65f;
     int avoided=rf()>clamp(.71f+(atk-def)*.008f,.05f,.95f);
     float opposingDef=level(b,b->gear[0]?DEFENCE:MARTIAL),learn=ranged?1:combat_learning(atk,opposingDef);
     float defendLearn=ranged?1:combat_learning(def,level(a,w?MELEE:MARTIAL));
@@ -609,10 +610,10 @@ void combat_impact(int ai, int bi, int w) {
         return;
     }
     int limb = rnd() % LIMBS;
-    if (rf() < .35f)
+    if (rf() < .35f || limb_missing(b,limb))
         limb = CHEST;
     float damage =
-        (w ? itemDefs[w].power : 7 + level(a, MARTIAL) * .4f) + (w?(level(a,STRENGTH)*(1-cut)+level(a,DEXTERITY)*cut):level(a,STRENGTH))*.16f + atk*.18f + (!w?level(a,TOUGHNESS)*.08f:0);
+        (w ? itemDefs[w].power : 7 + level(a, MARTIAL) * .4f) + (w?(effective_level(a,STRENGTH)*(1-cut)+effective_level(a,DEXTERITY)*cut):effective_level(a,STRENGTH))*.16f + atk*.18f + (!w?level(a,TOUGHNESS)*.08f:0);
     damage*=1+(weapon_class_level(a,weapon_class(w))-1)*.0025f;
     damage *= .8f + rf() * .4f;
     float rawDamage=damage;
@@ -620,8 +621,8 @@ void combat_impact(int ai, int bi, int w) {
     if (itemDefs[w].effect == 3)
         b->stun = .3f + itemDefs[w].potency * .03f;
     damage = fmaxf(2, damage * (1 - level(b, TOUGHNESS) * .002f));
-    if (a->health[RARM] < 20)
-        damage *= .65f;
+    if (limb_arm_condition(a,w)<.2f && limb_arms(a)>0) damage *= .65f;
+    damage *= limb_damage_factor(a,w);
     if (a->hunger < 15)
         damage *= .7f;
     if (distance(b->x, b->y, g.actors[g.selected].x, g.actors[g.selected].y) < 12)
@@ -654,12 +655,7 @@ void combat_impact(int ai, int bi, int w) {
     b->target = ai;
     if (a->squad || b->squad)
         log_msg("%s hits %s: %s -%d", a->name, b->name, limbNames[limb], (int)damage);
-    if (limb >= LARM && b->health[limb] < -55 && !(b->lostMask & (1 << limb))) {
-        b->lostMask |= 1 << limb;
-        b->bleed += 2;
-        if (b->squad)
-            log_warn("%s lost %s. Stop the bleeding!", b->name, limbNames[limb]);
-    }
+    limb_hit(b,limb,cut);
     if (b->health[HEAD] <= 0 || b->health[CHEST] <= 0 || b->blood < 20) {
         b->unconscious = 25 + damage;
         b->autoattack = 0;
@@ -738,19 +734,11 @@ void use_item(int s) {
         heal_from(g.selected, g.selected, s);
     else if (it == PARTS)
         depth_repair(g.selected,g.selected);
-    else if (it == ARM || it == LEG) {
-        int first = it == ARM ? LARM : LLEG, done = 0;
-        for (int i = first; i < first + 2; i++)
-            if ((a->lostMask & (1 << i)) && !(a->prostheticMask & (1 << i))) {
-                inventory_remove_slot(a, s, 1);
-                a->prostheticMask |= 1 << i;
-                a->health[i] = species_health(a);
-                done = 1;
-                log_msg("Fitted %s.", itemDefs[it].name);
-                break;
-            }
-        if (!done)
-            log_msg("No missing limb needs this prosthetic.");
+    else if (limb_item_grade(it)>=0) {
+        ui.limbReturn=SCREEN_PACK;ui.limbTarget=limb_item_leg(it)?LLEG:LARM;
+        if(!limb_missing(a,ui.limbTarget)&&limb_missing(a,ui.limbTarget+1))ui.limbTarget++;
+        limb_open(SCREEN_LIMBS);ui.selection=ui.limbTarget-LARM;
+        log_msg("Choose left or right limb, then choose the replacement.");
     } else
         log_msg("%s", itemDefs[it].desc);
 }
@@ -1626,7 +1614,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 10, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 11, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1727,7 +1715,7 @@ static int validate_game(const Game *t) {
         if (a->carrying >= t->actorCount || a->carriedBy >= t->actorCount)
             return 0;
     }
-    return depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t);
+    return depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t);
 }
 static int migrate_legacy(const LegacyGame *old) {
     if (old->actorCount < 1 || old->actorCount > 80 || old->buildingCount < 0 || old->buildingCount > 100 ||
@@ -1808,18 +1796,19 @@ static int migrate_legacy(const LegacyGame *old) {
     memset(&g.living,0,sizeof(g.living));
     memset(&g.society,0,sizeof(g.society));
     memset(&g.civil,0,sizeof(g.civil));
+    memset(&g.limbs,0,sizeof(g.limbs));
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
-    return (version==10 && size==sizeof(Game)) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version==11 && size==sizeof(Game)) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if(version==10)memcpy(out,data,size);
+    if(version==11)memcpy(out,data,size);
     else {
-        const unsigned char *src=data;int oldItems=version==9?V090_ITEMS:version==8?OLD_ITEMS:version>=5?CATALOG_ITEMS:2052;
+        const unsigned char *src=data;int oldItems=version==10?V100_ITEMS:version==9?V090_ITEMS:version==8?OLD_ITEMS:version>=5?CATALOG_ITEMS:2052;
         unsigned oldTail=144+TOWNS*oldItems*4;
         memcpy(out,src,144);
         for(int t=0;t<TOWNS;t++)memcpy(out->stock[t],src+144+t*oldItems*4,oldItems*4);
@@ -1883,6 +1872,7 @@ int load_game(const char *path) {
     living_init();
     society_init();
     civil_init();
+    limbs_init();
         memset(&ui, 0, sizeof(ui));
         ui.attackFocus=-1;
         ui.speed = 1;
@@ -2022,6 +2012,7 @@ void game_tick(float dt, Input in) {
     ui.noticeTime = fmaxf(0, ui.noticeTime - dt);
     log_tick(dt);
     int p = in.pressed;
+    if(limb_input(in))return;
     if(ui.screen==SCREEN_ORDERS)ui.screen=SCREEN_SQUAD;
     if(ui.screen==SCREEN_CARE)ui.screen=SCREEN_HEALTH;
     item_view_normalize();
@@ -2430,6 +2421,13 @@ void debug_snapshot(const char *path) {
     VALUE("shop_filter", &ui.shopFilter, 4);
     VALUE("pack", a->pack, sizeof(a->pack));
     VALUE("health", a->health, sizeof(a->health));
+    VALUE("lost", &a->lostMask, 4);
+    VALUE("prosthetics", &a->prostheticMask, 4);
+    VALUE("limbtarget", &ui.limbTarget, 4);
+    int fitted[4];for(int l=0;l<4;l++)fitted[l]=limb_installed(a,LARM+l);
+    VALUE("fitted", fitted, sizeof(fitted));
+    int lootFitted[4]={0};if(ui.lootActor>=0&&ui.lootActor<g.actorCount)for(int l=0;l<4;l++)lootFitted[l]=limb_installed(&g.actors[ui.lootActor],LARM+l);
+    VALUE("loot_fitted", lootFitted, sizeof(lootFitted));
     VALUE("attack", &a->attackPhase, 4);
     VALUE("time", &g.time, 4);
     VALUE("framecount", &rendered_frames, 4);

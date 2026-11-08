@@ -1,4 +1,5 @@
 #include "game.h"
+#include "combat_pose.h"
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -95,8 +96,8 @@ int weapon_strength(int it) {
     return itemDefs[it].weight * 2;
 }
 float weapon_handling(const Actor *a, int it) {
-    float effective = level(a, STRENGTH) * (.35f + .65f * fminf(a->health[LARM], a->health[RARM]) / species_health(a));
-    return (1 + fminf(1.4f, fmaxf(0, weapon_strength(it) - effective) * .035f))*(1-(weapon_class_level(a,weapon_class(it))-1)*.0015f);
+    float effective = effective_level(a, STRENGTH) * (.35f + .65f * limb_arm_condition(a,it));
+    return (1 + fminf(1.4f, fmaxf(0, weapon_strength(it) - effective) * .035f))*(1-(weapon_class_level(a,weapon_class(it))-1)*.0015f)*(limb_arms(a)==1&&combat_two_hands(it)?1.65f:1);
 }
 /* Garment profiles follow their construction, not their catalog position. */
 typedef struct {
@@ -256,6 +257,7 @@ void content_init(void) {
     for(int i=0;i<16;i++){int id=UNIQUE_ITEMS+i;ItemDef*d=&itemDefs[id];*d=itemDefs[gear_id(uf[i],4,3)];d->name=unique[i];d->desc=descriptions[id];d->trim=0xd5ba78;d->power+=i<8?9:0;d->armor+=i>=8&&i!=14?8:0;d->stealth+=i==11||i==15?14:0;d->capacity+=i==14?12:0;d->price+=1200;snprintf(descriptions[id],112,"Named frontier equipment. %s +%d; weight %d.",effectNames[d->effect],item_effect_value(id),d->weight);}
 
     civil_content();
+    limbs_content();
     for(int i=BASE_ITEMS;i<ITEMS;i++)if(itemDefs[i].slot==0){
         WeaponDesign d=weapon_design(i);
         if(!weapon_ranged(i))itemDefs[i].range*=1+(d.length-1)*.6f;
@@ -294,7 +296,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Six body parts, blood and fatigue are separate. Head or chest failure knocks a survivor out. Bleeding "
     "can kill an unconscious character. Start > Squad > Health & recovery, \001 treats the selected survivor; \001 near an injured "
     "ally opens First Aid, Carry and Recover Gear choices.\nDressings stop bleeding and restore some health. Sleeping restores the "
-    "rest. A doctor charges for full treatment. Lost limbs require a mechanical replacement. Death is "
+    "rest. A doctor charges for full treatment. Lost limbs never regrow. A missing leg makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Fitted prosthetics on fallen wanderers can be looted. Death is "
     "permanent; dismiss the body from Squad to free its slot.",
     "Rations are eaten below forty hunger: first your pack, then a companion backpack or owned depot within "
     "three meters. Water supports "

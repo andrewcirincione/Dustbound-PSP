@@ -347,6 +347,7 @@ int shop_item(int index) {
                 continue;
             if (ui.shopFilter == 3 && (slot < 1 || slot == 5))
                 continue;
+            if (ui.shopFilter == 5 && limb_item_grade(i)<0 && i!=PARTS) continue;
             if (ui.shopFilter == 4 && slot != 5)
                 continue;
             if (index-- == 0)
@@ -368,6 +369,7 @@ int shop_count(void) {
                 continue;
             if (ui.shopFilter == 3 && (s < 1 || s == 5))
                 continue;
+            if (ui.shopFilter == 5 && limb_item_grade(i)<0 && i!=PARTS) continue;
             if (ui.shopFilter == 4 && s != 5)
                 continue;
             n++;
@@ -611,6 +613,7 @@ const char *dialogue_line(int n, int page) {
         return town_custom(town_near(a->x,a->y,14));
     if (page == 3)
         return faction_identity(a->faction);
+    if(limb_surgeon(n))return "I remove arms or legs for 400 silver. Removal is permanent. Buy a replacement first; fitting costs two machine parts. Black Mesa sells relic limbs.";
     int elite=civil_elite_index(n);
     if(elite>=0)return eliteDefs[elite].story;
     if (npc_role(a) == ROLE_MERCENARY) {

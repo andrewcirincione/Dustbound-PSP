@@ -16,7 +16,7 @@ const SpeciesDef speciesDefs[SPECIES]={
 };
 int species_index(const Actor*a){return a->race>=0&&a->race<SPECIES?a->race:0;}
 float species_health(const Actor*a){return a->kind==BEAST?100:speciesDefs[species_index(a)].health;}
-int actor_capacity(const Actor*a){return 30+level(a,STRENGTH)*2+gear_bonus(a,3)+speciesDefs[species_index(a)].carry;}
+int actor_capacity(const Actor*a){return 30+effective_level(a,STRENGTH)*2+gear_bonus(a,3)+speciesDefs[species_index(a)].carry+limb_capacity_bonus(a);}
 float species_food(const Actor*a){return speciesDefs[species_index(a)].food;}
 int species_start_level(int origin,int race,int skill){
  static const int strength[5]={9,12,16,3,7};int n=skill==STRENGTH?strength[origin]:3;

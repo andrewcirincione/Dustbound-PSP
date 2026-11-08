@@ -1,3 +1,9 @@
+# Current continuation: 0.11.0
+
+The limb release supersedes the historical handoffs below. See `CONTENT_V110.md`, `VALIDATION_V110.md` and `FEEDBACK_V110.md`. `src/limbs.c` owns fitting, surgery, grades, stocks and persistence initialization. Actor size remains 932 bytes: low prosthetic-mask bits indicate presence, bits 8–19 hold grades (zero means legacy Standard), and bits 20–31 hold stolen ownership. Treat the mask as unsigned for shifts. Game size is 627,508 bytes; saves are v11 with actual v10 migration coverage. New catalog entries are prostheses and severed organic limbs, not wearable gear; gear-only loops end at V100_ITEMS. Run validate_v080, 081, 090, 100 and 110, then emulator_v110 on the final EBOOT. Published binary identity is in evidence/v110-build-manifest.json. Physical PSP qualification and naturally earned long-run economy balance remain open.
+
+---
+
 # Current continuation: 0.10.0
 
 The 0.10.0 release supersedes the historical handoff below. Current source adds five species, 18 persistent named owners/36 personal items, 96 armor variants, six settlement cultures, 12 constructions across all 38 weapon types, and explicit crafting requirements. Save v10 is 626,860 bytes; all prior readers remain. `docs/CONTENT_V100.md`, `DESIGN_REVIEW_V100.md`, `VALIDATION_V100.md` and `FEEDBACK_V100.md` are the current references. The qualified EBOOT digest is in `evidence/v100-build-manifest.json` and matches the completed 82-frame PSP controller run. Run 080, 081, 090 and 100 native suites and `scripts/emulator_v100.py` after relevant future changes. Do not describe prepared review saves or native benchmarks as a natural campaign or physical PSP qualification. Next design priorities: political succession, interdependent event mechanics, resident behavior, extended balance and stronger species anatomy.

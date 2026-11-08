@@ -330,7 +330,7 @@ int expansion_input(float dt, Input in) {
     if (ui.screen == SCREEN_TRADE && (p & (KEY_L | KEY_R))) {
         if (ui.sell)
             return 1;
-        ui.shopFilter = wrapi(ui.shopFilter + (p & KEY_L ? -1 : 1), 5);
+        ui.shopFilter = wrapi(ui.shopFilter + (p & KEY_L ? -1 : 1), 6);
         ui.selection = 0;
         return 1;
     }
@@ -524,7 +524,7 @@ int expansion_input(float dt, Input in) {
             open_view(SCREEN_WORLD);
             return 1;
         }
-        int count = PACK + GEARS;
+        int count = PACK + GEARS + 4;
         if (p & KEY_UP)
             ui.selection = wrapi(ui.selection - 1, count);
         if (p & KEY_DOWN)
@@ -642,6 +642,8 @@ int expansion_input(float dt, Input in) {
                 }
             } else
                 switch (dialogue_action(n, choice)) {
+                case 16:ui.limbReturn=SCREEN_DIALOG;limb_open(SCREEN_SURGERY);break;
+                case 17:if(town>=0&&depth_trade_open(town)){ui.tradeTown=town;ui.shopFilter=5;ui.sell=0;open_view(SCREEN_TRADE);}break;
                 case 14:ui.dialogPage=4;ui.selection=0;break;
                 case 15:open_view(SCREEN_FACTIONS);break;
                 case 0:

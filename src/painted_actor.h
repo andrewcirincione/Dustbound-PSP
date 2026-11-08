@@ -316,6 +316,33 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
         }
         return;
     }
+    if(limb_crawling(a)) {
+        float cycle=a->movedTimer>0?sinf(a->anim*2.8f):0;
+        /* Horizontal torso, dragging legs, and alternating grounded hands. */
+        for(int i=0;i<2;i++){
+            int l=LLEG+i;if(limb_missing(a,l))continue;int it=limb_installed(a,l),grade=limb_item_grade(it),mech=race==2||it;
+            uint32_t tint=grade>=0?limbGrades[grade].color:lc;
+            float yy=-3+(i?1:-1),end=-face*(17+(i?cycle:-cycle));
+            part(mech?76:64+lf-68,x-face*5*sc,y-5*sc,x-face*11*sc,y+yy*sc,4.5f*sc,tint,li,0,face<0,0,mech?1:.54f);
+            part(mech?77:64+lf-68,x-face*11*sc,y+yy*sc,x+end*sc,y-1*sc,3.8f*sc,tint,li,0,face<0,mech?0:.48f,1);
+        }
+        if(back){int bid=bf>=76&&bf<=83?88+bf-76:88;part(bid,x-face*4*sc,y-12*sc,x+face*4*sc,y-14*sc,9*sc,itemDefs[back].color,li,itemDefs[back].quality,face>0,0,1);}
+        part(tf,x+face*5*sc,y-10*sc,x-face*7*sc,y-5*sc,bw*2.2f*sc,cloth,li,itemDefs[torso].quality,face<0,0,1);
+        float handx=x+face*(13+cycle*2)*sc,handy=y-1*sc;
+        int primary=limb_missing(a,RARM)?0:1;
+        for(int i=0;i<2;i++){
+            int l=LARM+i;if(limb_missing(a,l))continue;int grade=limb_item_grade(limb_installed(a,l)),mech=race==2||grade>=0;uint32_t tint=grade>=0?limbGrades[grade].color:cloth;
+            float xx=x+face*(11+(i?cycle:-cycle)*3)*sc,yy=y-(i?1:3)*sc;
+            part(mech?76:72,x+face*4*sc,y-10*sc,x+face*7*sc,y-4*sc,3.8f*sc,tint,li,0,i^(face<0),0,1);
+            part(mech?77:75,x+face*7*sc,y-4*sc,xx,yy,3*sc,mech?tint:skin,li,0,i^(face<0),0,1);
+            if(i==primary){handx=xx;handy=yy;}
+        }
+        int faceid=race==2||a->hair==0?61:a->hair==3?62:a->beard?63:60;
+        part(faceid,x+face*9*sc,y-17*sc,x+face*8*sc,y-9*sc,(race==4?6.7f:5.8f)*sc,skin,li,0,face<0,0,1);
+        if(head&&hf>=48){float wide,top,bottom;head_attachment(hf,&wide,&top,&bottom);part(hf,x+face*9*sc,y+(top+16)*sc,x+face*9*sc,y+(bottom+16)*sc,wide*sc,itemDefs[head].color,li,itemDefs[head].quality,face<0,0,1);}
+        if(limb_arms(a)&&weapon)weapon_sprite(weapon,handx,handy,sc,face>0?-.18f:3.32f,face,li);
+        return;
+    }
     if (back) {
         int bid = bf >= 76 && bf <= 83 ? 88 + bf - 76 : 88;
         BackAttachment mount = back_attachment(back);
@@ -333,10 +360,12 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
         float foot = xx + (i ? 1 : -1) * rig.step * forward + off * .65f,
               knee = xx + rig.shift * forward + off * .35f;
         float lift = a->attackPhase ? 0 : fmaxf(0, off) * .4f;
+        int grade=limb_item_grade(limb_installed(a,limb));
+        uint32_t limbTint=grade>=0?limbGrades[grade].color:lc;
         int mech = race==2 || (a->prostheticMask & (1 << limb)), id = mech ? 76 : 64 + lf - 68;
-        part(id, RX(xx, -14), RY(-14), RX(knee, -7), RY(-7), 4.8f * sc, lc, li, itemDefs[legs].quality,
+        part(id, RX(xx, -14), RY(-14), RX(knee, -7), RY(-7), 4.8f * sc, limbTint, li, itemDefs[legs].quality,
              face < 0, 0, mech ? 1 : .54f);
-        part(mech ? 77 : id, RX(knee, -7.4f), RY(-7.4f), RX(foot, -2 - lift), RY(-2 - lift), 4.1f * sc, lc,
+        part(mech ? 77 : id, RX(knee, -7.4f), RY(-7.4f), RX(foot, -2 - lift), RY(-2 - lift), 4.1f * sc, limbTint,
              li, itemDefs[legs].quality, face < 0, mech ? 0 : .48f, 1);
         PART(mech ? 87 : 80 + ff - 60, foot, -5 - lift, foot + face * .6f, -.2f - lift, 5.4f,
              boots ? itemDefs[boots].color : skin, itemDefs[boots].quality);
@@ -345,11 +374,12 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
           handy = rig.handY + depth * rig.handX * .4f;
     WeaponGrip grip = weapon_grip(RX(handx, handy), RY(handy), angle, sc);
     float wrists[2][2];
+    int primary=limb_missing(a,RARM)?0:1;
     // Arms behind the body; wrists and handle remain one rigid construction.
     for (int i = 0; i < 2; i++) {
         int limb = i ? RARM : LARM;
-        weapon_hand(grip, weapon, !i, &wrists[i][0], &wrists[i][1]);
-        if (!i && !combat_two_hands(weapon)) {
+        weapon_hand(grip, weapon, i!=primary, &wrists[i][0], &wrists[i][1]);
+        if (i!=primary && !combat_two_hands(weapon)) {
             wrists[i][0] = RX(-face * 5, -17 + rig.crouch);
             wrists[i][1] = RY(-17 + rig.crouch);
         }
@@ -360,9 +390,10 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
               bend = sqrtf(fmaxf(0, 49 * sc * sc - d * d * .25f));
         float ex = (sx + hx) * .5f - (d > .01f ? dy / d : 0) * bend * (i ? 1 : -1) * face,
               ey = (sy + hy) * .5f + (d > .01f ? dx / d : 1) * bend * (i ? 1 : -1) * face;
-        int mech = race==2 || (a->prostheticMask & (1 << limb));
-        part(mech ? 76 : 72, sx, sy, ex, ey, 4 * sc, cloth, li, 0, i ^ (face < 0), 0, 1);
-        part(mech ? 77 : 75, ex, ey, hx, hy, 3 * sc, mech ? 0x777b78 : skin, li, 0, i ^ (face < 0), 0, 1);
+        int mech = race==2 || (a->prostheticMask & (1 << limb)),grade=limb_item_grade(limb_installed(a,limb));
+        uint32_t limbTint=grade>=0?limbGrades[grade].color:cloth;
+        part(mech ? 76 : 72, sx, sy, ex, ey, 4 * sc, limbTint, li, 0, i ^ (face < 0), 0, 1);
+        part(mech ? 77 : 75, ex, ey, hx, hy, 3 * sc, mech ? limbTint : skin, li, 0, i ^ (face < 0), 0, 1);
     }
     int coat = tf == 32 || tf == 33 || tf == 39 || tf == 40 || tf == 42 || tf == 44 || tf == 47;
     // Join the chin to the collar; transparent face/collar edges otherwise
@@ -398,7 +429,7 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
         head_attachment(hf, &wide, &top, &bottom);
         PART(hf, 0, top, 0, bottom, wide, itemDefs[head].color, itemDefs[head].quality);
     }
-    if (!(missing & (1 << RARM)))
+    if (limb_arms(a))
         weapon_sprite(weapon, grip.x, grip.y, sc, angle, face, li);
     for (int i = 0; i < 2; i++)
         if (!(missing & (1 << (i ? RARM : LARM)))) {

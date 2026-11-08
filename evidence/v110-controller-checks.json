@@ -1,0 +1,323 @@
+[
+  {
+    "eboot_sha256": "8bec63476ea8c90e5ad6c846a1e67ef53293d2aa3e6c07c54007a011cc9a4282",
+    "version": "0.11.0"
+  },
+  {
+    "capture": "v110-psp-title",
+    "screen": 13,
+    "expected": 13,
+    "frame": 26,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-surgeon-dialogue",
+    "screen": 17,
+    "expected": 17,
+    "frame": 192,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-venn-store",
+    "screen": 6,
+    "expected": 6,
+    "frame": 237,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-surgery-menu",
+    "screen": 38,
+    "expected": 38,
+    "frame": 358,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-surgery-arm-warning",
+    "screen": 39,
+    "expected": 39,
+    "frame": 407,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-removed-right-arm",
+    "screen": 38,
+    "expected": 38,
+    "frame": 497,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-surgical-one-arm",
+    "screen": 0,
+    "expected": 0,
+    "frame": 526,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-fit-1-0",
+    "screen": 37,
+    "expected": 37,
+    "frame": 706,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-fit-1-1",
+    "screen": 37,
+    "expected": 37,
+    "frame": 792,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-fit-1-2",
+    "screen": 37,
+    "expected": 37,
+    "frame": 904,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-fit-1-3",
+    "screen": 37,
+    "expected": 37,
+    "frame": 1042,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-fit-1-4",
+    "screen": 37,
+    "expected": 37,
+    "frame": 1200,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-relic-arm-fitted",
+    "screen": 36,
+    "expected": 36,
+    "frame": 1226,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-detach-warning",
+    "screen": 39,
+    "expected": 39,
+    "frame": 1273,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-fit-1-4",
+    "screen": 37,
+    "expected": 37,
+    "frame": 1429,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-surgery-leg-warning",
+    "screen": 39,
+    "expected": 39,
+    "frame": 1617,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-crawl-after-surgery",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1700,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "movement": "v110-psp-crawl-after-surgery",
+    "distance": 0.38588170927506993,
+    "input": "normal analog stick"
+  },
+  {
+    "capture": "v110-psp-fit-2-0",
+    "screen": 37,
+    "expected": 37,
+    "frame": 1908,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-fit-2-1",
+    "screen": 37,
+    "expected": 37,
+    "frame": 2019,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-fit-2-2",
+    "screen": 37,
+    "expected": 37,
+    "frame": 2153,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-fit-2-3",
+    "screen": 37,
+    "expected": 37,
+    "frame": 2303,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-fit-2-4",
+    "screen": 37,
+    "expected": 37,
+    "frame": 2468,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-relic-arm-leg-fitted",
+    "screen": 36,
+    "expected": 36,
+    "frame": 2494,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-restored-walking",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2553,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "movement": "v110-psp-restored-walking",
+    "distance": 2.629454302748323,
+    "input": "normal analog stick"
+  },
+  {
+    "capture": "v110-psp-save-reloaded-limbs",
+    "screen": 36,
+    "expected": 36,
+    "frame": 3102,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-movement-one-leg",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3299,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "movement": "v110-psp-movement-one-leg",
+    "distance": 0.25856181189505656,
+    "input": "normal analog stick"
+  },
+  {
+    "capture": "v110-psp-limbs-one-leg",
+    "screen": 36,
+    "expected": 36,
+    "frame": 3506,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-movement-one-arm",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3791,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "movement": "v110-psp-movement-one-arm",
+    "distance": 1.0795203807262643,
+    "input": "normal analog stick"
+  },
+  {
+    "capture": "v110-psp-one-arm-pack",
+    "screen": 1,
+    "expected": 1,
+    "frame": 4153,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-one-arm-rapier",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4210,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-limbs-one-arm",
+    "screen": 36,
+    "expected": 36,
+    "frame": 4384,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-movement-no-legs",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4685,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "movement": "v110-psp-movement-no-legs",
+    "distance": 0.13025196933721928,
+    "input": "normal analog stick"
+  },
+  {
+    "capture": "v110-psp-limbs-no-legs",
+    "screen": 36,
+    "expected": 36,
+    "frame": 4858,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-fitted-wanderer-loot",
+    "screen": 24,
+    "expected": 24,
+    "frame": 5421,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-wanderer-limb-taken",
+    "screen": 24,
+    "expected": 24,
+    "frame": 5453,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-black-mesa-relic-store",
+    "screen": 6,
+    "expected": 6,
+    "frame": 6160,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-full-relic-limbs",
+    "screen": 36,
+    "expected": 36,
+    "frame": 6649,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-full-relic-health",
+    "screen": 3,
+    "expected": 3,
+    "frame": 6680,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v110-psp-relic-bonus-stats",
+    "screen": 2,
+    "expected": 2,
+    "frame": 6746,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "completed": true,
+    "prepared_save_slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "surgical_removal_and_cancel_verified": true,
+    "all_five_grades_fitted_through_ui_arm_and_leg": true,
+    "replacements_saved_and_reloaded": true,
+    "fitted_wanderer_limb_physically_looted": true,
+    "basic_and_relic_shops_purchased": true,
+    "read_only_qa": true,
+    "eboot_sha256": "8bec63476ea8c90e5ad6c846a1e67ef53293d2aa3e6c07c54007a011cc9a4282"
+  }
+]

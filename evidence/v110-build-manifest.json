@@ -1,0 +1,31 @@
+{
+  "version": "0.11.0",
+  "save_version": 11,
+  "qualified_date_utc": "2026-11-08",
+  "eboot_sha256": "8bec63476ea8c90e5ad6c846a1e67ef53293d2aa3e6c07c54007a011cc9a4282",
+  "eboot_bytes": 1662478,
+  "prx_sha256": "ca5446be2e0ad5298044d627fe5c90ecf8abf4c89057a3876803c212cf1c0a3e",
+  "game_bytes": 627508,
+  "actor_bytes": 932,
+  "catalog_items": 2378,
+  "replacement_grades": 5,
+  "replacement_types": 10,
+  "fitted_wanderers": 6,
+  "elf_text_bytes": 1214564,
+  "elf_data_bytes": 3516,
+  "elf_bss_bytes": 5015896,
+  "psp_framebuffer_captures": 39,
+  "psp_emulator_controller_completed": true,
+  "physical_psp_tested": false,
+  "natural_full_campaign_tested": false,
+  "controller_evidence": "evidence/v110-controller-checks.json",
+  "capture_method": "Completed PSP EBOOT framebuffers; controller-driven prepared saves; read-only QA snapshots",
+  "native_release_suites": [
+    "validate_v080.sh",
+    "validate_v081.sh",
+    "validate_v090.sh",
+    "validate_v100.sh",
+    "validate_v110.sh"
+  ],
+  "historical_build_native_result": "Core, expansion, renderer, 2112-item catalog and 26649 overhaul checks passed; later test_playability stops at obsolete five-option dialogue maximum. Not claimed as a full legacy-suite pass."
+}

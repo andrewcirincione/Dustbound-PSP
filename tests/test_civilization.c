@@ -29,7 +29,7 @@ static void species_checks(void){
  puts("PASS: all 25 origin/species combinations, barber preservation, movement/carry/appetite and full species-aware healing/repair.");
 }
 static void elite_checks(void){
- Actor*a=fresh();assert(ITEMS==2368&&g.actorCount<=176);assert(g.buildingCount<MAX_BUILDINGS);
+ Actor*a=fresh();assert(V100_ITEMS==2368&&ITEMS>V100_ITEMS&&g.actorCount<=176);assert(g.buildingCount<MAX_BUILDINGS);
  for(int e=0;e<ELITES;e++){
   int n=g.civil.eliteActor[e]-1;assert(n>=0);Actor*b=&g.actors[n];assert(!strcmp(b->name,eliteDefs[e].name)&&civil_elite_index(n)==e);
   assert(b->gear[0]==REGALIA_ITEMS+e*2&&b->gear[1]==REGALIA_ITEMS+e*2+1);assert(level(b,MELEE)>=42);

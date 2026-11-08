@@ -18,7 +18,7 @@ static void v7fixture(void){/* Serialize the exact released v7 layout from the u
 }
 int main(void){
     game_new(73819,0);assert(g.living.version==1&&living_validate(&g));
-    for(int it=CATALOG_ITEMS;it<ITEMS;it++){assert(gear_family(it)>=0&&gear_family(it)<FAMILIES);assert(itemDefs[it].price>0);}
+    for(int it=CATALOG_ITEMS;it<V100_ITEMS;it++){assert(gear_family(it)>=0&&gear_family(it)<FAMILIES);assert(itemDefs[it].price>0);}
     g.money=777;g.stock[15][CATALOG_ITEMS-1]=9;g.regions.outcome[0]=1;v7fixture();
     assert(load_game("build/v7-living.sav"));assert(g.money==777&&g.stock[15][CATALOG_ITEMS-1]==9&&g.regions.outcome[0]==1&&g.living.version==1);
     int ser=g.living.serial;assert(save_game("build/v8-living.sav"));assert(load_game("build/v8-living.sav"));assert(g.living.serial==ser);

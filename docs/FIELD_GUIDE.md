@@ -159,3 +159,8 @@ Raiders near the chain yard may carry a fallen survivor away. Escape takes time 
 Use Armor Layers to fit a light body garment under outer armor. Weight must be five or less. Swaps preserve stolen ownership and fail safely if your pack is full.
 
 Outer body covers 95% of chest hits and 65% of arm hits; headwear covers 85%, legwear 90%, boots 35%. An uncovered hit bypasses that piece. Blunt impacts use 72% of outer protection. Underlayers add reduced protection. Wear lowers protection to a minimum of 65%; maintain with cloth. Inspect both armor and movement before equipping.
+
+
+## Limb replacements and surgery (0.11.0)
+
+Health → R opens individual limb slots. Fit a matching mechanical arm or leg for two machine parts, compare grades, detach an old part, or repair metal. Natural limbs must be lost first. Surgeon Venn in Dusk Haven can permanently remove an arm or leg for 400 silver. Buy the replacement before removing a leg: one missing leg causes crawling. Copper Cross stocks Reinforced, Iron Gate Precision, and Black Mesa Relic replacements. Fallen wandering elites may have real FITTED limbs to loot. Bandages never regrow lost limbs. See [full grades and locations](CONTENT_V110.md).

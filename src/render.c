@@ -494,6 +494,7 @@ static void building(int id) {
         center(x, y - artSprites[sprite].ay - 8, name, GOLD, 1);
     }
 }
+#include "painted_actor.h"
 static int resource_sprite(int n) {
     int t = g.nodes[n].type;
     return t <= NODE_COPPER ? 9 : t == NODE_WOOD ? 8 : t == NODE_RUIN ? 15 : 31;
@@ -506,13 +507,17 @@ static void resource(int n) {
     project(b->x, b->y, &x, &y);
     if (x < -40 || x > 520 || y < -30 || y > 245)
         return;
+    if(b->item==SEVERED_ARM||b->item==SEVERED_LEG){
+        diamond(x,y,7,3,shade(0x653c30,light()));
+        part(b->item==SEVERED_ARM?75:64,x-5,y-2,x+5,y,4,0x9d7660,light(),0,0,0,1);
+        return;
+    }
     int id = resource_sprite(n);
     art(id, x, y + (id < 24 ? 5 : 0), light() * (b->type == NODE_ORE ? .82f : 1), 0);
     if (b->locked) {
         frame(x - 2, y - 5, 4, 4, GOLD);
     }
 }
-#include "painted_actor.h"
 typedef struct {
     float depth;
     int kind, index, x, y;
@@ -846,7 +851,7 @@ static void detailed_status(void) {
         int missing = (a->lostMask & (1 << i)) && !(a->prostheticMask & (1 << i));
         uint32_t color = missing || a->health[i] < 30 ? RED : a->health[i] < 75 ? GOLD : TEAL;
         text(16, y, limbNames[i], MUTED, 1);
-        bar(86, y + 2, 66, 4, missing ? 0 : a->health[i]*100/species_health(a), color);
+        bar(86, y + 2, 66, 4, missing ? 0 : a->health[i]*100/limb_max_health(a,i), color);
         if (missing) snprintf(value, sizeof(value), "LOST");
         else snprintf(value, sizeof(value), "%d", (int)a->health[i]);
         text(163, y, value, color, 1);
@@ -972,7 +977,7 @@ static void overlay_header(const char *name, const char *sub) {
     line(27, 75, 451, 75, EDGE);
     text(28, 237, ui.menuReturn ? "\002 BACK   \010 GUIDE" : "\002 CLOSE   \010 GUIDE", MUTED, 1);
     if ((ui.screen >= SCREEN_PACK && ui.screen <= SCREEN_SQUAD) || ui.screen==SCREEN_EQUIPPED) {
-        char who[60];snprintf(who,sizeof(who),"\005/\006 MEMBER: %.16s",g.actors[g.selected].name);text(249,237,who,MUTED,1);
+        char who[60];snprintf(who,sizeof(who),ui.screen==SCREEN_HEALTH?"\005 MEMBER   \006 LIMBS":"\005/\006 MEMBER: %.16s",g.actors[g.selected].name);text(249,237,who,MUTED,1);
     }
 }
 static int start_row(int selected, int max, int visible) {
@@ -1034,11 +1039,11 @@ static void equipment_comparison(int it, int y) {
     compare_stat(cell++,y+26,"WEIGHT",old->weight,d->weight,0,1);
     if(d->slot==0) {
         if(fabsf(old->range-d->range)>.01f)compare_stat(cell++,y+26,"REACH",worn?old->range:1.55f,d->range,1,0);
-        float before=weapon_handling(a,worn)*fmaxf(.55f,(worn?old->cooldown:1)-level(a,DEXTERITY)*.003f);
-        float after=weapon_handling(a,it)*fmaxf(.55f,d->cooldown-level(a,DEXTERITY)*.003f);
+        float before=weapon_handling(a,worn)*fmaxf(.55f,(worn?old->cooldown:1)-effective_level(a,DEXTERITY)*.003f);
+        float after=weapon_handling(a,it)*fmaxf(.55f,d->cooldown-effective_level(a,DEXTERITY)*.003f);
         if(fabsf(before-after)>.01f)compare_stat(cell++,y+26,"DELAY SEC",before,after,1,1);
         if(weapon_strength(it)>level(a,STRENGTH)) {
-            snprintf(b,sizeof(b),"NEEDS STR %d / HAVE %d",weapon_strength(it),level(a,STRENGTH));
+            snprintf(b,sizeof(b),"NEEDS STR %d / HAVE %d",weapon_strength(it),effective_level(a,STRENGTH));
             clipped(31+(cell%2)*211,y+26+(cell/2)*12,b,33,RED);cell++;
         }
     } else if(d->slot==5) {
@@ -1094,9 +1099,9 @@ static void pack_screen(void) {
     int before=a->gear[d->slot];ItemDef*old=&itemDefs[before];
     compare_stat(0,190,d->slot==0?"DAMAGE":d->slot==5?"CAPACITY":"ARMOR",d->slot==0?old->power:d->slot==5?old->capacity:old->armor,d->slot==0?d->power:d->slot==5?d->capacity:d->armor,0,0);
     compare_stat(1,190,"WEIGHT",old->weight,d->weight,0,1);
-    if(!d->slot){compare_stat(2,190,"REACH",before?old->range:1.55f,d->range,1,0);compare_stat(3,190,"DELAY",weapon_handling(a,before)*fmaxf(.55f,(before?old->cooldown:1)-level(a,DEXTERITY)*.003f),weapon_handling(a,it)*fmaxf(.55f,d->cooldown-level(a,DEXTERITY)*.003f),1,1);snprintf(b,sizeof(b),"REQUIRES STR %d / HAVE %d",weapon_strength(it),level(a,STRENGTH));text(31,214,b,weapon_strength(it)>level(a,STRENGTH)?RED:MUTED,1);}
+    if(!d->slot){compare_stat(2,190,"REACH",before?old->range:1.55f,d->range,1,0);compare_stat(3,190,"DELAY",weapon_handling(a,before)*fmaxf(.55f,(before?old->cooldown:1)-effective_level(a,DEXTERITY)*.003f),weapon_handling(a,it)*fmaxf(.55f,d->cooldown-effective_level(a,DEXTERITY)*.003f),1,1);snprintf(b,sizeof(b),"REQUIRES STR %d / HAVE %d",weapon_strength(it),effective_level(a,STRENGTH));text(31,214,b,weapon_strength(it)>effective_level(a,STRENGTH)?RED:MUTED,1);}
     else {compare_stat(2,190,"STEALTH",old->stealth,d->stealth,0,0);compare_stat(3,190,d->slot==5?"LOADED WT":"MOVE %",d->slot==5?encumbrance(a):old->speed*.5f,d->slot==5?backpack_load_preview(a,it):d->speed*.5f,1,d->slot==5);compare_stat(4,190,"WEATHER",old->protection,d->protection,0,0);compare_stat(5,190,"CAPACITY",old->capacity,d->capacity,0,0);}
-    clipped(31,226,item_function(it),69,TEXT);
+    clipped(31,226,limb_arms(a)==1&&combat_two_hands(it)?"ONE ARM: -40% DAMAGE / -25 AIM / +65% DELAY":item_function(it),69,TEXT);
 }
 static void skills_screen(void) {
     Actor *a = &g.actors[g.selected];
@@ -1114,10 +1119,10 @@ static void skills_screen(void) {
             rect(x - 3, y - 2, 199, 10, 0x4a4030);
         text(x, y, skillNames[i], i == ui.selection ? TEXT : MUTED, 1);
         int lv = level(a, i);
-        snprintf(b, sizeof(b), "%02d", lv);
-        text(x + 147, y, b, GOLD, 1);
+        snprintf(b, sizeof(b), limb_bonus(a,i)?"%02d%+d":"%02d", lv,limb_bonus(a,i));
+        text(x + 137, y, b, GOLD, 1);
         float low = 12.f * (lv - 1) * (lv - 1), high = 12.f * lv * lv;
-        bar(x + 166, y + 2, 24, 3, lv >= 100 ? 100 : 100 * (a->xp[i] - low) / (high - low), TEAL);
+        bar(x + 177, y + 2, 14, 3, lv >= 100 ? 100 : 100 * (a->xp[i] - low) / (high - low), TEAL);
     }
     int lv = level(a, ui.selection);
     snprintf(b, sizeof(b), "%s  LEVEL %d  %s", skillNames[ui.selection], lv,
@@ -1136,15 +1141,51 @@ static void health_screen(void) {
         int y=111+i*13,missing=(a->lostMask&(1<<i))&&!(a->prostheticMask&(1<<i));
         if(i==ui.selection)rect(25,y-2,425,12,0x4a4030);
         text(31,y,limbNames[i],i==ui.selection?TEXT:MUTED,1);
-        bar(157,y+2,91,4,missing?0:a->health[i]*100/species_health(a),a->health[i]<30||missing?RED:TEAL);
-        if(missing)snprintf(b,sizeof(b),"LOST");else snprintf(b,sizeof(b),"%.0f/%.0f",a->health[i],species_health(a)-z->trauma[i]);
+        bar(157,y+2,91,4,missing?0:a->health[i]*100/limb_max_health(a,i),a->health[i]<30||missing?RED:TEAL);
+        if(missing)snprintf(b,sizeof(b),"LOST");else snprintf(b,sizeof(b),"%.0f/%.0f",a->health[i],limb_max_health(a,i)-z->trauma[i]);
         text(261,y,b,missing?RED:TEXT,1);
         snprintf(b,sizeof(b),"%.0f%s",z->trauma[i],depth_organic(a,i)?"":" / MECH");text(337,y,b,MUTED,1);
     }
     snprintf(b,sizeof(b),"BLOOD %.0f  BLEED %.1f  FOOD %.0f  FATIGUE %.0f",a->blood,a->bleed,a->hunger,a->fatigue);text(31,194,b,a->bleed>.01f?RED:MUTED,1);
     snprintf(b,sizeof(b),"DRESSINGS %d  GEAR CONDITION %.0f%%",inventory_count(a,MEDKIT),z->upkeep);text(31,207,b,GOLD,1);
-    text(31,221,z->captive?"Work shackles away from guards.":"Bandages stop bleeding. Rest repairs lasting trauma.",MUTED,1);
+    text(31,221,z->captive?"Work shackles away from guards.":"\006 LIMBS: fit, compare and detach replacements.",MUTED,1);
 }
+static void limbs_screen(void) {
+    Actor *a=&g.actors[g.selected];char b[140];int surgery=ui.screen==SCREEN_SURGERY,confirm=ui.screen==SCREEN_LIMBCONFIRM;
+    if(confirm){
+        overlay_header(ui.limbConfirm==1?"CONFIRM LIMB REMOVAL":"CONFIRM DETACHMENT","\001 CONFIRM   \002 CANCEL");
+        snprintf(b,sizeof(b),"%s / %s",a->name,limbNames[ui.limbTarget]);text(31,85,b,GOLD,1);
+        wrap(31,108,65,ui.limbConfirm==1?"400 silver. This permanently removes the natural limb. Venn closes the wound. Buy a replacement before surgery; fitting costs two machine parts.":"The replacement returns to your pack. Fitting it again costs two machine parts. The limb will be missing until you fit a replacement.",TEXT);
+        wrap(31,173,65,ui.limbTarget>=LLEG?"You will crawl without this leg.":"One missing arm: two-handed weapons lose 40% damage and 25 accuracy; attacks take 65% longer before injury penalties.",RED);
+        text(31,222,"Circle cancels without removing anything.",MUTED,1);return;
+    }
+    if(ui.screen==SCREEN_LIMBFIT){
+        overlay_header("FIT A REPLACEMENT","\015 SELECT   \001 FIT: 2 PARTS   \002 BACK");
+        snprintf(b,sizeof(b),"%s / PARTS %d/2",limbNames[ui.limbTarget],inventory_count(a,PARTS));text(31,83,b,GOLD,1);
+        int count=limb_fit_count(),first=start_row(ui.selection,count,5);
+        for(int j=0;j<5&&first+j<count;j++){int n=first+j,slot=limb_fit_slot(n),y=100+j*14;row(y,n==ui.selection,itemDefs[a->pack[slot].item].name,NULL);}
+        if(!count)wrap(31,106,65,"No matching limbs in your pack. Look in a town market's Mechanical Limbs tab, or buy from Venn in Dusk Haven.",TEXT);
+        else{int it=a->pack[limb_fit_slot(ui.selection)].item,grade=limb_item_grade(it),old=limb_installed(a,ui.limbTarget);const LimbGrade*d=&limbGrades[grade];
+            snprintf(b,sizeof(b),"FITTED: %.49s",old?itemDefs[old].name:limb_missing(a,ui.limbTarget)?"MISSING":"NATURAL LIMB - SURGERY REQUIRED");clipped(31,178,b,69,MUTED);
+            const LimbGrade *o=old?&limbGrades[limb_item_grade(old)]:NULL;
+            snprintf(b,sizeof(b),ui.limbTarget>=LLEG?"OLD: HP %.0f / MOVE %+d%% / LOAD %+d":"OLD: HP %.0f / STR %+d / DEX %+d",limb_missing(a,ui.limbTarget)?0:limb_max_health(a,ui.limbTarget),o?(ui.limbTarget>=LLEG?o->speed:o->strength):0,o?(ui.limbTarget>=LLEG?o->carry:o->dexterity):0);text(31,193,b,MUTED,1);
+            snprintf(b,sizeof(b),ui.limbTarget>=LLEG?"NEW: HP %d / MOVE %+d%% / LOAD %+d":"NEW: HP %d / STR %+d / DEX %+d",d->hp,ui.limbTarget>=LLEG?d->speed:d->strength,ui.limbTarget>=LLEG?d->carry:d->dexterity);text(31,208,b,TEAL,1);
+            text(31,222,"2 parts per fitting; old part returns to pack.",MUTED,1);
+        }return;
+    }
+    overlay_header(surgery?"VENN / REMOVAL SURGERY":"LIMBS & REPLACEMENTS",surgery?"\015 SELECT   \001 REMOVE: 400 S   \003 BUY LIMBS":"\001 FIT   \003 DETACH   \004 REPAIR   \002 BACK");
+    for(int j=0;j<4;j++){int l=LARM+j,it=limb_installed(a,l),y=87+j*27;if(j==ui.selection)rect(25,y-3,425,25,0x4a4030);
+        text(31,y,limbNames[l],TEXT,1);snprintf(b,sizeof(b),"%.0f/%.0f HP",limb_missing(a,l)?0:a->health[l],limb_max_health(a,l));text(310,y,b,limb_missing(a,l)?RED:TEAL,1);
+        clipped(43,y+11,it?itemDefs[it].name:limb_missing(a,l)?"MISSING":a->race==2?"NATIVE MACHINE LIMB":"NATURAL LIMB",63,it?GOLD:limb_missing(a,l)?RED:MUTED);
+    }
+    if(surgery){text(31,200,"PERMANENT. Buy a replacement before removal.",RED,1);text(31,215,"Dusk Haven: basic / Black Mesa: relic grade",MUTED,1);}
+    else{
+        snprintf(b,sizeof(b),"STR %+d  DEX %+d  MOVE %+.0f%%  LOAD %+d",limb_bonus(a,STRENGTH),limb_bonus(a,DEXTERITY),(limb_move_bonus(a)-1)*100,limb_capacity_bonus(a));text(31,200,b,TEAL,1);
+        const char *status=limb_crawling(a)?"CRAWLING: fit a replacement for each missing leg.":limb_arms(a)==1?"ONE ARM: two-handed weapons are slower and weaker.":limb_arms(a)==0?"NO ARMS: weapons unusable; kicks are weakened.":"Fitting costs 2 parts; metal repairs use parts.";
+        clipped(31,215,status,69,limb_crawling(a)||limb_arms(a)<2?RED:MUTED);
+    }
+}
+
 static void squad_screen(void) {
     Actor *a=&g.actors[g.selected];DepthActor *z=&g.depth.actors[g.selected];char b[120];
     overlay_header("SQUAD MANAGEMENT","\005/\006 MEMBER   \014 CHANGE   \001 SET   \004 PACK");
@@ -1408,7 +1449,7 @@ static void map_screen(void) {
 static void trade_screen(void) {
     char b[100], v[70];
     static const char *titles[] = {"BUY / ALL STOCK", "BUY / SUPPLIES", "BUY / WEAPONS", "BUY / ARMOR",
-                                   "BUY / BACKPACKS"};
+                                   "BUY / BACKPACKS", "BUY / MECHANICAL LIMBS"};
     overlay_header(ui.sell ? "SELL / CARRIED" : titles[ui.shopFilter],
                    ui.sell ? "\014 BUY-SELL   \001 SELL ONE"
                            : "\014 BUY-SELL   \005/\006 FILTER   \001 BUY ONE");
@@ -1790,12 +1831,12 @@ static void loot_screen(void) {
     overlay_header("LOOT",theft?"\001 STEAL ONE   \003 STEAL STACK   \015 CHOOSE":"\001 TAKE ONE   \003 TAKE STACK   \015 CHOOSE");
     int first=start_row(item_view_row(ui.selection),count,6);
     for(int j=0;j<6&&first+j<count;j++) {
-        int k=item_view_slot(first+j),id=k<PACK?a->pack[k].item:a->gear[k-PACK],y=84+j*13;
+        int k=item_view_slot(first+j),id=limb_loot_item(a,k),y=84+j*13;
         if(k==ui.selection)rect(25,y-3,425,13,0x4a4030);
-        snprintf(b,sizeof(b),"%s%.55s",k>=PACK?"WORN: ":"",itemDefs[id].name);clipped(31,y,b,62,k==ui.selection?TEXT:MUTED);
+        snprintf(b,sizeof(b),"%s%.55s",k>=PACK+GEARS?"FITTED: ":k>=PACK?"WORN: ":"",itemDefs[id].name);clipped(31,y,b,62,k==ui.selection?TEXT:MUTED);
         snprintf(b,sizeof(b),"%d",k<PACK?a->pack[k].qty:1);text(442-strlen(b)*6,y,b,GOLD,1);
     }
-    int it=!count?0:ui.selection<PACK?a->pack[ui.selection].item:a->gear[ui.selection-PACK];
+    int it=!count?0:limb_loot_item(a,ui.selection);
     snprintf(b,sizeof(b),"%d ITEMS / %.30s",count,a->name);text(31,160,b,MUTED,1);
     equipment_comparison(it,173);
 }
@@ -1915,6 +1956,8 @@ void render_game(uint32_t *pixels, int stride) {
     case SCREEN_SKILLS:
         skills_screen();
         break;
+    case SCREEN_LIMBS:case SCREEN_LIMBFIT:case SCREEN_SURGERY:case SCREEN_LIMBCONFIRM:
+        limbs_screen();break;
     case SCREEN_HEALTH:
         health_screen();
         break;

@@ -96,7 +96,10 @@ int main(void) {
     a->lostMask = 1 << LLEG;
     CHECK(movement_speed(a) < sp * .3f, "a missing leg severely reduces movement");
     inventory_add(a, LEG, 1);
+    inventory_add(a, PARTS, 2);
     use_item(0);
+    game_tick(.033f,(Input){KEY_CROSS,KEY_CROSS,0,0});
+    game_tick(.033f,(Input){KEY_CROSS,KEY_CROSS,0,0});
     CHECK((a->prostheticMask & (1 << LLEG)) && movement_speed(a) > sp * .8f,
           "equipping a prosthetic restores leg function");
     fresh();

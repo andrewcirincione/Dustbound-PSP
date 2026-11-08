@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
         if (!f)
             return 1;
         fprintf(f, "id,family,material,quality,render_hash,name\n");
-        for (int it = BASE_ITEMS; it < ITEMS; it++) {
+        for (int it = BASE_ITEMS; it < CATALOG_ITEMS; it++) {
             render_catalog_scale(pixels, 480, it, argc > 3 ? atoi(argv[3]) : 5);
             uint64_t h = 1469598103934665603ull;
             for (int z = 0; z < 480 * 272; z++)
