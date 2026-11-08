@@ -679,18 +679,18 @@ static void nearby_labels(int indoors){
  int fighting=0;for(int i=0;i<count;i++)if(squad_combatant(ids[i]))fighting=1;
  if(fighting)for(int i=1;i<count;i++)if(ids[i]==p->target){int swap=ids[0];ids[0]=ids[i];ids[i]=swap;break;}
  for(int i=0;i<count&&used<(fighting?1:8);i++){Actor*a=&g.actors[ids[i]];int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);
-  char label[48];snprintf(label,sizeof(label),"%.20s%s",npc_role_name(a),a->dead?" / DEAD":a->unconscious>0?" / DOWN":actor_relation(ids[i])<0?" !":"");int w=text_width(label)+8,l=x-w/2,t=y-(a->dead||a->unconscious>0?24:56);if(l<4)l=4;if(l+w>476)l=476-w;if(t<26)t=26;
+  char label[48];snprintf(label,sizeof(label),"%.20s%s",npc_role_name(a),a->dead?" / DEAD":a->unconscious>0?" / DOWN":actor_relation(ids[i])<0?" !":"");int w=text_width(label)+8,l=x-w/2,t=fighting?y+17:y-(a->dead||a->unconscious>0?24:56);if(l<4)l=4;if(l+w>476)l=476-w;if(t<26)t=26;
   for(int attempt=0;attempt<5;attempt++){int hit=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])hit=1;if(!hit)break;t-=13;}
   int overlaps=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])overlaps=1;
   if(overlaps||t<25||t>221||x<0||x>480||(l+w>398&&t<100))continue;
   boxes[used][0]=l;boxes[used][1]=t;boxes[used][2]=w;used++;
-  line(x,y-(a->dead||a->unconscious>0?8:35),l+w/2,t+10,shade(factionColors[a->faction],.65f));
+  if(!fighting)line(x,y-(a->dead||a->unconscious>0?8:35),l+w/2,t+10,shade(factionColors[a->faction],.65f));
   rect(l,t,w,11,INK);rect(l,t,2,11,factionColors[a->faction]);text(l+5,t+2,label,label_color(a->faction),1);
   if(!a->dead&&actor_relation(ids[i])<0)text(l+w-9,t+2,"!",RED,1);
  }
- for(int i=0;i<count;i++)if(squad_combatant(ids[i])){Actor*a=&g.actors[ids[i]];int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);rect(x-14,y-42,29,7,0x14110e);bar(x-13,y-41,27,5,knockout_reserve(a),a->unconscious>0?MUTED:0xe36552);
+ for(int i=0;i<count;i++)if(squad_combatant(ids[i])){Actor*a=&g.actors[ids[i]];int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);rect(x-14,y+1,29,7,0x14110e);bar(x-13,y+2,27,5,knockout_reserve(a),a->unconscious>0?MUTED:0xe36552);
  if(a->attackPhase==1){float q=1-a->attackClock/fmaxf(.01f,a->attackDuration);bar(x-12,y+8,25,3,q*100,GOLD);line(x,y+5,x+(int)(cosf(a->attackAngle)*18),y+5+(int)(sinf(a->attackAngle)*9),GOLD);}
- if(a->hitFlash>0&&a->impactKind){const char*hit=a->unconscious>0?"DOWN":a->impactKind==2?"BLOCK":a->impactKind==3?"DODGE":"HIT";text(x-10,y-29,hit,a->unconscious>0?GOLD:TEXT,1);}}
+ if(a->hitFlash>0&&a->impactKind){const char*hit=a->unconscious>0?"DOWN":a->impactKind==2?"BLOCK":a->impactKind==3?"DODGE":"HIT";text(x+17,y-12,hit,a->unconscious>0?GOLD:TEXT,1);}}
 }
 static void speech_bubbles(void) {
     int best = -1;

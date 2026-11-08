@@ -54,13 +54,13 @@ static int shot_clear(float x, float y) {
 }
 void depth_move_room(Actor *a, float dx, float dy, float dt) {
     int n = index_of(a), room = depth_room(a);
-    if (n < 0 || !room || !conscious(a) || D.actors[n].captive)
+    if (n < 0 || !room || !conscious(a) || D.actors[n].captive || g.hitstop>0 || a->attackPhase==1 || a->attackPhase==2)
         return;
     float len = sqrtf(dx * dx + dy * dy);
     if (len < .01f)
         return;
     float step = movement_speed(a) * dt / len;
-    float x = depth_x(a), y = depth_y(a), nx = x + dx * step, ny = y + dy * step;
+    float x = depth_x(a), y = depth_y(a), ox=x, oy=y, nx = x + dx * step, ny = y + dy * step;
     if (room_clear(room, nx, y))
         x = nx;
     if (room_clear(room, x, ny))
@@ -72,8 +72,8 @@ void depth_move_room(Actor *a, float dx, float dy, float dt) {
         D.actors[n].rx = x;
         D.actors[n].ry = y;
     }
-    a->movedTimer = .15f;
-    a->anim += dt * 7;
+    float moved=distance(ox,oy,x,y);
+    if(moved>.001f){a->movedTimer=.12f;a->anim=fmodf(a->anim+moved*2.2f,6.2831853f);}
     a->facing = (dx - dy) > 0;
 }
 void depth_enter_room(int building) {

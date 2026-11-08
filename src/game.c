@@ -9,6 +9,14 @@
 #include <string.h>
 
 Game g;
+/* Transient animation state: excluded from Game/Actor and all save formats. */
+static float visualStance[MAX_ACTORS];
+void combat_visual_reset(void) { memset(visualStance,0,sizeof(visualStance)); }
+float combat_stance(const Actor *a) {
+    uintptr_t p=(uintptr_t)a,b=(uintptr_t)g.actors;
+    if(p>=b && p<b+sizeof(g.actors))return visualStance[(p-b)/sizeof(Actor)];
+    return a->attackPhase ? 1 : 0;
+}
 UI ui;
 volatile uint32_t display_buffer = 0x04000000;
 volatile uint32_t rendered_frames = 0;
@@ -299,7 +307,7 @@ void move_actor(Actor *a, float dx, float dy, float dt) {
         a->y += dy * sp;
     float moved = distance(ox, oy, a->x, a->y);
     if (moved > .001f) {
-        a->anim += dt * 8;
+        a->anim = fmodf(a->anim + moved * 2.2f, 6.2831853f);
         a->movedTimer = .12f;
         gain(a, ATHLETICS, moved * 2);
         gain(a, STRENGTH, moved * encumbrance(a) * .035f);
@@ -309,6 +317,7 @@ void move_actor(Actor *a, float dx, float dy, float dt) {
     }
 }
 void init_actor(int n, const char *name, int kind, int faction, float x, float y, int skill) {
+    visualStance[n]=0;
     society_actor_reset(n);
     memset(&g.depth.actors[n], 0, sizeof(g.depth.actors[n]));
     g.depth.actors[n].upkeep = 100;
@@ -1408,6 +1417,10 @@ void simulate(float dt) {
         Actor *a = &g.actors[i];
         if (!a->active || a->dead)
             continue;
+        int ready = conscious(a) && (a->attackPhase || (a->autoattack && a->target >= 0 &&
+            a->target < g.actorCount && conscious(&g.actors[a->target]) &&
+            depth_distance(a,&g.actors[a->target]) < 10));
+        visualStance[i] = clamp(visualStance[i]+(ready?dt*5:-dt*3),0,1);
         a->cooldown = fmaxf(0, a->cooldown - dt);
         a->stun = fmaxf(0, a->stun - dt);
         a->hitFlash = fmaxf(0, a->hitFlash - dt);
@@ -1424,10 +1437,10 @@ void simulate(float dt) {
                 if (a->attackClock <= 0) {
                     if (a->attackPhase == 1) {
                         a->attackPhase = 2;
-                        a->attackDuration = a->attackClock = STRIKE_SECONDS;
+                        a->attackDuration = a->attackClock = combat_strike_seconds(a,a->attackWeapon);
                     } else if (a->attackPhase == 2) {
                         a->attackPhase = 3;
-                        a->attackDuration = a->attackClock = fmaxf(.12f, a->cooldown);
+                        a->attackDuration = a->attackClock = fmaxf(.18f, a->cooldown);
                     } else
                         a->attackPhase = 0;
                 }
@@ -1901,6 +1914,7 @@ int load_game(const char *path) {
     }
     fclose(f);
     if (ok) {
+        combat_visual_reset();
         memset(g.depth.groupTravel,0,sizeof(g.depth.groupTravel));
         frontier_identity();
         depth_init();
