@@ -82,7 +82,7 @@ static inline float combat_strike_seconds(const Actor *a, int weapon) {
     int style = combat_style(weapon);
     float base = style == 2 ? .32f : style == 1 ? .22f : style == 5 ? .20f : .25f;
     float injury = 1 + .25f * (1 - limb_arm_condition(a, weapon));
-    return fmaxf(.12f, fminf(1.1f, base * weapon_handling(a, weapon) * injury));
+    return fmaxf(.12f, fminf(1.1f, base * weapon_handling(a, weapon) * injury * (weapon?1:1-(level(a,MARTIAL)-1)*.0015f)));
 }
 /* Carry angular and body momentum through impact. The contact key has the
    same derivative on both sides; preparation and follow-through end at rest. */
@@ -105,14 +105,15 @@ static inline CombatPose combat_idle(int weapon) {
     if (s == 5)return (CombatPose){3,-14,0,0,0,0,0};
     if (s == 3 || s == 4)return (CombatPose){4,-17,.55f,0,0,0,0};
     if (s == 1)return (CombatPose){4,-17,-.65f,0,0,0,0};
-    return (CombatPose){4,-16,.65f,0,0,0,0};
+    if(s==2)return (CombatPose){4,-18,-1.15f,0,0,0,0};
+    return (CombatPose){4,-16,.30f,0,0,0,0};
 }
 static inline CombatPose combat_pose(int weapon, int phase, float p) {
     int s = combat_style(weapon);
     CombatPose guard = {6, -19, -.85f, 0, 0, 0, 0};
     CombatPose load = {-3, -27, -2.2f, -2, 1, -1, -.10f};
     CombatPose hit = {9, -20, 0, 2.5f, 2, 4, .10f};
-    CombatPose finish = {7, -14, 1.05f, 2, 2, 4, .14f};
+    CombatPose finish = {7, -16, .25f, 2, 2, 4, .14f};
     if (s == 1) { /* spear / knife: retract, extend, settle */
         guard = (CombatPose){4, -19, -.15f, 0, 0, 0, 0};
         load = (CombatPose){-3, -20, -.12f, -2, 1, -1, -.08f};
@@ -122,7 +123,7 @@ static inline CombatPose combat_pose(int weapon, int phase, float p) {
         guard = (CombatPose){5, -18, -1.1f, 0, 0, 0, 0};
         load = (CombatPose){-2, -29, -1.9f, -2, 1, -1, -.08f};
         hit = (CombatPose){9, -20, 0, 3, 3, 4, .10f};
-        finish = (CombatPose){8, -13, .9f, 3, 3, 4, .12f};
+        finish = (CombatPose){8, -16, .23f, 3, 3, 4, .12f};
     } else if (s == 3) { /* shoulder the stock; recoil then settle */
         guard = (CombatPose){5, -19, -.55f, 0, 0, 0, 0};
         load = (CombatPose){5, -23, 0, 0, 1, 2, .04f};

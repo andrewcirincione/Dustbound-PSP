@@ -320,7 +320,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         return;
     }
     if(limb_crawling(a)) {
-        float cycle=a->movedTimer>0?sinf(a->anim*2.8f):0;
+        float cycle=a->movedTimer>0?sinf(a->anim*2):0;
         /* Horizontal torso, dragging legs, and alternating grounded hands. */
         for(int i=0;i<2;i++){
             int l=LLEG+i;if(limb_missing(a,l))continue;int it=limb_installed(a,l),grade=limb_item_grade(it),mech=race==2||it;

@@ -266,10 +266,11 @@ int main(void) {
     a->attackPhase = 2;
     a->attackTarget = 1;
     a->attackWeapon = gear_id(0, 1, 1);
-    a->attackClock = a->attackDuration = STRIKE_SECONDS;
-    step(.08f);
+    a->attackClock = a->attackDuration = combat_strike_seconds(a,a->attackWeapon);
+    float contactTime=a->attackDuration*STRIKE_CONTACT;
+    step(contactTime-.025f);
     CHECK(e->hitFlash == 0, "no hit before the blade reaches the contact marker");
-    step(.04f);
+    step(.05f);
     CHECK(e->hitFlash > 0, "hit or block resolves at visible blade contact");
     float earned = a->xp[MELEE];
     step(.35f);
