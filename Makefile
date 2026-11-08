@@ -6,7 +6,7 @@ INCDIR = src
 CFLAGS = -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation
 LIBS = -lm -lpsppower -lpspaudio
 EXTRA_TARGETS = EBOOT.PBP
-PSP_EBOOT_TITLE = Dustbound 0.16.0
+PSP_EBOOT_TITLE = Dustbound 0.16.1
 PSP_EBOOT_ICON = assets/ICON0.png
 PSP_EBOOT_PIC1 = assets/PIC1.png
 PSP_LARGE_MEMORY = 0
@@ -15,7 +15,7 @@ PSP_FW_VERSION = 660
 include $(PSPSDK)/lib/build.mak
 
 # Keep incremental builds correct after header or launcher artwork changes.
-$(OBJS): src/game.h src/combat_pose.h src/depth.h src/depth_types.h
+$(OBJS): src/game.h src/combat_pose.h src/combat_moves.h src/depth.h src/depth_types.h
 src/game.o: src/legacy.h
 EBOOT.PBP: assets/ICON0.png assets/PIC1.png
 

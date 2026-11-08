@@ -14,7 +14,7 @@ static int action(int type,int target){int c=nearby_actions();for(int i=0;i<c;i+
 static void isolated(Actor*a){for(int i=0;i<g.actorCount;i++)if(!g.actors[i].squad)g.actors[i].active=0;a->x=400;a->y=400;a->autoattack=0;}
 int main(void){
  setvbuf(stdout,NULL,_IONBF,0);
- Actor*a=fresh();assert(ITEMS>=2236);for(int type=0;type<2;type++)for(int i=0;i<24;i++){int it=OLD_ITEMS+type*24+i;assert(itemDefs[it].slot==0&&itemDefs[it].power>0&&itemDefs[it].price>0);if(i)assert(strcmp(itemDefs[it].name,itemDefs[it-1].name));}assert(combat_style(RAPIER_ITEMS)==1&&!combat_two_hands(RAPIER_ITEMS));
+ Actor*a=fresh();assert(ITEMS>=2236);for(int type=0;type<2;type++)for(int i=0;i<24;i++){int it=OLD_ITEMS+type*24+i;assert(itemDefs[it].slot==0&&itemDefs[it].power>0&&itemDefs[it].price>0);if(i)assert(strcmp(itemDefs[it].name,itemDefs[it-1].name));}assert(combat_profile(RAPIER_ITEMS)==&combatProfiles[WC_RAPIERS]&&!combat_two_hands(RAPIER_ITEMS));
  int goods[]={RATION,ORE,COPPER,GRAIN,WATER,IRONBAR,MEDKIT,WOOD};int profits=0;
  for(int rep=-100;rep<=100;rep+=25)for(int t=0;t<TOWNS;t++){g.rep[g.townOwner[t]]=rep;for(unsigned j=0;j<sizeof(goods)/sizeof(*goods);j++)for(int stock=0;stock<=60;stock+=3){int it=goods[j];g.stock[t][it]=stock;assert(item_price(t,it,1)<item_price(t,it,0));}}
  a=fresh();for(int t=0;t<TOWNS;t++)for(int u=0;u<TOWNS;u++)if(item_price(u,GRAIN,1)>item_price(t,GRAIN,0))profits++;assert(profits>0);assert(market_percent(0,GRAIN,0)<0&&market_percent(2,GRAIN,1)>0);assert(strstr(trade_tip(0),"sell at"));int stock=g.stock[15][WOOD];society_tick(60);assert(g.stock[15][WOOD]>stock);

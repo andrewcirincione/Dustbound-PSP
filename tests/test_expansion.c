@@ -266,7 +266,7 @@ int main(void) {
     a->attackPhase = 2;
     a->attackTarget = 1;
     a->attackWeapon = gear_id(0, 1, 1);
-    a->attackClock = a->attackDuration = combat_strike_seconds(a,a->attackWeapon);
+    a->attackClock = a->attackDuration = combat_timing(a, a->attackWeapon, 0).stroke;
     float contactTime=a->attackDuration*STRIKE_CONTACT;
     step(contactTime-.025f);
     CHECK(e->hitFlash == 0, "no hit before the blade reaches the contact marker");
@@ -278,8 +278,8 @@ int main(void) {
     int seamless = 1;
     for (int f = 0; f < 32; f++)
         for (int phase = 1; phase < 4; phase++) {
-            CombatPose end = combat_pose(gear_id(f, 1, 1), phase, 1);
-            CombatPose next = combat_pose(gear_id(f, 1, 1), phase == 3 ? 0 : phase + 1, 0);
+            CombatPose end = combat_pose(gear_id(f, 1, 1), phase, 1, 0);
+            CombatPose next = combat_pose(gear_id(f, 1, 1), phase == 3 ? 0 : phase + 1, 0, 0);
             if (fabsf(end.handX - next.handX) > .001f || fabsf(end.handY - next.handY) > .001f ||
                 fabsf(end.blade - next.blade) > .001f || fabsf(end.step - next.step) > .001f ||
                 fabsf(end.shift - next.shift) > .001f)

@@ -1,3 +1,12 @@
+# 0.16.1 — Combat motion
+
+- Fighters draw from three attacks per weapon type, with different windup, stroke and recovery times. Each cycle uses all three before shuffling again, and adjacent attacks use different moves.
+- Katana cuts use quicker changes of direction. Greatswords use a planted cleave, a low sweep and a braced thrust.
+- Unarmed fighters use a two-fist guard, a lead jab, a rear cross and a rising hook. Arms stay within reach and the rear foot stays grounded during strikes.
+- Weapon proficiency and Martial arts shorten attack timing. Save format remains v15.
+
+Run `bash scripts/validate_v160.sh build/v161`, compile the PSP build, then run `python3 scripts/emulator_v161.py /path/to/PPSSPPHeadless` to reproduce the animation checks.
+
 # 0.10.0 — Peoples, courts and personal arms
 
 Five species with visible base stats; 18 named owners and 36 personal items; 96 cultural armor variants; distinct settlement plans; 12 constructions across all 38 weapon types; clear crafting and forging requirements. Save v10 with earlier-save migration. See docs/RELEASE_NOTES.md and docs/VALIDATION_V100.md.

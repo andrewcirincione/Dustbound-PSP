@@ -1,4 +1,5 @@
 #include "game.h"
+#include "combat_pose.h"
 #include <math.h>
 #include <pspctrl.h>
 #include <pspdisplay.h>
@@ -82,9 +83,13 @@ int main(int argc, char *argv[]) {
     if (q)
         fclose(q);
     FILE *recordFlag = fopen("DUST_RECORD", "r");
-    int record = recordFlag != NULL, recorded = 0;
-    if (recordFlag)
+    int record = recordFlag != NULL, recorded = 0, recordLimit = 240;
+    if (recordFlag) {
+        int requested;
+        if (fscanf(recordFlag, "%d", &requested) == 1 && requested > 0 && requested <= 600)
+            recordLimit = requested;
         fclose(recordFlag);
+    }
     SceCtrlData pad;
     uint64_t last, now;
     sceRtcGetCurrentTick(&last);
@@ -149,7 +154,7 @@ int main(int argc, char *argv[]) {
         }
         /* Optional QA readback of frames produced by this PSP executable.
            Marker absent in release packages; no recording cost in normal play. */
-        if (record && ui.screen == SCREEN_WORLD && recorded < 240) {
+        if (record && ui.screen == SCREEN_WORLD && recorded < recordLimit) {
             char path[64];
             snprintf(path, sizeof(path), "QA_FRAME_%03d.rgba", recorded);
             FILE *out = fopen(path, "wb");
@@ -159,9 +164,11 @@ int main(int argc, char *argv[]) {
             }
             out = fopen("QA_FRAMES.csv", recorded ? "a" : "w");
             if (out) {
+                const Actor *a = &g.actors[g.selected];
                 if (!recorded)
-                    fprintf(out, "frame,time,attack_phase\n");
-                fprintf(out, "%d,%.4f,%d\n", recorded, g.time, g.actors[g.selected].attackPhase);
+                    fprintf(out, "frame,time,attack_phase,variant,phase_seconds,phase_remaining\n");
+                fprintf(out, "%d,%.4f,%d,%d,%.4f,%.4f\n", recorded, g.time, a->attackPhase,
+                        combat_attack_variant(a), a->attackDuration, a->attackClock);
                 fclose(out);
             }
             recorded++;

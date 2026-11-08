@@ -9,13 +9,57 @@
 #include <string.h>
 
 Game g;
-/* Transient animation state: excluded from Game/Actor and all save formats. */
-static float visualStance[MAX_ACTORS];
-void combat_visual_reset(void) { memset(visualStance,0,sizeof(visualStance)); }
+/* A running attack keeps its chosen motion and timings until it finishes.
+   This side table leaves the binary save layout unchanged. */
+typedef struct {
+    float stance;
+    CombatTiming timing;
+    uint32_t entropy;
+    unsigned played;
+    int variant;
+} CombatVisual;
+static CombatVisual combatVisuals[MAX_ACTORS];
+void combat_visual_reset(void) { memset(combatVisuals, 0, sizeof(combatVisuals)); }
+static const CombatVisual *combat_visual(const Actor *a) {
+    uintptr_t address = (uintptr_t)a, start = (uintptr_t)g.actors;
+    return address >= start && address < start + sizeof(g.actors)
+        ? &combatVisuals[(address - start) / sizeof(Actor)] : NULL;
+}
 float combat_stance(const Actor *a) {
-    uintptr_t p=(uintptr_t)a,b=(uintptr_t)g.actors;
-    if(p>=b && p<b+sizeof(g.actors))return visualStance[(p-b)/sizeof(Actor)];
-    return a->attackPhase ? 1 : 0;
+    const CombatVisual *visual = combat_visual(a);
+    return visual ? visual->stance : a->attackPhase != 0;
+}
+int combat_attack_variant(const Actor *a) {
+    const CombatVisual *visual = combat_visual(a);
+    return visual && a->attackPhase ? visual->variant : 0;
+}
+static int next_attack_variant(int actor) {
+    CombatVisual *visual = &combatVisuals[actor];
+    const unsigned all = (1u << ATTACK_VARIANTS) - 1;
+    unsigned choices = all & ~visual->played;
+    if (!choices) {
+        visual->played = 0;
+        choices = all & ~(1u << visual->variant);
+    }
+    /* Shuffle locally so choosing a pose never consumes world or damage RNG. */
+    uint32_t roll = visual->entropy;
+    if (!roll)
+        roll = (g.seed ^ ((uint32_t)(actor + 1) * 0x9e3779b9u)) | 1u;
+    roll ^= roll << 13;
+    roll ^= roll >> 17;
+    roll ^= roll << 5;
+    visual->entropy = roll;
+    unsigned pick = roll % __builtin_popcount(choices);
+    for (int i = 0; i < ATTACK_VARIANTS; i++) {
+        if (!(choices & (1u << i)))
+            continue;
+        if (pick == 0) {
+            visual->played |= 1u << i;
+            return i;
+        }
+        pick--;
+    }
+    return 0;
 }
 UI ui;
 volatile uint32_t display_buffer = 0x04000000;
@@ -317,7 +361,7 @@ void move_actor(Actor *a, float dx, float dy, float dt) {
     }
 }
 void init_actor(int n, const char *name, int kind, int faction, float x, float y, int skill) {
-    visualStance[n]=0;
+    combatVisuals[n] = (CombatVisual){0};
     society_actor_reset(n);
     memset(&g.depth.actors[n], 0, sizeof(g.depth.actors[n]));
     g.depth.actors[n].upkeep = 100;
@@ -397,6 +441,7 @@ void restock(void) {
 void game_new(uint32_t seed, int scenario) {
     content_init();
     memset(&g, 0, sizeof(g));
+    combat_visual_reset();
     memset(&ui, 0, sizeof(ui));
     ui.attackFocus=-1;
     world_layout(0);
@@ -557,13 +602,15 @@ void strike(int ai, int bi) {
             log_msg("%s needs ammunition.", a->name);
         return;
     }
-    float cadence =
-        weapon_handling(a, w) * fmaxf(.55f, (w ? itemDefs[w].cooldown : 1.0f) - effective_level(a, DEXTERITY) * .003f);
+    CombatVisual *visual = &combatVisuals[ai];
+    visual->variant = a->kind == BEAST ? 0 : next_attack_variant(ai);
+    CombatTiming timing = combat_timing(a, w, visual->variant);
+    visual->timing = timing;
     a->attackPhase = 1;
     a->attackTarget = bi;
     a->attackWeapon = w;
-    a->attackDuration = a->attackClock = fmaxf(a->squad?.20f:.45f, cadence * (ranged ? .46f : .34f));
-    a->cooldown = cadence;
+    a->attackDuration = a->attackClock = timing.windup;
+    a->cooldown = timing.windup + timing.stroke + timing.recovery;
     a->taskKind = 0;
     a->attackAngle = atan2f((depth_x(b)+depth_y(b)-depth_x(a)-depth_y(a))*11, (depth_x(b)-depth_y(b)-depth_x(a)+depth_y(a))*22);
     a->facing = cosf(a->attackAngle) >= 0;
@@ -1420,7 +1467,8 @@ void simulate(float dt) {
         int ready = conscious(a) && (a->attackPhase || (a->autoattack && a->target >= 0 &&
             a->target < g.actorCount && conscious(&g.actors[a->target]) &&
             depth_distance(a,&g.actors[a->target]) < 10));
-        visualStance[i] = clamp(visualStance[i]+(ready?dt*5:-dt*3),0,1);
+        CombatVisual *visual = &combatVisuals[i];
+        visual->stance = clamp(visual->stance + (ready ? dt * 5 : -dt * 3), 0, 1);
         a->cooldown = fmaxf(0, a->cooldown - dt);
         a->stun = fmaxf(0, a->stun - dt);
         a->hitFlash = fmaxf(0, a->hitFlash - dt);
@@ -1437,10 +1485,14 @@ void simulate(float dt) {
                 if (a->attackClock <= 0) {
                     if (a->attackPhase == 1) {
                         a->attackPhase = 2;
-                        a->attackDuration = a->attackClock = combat_strike_seconds(a,a->attackWeapon);
+                        /* Older saves may resume mid-attack with no side-table timing. */
+                        if (visual->timing.stroke == 0)
+                            visual->timing = combat_timing(a, a->attackWeapon, visual->variant);
+                        a->attackDuration = a->attackClock = visual->timing.stroke;
                     } else if (a->attackPhase == 2) {
                         a->attackPhase = 3;
-                        a->attackDuration = a->attackClock = fmaxf(.18f, a->cooldown);
+                        a->attackDuration = a->attackClock = visual->timing.recovery > 0
+                            ? visual->timing.recovery : fmaxf(.18f, a->cooldown);
                     } else
                         a->attackPhase = 0;
                 }

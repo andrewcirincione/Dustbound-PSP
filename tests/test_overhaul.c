@@ -120,7 +120,7 @@ int main(void) {
         for (int phase = 0; phase < 4; phase++)
             for (int dir = 0; dir < 8; dir++)
                 for (int t = 0; t <= 12; t++) {
-                    CombatPose p = combat_pose(gear_id(family, 1, 1), phase, t / 12.f);
+                    CombatPose p = combat_pose(gear_id(family, 1, 1), phase, t / 12.f, 0);
                     float an = dir * .785398163f + p.blade;
                     WeaponGrip grip =
                         weapon_grip(20 + p.shift * (1 + p.twist), 40 + p.handY * 1.25f + p.crouch, an, 3);
