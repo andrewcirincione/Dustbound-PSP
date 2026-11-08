@@ -1,3 +1,9 @@
+# 0.17.1 — Succession
+
+- The deaths of capital leaders, named settlement chiefs and their successors can open new councils.
+- Winning factions promote a surviving guard or send a new steward. Each incumbent keeps a separate identity and equipment.
+- Residents can pass on the name of the new leader. Version 18 loads Three Banners saves.
+
 # 0.17.0 — Three Banners
 
 - Add Brass Junction, Vermilion Keep and Cinder Abbey, with distinct uniforms, civic layouts, markets and services.

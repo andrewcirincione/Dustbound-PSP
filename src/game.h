@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.17.0"
+#define VERSION "0.17.1"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -315,7 +315,8 @@ enum {
     ROLE_SMITH,
     ROLE_BARBER,
     ROLE_SCOUT,
-    ROLE_MERCENARY
+    ROLE_MERCENARY,
+    ROLE_SEATED_LEADER
 };
 int npc_role(const Actor *a);
 int weapon_family_index(int i);

@@ -1673,7 +1673,7 @@ void simulate(float dt) {
             int spawned = 0;
             for (int i = 0; i < MAX_ACTORS && spawned < 2; i++) {
                 int n = -1;
-                if (i < g.actorCount && g.actors[i].dead && !g.actors[i].squad && depth_named(i) < 0 && !regional_named(i) && civil_elite_index(i)<0 && !living_owned(i) &&
+                if (i < g.actorCount && g.actors[i].dead && !g.actors[i].squad && depth_named(i) < 0 && !regional_named(i) && civil_elite_index(i)<0 && !living_owned(i) && !politics_protected(i) &&
                     g.actors[i].carriedBy < 0 && merc_slot(&g.actors[i]) < 0)
                     n = i;
                 else if (g.actorCount < MAX_ACTORS) {
@@ -1709,7 +1709,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 17 };
+enum { SAVE_VERSION = 18 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -1919,7 +1919,7 @@ static int migrate_legacy(const LegacyGame *old) {
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
-    return (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return ((version==17||version==SAVE_VERSION) && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -1943,7 +1943,7 @@ static void read_save_array(SaveReader *reader, void *array, size_t oldBytes, si
 }
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if (version == SAVE_VERSION) memcpy(out, data, size);
+    if (version >= 17) memcpy(out, data, size);
     else {
         int oldItems = version>=11 ? ITEMS : version==10 ? V100_ITEMS : version==9 ? V090_ITEMS :
                        version==8 ? OLD_ITEMS : version>=5 ? CATALOG_ITEMS : 2052;

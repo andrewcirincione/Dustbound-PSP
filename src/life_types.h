@@ -26,7 +26,7 @@ typedef struct { int serial,goal,town,faction,type; float x,y,time; char name[32
 typedef struct { FieldSighting group[POP_GROUPS]; } FieldNotes;
 
 enum { WAR_FACTIONS = 3, WAR_RESIDENTS = 5, WAR_REPORTS = 16 };
-enum { WAR_TAKEOVER = 1, WAR_CLASH };
+enum { WAR_TAKEOVER = 1, WAR_CLASH, WAR_SUCCESSION };
 typedef struct {
  int kind, town, winner, other, prisoners;
  float x, y, time;

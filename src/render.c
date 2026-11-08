@@ -1350,7 +1350,10 @@ static void life_screen(void){
    snprintf(b,sizeof(b),"%s %d vs %d influence. %s",side?"CHALLENGER":"CARETAKER",p->support[side],p->support[!side],politics_policy_text(fac));wrap(31,125,68,b,TEXT);
    const char*labels[]={"Back caretaker: 200 silver / +30 influence","Back challenger: 200 silver / +30 influence","Relief: 4 rations / caretaker +12 influence","Leave"};for(int i=0;i<4;i++)row(166+i*13,i==ui.selection,labels[i],NULL);
    snprintf(b,sizeof(b),"ONE PLEDGE / SILVER %d/200  FOOD %d/4  %s",g.money,inventory_count(&g.actors[g.selected],RATION),p->pledge<0?"OPEN":"PLEDGED");clipped(31,222,b,68,GOLD);
-  }else{snprintf(b,sizeof(b),"GOVERNMENT: %s",factionNames[g.townOwner[t]]);clipped(31,105,b,68,TEAL);wrap(31,127,68,p->policy==1?"Relief administration: food, water and medicine prices reduced 15%.":p->policy==2?"Military administration: equipment prices increased 12%.":"Trade administration: supply prices reduced 7%.",TEXT);snprintf(b,sizeof(b),"REFUGEES %d / SHIPMENTS %d",p->refugees,p->shipments);text(31,184,b,GOLD,1);wrap(31,207,68,"The former ruler and their unique equipment remain where they fell.",MUTED);}return;
+  }else{snprintf(b,sizeof(b),"GOVERNMENT: %s",factionNames[g.townOwner[t]]);clipped(31,100,b,68,TEAL);
+   int leader=p->leader-1;
+   snprintf(b,sizeof(b),"LEADER: %s",leader>=0&&politics_leader_title(leader)?g.actors[leader].name:"VACANT");
+   clipped(31,114,b,68,GOLD);wrap(31,137,68,p->policy==1?"Relief administration: food, water and medicine prices reduced 15%.":p->policy==2?"Military administration: equipment prices increased 12%.":"Trade administration: supply prices reduced 7%.",TEXT);snprintf(b,sizeof(b),"REFUGEES %d / SHIPMENTS %d",p->refugees,p->shipments);text(31,184,b,GOLD,1);wrap(31,207,68,"The former ruler and their unique equipment remain where they fell.",MUTED);}return;
  }
  overlay_header("WORLD ACTIVITY","\015 SELECT   \001 COUNCIL / MAP   \002 CLOSE");int count=life_ledger_count(),first=start_row(ui.selection,count,6);for(int j=0;j<6&&first+j<count;j++){life_ledger_label(first+j,b,sizeof(b));row(84+j*14,first+j==ui.selection,b,NULL);}life_ledger_detail(ui.selection,b,sizeof(b));wrap(31,178,68,b,TEXT);
 }

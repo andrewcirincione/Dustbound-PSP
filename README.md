@@ -1,10 +1,10 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.17.0 — Three Banners
+## 0.17.1 — Three Banners
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
-[Download 0.17.0](https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v0.17.0) · [Three Banners design](docs/FRONTIER_WAR.md) · [Field guide](docs/FIELD_GUIDE.md)
+[Download 0.17.1](https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v0.17.1) · [Three Banners design](docs/FRONTIER_WAR.md) · [Field guide](docs/FIELD_GUIDE.md)
 
 Nineteen settlements include Brass Junction, Vermilion Keep and Cinder Abbey. The Compact, Shogunate and Ash Monastery send armies against one another. Captured cities can have guarded labor yards, and nearby residents pass on news of actual raids and victories.
 
@@ -33,7 +33,7 @@ Weapon handling now changes the actual strike speed. Relaxed carry and combat gu
 
 ## Install
 
-Extract `Dustbound-0.17.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v17 reads prior expeditions and adds the new capitals and armies. Existing equipment, training and town control carry over.
+Extract `Dustbound-0.17.1-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v18 reads prior expeditions and adds the new capitals and armies. Existing equipment, training and town control carry over.
 
 ## Controls
 

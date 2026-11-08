@@ -654,6 +654,11 @@ const char *dialogue_line(int n, int page) {
     if (page == 3)
         return faction_identity(a->faction);
     if(limb_surgeon(n))return "I remove arms or legs for 400 silver. Removal is permanent. Buy a replacement first; fitting costs two machine parts. Black Mesa sells relic limbs.";
+    if(politics_leader_title(n)){
+        static char line[160];
+        snprintf(line,sizeof(line),"The council seated me at %s. %s",towns[a->homeTown].name,politics_policy_text(a->faction));
+        return line;
+    }
     int elite=civil_elite_index(n);
     if(elite>=0)return eliteDefs[elite].story;
     if (npc_role(a) == ROLE_MERCENARY) {
