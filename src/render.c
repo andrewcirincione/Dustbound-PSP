@@ -541,7 +541,7 @@ static void objects_draw(void) {
     }
     for (int i = 0; i < g.actorCount; i++) {
         Actor *a = &g.actors[i];
-        if (!a->active || a->carriedBy >= 0 || actor_inside(a))
+        if (!a->active || a->carriedBy >= 0 || actor_inside(a) || population_hidden(i))
             continue;
         int x, y;
         project(a->x, a->y, &x, &y);
@@ -558,6 +558,8 @@ static void objects_draw(void) {
             unsigned h = hash(x, y);
             if (h % 13 || town_near(x, y, 8) >= 0 || road(x, y))
                 continue;
+            int campGround=0;for(int k=0;k<POP_GROUPS;k++)if(population_object_count(k)&&fabsf(x-g.population.state[k].siteX)<7&&fabsf(y-g.population.state[k].siteY)<7){campGround=1;break;}
+            if(campGround)continue;
             int sx, sy;
             project(x + .3f, y + .4f, &sx, &sy);
             if (sx < 0 || sx > 480 || sy < 0 || sy > 252)
@@ -578,7 +580,7 @@ static void objects_draw(void) {
             int id = resource_sprite(o->index);
             art_shadow(id, x, y + (id < 24 ? 5 : 0));
         }
-        if(o->kind==4){float wx,wy;int t=population_object(o->index/POP_PROPS,o->index%POP_PROPS,&wx,&wy);art_shadow(t==1?27:t==2?16:t==4?26:31,x,y);}
+        if(o->kind==4){if(!population_prop_style(o->index/POP_PROPS,o->index%POP_PROPS))art_shadow(population_prop_art(o->index/POP_PROPS,o->index%POP_PROPS),x,y);}
         if (o->kind == 3) {
             int region = o->index / 4, variant = o->index % 4;
             int id = region == 7                    ? 10
@@ -632,8 +634,11 @@ static void objects_draw(void) {
                 triangle(o->x - 3, o->y - 49, o->x + 3, o->y - 49, o->x, o->y - 45, TEAL);
             }
         } else if(o->kind==4){
-            float wx,wy;int t=population_object(o->index/POP_PROPS,o->index%POP_PROPS,&wx,&wy),id=t==1?27:t==2?16:t==4?26:31;
-            art(id,o->x,o->y,light(),0);
+            float wx,wy;int t=population_object(o->index/POP_PROPS,o->index%POP_PROPS,&wx,&wy),id=population_prop_art(o->index/POP_PROPS,o->index%POP_PROPS),style=population_prop_style(o->index/POP_PROPS,o->index%POP_PROPS);int x=o->x,y=o->y;
+            if(style==1){uint32_t cloth=shade(0x81725a,light());triangle(x-14,y-4,x+1,y-12,x+13,y-6,cloth);triangle(x-14,y-4,x+13,y-6,x-2,y+2,cloth);line(x-12,y-5,x-1,y+1,shade(0xb6aa87,light()));line(x-10,y-6,x+1,y,shade(0xb6aa87,light()));}
+            else if(style==2){line(x,y,x,y-29,shade(0x6d5037,light()));triangle(x+1,y-28,x+14,y-24,x+1,y-17,shade(0x9c403a,light()));}
+            else if(style==3){art(31,x,y,light()*.78f,0);art(20,x+9,y+2,light()*.7f,0);}
+            else art(id,x,y,light(),0);
             if(t==1){int flicker=(int)(g.time*8)%3;diamond(o->x,o->y-6,2+flicker,4+flicker,0xe0a24b);}
         } else {
             int x = o->x, y = o->y;
@@ -841,7 +846,7 @@ static void mini_map(void) {
     for (int i = 0; i < g.actorCount; i++) {
         Actor *a = &g.actors[i];
         int x = ox + 33 + (a->x - ui.camX) * 2.5f, y = oy + 30 + (a->y - ui.camY) * 2.5f;
-        if (x >= ox && x < ox + 66 && y >= oy && y < oy + 60 && a->active && !a->dead)
+        if (x >= ox && x < ox + 66 && y >= oy && y < oy + 60 && a->active && !a->dead && !population_hidden(i))
             rect(x, y, 2, 2, a->squad ? TEAL : a->faction == HOSTILE ? RED : GOLD);
     }
     frame(ox - 3, oy - 3, 72, 67, EDGE);
@@ -1179,7 +1184,7 @@ static void limbs_screen(void) {
             const LimbGrade *o=old?&limbGrades[limb_item_grade(old)]:NULL;
             snprintf(b,sizeof(b),ui.limbTarget>=LLEG?"OLD: HP %.0f / MOVE %+d%% / LOAD %+d":"OLD: HP %.0f / STR %+d / DEX %+d",limb_missing(a,ui.limbTarget)?0:limb_max_health(a,ui.limbTarget),o?(ui.limbTarget>=LLEG?o->speed:o->strength):0,o?(ui.limbTarget>=LLEG?o->carry:o->dexterity):0);text(31,193,b,MUTED,1);
             snprintf(b,sizeof(b),ui.limbTarget>=LLEG?"NEW: HP %d / MOVE %+d%% / LOAD %+d":"NEW: HP %d / STR %+d / DEX %+d",d->hp,ui.limbTarget>=LLEG?d->speed:d->strength,ui.limbTarget>=LLEG?d->carry:d->dexterity);text(31,208,b,TEAL,1);
-            text(31,222,"2 parts per fitting; old part returns to pack.",MUTED,1);
+            text(31,222,grade==2?(ui.limbTarget>=LLEG?"LOAD: tougher and heavier; slower travel.":"POWER: tougher and heavier; less dexterity."):grade==3?(ui.limbTarget>=LLEG?"SPEED: lighter; less durability and load.":"FINESSE: lighter; less durability and strength."):grade==4?"ALL-ROUND: durable and versatile; high price.":"2 parts per fitting; old part returns to pack.",MUTED,1);
         }return;
     }
     overlay_header(surgery?"VENN / REMOVAL SURGERY":"LIMBS & REPLACEMENTS",surgery?"\015 SELECT   \001 REMOVE: 400 S   \003 BUY LIMBS":"\001 FIT   \003 DETACH   \004 REPAIR   \002 BACK");
@@ -1193,6 +1198,16 @@ static void limbs_screen(void) {
         const char *status=limb_crawling(a)?"CRAWLING: fit a replacement for each missing leg.":limb_arms(a)==1?"ONE ARM: two-handed weapons are slower and weaker.":limb_arms(a)==0?"NO ARMS: weapons unusable; kicks are weakened.":"Fitting costs 2 parts; metal repairs use parts.";
         clipped(31,215,status,69,limb_crawling(a)||limb_arms(a)<2?RED:MUTED);
     }
+}
+
+static void life_screen(void){
+ char b[220];if(ui.screen==SCREEN_POLITICS){int t=ui.tradeTown;TownPolitics*p=&g.life.towns[t];overlay_header("COUNCIL & SUCCESSION",p->stage==1?"\015 SELECT   \001 COMMIT   \002 CLOSE":"\001 / \002 CLOSE");clipped(31,83,towns[t].name,65,GOLD);
+  if(p->stage==1){snprintf(b,sizeof(b),"CARETAKER %s: %d / CHALLENGER %s: %d",factionNames[p->original],p->support[0],factionNames[p->rival],p->support[1]);clipped(31,99,b,68,TEAL);wrap(31,112,68,"One pledge per dispute. Relief backs the caretaker. Local guards, food and arriving armies affect the outcome.",TEXT);
+   const char*labels[]={"Back caretaker: 200 silver / +30 influence","Back challenger: 200 silver / +30 influence","Deliver 4 rations: caretaker +12 influence","Leave"};for(int i=0;i<4;i++)row(156+i*15,i==ui.selection,labels[i],NULL);
+   snprintf(b,sizeof(b),"SILVER %d/200  RATIONS %d/4  PLEDGE %s",g.money,inventory_count(&g.actors[g.selected],RATION),p->pledge<0?"OPEN":"RECORDED");clipped(31,222,b,68,GOLD);
+  }else{snprintf(b,sizeof(b),"GOVERNMENT: %s",factionNames[g.townOwner[t]]);clipped(31,105,b,68,TEAL);wrap(31,127,68,p->policy==1?"Relief administration: food, water and medicine prices reduced 15%.":p->policy==2?"Military administration: equipment prices increased 12%.":"Trade administration: supply prices reduced 7%.",TEXT);snprintf(b,sizeof(b),"REFUGEES %d / SHIPMENTS %d",p->refugees,p->shipments);text(31,184,b,GOLD,1);wrap(31,207,68,"The former ruler and their unique equipment remain where they fell.",MUTED);}return;
+ }
+ overlay_header("WORLD ACTIVITY","\015 SELECT   \001 COUNCIL   \002 CLOSE");int count=life_ledger_count(),first=start_row(ui.selection,count,6);for(int j=0;j<6&&first+j<count;j++){life_ledger_label(first+j,b,sizeof(b));row(84+j*14,first+j==ui.selection,b,NULL);}life_ledger_detail(ui.selection,b,sizeof(b));wrap(31,178,68,b,TEXT);
 }
 
 static void squad_screen(void) {
@@ -1925,6 +1940,7 @@ void render_game(uint32_t *pixels, int stride) {
         name_screen();
         break;
     case SCREEN_ENGAGE: engage_screen();break;
+    case SCREEN_LIFE:case SCREEN_POLITICS:life_screen();break;
     case SCREEN_ACTIONS: actions_screen();break;
     case SCREEN_THEFT:
         theft_screen();

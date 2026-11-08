@@ -1,4 +1,6 @@
-Current release validation: [0.9.0](VALIDATION_V090.md).
+Current release validation: [0.13.0](VALIDATION_V130.md).
+
+Historical: [0.12.0](VALIDATION_V120.md), [0.11.0](VALIDATION_V110.md), [0.10.0](VALIDATION_V100.md), [0.9.0](VALIDATION_V090.md).
 
 Historical atlas validation: [0.8.1](VALIDATION_V081.md).
 

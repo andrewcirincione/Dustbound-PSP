@@ -329,7 +329,7 @@ int item_price(int town, int it, int selling) {
         return 0;
     float mod = 1 + regional_price(town,it) + (town==1&&g.depth.route==ROUTE_TRUCE?.12f:0) + (60 - g.prosperity[town]) * .004f + limit(g.rep[g.townOwner[town]]*.001f,-.15f,.1f)*(selling?.5f:-1);
     mod = limit(mod, .65f, 1.6f);
-    return (int)fmaxf(1, itemDefs[it].price * (selling ? .75f : 1) * mod * market_factor(town,it));
+    return (int)fmaxf(1, itemDefs[it].price * (selling ? .75f : 1) * mod * market_factor(town,it) * politics_price(town,it));
 }
 int shop_item(int index) {
     if (ui.tradeTown < 0 || ui.tradeTown >= TOWNS)

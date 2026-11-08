@@ -1,0 +1,346 @@
+[
+  {
+    "eboot_sha256": "6d69d9a3d9353aaf428b93c0e629cc9d14e0f9b16e056cc9d00dcbf0ededc7b2",
+    "version": "0.13.0"
+  },
+  {
+    "capture": "v130-psp-title",
+    "screen": 13,
+    "expected": 13,
+    "frame": 22,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-fresh-world",
+    "screen": 0,
+    "expected": 0,
+    "frame": 239,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-road-journey-1",
+    "screen": 0,
+    "expected": 0,
+    "frame": 510,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-road-journey-3",
+    "screen": 0,
+    "expected": 0,
+    "frame": 912,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-road-journey-5",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1418,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "fresh_controller_journey": [
+      {
+        "position": [
+          26.0,
+          33.73075866699219
+        ],
+        "time": 12.492156982421875,
+        "population": [
+          80,
+          2,
+          295,
+          8,
+          1,
+          0,
+          0,
+          17
+        ]
+      },
+      {
+        "position": [
+          26.0,
+          37.07770919799805
+        ],
+        "time": 22.357913970947266,
+        "population": [
+          80,
+          2,
+          295,
+          8,
+          1,
+          0,
+          0,
+          17
+        ]
+      },
+      {
+        "position": [
+          31.778093338012695,
+          37.0029411315918
+        ],
+        "time": 36.9138069152832,
+        "population": [
+          80,
+          2,
+          295,
+          8,
+          2,
+          0,
+          0,
+          17
+        ]
+      },
+      {
+        "position": [
+          39.83061218261719,
+          36.998878479003906
+        ],
+        "time": 51.4969367980957,
+        "population": [
+          80,
+          2,
+          295,
+          8,
+          3,
+          0,
+          0,
+          17
+        ]
+      },
+      {
+        "position": [
+          49.92137908935547,
+          36.998878479003906
+        ],
+        "time": 70.93077087402344,
+        "population": [
+          80,
+          2,
+          295,
+          8,
+          6,
+          0,
+          1,
+          17
+        ]
+      },
+      {
+        "position": [
+          59.70179748535156,
+          37.17035675048828
+        ],
+        "time": 87.83203125,
+        "population": [
+          80,
+          3,
+          295,
+          8,
+          6,
+          0,
+          2,
+          17
+        ]
+      }
+    ],
+    "simulated_seconds": 86.57451438903809,
+    "host_wall_seconds": 3.799087267001596,
+    "observed_frame_rate": 310.0744776862492,
+    "physical_psp_benchmark": false
+  },
+  {
+    "capture": "v130-psp-journey-reloaded",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1951,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-camp-0",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2152,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-camp-1",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2334,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-camp-2",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2537,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-camp-3",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2720,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-camp-4",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2910,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-camp-bed-action",
+    "screen": 35,
+    "expected": 35,
+    "frame": 2974,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-camp-bed-rest",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3108,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-companion-rescue",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3476,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-rescue-reloaded",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3930,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-ambush-hidden",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4135,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-ambush-sprung",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4242,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-council-action",
+    "screen": 35,
+    "expected": 35,
+    "frame": 4444,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-council-open",
+    "screen": 41,
+    "expected": 41,
+    "frame": 4480,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-council-pledged",
+    "screen": 41,
+    "expected": 41,
+    "frame": 4617,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-council-reloaded",
+    "screen": 41,
+    "expected": 41,
+    "frame": 5222,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-new-government",
+    "screen": 41,
+    "expected": 41,
+    "frame": 5627,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-world-activity",
+    "screen": 40,
+    "expected": 40,
+    "frame": 6098,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-world-activity-scroll",
+    "screen": 40,
+    "expected": 40,
+    "frame": 6311,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-arm-grade-2",
+    "screen": 37,
+    "expected": 37,
+    "frame": 6724,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-arm-grade-3",
+    "screen": 37,
+    "expected": 37,
+    "frame": 6749,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-arm-grade-4",
+    "screen": 37,
+    "expected": 37,
+    "frame": 6778,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-leg-grade-2",
+    "screen": 37,
+    "expected": 37,
+    "frame": 6986,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-leg-grade-3",
+    "screen": 37,
+    "expected": 37,
+    "frame": 7016,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-leg-grade-4",
+    "screen": 37,
+    "expected": 37,
+    "frame": 7044,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v130-psp-specialized-limbs-fitted",
+    "screen": 36,
+    "expected": 36,
+    "frame": 7101,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "completed": true,
+    "camp_variants": 5,
+    "bed_recovery": true,
+    "companion_carry_saved": true,
+    "ambush_hidden_then_triggered": true,
+    "finite_pledge_and_relief_saved": true,
+    "succession_resolved": true,
+    "activity_scroll": true,
+    "specialized_limb_previews_fitting_saved": true,
+    "read_only_qa": true,
+    "eboot_sha256": "6d69d9a3d9353aaf428b93c0e629cc9d14e0f9b16e056cc9d00dcbf0ededc7b2"
+  }
+]

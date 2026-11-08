@@ -1,16 +1,16 @@
-# Dustbound 0.12.0 — An unquiet frontier
+# Dustbound 0.13.0 — A frontier with consequences
 
-Persistent world encounters now range from small camps and wounded travelers to prisoner convoys and marching armies. Prosthetic limbs remain uncommon.
+World encounters now have more distinct behavior and lasting outcomes.
 
-- **80 persistent encounter groups, 16 situations:** scavengers, refugees, hunters, smugglers, traders, patrols, raiders, beasts, pilgrims, wounded travelers, battlefields, 12–16-member armies, ambushes, salvage crews, prisoner convoys and duelists.
-- **Camps you can use:** tents, fires, actual beds, cooking, finite supply caches and limited-stock traveling traders. Beds heal and reduce fatigue when safe; taking owned supplies can provoke the camp.
-- **Activity beyond your view:** groups travel, rest, gather resources and fight other factions off-screen. Nearby groups use the ordinary actor simulation.
-- **Persistent consequences:** injuries, corpses, equipment, stolen goods, fitted limbs and supplies survive streaming and saves. Leaving and returning cannot reroll the loot. Freed prisoners retain the existing follow/flee/recruit behavior.
-- **Uncommon prosthetics:** low-tier humanoids have a 4% chance to wear one, increasing modestly with tier. Strong grades are scarcer; Relic parts are exceptional. Actual fitted parts can be looted once from fallen owners.
-- **Earlier limb mechanics retained:** five grades, replacement shops, Surgeon Venn, crawling with a missing leg and two-handed weapon penalties with a missing arm.
+- **Hunters and ambushers:** hunters pursue real beast groups and return with finite carcass loot; ambushers conceal themselves and flank when triggered.
+- **Survivors respond to losses:** groups regroup, spend medicine, carry wounded companions, recover and retreat. One casualty no longer stops the whole group.
+- **Camps change over time:** finite provisions, supply trips, relocation and abandonment. Refugees can reach safety and become recruitable. Bedrolls, trader beds and varied layouts distinguish camps.
+- **Armies have duties:** reinforce vulnerable holdings, move actual supplies or assault a town's garrison.
+- **Succession after ruler deaths:** visit a council to back a claimant or deliver relief. Outcomes change ownership and administration prices. Track discovered developments through Start > World > World activity.
+- **Prosthetic choices have tradeoffs:** Reinforced favors power, toughness and hauling; Precision favors dexterity and speed; Relic is a costly all-round option. Prosthetics remain uncommon in random encounters.
 
-Install `Dustbound-0.12.0-PSP.zip` at the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Save format is v12; an actual v11 save was migrated and reloaded. Earlier readers remain supported. Back up saves before overwriting them with a newer version.
+Install `Dustbound-0.13.0-PSP.zip` at the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Saves use v13; a real v12 save was migrated and reloaded. Earlier readers remain. Back up saves before overwriting them with a newer version.
 
-[Encounter details](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/CONTENT_V120.md) · [PSP screenshots](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/FEEDBACK_V120.md) · [Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V120.md)
+[Details](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/CONTENT_V130.md) · [PSP screenshots](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/FEEDBACK_V130.md) · [Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V130.md)
 
-Verified with native simulation/sanitizer suites and controller-driven PPSSPP scenarios. This is a bounded simulation with coarse off-screen battles. Physical PSP testing and naturally played long-run campaign balance are not claimed. Playable alpha.
+Verified through native regression/sanitizer suites, a 20-minute full simulation, a five-hour coarse world run and controller-driven PPSSPP checks. Offline battles remain simplified. Physical PSP performance and naturally played full-campaign balance remain unqualified. Playable alpha.

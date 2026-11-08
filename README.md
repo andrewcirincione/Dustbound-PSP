@@ -24,11 +24,21 @@ Five playable species with visible starting stats; different fortress, monastery
 
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.12.0, persistent wilderness populations — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.13.0, world behavior and succession — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 
 ![Copper Road rescue dialogue from the PSP EBOOT](evidence/v060-05-sora-wreck.png)
+
+## 0.13.0: decisions and consequences
+
+Hunters pursue real prey, ambushers conceal and flank, survivors bandage and carry companions, camps seek supplies and relocate, and refugees can settle. Armies reinforce, carry supplies or assault actual town garrisons. Ruler deaths open a succession dispute the player can influence with silver and relief. Start > World > World activity reports discovered developments.
+
+Reinforced limbs now specialize in power, durability and hauling; Precision specializes in dexterity and speed. Relic remains versatile. Random prosthetics stay uncommon. Distinct camp footprints and improvised bedrolls make camps easier to read.
+
+[Mechanics](docs/CONTENT_V130.md) · [PSP review](docs/FEEDBACK_V130.md) · [Tests and limits](docs/VALIDATION_V130.md)
+
+![Succession council](evidence/v130-psp-council-pledged.png)
 
 ## 0.8.0: living frontier
 

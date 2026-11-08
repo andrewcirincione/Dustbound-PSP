@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.12.0"
+#define VERSION "0.13.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -131,7 +131,7 @@ enum {
     SCREEN_LOOT,
     SCREEN_ASSIST,
     SCREEN_LOG, SCREEN_EXPEDITION, SCREEN_ORDERS, SCREEN_CAMP, SCREEN_CARE, SCREEN_ENCOUNTER, SCREEN_LAYERS,
-    SCREEN_THEFT, SCREEN_ENGAGE, SCREEN_ACTIONS, SCREEN_LIMBS, SCREEN_LIMBFIT, SCREEN_SURGERY, SCREEN_LIMBCONFIRM
+    SCREEN_THEFT, SCREEN_ENGAGE, SCREEN_ACTIONS, SCREEN_LIMBS, SCREEN_LIMBFIT, SCREEN_SURGERY, SCREEN_LIMBCONFIRM, SCREEN_LIFE, SCREEN_POLITICS
 };
 enum {
     KEY_UP = 1,
@@ -214,6 +214,7 @@ typedef struct {
 } LivingWorld;
 #include "society_types.h"
 #include "population_types.h"
+#include "life_types.h"
 typedef struct {
     uint32_t seed, rng;
     float time, dayTime, raidTimer, autosave;
@@ -246,6 +247,7 @@ typedef struct {
     struct { int version, surgeonActor; } limbs;
     /* v12: persistent population; all earlier save bytes stay in place. */
     Population population;
+    FrontierLife life;
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -502,4 +504,5 @@ void render_catalog_sample(uint32_t *pixels, int stride, int item);
 #include "civilization.h"
 #include "limbs.h"
 #include "population.h"
+#include "life.h"
 #endif

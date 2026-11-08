@@ -1,0 +1,229 @@
+=== validate_v080.sh ===
+PASS: 1,200 event generations, all 32 mechanic/condition combinations, runtime renewal, 16-member formation, reward/loot gates, target retaliation, v7 migration and v8 persistence.
+PASS 01: world includes sixteen towns, residents, hostiles and resources
+PASS 02: wanderer starts with one member and 650 silver
+PASS 03: player starts on walkable ground
+PASS 04: buildings and map boundaries block movement
+PASS 05: inventory can add and count a stack
+PASS 06: insufficient removal is atomic
+PASS 07: removal clears an exhausted slot
+PASS 08: full inventory rejects new items
+PASS 09: failed purchase does not consume money or shop stock
+PASS 10: buying updates money, stock and inventory
+PASS 11: equipping armor swaps old armor back into pack
+PASS 12: selling pays the displayed resale price
+PASS 13: unaffordable trade cannot alter stock
+PASS 14: recruitment creates a controllable squad member
+PASS 15: same companion cannot be recruited twice
+PASS 16: L cycles the controlled squad member
+PASS 17: squad recruitment enforces eight-member cap
+PASS 18: movement trains athletics
+PASS 19: heavy loads slow movement
+PASS 20: a missing leg severely reduces movement
+PASS 21: equipping a prosthetic restores leg function
+PASS 22: melee causes body-part damage and skill XP
+PASS 23: cutting weapons cause bleeding
+PASS 24: first aid consumes a dressing, heals, stops bleeding
+PASS 25: hungry squad automatically eats rations
+PASS 26: knockout recovery does not damage healthy body parts
+PASS 27: blood loss causes unconsciousness
+PASS 28: fatal blood loss causes persistent death
+PASS 29: crossbow attacks consume ammunition at range
+PASS 30: empty crossbow is retained and switches to unarmed
+PASS 31: town boundary prevents unauthorized construction
+PASS 32: camp construction consumes materials and establishes an outpost
+PASS 33: campfire consumes exactly three timber
+PASS 34: construction prevents overlapping structures
+PASS 35: campfire recipe supports meat substitution
+PASS 36: crafting requires a nearby workstation
+PASS 37: forge can be constructed from timber and iron bars
+PASS 38: forge smelts three ore into one iron bar
+PASS 39: research bench can be built
+PASS 40: research consumes relic and money and unlocks a tier
+PASS 41: research unlocks sabre crafting
+PASS 42: resource context finds nearby iron deposit
+PASS 43: gathering completes, consumes node stock, trains labour
+PASS 44: lock tools can open sealed ruins and train lockpicking
+PASS 45: triangle opens inventory
+PASS 46: R preserves the character screen while switching members
+PASS 47: world D-pad Down opens skills
+PASS 48: circle closes an overlay
+PASS 49: tactical pause stops simulation
+PASS 50: menus stop simulation
+PASS 51: select opens world map
+PASS 52: map sets travel order
+PASS 53: dialogue directional input preserves recruit identity
+PASS 54: healthy followers do not intercept nearby loot
+PASS 55: injured followers remain available for first aid
+PASS 56: save creates a complete expedition file
+PASS 57: save/load preserves economy, time, armor and skill progress
+PASS 58: corrupted save is rejected without altering live state
+PASS 59: missing save is handled safely
+PASS 60: 1000-second whole-world simulation keeps actors finite and in bounds
+PASS 61: long simulation advances world time
+
+61/61 passed
+PASS 01: all catalog and specialist gear have valid slots, effects and prices
+PASS 02: catalog boundaries are checked
+PASS 03: creator applies appearance, ancestry and ronin origin
+PASS 04: barber preserves expedition progress
+PASS 05: context guide opens the forging chapter
+PASS 06: guide returns to originating screen
+PASS 07: master relic armor consumes exact forging ingredients
+PASS 08: forged armor equips into its visible body slot
+PASS 09: locked forging is atomic
+PASS 10: depot construction succeeds with materials outside town
+PASS 11: depot deposits inventory resources
+PASS 12: depot withdrawal restores inventory
+PASS 13: stolen goods cannot lose ownership through storage
+PASS 14: journal rejects a duplicate active contract
+PASS 15: supply contract consumes goods and pays silver and reputation
+PASS 16: completed contract cannot pay twice
+PASS 17: delivery contract can be accepted
+PASS 18: delivery records reaching the destination
+PASS 19: delivery requires returning to the issuer
+PASS 20: delivery pays on returning to the issuing town
+PASS 21: local prosperity affects displayed market prices
+PASS 22: weapon market filter maps to available stock
+PASS 23: stolen ownership survives equipping and removing gear
+PASS 24: selling to the victim faction is rejected
+PASS 25: Black Mesa can fence stolen gear
+PASS 26: doctor treats wounds for the stated fee
+PASS 27: bedside interaction starts paid rest
+PASS 28: sleep restores wounds and fatigue
+PASS 29: snow exposure rises outside shelter
+PASS 30: sealed equipment reduces environmental exposure
+PASS 31: nearby law guards take defeated wanted survivors into custody
+PASS 32: custody prevents walking out of the holding area
+PASS 33: custody dialogue accepts bail and clears bounty
+PASS 34: starting an attack winds up without instant damage
+PASS 35: short blades wind up faster than heavy nodachi
+PASS 36: leaving reach before contact avoids the strike
+PASS 37: a missing right arm transfers the weapon to the remaining hand
+PASS 38: no hit before the blade reaches the contact marker
+PASS 39: hit or block resolves at visible blade contact
+PASS 40: follow-through cannot resolve the same strike twice
+PASS 41: all 32 weapon families join preparation, strike and recovery without pose snapping
+PASS 42: expanded expedition writes successfully
+PASS 43: save roundtrip preserves appearance, gear, custody, weather, contracts and ownership
+PASS 44: legacy layout matches the shipped v0.1 save payload
+PASS 45: real v0.1 outpost fixture migrates equipment, buildings and research
+PASS 46: migrated expedition can be saved and reloaded as v0.2
+PASS 47: invalid legacy data cannot alter the live expedition
+PASS 48: dismissing a fallen leader selects another roster member even when all are dead
+PASS 49: last fallen survivor remains a valid saveable expedition
+PASS 50: town ownership events update settlement faction banners
+
+50/50 expansion checks passed
+
+=== validate_v081.sh ===
+PASS: atlas discovery filtering, named town selection, wraparound, zoom context, exact travel destination, events never enter atlas lists and D-pad preserves player position.
+
+=== validate_v090.sh ===
+PASS: 48 new weapon variants, one-handed rapier thrusts, regional profit, no same-town price arbitrage, offscreen production.
+PASS: faction-specific warrants, restricted gates, matching disguise, recognition, prosthetic inspection, contextual wanted alert and prioritized deduplicated log.
+PASS: freight deposit/refund and atomic full-pack rejection; no double claims; employer warning/cooldown/recovery, wages only for following movement, patrol completion, death failure.
+PASS: paused lockpick/open FIFO, locked open rejection, town-only atlas.
+PASS: physical cannibal capture, binding, eating damage, v9 captive persistence, escape with guards away.
+PASS: actual v0.8.1 save migration.
+BENCH: 1000 full-world simulation ticks / 173 actors: 0.208s native CPU (not PSP hardware).
+ALL SOCIETY CHECKS PASSED
+PASS: 422 screen/biome/guide renders; 480x272 bounds and 512-pixel stride preserved.
+PASS: combat strength/dexterity/melee/class XP; hit toughness and defense; reduced blocked XP; unarmed and stagger dodge; load penalty; harder-opponent multipliers; armor-safe toughness training; persistent independent class progress and handling benefit.
+PASS: two paused rescues execute serially, persist mid-work and after release; freed NPCs choose following or flight without squad membership, followers can be dismissed to refuge, and join only through Recruit; full squad does not block freedom.
+PASS: nearby conscious guards catch rescue attempts and create faction charges; distance, rooms and dead-target checks prevent remote or invalid rescues.
+STATE: Game=2143228 bytes; 173 actors in fresh rescue fixture.
+
+=== validate_v100.sh ===
+PASS: all 25 origin/species combinations, barber preservation, movement/carry/appetite and full species-aware healing/repair.
+PASS: 18 distinct owners, 36 physical named items, 96 armor variants, traveling elites, no loot refill after death/load; 173 actors / 267 buildings.
+PASS: all 15 rebuilt settlements have accessible services; both fortress gate axes remain open.
+PASS: actual v9 -> v10 migration, repeated reload idempotence, player-built structures preserved; Game=2143228 bytes.
+ALL CIVILIZATION CHECKS PASSED
+VISUAL: Katana: 12 monochrome silhouettes / 24 variants
+VISUAL: Wakizashi: 12 monochrome silhouettes / 24 variants
+VISUAL: Nodachi: 12 monochrome silhouettes / 24 variants
+VISUAL: Tanto: 12 monochrome silhouettes / 24 variants
+VISUAL: Naginata: 12 monochrome silhouettes / 24 variants
+VISUAL: Yari: 12 monochrome silhouettes / 24 variants
+VISUAL: Nagamaki: 12 monochrome silhouettes / 24 variants
+VISUAL: Kusarigama: 12 monochrome silhouettes / 24 variants
+VISUAL: Frontier sabre: 12 monochrome silhouettes / 24 variants
+VISUAL: Bowie knife: 12 monochrome silhouettes / 24 variants
+VISUAL: Trail machete: 12 monochrome silhouettes / 24 variants
+VISUAL: Butcher cleaver: 12 monochrome silhouettes / 24 variants
+VISUAL: War pick: 12 monochrome silhouettes / 24 variants
+VISUAL: Boarding axe: 12 monochrome silhouettes / 24 variants
+VISUAL: Kanabo: 12 monochrome silhouettes / 24 variants
+VISUAL: Tetsubo: 12 monochrome silhouettes / 24 variants
+VISUAL: Quarterstaff: 12 monochrome silhouettes / 24 variants
+VISUAL: Hook blade: 12 monochrome silhouettes / 24 variants
+VISUAL: Ring sabre: 12 monochrome silhouettes / 24 variants
+VISUAL: Broken falchion: 12 monochrome silhouettes / 24 variants
+VISUAL: Horse cutter: 12 monochrome silhouettes / 24 variants
+VISUAL: Saw sword: 12 monochrome silhouettes / 24 variants
+VISUAL: Twin sickle: 12 monochrome silhouettes / 24 variants
+VISUAL: Spiked club: 12 monochrome silhouettes / 24 variants
+VISUAL: Scout bow: 12 monochrome silhouettes / 24 variants
+VISUAL: Repeater bow: 12 monochrome silhouettes / 24 variants
+VISUAL: Heavy arbalest: 12 monochrome silhouettes / 24 variants
+VISUAL: Hand crossbow: 12 monochrome silhouettes / 24 variants
+VISUAL: Longbow: 12 monochrome silhouettes / 24 variants
+VISUAL: Ranger rifle: 12 monochrome silhouettes / 24 variants
+VISUAL: Dragoon pistol: 12 monochrome silhouettes / 24 variants
+VISUAL: Scattergun: 12 monochrome silhouettes / 24 variants
+VISUAL: Greatsword: 12 monochrome silhouettes / 24 variants
+VISUAL: Railway maul: 12 monochrome silhouettes / 24 variants
+VISUAL: Crescent glaive: 12 monochrome silhouettes / 24 variants
+VISUAL: Anchor cleaver: 12 monochrome silhouettes / 24 variants
+VISUAL: Scimitar: 12 monochrome silhouettes / 24 variants
+VISUAL: Rapier: 12 monochrome silhouettes / 24 variants
+PASS: all 38 weapon types have at least 12 monochrome silhouettes; 14592 equipped direction/phase renders.
+PASS: 5760 painted grip samples; 14976 attack poses fit actor cache; 36 bounded, cache-stable comparison pairs. Bounds x=-113..112 y=-124..51 at 2x.
+PASS: 288 asymmetric weapon raster reflections preserve edge orientation.
+PASS: 1152 backpack/body/torso/facing/pose renders keep visible loads on the upper back.
+PASS: 72 headwear/body/facing renders overlap the brow and stay within fitted head bounds.
+Attachment visual sheets rendered.
+PASS: displayed recipe quantities, alternate cooking inputs, missing materials/fuel, rollback, output counts, exact forging deductions, all 38 weapon/20 torso designs, named regalia cannot be forged.
+
+=== validate_v110.sh ===
+PASS: cutting trauma removes limbs, blunt trauma does not sever flesh, severed limbs appear on the ground, missing legs crawl, dressing cannot regrow limbs.
+PASS: either missing arm keeps the remaining hand usable and applies two-handed damage, accuracy and attack-delay penalties.
+PASS: all five grades fit all four sockets, bonuses affect effective stats, copies retain grade/ownership, mechanical HP survives ticking, repairs require parts and broken metal does not bleed.
+PASS: wrong socket, natural limb, insufficient parts and full-pack swaps fail atomically; detachment cannot be used for free healing.
+PASS: Venn requires safe nearby access and payment, removal is permanent and bandaged; specialized towns sell the intended grades through a dedicated market filter.
+PASS: fitted wanderer limbs can be looted exactly once, the owner loses their function, and loss/ownership persists through save/reload; real v10 saves migrate.
+PASS: all new screens remain within the 480x272 framebuffer; prepared emulator saves generated.
+ALL LIMB CHECKS PASSED; Game=2143228 Actor=932
+
+=== validate_v120.sh ===
+WORLD 0: 302 generated NPCs, 14 prosthetic wearers, 20 preserved wilderness NPCs
+WORLD 1: 302 generated NPCs, 25 prosthetic wearers, 20 preserved wilderness NPCs
+WORLD 2: 309 generated NPCs, 27 prosthetic wearers, 20 preserved wilderness NPCs
+WORLD 3: 297 generated NPCs, 18 prosthetic wearers, 19 preserved wilderness NPCs
+WORLD 4: 305 generated NPCs, 18 prosthetic wearers, 19 preserved wilderness NPCs
+WORLD 5: 306 generated NPCs, 20 prosthetic wearers, 19 preserved wilderness NPCs
+RARITY tier 0: 826/20000 wearers; 0 Relic parts
+RARITY tier 1: 826/20000 wearers; 0 Relic parts
+RARITY tier 2: 1439/20000 wearers; 0 Relic parts
+RARITY tier 3: 2031/20000 wearers; 5 Relic parts
+PASS: 80 persistent groups, all 16 situations and broad regional placement; ordinary prosthetics uncommon, veteran bias modest, Relic exceptionally rare, beasts excluded.
+PASS: full actor, damage, loot, stolen tags, fitted parts, class XP, trauma, corpses and finite supplies survive streaming/save reload; no limb duplication; split squads/carried actors pin; freed followers detach without joining the squad.
+PASS: actual nearby-action bed rest heals and reduces fatigue; finite trader stock, exact payment, cooking deductions, safe/reach gates and paused camp actions save correctly.
+PASS: off-screen groups actually travel, gather finite world resources and fight other factions; injuries persist without awarding player money, kills or participation rewards.
+PASS: actor exhaustion defers whole groups without recycling protected NPCs; actual v11 migration and v12 reload pass; malformed population data is rejected.
+ROLLED LIMB FIXTURE: group type 8 owner Nox Vale limb 3 item 2368
+BENCH: 1000 population-enabled ticks 0.101s native CPU; not physical PSP performance.
+PASS: all sixteen world/action layouts stay within 480x272; ordinary prepared saves and a naturally rolled prosthetic-owner fixture are ready for PSP controller review.
+ALL POPULATION CHECKS PASSED; Game=2143228 Population=1500196 Actor=932
+
+=== validate_v130.sh ===
+PASS: one death no longer stops survivors; corpse locations stay fixed; actual dressings and carry links survive streaming/save/reload; recovered companions are put down.
+PASS: hunters pursue actual packs and transfer finite carcass loot; ambushers hide, trigger and flank; refugees pack, reach safety and become recruitable without joining automatically.
+PASS: depleted camps pack, withdraw exact real town stock, relocate and preserve supplies; armies choose needs-based duties and fight actual garrisons without player reward.
+PASS: succession pledges and relief spend once, resolution changes ownership/policy without reviving rulers; v12 migration; Reinforced and Precision each outperform Relic in their specialty.
+PASS: distinct camp layouts and council/activity screens respect framebuffer bounds; prepared controller saves generated.
+PASS: cyclic carriers, missing mission towns and non-finite timers are rejected.
+FULL SIM: 20 simulated minutes / 12000 full ticks; alive=286 down=21 hungry=0 settled groups=11; player money 650->650, kills=0; 4.30s host CPU.
+ENDURANCE: 10 game days / 5 simulated hours; rescues=5 hunts=5 resupplies=11 relocations=11 refugees=28 missions=2 conflicts=1058; 45.29s host CPU.
+ALL LIFE CHECKS PASSED; Game=2143228 Life=15524 Actor=932

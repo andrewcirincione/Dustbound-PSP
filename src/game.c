@@ -487,6 +487,7 @@ void game_new(uint32_t seed, int scenario) {
     civil_init();
     limbs_init();
     population_init();
+    life_init();
     ui.camX = a->x;
     ui.camY = a->y;
     ui.mapX = a->x;
@@ -1031,7 +1032,7 @@ void find_context(void) {
     ui.contextKind = ui.contextIndex = -1;
     for (int i = 0; i < g.actorCount; i++) {
         Actor *b = &g.actors[i];
-        if (i == g.selected || !b->active || b->carriedBy >= 0 || actor_inside(a) != actor_inside(b))
+        if (i == g.selected || !b->active || b->carriedBy >= 0 || population_hidden(i) || actor_inside(a) != actor_inside(b))
             continue;
         if (conscious(b) && hostile(a, b) && (b->target >= 0 || a->target == i))
             continue;
@@ -1363,6 +1364,7 @@ void simulate(float dt) {
     living_tick(dt);
     society_tick(dt);
     civil_tick(dt);
+    politics_tick(dt);
     g.time += dt;
     g.dayTime += dt / 75;
     if (g.dayTime >= 24) {
@@ -1489,6 +1491,7 @@ void simulate(float dt) {
         }
         if (actor_inside(a) || !conscious(a) || a->prisonTime>0 || society_rescue_busy(i) || g.depth.actors[i].captive || (a->carrying>=0 && g.depth.actors[a->carrying].captive>=2))
             continue;
+        if(population_tactics(i,dt))continue;
         int target = -1;
         float best = weapon_ranged(a->gear[0]) ? itemDefs[a->gear[0]].range + 1 : 6.0f;
         if (a->kind == BEAST)
@@ -1617,7 +1620,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 12, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 13, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1718,7 +1721,7 @@ static int validate_game(const Game *t) {
         if (a->carrying >= t->actorCount || a->carriedBy >= t->actorCount)
             return 0;
     }
-    return depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t) && population_validate(t);
+    return depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t) && population_validate(t) && life_validate(t);
 }
 static int migrate_legacy(const LegacyGame *old) {
     if (old->actorCount < 1 || old->actorCount > 80 || old->buildingCount < 0 || old->buildingCount > 100 ||
@@ -1801,10 +1804,11 @@ static int migrate_legacy(const LegacyGame *old) {
     memset(&g.civil,0,sizeof(g.civil));
     memset(&g.limbs,0,sizeof(g.limbs));
     memset(&g.population,0,sizeof(g.population));
+    memset(&g.life,0,sizeof(g.life));
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
-    return (version==12 && size==sizeof(Game)) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version==13 && size==sizeof(Game)) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -1878,6 +1882,7 @@ int load_game(const char *path) {
     civil_init();
     limbs_init();
     population_init();
+    life_init();
         memset(&ui, 0, sizeof(ui));
         ui.attackFocus=-1;
         ui.speed = 1;
@@ -1967,12 +1972,12 @@ void cycle_squad(int direction) {
         }
     }
 }
-static const char *pauseLabels[3][8] = {
+static const char *pauseLabels[3][9] = {
     {"Resume", "Save game", "Load game", "Game speed", "Controls & field guide", "Save and quit to title", "New wanderer"},
     {"Inventory & equipment", "Skills", "Health & recovery", "Squad management", "Armor layers", "Recent messages", "Choose opponent"},
-    {"Map & travel", "Copper Road expedition", "Journal & local conflicts", "Factions", "Build a camp", "Camp upkeep", "Crafting recipes", "Research"}
+    {"Map & travel", "Copper Road expedition", "Journal & local conflicts", "Factions", "Build a camp", "Camp upkeep", "Crafting recipes", "Research", "World activity"}
 };
-int pause_menu_count(void) { return ui.menuTab == 0 ? 7 : ui.menuTab == 1 ? 7 : 8; }
+int pause_menu_count(void) { return ui.menuTab == 0 ? 7 : ui.menuTab == 1 ? 7 : 9; }
 const char *pause_menu_label(int row) {
     return row >= 0 && row < pause_menu_count() ? pauseLabels[ui.menuTab][row] : "";
 }
@@ -1998,9 +2003,9 @@ static void pause_menu_open(void) {
         }
         return;
     }
-    static const int screens[2][8] = {
+    static const int screens[2][9] = {
         {SCREEN_PACK, SCREEN_SKILLS, SCREEN_HEALTH, SCREEN_SQUAD, SCREEN_LAYERS, SCREEN_LOG, SCREEN_ENGAGE},
-        {SCREEN_MAP, SCREEN_EXPEDITION, SCREEN_JOURNAL, SCREEN_FACTIONS, SCREEN_BUILD, SCREEN_CAMP, SCREEN_CRAFT, SCREEN_RESEARCH}
+        {SCREEN_MAP, SCREEN_EXPEDITION, SCREEN_JOURNAL, SCREEN_FACTIONS, SCREEN_BUILD, SCREEN_CAMP, SCREEN_CRAFT, SCREEN_RESEARCH, SCREEN_LIFE}
     };
     ui.menuReturn = 1;
     int target = screens[ui.menuTab - 1][row];
@@ -2017,6 +2022,7 @@ void game_tick(float dt, Input in) {
     ui.noticeTime = fmaxf(0, ui.noticeTime - dt);
     log_tick(dt);
     int p = in.pressed;
+    if(politics_input(in))return;
     if(limb_input(in))return;
     if(ui.screen==SCREEN_ORDERS)ui.screen=SCREEN_SQUAD;
     if(ui.screen==SCREEN_CARE)ui.screen=SCREEN_HEALTH;
@@ -2441,6 +2447,10 @@ void debug_snapshot(const char *path) {
     if(popNear>=0){WorldEvent*e=&g.population.groups[popNear];PopulationState*m=&g.population.state[popNear];int data[12]={popNear,e->type,m->phase,e->serial,m->beds,e->spawned,e->count,m->stock[0],m->stock[1],m->stock[2],m->cacheQty,m->harvests};memcpy(popInfo,data,sizeof(data));popPosition[0]=e->x;popPosition[1]=e->y;}
     VALUE("pop_near",popInfo,sizeof(popInfo));VALUE("pop_position",popPosition,sizeof(popPosition));
     VALUE("fatigue",&a->fatigue,4);
+    int lifeStats[8]={g.life.version,g.life.rescues,g.life.hunts,g.life.resupplies,g.life.relocations,g.life.settled,g.life.missions,g.life.succession};VALUE("life",lifeStats,sizeof(lifeStats));
+    int lifeNear[12]={0};if(popNear>=0){GroupLife*z=&g.life.groups[popNear];int v[12]={z->goal,z->camp,z->targetGroup,z->targetTown,z->losses,z->ambushSprung,z->rescues,z->hunts,z->supplies,z->settled,z->missionDone,z->relocations};memcpy(lifeNear,v,sizeof(v));}VALUE("life_near",lifeNear,sizeof(lifeNear));
+    int lifeCarry[POP_MEMBERS*2];for(int j=0;j<POP_MEMBERS*2;j++)lifeCarry[j]=-1;if(popNear>=0){WorldEvent*e=&g.population.groups[popNear];for(int j=0;j<e->count;j++)if(e->spawned&&e->members[j]>=0){Actor*b=&g.actors[e->members[j]];lifeCarry[j*2]=b->carrying;lifeCarry[j*2+1]=b->carriedBy;}}VALUE("life_carry",lifeCarry,sizeof(lifeCarry));
+    int council[10]={0};int councilTown=ui.tradeTown;if(councilTown>=0&&councilTown<TOWNS){TownPolitics*z=&g.life.towns[councilTown];int v[10]={councilTown,z->stage,z->support[0],z->support[1],z->pledge,z->relief,z->winner,z->leader,z->policy,g.townOwner[councilTown]};memcpy(council,v,sizeof(v));}VALUE("council",council,sizeof(council));
 
     VALUE("attack", &a->attackPhase, 4);
     VALUE("time", &g.time, 4);

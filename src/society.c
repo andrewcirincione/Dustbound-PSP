@@ -310,10 +310,12 @@ int nearby_actions(void){
    else if(type==3)add_action(ACTION_POPULATION,20,k);
   }
  }
+ int town=town_near(a->x,a->y,24);if(town>=0&&g.life.version&&g.life.towns[town].stage)add_action(ACTION_POLITICS,0,town);
  return actionCount;
 }
 const NearbyAction *nearby_action(int row){return row>=0&&row<actionCount?&actions[row]:NULL;}
 void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_action(row);if(!x){snprintf(out,size,"Nothing within reach");return;}
+ if(x->type==ACTION_POLITICS){snprintf(out,size,"Council at %s",towns[x->target].name);return;}
  if(x->type==ACTION_POPULATION){population_action_label(x->target,x->kind,out,size);return;}
  if(x->type==ACTION_EVENT){char name[70];living_title(x->target,name,sizeof(name));snprintf(out,size,"Investigate %s",name);return;}
  if(x->type>=ACTION_RESCUED_FOLLOW){snprintf(out,size,"%s %s",x->type==ACTION_RESCUED_FOLLOW?"Ask to follow:":x->type==ACTION_RESCUED_LEAVE?"Leave me alone:":"Recruit:",g.actors[x->target].name);return;}
@@ -323,6 +325,7 @@ void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_
  snprintf(out,size,"%s %s",x->type==ACTION_UNLOCK?"Pick lock":x->type==ACTION_OPEN?"Open after unlocking":context_action(),context_name());ui.contextKind=kind;ui.contextIndex=index;
 }
 static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!conscious(a)||depth_room(a)!=x->room)return 0;int n=x->target;
+ if(x->type==ACTION_POLITICS)return n>=0&&n<TOWNS&&distance(a->x,a->y,towns[n].x,towns[n].y)<=24;
  if(x->type==ACTION_POPULATION)return population_action_valid(n,x->kind);
  if(x->type==ACTION_EVENT)return n>=0&&n<EVENTS&&!g.living.events[n].status&&distance(a->x,a->y,g.living.events[n].x,g.living.events[n].y)<=8;
  if(x->kind==0)return n>=0&&n<g.actorCount&&g.actors[n].active&&depth_room(&g.actors[n])==x->room&&depth_distance(a,&g.actors[n])<=TALK_REACH;
@@ -332,6 +335,7 @@ static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!
  return n>=0&&n<g.buildingCount&&distance(a->x,a->y,g.buildings[n].x+(x->kind==3?1.45f:0),g.buildings[n].y+(x->kind==3?.65f:0))<=1.7f;
 }
 static void perform_action(const NearbyAction*x){Actor*a=&g.actors[g.selected];int n=x->target;if(!action_valid(x)){log_msg("Queued target is no longer within reach.");return;}
+ if(x->type==ACTION_POLITICS){politics_open(n);return;}
  if(x->type==ACTION_POPULATION){population_action(n,x->kind);return;}
  if(x->type==ACTION_EVENT){WorldEvent*e=&g.living.events[n];if(e->type==2||e->type==3||e->type==4)living_action(n);else{char b[160];living_detail(n,b,sizeof(b));log_msg("%s",b);}return;}
  if(x->type==ACTION_ATTACK){command_attack(n);return;}
@@ -353,7 +357,8 @@ int society_validate(const Game*v){const Society*s=&v->society;if(!s->version)re
  for(int t=0;t<TOWNS;t++)if(s->crisis[t]<0||s->crisis[t]>2)return 0;
  for(int n=0;n<MAX_ACTORS;n++){if(s->rescueHelper[n]<0||s->rescueHelper[n]>v->actorCount||s->freed[n]<0||s->freed[n]>3||s->captorFaction[n]<0||s->captorFaction[n]>=FACTIONS)return 0;for(int c=0;c<WEAPON_CLASSES;c++)if(!isfinite(s->weaponXP[n][c])||s->weaponXP[n][c]<0||s->weaponXP[n][c]>117612)return 0;if(s->queueCount[n]<0||s->queueCount[n]>ACTION_QUEUE||s->cannibal[n]<0||s->cannibal[n]>2||!isfinite(s->eating[n])||!isfinite(s->suspicion[n])||!isfinite(s->gateMessage[n]))return 0;
   for(int f=0;f<FACTIONS;f++)if(s->wanted[n][f]<0||s->wanted[n][f]>100000||!isfinite(s->recognized[n][f]))return 0;
-  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_POPULATION||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
+  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_POLITICS||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
+   if(a->type==ACTION_POLITICS){if(a->target>=TOWNS||a->kind!=0)return 0;continue;}
    if(a->type==ACTION_POPULATION){if(a->target>=POP_GROUPS||!(a->kind==0||a->kind==1||(a->kind>=11&&a->kind<=13)||a->kind==20||(a->kind>=30&&a->kind<=32)))return 0;continue;}
    if(a->kind>6)return 0;
    if((a->type==ACTION_OPEN||a->type==ACTION_UNLOCK)&&a->kind!=1)return 0;

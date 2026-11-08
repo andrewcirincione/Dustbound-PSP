@@ -7,8 +7,8 @@ extern int conscious(const Actor *a);
 const LimbGrade limbGrades[LIMB_GRADES]={
  {"Scrap",70,250,-2,-2,0,-8,0x8a7965},
  {"Standard",100,700,0,0,0,0,0x9fa8a1},
- {"Reinforced",130,1450,4,0,4,3,0x8f9da4},
- {"Precision",145,2800,2,5,2,10,0xa5b8b2},
+ {"Reinforced",190,1450,10,-4,12,-6,0x8f9da4},
+ {"Precision",110,2800,-2,10,-3,22,0xa5b8b2},
  {"Relic",180,5200,6,6,6,15,0xd5bb83}
 };
 /* Preserve Actor/save/reserve layouts. Low bits retain the original limb mask.
@@ -43,7 +43,7 @@ void limbs_content(void){
   int it=limb_item(grade,leg),n=grade*2+leg;const LimbGrade*d=&limbGrades[grade];
   snprintf(names[n],40,"%s mechanical %s",d->name,leg?"leg":"arm");
   snprintf(descriptions[n],180,leg?"%d HP; movement %+d%%; load %+d. Fit from Limbs: 2 machine parts. Repairs use parts.":"%d HP; strength %+d; dexterity %+d. Fit from Limbs: 2 machine parts. Repairs use parts.",d->hp,leg?d->speed:d->strength,leg?d->carry:d->dexterity);
-  itemDefs[it]=(ItemDef){.name=names[n],.desc=descriptions[n],.price=d->price,.weight=grade==2?5:grade==4?3:2,.slot=-1,.color=d->color,.family=-1};
+  itemDefs[it]=(ItemDef){.name=names[n],.desc=descriptions[n],.price=d->price,.weight=grade==2?5:grade==3?1:grade==4?3:2,.slot=-1,.color=d->color,.family=-1};
  }
  itemDefs[SEVERED_ARM]=(ItemDef){.name="Severed arm",.desc="An organic arm lost to injury. Cannot be reattached; fit a mechanical replacement.",.weight=2,.slot=-1,.color=0x98594b,.family=-1};
  itemDefs[SEVERED_LEG]=(ItemDef){.name="Severed leg",.desc="An organic leg lost to injury. Cannot be reattached; fit a mechanical replacement.",.weight=3,.slot=-1,.color=0x98594b,.family=-1};

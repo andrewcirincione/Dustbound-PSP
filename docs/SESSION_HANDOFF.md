@@ -1,3 +1,13 @@
+# Current continuation: 0.13.0
+
+See CONTENT_V130, VALIDATION_V130 and FEEDBACK_V130. `population_behavior.h` is included inside population.c so decisions share its actual live/stored members, supplies and streaming helpers. `politics.c` owns councils, succession, ownership, prices and the activity ledger. New `FrontierLife` state is appended after the unchanged v12 Population prefix. Game=2,143,228; FrontierLife=15,524; Population=1,500,196; Actor=932. Save version13; actual released v12 fixture lives in tests/fixtures/v120-migration.sav.gz. MAX_ACTORS192 / EVENTS8 / POP_GROUPS80 remain; POP_PROPS is now8. Do not alter released struct prefixes.
+
+Internal carry indices are stored in GroupLife, normalized out of reserve Actor pointers, and remapped when materializing all members. Carried patients must never act as carriers, including while awake but not recovered enough to be put down. Detachment clears both sides. Corpses remain fixed while the group center moves. Only an entirely dead group becomes a renewable ruin. Camp food/cargo and medicine come from actual finite inventories or town stocks. No free refill on load.
+
+Release gates are 080, 081, 090, 100, 110, 120, 130 plus emulator_v130 on the final EBOOT. Evidence includes final digest, 31 controller frames, native logs, full simulation and coarse endurance metrics. CI rebuilds with the pinned toolchain and refuses a digest mismatch. Historical omnibus remains separate with its obsolete dialogue-count assertion; do not claim it passes. Physical PSP profiling and a naturally played full campaign remain open. Off-screen combat is coarse; pathfinding is local and faction objectives are heuristic.
+
+---
+
 # Current continuation: 0.12.0
 
 Persistent population supersedes the prior handoffs below. See CONTENT_V120, VALIDATION_V120 and FEEDBACK_V120. `src/population.c` owns 80 stored groups / 16 archetypes, streaming, camps, coarse offline activity and rare prosthetic generation. Population is appended after the untouched v11 Game prefix; Game=2,127,704 bytes, Population=1,500,196, Actor=932. Saves are v12 with an actual v11 migration fixture. Keep MAX_ACTORS=192 and EVENTS=8. Live ownership 1–8 belongs to legacy events; 9–88 belongs to population groups; -1 marks a reusable slot and 0 a permanent actor. Never index legacy events using population ownership. Store full actor/depth/social state and never refill a surviving group on streaming. WorldEvent.presence measures quiet aftermath time for population groups. Freed/recruited/hired actors detach into permanent slots. Beds use negative task indices below -1000; camp props are separately depth-sorted with POP_PROPS=6. Prosthetics roll once per creation; never regenerate removed parts on load.
