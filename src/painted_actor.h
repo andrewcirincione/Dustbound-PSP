@@ -2,8 +2,34 @@
    Only world sprites are composed at 2x and filtered. Portraits sample the same
    indexed art directly; no runtime decoder, allocation or per-outfit atlas. */
 #include "weapon_design.h"
-static uint64_t partKeys[ART_COUNT];
 static uint32_t paintHair = 0x30251e;
+/* A fight interleaves many outfits. Keep their small shaded palettes across
+   poses instead of rebuilding the palette each time a sprite changes wearer. */
+enum { PALETTE_SETS = 32, PALETTE_WAYS = 4 };
+typedef struct {
+    uint64_t key;
+    uint32_t colors[256];
+} PaintPalette;
+static PaintPalette paintPalettes[PALETTE_SETS][PALETTE_WAYS];
+static unsigned char paletteNext[PALETTE_SETS];
+
+static uint32_t *palette_slot(int id, uint32_t tint, uint32_t hair, unsigned brightness, int *fresh) {
+    uint64_t key = (uint64_t)(id + 1) << 56 | (uint64_t)(hair & 0xffffff) << 32 |
+                   (uint64_t)(brightness & 255) << 24 | (tint & 0xffffff);
+    uint32_t hash = (uint32_t)key ^ (uint32_t)(key >> 32);
+    hash = (hash ^ (hash >> 16)) * 0x7feb352du;
+    unsigned set = (hash ^ (hash >> 15)) & (PALETTE_SETS - 1);
+    for (int i = 0; i < PALETTE_WAYS; i++) {
+        if (paintPalettes[set][i].key == key) {
+            *fresh = 0;
+            return paintPalettes[set][i].colors;
+        }
+    }
+    PaintPalette *slot = &paintPalettes[set][paletteNext[set]++ & (PALETTE_WAYS - 1)];
+    slot->key = key;
+    *fresh = 1;
+    return slot->colors;
+}
 /* Exclusive edges in the current paint target. The tracked rectangle bounds
    the scratch work without changing how individual parts are rasterized. */
 typedef struct {
@@ -46,6 +72,19 @@ static void painted_quad(int x0, int y0, int x1, int y1, int x2, int y2, int x3,
     }
     quad(x0, y0, x1, y1, x2, y2, x3, y3, color);
 }
+static uint32_t alphaReciprocal[4 * 255 + 1];
+static inline uint32_t alpha_reciprocal(unsigned alpha) {
+    uint32_t reciprocal = alphaReciprocal[alpha];
+    if (!reciprocal)
+        alphaReciprocal[alpha] = reciprocal = (1u << 24) / alpha;
+    return reciprocal;
+}
+static inline unsigned alpha_average(unsigned sum, unsigned alpha, uint32_t reciprocal) {
+    /* sum <= 255 * alpha, so this product fits in 32 bits. Truncating the
+       reciprocal can miss by one. The remainder check restores exact division. */
+    unsigned value = (sum * reciprocal) >> 24;
+    return value + (sum - value * alpha >= alpha);
+}
 static void rgba_over(uint32_t *dst, uint32_t src) {
     unsigned a = src >> 24;
     if (!a)
@@ -66,22 +105,23 @@ static void rgba_over(uint32_t *dst, uint32_t src) {
     /* The world framebuffer is opaque. Constant division is cheaper on MIPS. */
     if (out == 255)
         *dst = 0xff000000 | (red / 255) | (green / 255 << 8) | (blue / 255 << 16);
-    else
-        *dst = (out << 24) | (red / out) | (green / out << 8) | (blue / out << 16);
+    else {
+        uint32_t reciprocal = alpha_reciprocal(out);
+        *dst = (out << 24) | alpha_average(red, out, reciprocal) |
+               (alpha_average(green, out, reciprocal) << 8) |
+               (alpha_average(blue, out, reciprocal) << 16);
+    }
 }
-static void part_palette(int id, uint32_t tint, float li, int quality) {
-    int lum = (int)(li * 64);
-    uint64_t key = (uint64_t)tint | ((uint64_t)(lum + quality * 3) << 24);
-    if (id >= 60 && id < 64)
-        key ^= (uint64_t)paintHair << 39;
-    key++;
-    if (partKeys[id] == key)
-        return;
-    partKeys[id] = key;
+static const uint32_t *part_palette(int id, uint32_t tint, float li, int quality) {
+    int lum = (int)(li * 64) + quality * 2;
+    int head = id >= 60 && id < 64, fresh;
+    uint32_t *palette = palette_slot(id, tint, head ? paintHair : 0, lum, &fresh);
+    if (!fresh)
+        return palette;
     for (int i = 0; i < 256; i++) {
         uint32_t c = artSprites[id].palette[i];
         int r = c & 255, g0 = (c >> 8) & 255, b = (c >> 16) & 255;
-        if (id >= 60 && id < 64) {
+        if (head) {
             if (r < 78 && g0 < 70) {
                 int value = (r + g0 + b) / 3;
                 r = value * (64 + (paintHair >> 16)) / 96;
@@ -97,12 +137,13 @@ static void part_palette(int id, uint32_t tint, float li, int quality) {
             g0 = g0 * (160 + ((tint >> 8) & 255) / 2) / 224;
             b = b * (160 + (tint & 255) / 2) / 224;
         }
-        r = r * (lum + quality * 2) / 64;
-        g0 = g0 * (lum + quality * 2) / 64;
-        b = b * (lum + quality * 2) / 64;
-        artPalette[id][i] = (c & 0xff000000) | (r > 255 ? 255 : r) | ((g0 > 255 ? 255 : g0) << 8) |
-                            ((b > 255 ? 255 : b) << 16);
+        r = r * lum / 64;
+        g0 = g0 * lum / 64;
+        b = b * lum / 64;
+        palette[i] = (c & 0xff000000) | (r > 255 ? 255 : r) | ((g0 > 255 ? 255 : g0) << 8) |
+                     ((b > 255 ? 255 : b) << 16);
     }
+    return palette;
 }
 static void part(int id, float ax, float ay, float bx, float by, float width, uint32_t tint, float li,
                  int quality, int flip, float v0, float v1) {
@@ -125,7 +166,7 @@ static void part(int id, float ax, float ay, float bx, float by, float width, ui
         bottom = clipBottom;
     if (trackedPaint)
         include_paint(trackedPaint, (PaintBounds){left, top, right, bottom});
-    part_palette(id, tint, li, quality);
+    const uint32_t *palette = part_palette(id, tint, li, quality);
     float dux = ux / width, duy = uy / width, dvx = dx / (length * length), dvy = dy / (length * length);
     for (int y = top; y < bottom; y++) {
         float u = ((left + .5f - ax) * dux + (y + .5f - ay) * duy) + .5f,
@@ -139,19 +180,18 @@ static void part(int id, float ax, float ay, float bx, float by, float width, ui
             int lo = s->rows[sy * 3 + 1], hi = s->rows[sy * 3 + 2];
             if (sx < lo || sx >= hi)
                 continue;
-            rgba_over(fb + y * pitch + x, artPalette[id][s->pixels[s->rows[sy * 3] + sx - lo]]);
+            rgba_over(fb + y * pitch + x, palette[s->pixels[s->rows[sy * 3] + sx - lo]]);
         }
     }
 }
 /* Paint the complete weapon around its authored handle pivot. Palette tinting
    preserves warm leather/wood and patina while changing exposed metal. */
-static void weapon_palette(int id, const ItemDef *item, float li) {
-    uint64_t key = (uint64_t)item->color | ((uint64_t)((int)(li * 64) + item->quality * 3) << 24);
-    key++;
-    if (partKeys[id] == key)
-        return;
-    partKeys[id] = key;
+static const uint32_t *weapon_palette(int id, const ItemDef *item, float li) {
     int lum = (int)(li * 64) + item->quality * 2;
+    int fresh;
+    uint32_t *palette = palette_slot(id, item->color, 0, lum, &fresh);
+    if (!fresh)
+        return palette;
     for (int i = 0; i < 256; i++) {
         uint32_t c = artSprites[id].palette[i];
         int r = c & 255, green = (c >> 8) & 255, b = (c >> 16) & 255;
@@ -175,9 +215,10 @@ static void weapon_palette(int id, const ItemDef *item, float li) {
         r = r * lum / 64;
         green = green * lum / 64;
         b = b * lum / 64;
-        artPalette[id][i] = (c & 0xff000000) | (r > 255 ? 255 : r) | ((green > 255 ? 255 : green) << 8) |
-                            ((b > 255 ? 255 : b) << 16);
+        palette[i] = (c & 0xff000000) | (r > 255 ? 255 : r) | ((green > 255 ? 255 : green) << 8) |
+                     ((b > 255 ? 255 : b) << 16);
     }
+    return palette;
 }
 static int weapon_family(int item) {
     int f = gear_family(item);
@@ -238,6 +279,18 @@ static void weapon_fitting(int item,float x,float y,int sc,float angle,int face,
 #undef WL
 #undef WQ
 }
+typedef struct {
+    float left, right, slope;
+} WeaponScanSpan;
+static WeaponScanSpan weapon_scan_span(float low, float high, float x, int sc,
+                                       float xComponent, float yComponent, int x0, int x1) {
+    /* The bounding box already handles the axis nearly parallel to the row. */
+    if (fabsf(xComponent) < .125f)
+        return (WeaponScanSpan){x0, x1, 0};
+    float inverse = sc / xComponent, origin = x - .5f;
+    float a = origin + low * inverse, b = origin + high * inverse;
+    return (WeaponScanSpan){a < b ? a : b, a < b ? b : a, -yComponent * inverse};
+}
 static void weapon_sprite(int item, float x, float y, int sc, float angle, int face, float li) {
     if (!item)return;
     WeaponDesign design=weapon_design(item);float ca=cosf(angle),sa=sinf(angle),anchor=weapon_design_anchor(item);
@@ -266,15 +319,52 @@ static void weapon_sprite(int item, float x, float y, int sc, float angle, int f
     int y0=fmaxf(clipTop,floorf(top-margin)),y1=fminf(clipBottom,ceilf(bottom+margin));
     if (trackedPaint)
         include_paint(trackedPaint, (PaintBounds){x0, y0, x1, y1});
-    weapon_palette(id,&itemDefs[item],li);
-    for(int yy=y0;yy<y1;yy++)for(int xx=x0;xx<x1;xx++){
-        float dx=(xx+.5f-x)/sc,dy=(yy+.5f-y)/sc;
-        float along=weapon_design_unalong(dx*ca+dy*sa,anchor,design),blend=weapon_design_blend(along);
-        float cross=(-dx*sa+dy*ca-design.sweep*blend*blend*face)/(1+(design.width-1)*blend);
-        float u=w->gripX+cross/(scale*parity),v=w->gripY-along/scale;
-        if(u<0||v<0||u>=s->w||v>=s->h)continue;
-        int sx=u,sy=v,lo=s->rows[sy*3+1];if(sx<lo||sx>=s->rows[sy*3+2])continue;
-        rgba_over(fb+yy*pitch+xx,artPalette[id][s->pixels[s->rows[sy*3]+sx-lo]]);
+    /* Intersect each row with the weapon's local rectangle. The final
+       pixel tests still use the full warp and the original atlas samples. */
+    float maxWidth = fmaxf(1, design.width);
+    float c0 = -w->gripX * scale * parity * maxWidth;
+    float c1 = (s->w - w->gripX) * scale * parity * maxWidth;
+    float sweep = design.sweep * face;
+    float alongLow = weapon_design_along((w->gripY - s->h) * scale, anchor, design);
+    WeaponScanSpan alongSpan = weapon_scan_span(alongLow, tip, x, sc, ca, sa, x0, x1);
+    WeaponScanSpan acrossSpan = weapon_scan_span(fminf(c0, c1) + fminf(0, sweep),
+                                                 fmaxf(c0, c1) + fmaxf(0, sweep),
+                                                 x, sc, -sa, ca, x0, x1);
+    const uint32_t *palette = weapon_palette(id, &itemDefs[item], li);
+    /* The horizontal projection repeats on every row. Evaluate it once at
+       the same pixel centers and reuse the exact float contributions. */
+    int columns = x1 > x0 ? x1 - x0 : 1;
+    struct { float along, across; } column[columns];
+    for (int xx = x0; xx < x1; xx++) {
+        float dx = (xx + .5f - x) / sc;
+        column[xx - x0].along = dx * ca;
+        column[xx - x0].across = -dx * sa;
+    }
+    for (int yy = y0; yy < y1; yy++) {
+        float dy = (yy + .5f - y) / sc;
+        float alongY = dy * sa, acrossY = dy * ca;
+        float a = alongSpan.slope * dy, b = acrossSpan.slope * dy;
+        float rowLeft = alongSpan.left + a, rowRight = alongSpan.right + a;
+        float acrossLeft = acrossSpan.left + b, acrossRight = acrossSpan.right + b;
+        /* Pad outward to account for integer conversion and float rounding. */
+        int first = (int)(rowLeft > acrossLeft ? rowLeft : acrossLeft) - 1;
+        int end = (int)(rowRight < acrossRight ? rowRight : acrossRight) + 2;
+        if (first < x0) first = x0;
+        if (end > x1) end = x1;
+        uint32_t *row = fb + yy * pitch;
+        for (int xx = first; xx < end; xx++) {
+            float along = weapon_design_unalong(column[xx - x0].along + alongY, anchor, design);
+            float v = w->gripY - along / scale;
+            if (v < 0 || v >= s->h) continue;
+            float blend = weapon_design_blend(along);
+            float across = column[xx - x0].across + acrossY;
+            float cross = (across - design.sweep * blend * blend * face) / (1 + (design.width - 1) * blend);
+            float u = w->gripX + cross / (scale * parity);
+            if (u < 0 || u >= s->w) continue;
+            int sx = u, sy = v, lo = s->rows[sy * 3 + 1];
+            if (sx < lo || sx >= s->rows[sy * 3 + 2]) continue;
+            rgba_over(row + xx, palette[s->pixels[s->rows[sy * 3] + sx - lo]]);
+        }
     }
     weapon_fitting(item,x,y,sc,angle,face,li,tip);
 }
@@ -668,7 +758,10 @@ static void paint_cached_actor(ActorSprite *sprite, Actor *a, float li, float st
                     green += (color >> 8 & 255) * a0;
                     blue += (color >> 16 & 255) * a0;
                 }
-                result = (alpha / 4 << 24) | (red / alpha) | (green / alpha << 8) | (blue / alpha << 16);
+                uint32_t reciprocal = alpha_reciprocal(alpha);
+                result = (alpha / 4 << 24) | alpha_average(red, alpha, reciprocal) |
+                         (alpha_average(green, alpha, reciprocal) << 8) |
+                         (alpha_average(blue, alpha, reciprocal) << 16);
             }
             sprite->pixels[y * ACT_W + x] = result;
             include_paint(&sprite->bounds, (PaintBounds){x, y, x + 1, y + 1});

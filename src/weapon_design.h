@@ -23,5 +23,10 @@ static inline const char *weapon_design_name(int item){
 static inline float weapon_design_anchor(int item){return weapon_ranged(item)?14:5;}
 static inline float weapon_design_along(float a,float anchor,WeaponDesign d){return a>anchor?anchor+(a-anchor)*d.length:a<-anchor?-anchor+(a+anchor)*d.length:a;}
 static inline float weapon_design_unalong(float a,float anchor,WeaponDesign d){return a>anchor?anchor+(a-anchor)/d.length:a<-anchor?-anchor+(a+anchor)/d.length:a;}
-static inline float weapon_design_blend(float a){return fminf(1,fmaxf(0,(fabsf(a)-3)/10));}
+static inline float weapon_design_blend(float a) {
+    float distance = fabsf(a);
+    if (distance >= 13) return 1;
+    if (!(distance > 3)) return 0;
+    return (distance - 3) / 10;
+}
 #endif

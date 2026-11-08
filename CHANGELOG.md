@@ -1,3 +1,8 @@
+# 0.16.3 — Crowded combat rendering
+
+- Restrict each raster row to the weapon's projected bounds and reuse column projections. Weapon textures, warp and fittings use the original sampling.
+- Cache shaded palettes across outfits and use exact integer averaging for translucent sprite pixels. The 21-fighter benchmark compares both frame and simulation hashes.
+
 # 0.16.2 — Weapon skills and PSP performance
 
 - Weapon training uses Slashing Blades, Light Blades, Heavy Weapons, Polearms, Archery and Firearms. Each weapon uses its own motion profile and damage balance.

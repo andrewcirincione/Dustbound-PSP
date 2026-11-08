@@ -812,7 +812,7 @@ static void texture_plane(int id, float x, float y, float ux, float uy, float vx
         top = clipTop;
     if (bottom > clipBottom)
         bottom = clipBottom;
-    part_palette(id, 0x808080, li, 0);
+    const uint32_t *palette = part_palette(id, 0x808080, li, 0);
     for (int yy = top; yy < bottom; yy++)
         for (int xx = left; xx < right; xx++) {
             float dx = xx + .5f - x, dy = yy + .5f - y, u = (dx * vy - dy * vx) / det,
@@ -823,7 +823,7 @@ static void texture_plane(int id, float x, float y, float ux, float uy, float vx
             int lo = s->rows[sy * 3 + 1];
             if (sx < lo || sx >= s->rows[sy * 3 + 2])
                 continue;
-            fb[yy * pitch + xx] = artPalette[id][s->pixels[s->rows[sy * 3] + sx - lo]];
+            fb[yy * pitch + xx] = palette[s->pixels[s->rows[sy * 3] + sx - lo]];
         }
 }
 static void room_project(float x, float y, int *sx, int *sy) {

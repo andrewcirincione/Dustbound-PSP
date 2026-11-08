@@ -123,6 +123,14 @@ static void movement(void){
 }
 static int sample_weapon(int i){return i==0?NONE:i<=WEAPON_FAMILIES?gear_id(weapon_family_index(i-1),1,1):i==37?SCIMITAR_ITEMS:RAPIER_ITEMS;}
 static void sprite_cache_bounds(void) {
+ for (unsigned alpha = 1; alpha <= 4 * 255; alpha++) {
+  uint32_t reciprocal = alpha_reciprocal(alpha);
+  for (unsigned channel = 0; channel <= 255; channel++) {
+   unsigned sum = channel * alpha;
+   assert(alpha_average(sum, alpha, reciprocal) == channel);
+   if (sum) assert(alpha_average(sum - 1, alpha, reciprocal) == channel - 1);
+  }
+ }
  static uint32_t full[ACT_SCRATCH_STRIDE * ACT_H * 2];
  static ActorSprite cached;
  Actor a = *fresh();
