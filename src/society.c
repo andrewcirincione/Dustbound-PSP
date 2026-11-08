@@ -22,7 +22,7 @@ int weapon_class(int it){
  return f>=0&&f<24?WC_SABRES:-1;
 }
 int weapon_class_level(const Actor*a,int c){int n=actor_no(a);if(c<0||c>=WEAPON_CLASSES||n<0)return 1;if(!a->squad)return level(a,c>=WC_BOWS?CROSSBOWS:MELEE);return (int)bound(1+sqrtf(S.weaponXP[n][c]/12),1,100);}
-void weapon_class_gain(Actor*a,int w,float amount){int n=actor_no(a),c=weapon_class(w);if(n<0||c<0||!a->squad)return;int before=weapon_class_level(a,c);S.weaponXP[n][c]=bound(S.weaponXP[n][c]+amount,0,117612);if(n==g.selected&&weapon_class_level(a,c)>before)log_msg("%s: %s %d",a->name,weaponClassNames[c],weapon_class_level(a,c));}
+void weapon_class_gain(Actor*a,int w,float amount){int n=actor_no(a),c=weapon_class(w);if(n<0||c<0||!a->squad)return;int before=weapon_class_level(a,c);S.weaponXP[n][c]=bound(S.weaponXP[n][c]+amount,0,117612);if(n==g.selected&&weapon_class_level(a,c)>before)log_progress("%s: %s %d",a->name,weaponClassNames[c],weapon_class_level(a,c));}
 float weapon_cut_ratio(int it){int c=weapon_class(it);if(!it)return 1;if(c==WC_BLUNT)return .05f;if(it==STAFF||gear_family(it)==16)return .05f;return c==WC_HEAVY?.45f:c==WC_HACKERS?.55f:c==WC_KATANAS?.9f:c==WC_SABRES?.8f:c==WC_RAPIERS||c==WC_KNIVES?.95f:.75f;}
 float combat_learning(float learner,float opponent){float d=opponent-learner;return bound(1+d*(d>=0?.1f:.04f),.1f,6);}
 int combat_evasion(const Actor*a){return !a->gear[0]||weapon_ranged(a->gear[0])||a->stun>0;}
@@ -289,7 +289,7 @@ int living_local_slot(int row){Actor*a=&g.actors[g.selected];for(int e=0;e<EVENT
 int nearby_actions(void){
  actionCount=0;Actor*a=&g.actors[g.selected];int room=depth_room(a);
  if(g.depth.actors[g.selected].captive||a->prisonTime>0)add_action(ACTION_RESCUE,0,g.selected);
- for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(n==g.selected||!b->active||depth_room(b)!=room||depth_distance(a,b)>TALK_REACH||b->carriedBy>=0)continue;
+ for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(n==g.selected||!b->active||population_hidden(n)||depth_room(b)!=room||depth_distance(a,b)>TALK_REACH||b->carriedBy>=0)continue;
   if(!b->dead&&(g.depth.actors[n].captive||b->prisonTime>0))add_action(ACTION_RESCUE,0,n);
   if(S.freed[n]&&!b->squad&&!b->dead){add_action(S.freed[n]==1?ACTION_RESCUED_LEAVE:ACTION_RESCUED_FOLLOW,0,n);add_action(ACTION_RESCUED_RECRUIT,0,n);}
   if(b->dead||b->unconscious>0){add_action(ACTION_CONTEXT,0,n);if(a->carrying<0&&!g.depth.actors[n].captive)add_action(ACTION_CARRY,0,n);}

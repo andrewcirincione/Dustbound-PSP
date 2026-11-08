@@ -282,7 +282,7 @@ int main(void) {
     ui.mapX = 40;
     ui.mapY = 40;
     press(KEY_CROSS);
-    CHECK(ui.screen == SCREEN_WORLD && ui.waypoint, "map sets travel order");
+    CHECK(ui.screen == SCREEN_WORLD && ui.waypoint, "map places a manual navigation pin");
     r = find_kind(RECRUIT);
     ui.screen = SCREEN_RECRUIT;
     ui.selection = r;

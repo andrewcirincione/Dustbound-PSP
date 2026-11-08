@@ -71,7 +71,7 @@ static void depth_screen(void) {
                 v = z->queued ? "ON" : "OFF";
             row(86 + i * 16, ui.selection == i, names[i], v);
         }
-        text(31, 225, "ATLAS: HOLD \006 + \001 TO ROUTE THIS GROUP", TEAL, 1);
+        text(31, 225, "MAP PINS ARE REFERENCES. WALK WITH THE ANALOG STICK.", TEAL, 1);
     } else if (ui.screen == SCREEN_CAMP) {
         depth_header("CAMP WORK & FUEL", "\015 STRUCTURE  \001 BUILD/REPAIR  \003 FUEL  \010 GUIDE");
         int total = depth_camp_count();

@@ -19,4 +19,8 @@ int life_ledger_count(void);
 int life_ledger_item(int row);
 void life_ledger_label(int row,char *out,int size);
 void life_ledger_detail(int row,char *out,int size);
+void field_observe(int group);
+int field_notes_valid(const Game *state);
+const char *politics_claimant(int town,int faction);
+const char *politics_policy_text(int faction);
 #endif

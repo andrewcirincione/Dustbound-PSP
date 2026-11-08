@@ -24,6 +24,10 @@ void living_gear(Actor*a,int role,int tier,int n){
     if(role==3)inventory_add(a,PARTS,1+tier);
     if(role==7)inventory_add(a,TONIC,1+tier);
     if(tier>=3)inventory_add(a,RELIC,tier-2);
+    if(a->kind==RAIDER&&tier<=1){
+        a->gear[0]=gear_id(n%2?14:0,0,0);a->gear[1]=n%3?RAGS:0;
+        a->gear[2]=0;a->gear[3]=n%3?0:gear_id(60,0,0);a->gear[4]=gear_id(68,0,0);a->gear[5]=0;
+    }
     if(a->kind==BEAST){memset(a->gear,0,sizeof(a->gear));memset(a->pack,0,sizeof(a->pack));inventory_add(a,HIDE,2+tier);inventory_add(a,MEAT,2+tier);if(tier>=3)inventory_add(a,CATALOG_ITEMS+22,1);}
 }
 void living_loot(int n,int role,int tier){living_gear(&g.actors[n],role,tier,n);}
@@ -33,7 +37,7 @@ void living_detail(int slot,char*out,int size){
     static const char *verbs[8]={"Escort to destination; stay close to earn pay.","Stop the column before it plunders the town.","Deliver supplies at the destination town.","Search the marked site for equipment.","Bandage the pilgrim; help them depart safely.","Hunt the pack before it strips local supplies.","Army advances on the destination garrison.","Defeat the warlord; signature equipment is worn."};
     if(e->status)snprintf(out,size,"%s. New incidents continue elsewhere.",e->status==1?"Resolved":"Opportunity passed");
     else if(e->type==2)snprintf(out,size,"Bring %d %s to %s. %d silver; improves local stock.",3+e->tier,itemDefs[e->modifier==1?RATION:e->modifier==2?PARTS:MEDKIT].name,towns[e->town].name,180+e->tier*80);
-    else snprintf(out,size,"%s Tier %d / %d members. %s",factionNames[e->faction],e->tier+1,e->count,verbs[e->type]);
+    else snprintf(out,size,"%s. %s",factionNames[e->faction],verbs[e->type]);
 }
 static int release_event(int slot){
     WorldEvent*e=&LW.events[slot];Actor*p=&g.actors[g.selected];

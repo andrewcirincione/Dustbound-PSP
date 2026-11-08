@@ -21,4 +21,7 @@ typedef struct {
  GroupLife groups[POP_GROUPS];
  TownPolitics towns[TOWNS];
 } FrontierLife;
+/* v14: observations are snapshots, never remote tracking of living groups. */
+typedef struct { int serial,goal,town,faction,type; float x,y,time; char name[32]; } FieldSighting;
+typedef struct { FieldSighting group[POP_GROUPS]; } FieldNotes;
 #endif

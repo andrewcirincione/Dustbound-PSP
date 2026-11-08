@@ -108,7 +108,7 @@ void gain(Actor *a, int s, float n) {
     int before = level(a, s);
     a->xp[s] = fminf(117612, a->xp[s] + n);
     if (level(a, s) > before && g.actors + g.selected == a)
-        log_msg("%s: %s %d", a->name, skillNames[s], level(a, s));
+        log_progress("%s: %s %d", a->name, skillNames[s], level(a, s));
 }
 static void log_write(int priority, const char *fmt, va_list ap) {
     char b[100]; vsnprintf(b,sizeof(b),fmt,ap);
@@ -116,6 +116,7 @@ static void log_write(int priority, const char *fmt, va_list ap) {
         for(int i=LOGS-1;i>0;i--) memcpy(ui.logs[i],ui.logs[i-1],80);
         snprintf(ui.logs[0],80,"%.79s",b);ui.logCount++;
     }
+    if(priority<0){if(ui.feedCount)return;priority=0;}
     snprintf(ui.notice,sizeof(ui.notice),"%s",b);ui.noticeTime=4;
     for(int i=0;i<ui.feedCount;i++) if(!strcmp(ui.feed[i],b)) return;
     int at=ui.feedCount;
@@ -127,6 +128,7 @@ static void log_write(int priority, const char *fmt, va_list ap) {
     if(!at)ui.feedClock=0;
 }
 void log_msg(const char *fmt, ...) { va_list ap;va_start(ap,fmt);log_write(0,fmt,ap);va_end(ap); }
+void log_progress(const char *fmt, ...) { va_list ap;va_start(ap,fmt);log_write(-1,fmt,ap);va_end(ap); }
 void log_warn(const char *fmt, ...) { va_list ap;va_start(ap,fmt);log_write(1,fmt,ap);va_end(ap); }
 void log_tick(float dt) {
     ui.statusClock+=dt;
@@ -1351,6 +1353,7 @@ static int take_ration(Actor *a) {
     return 0;
 }
 void simulate(float dt) {
+    memset(g.depth.groupTravel,0,sizeof(g.depth.groupTravel));
     frontier_tick(dt);
     g.shake = fmaxf(0, g.shake - dt);
     if (g.hitstop > 0) {
@@ -1620,7 +1623,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 13, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 14, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1721,7 +1724,7 @@ static int validate_game(const Game *t) {
         if (a->carrying >= t->actorCount || a->carriedBy >= t->actorCount)
             return 0;
     }
-    return depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t) && population_validate(t) && life_validate(t);
+    return field_notes_valid(t) && depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t) && population_validate(t) && life_validate(t);
 }
 static int migrate_legacy(const LegacyGame *old) {
     if (old->actorCount < 1 || old->actorCount > 80 || old->buildingCount < 0 || old->buildingCount > 100 ||
@@ -1808,7 +1811,7 @@ static int migrate_legacy(const LegacyGame *old) {
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
-    return (version==13 && size==sizeof(Game)) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version==14 && size==sizeof(Game)) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -1874,6 +1877,7 @@ int load_game(const char *path) {
     }
     fclose(f);
     if (ok) {
+        memset(g.depth.groupTravel,0,sizeof(g.depth.groupTravel));
         frontier_identity();
         depth_init();
     regional_init();
@@ -1946,7 +1950,7 @@ int save_slot(int n) {
     char p[400];
     snprintf(p, sizeof(p), "%s/DUST_%d.sav", saveRoot, n);
     int ok = save_game(p);
-    log_msg(ok ? "Saved to slot %d." : "Save failed in slot %d.", n);
+    if(!ok)log_warn("Save failed in slot %d.",n);else if(n)log_msg("Saved to slot %d.",n);
     return ok;
 }
 int load_slot(int n) {
@@ -1975,7 +1979,7 @@ void cycle_squad(int direction) {
 static const char *pauseLabels[3][9] = {
     {"Resume", "Save game", "Load game", "Game speed", "Controls & field guide", "Save and quit to title", "New wanderer"},
     {"Inventory & equipment", "Skills", "Health & recovery", "Squad management", "Armor layers", "Recent messages", "Choose opponent"},
-    {"Map & travel", "Copper Road expedition", "Journal & local conflicts", "Factions", "Build a camp", "Camp upkeep", "Crafting recipes", "Research", "World activity"}
+    {"Map & bearings", "Copper Road expedition", "Journal & local conflicts", "Factions", "Build a camp", "Camp upkeep", "Crafting recipes", "Research", "World activity"}
 };
 int pause_menu_count(void) { return ui.menuTab == 0 ? 7 : ui.menuTab == 1 ? 7 : 9; }
 const char *pause_menu_label(int row) {
@@ -2214,23 +2218,11 @@ void game_tick(float dt, Input in) {
             ui.mapY = clamp(ui.mapY, 3, WORLD - 4);
             if (p & KEY_CROSS) {
                 if(!ui.mapZoom && ui.mapChoice==0)return;
-                if (actor_inside(a) || !conscious(a) || a->prisonTime > 0) {
-                    log_msg("Leave the building and choose a free, conscious traveler.");
-                    return;
-                }
-                if (!can_walk(ui.mapX, ui.mapY)) {
-                    log_msg("Destination is blocked. Choose land or a road crossing.");
-                    return;
-                }
-                ui.travelStall = 0;
-                ui.travelLastX = a->x;
-                ui.travelLastY = a->y;
-                a->taskKind = 0;
                 ui.waypoint = 1;
                 ui.travelX = ui.mapX;
                 ui.travelY = ui.mapY;
                 open_screen(SCREEN_WORLD);
-                log_msg("Route set. Move manually to cancel.");
+                log_msg("Map pin placed. Walk with the analog stick.");
             }
         } else if (ui.screen == SCREEN_TRADE) {
             if (p & (KEY_LEFT | KEY_RIGHT)) {
@@ -2327,37 +2319,11 @@ void game_tick(float dt, Input in) {
         return;
     }
     if (fabsf(dx) + fabsf(dy) > .15f) {
-        ui.waypoint = 0;
         ui.contextChoice = 0;
         a->taskKind = 0;
         move_actor(a, (dx + dy) * .7071f, (dy - dx) * .7071f, step);
-    } else if (ui.waypoint) {
-        if (!a->active || a->dead) {
-            ui.waypoint = 0;
-            log_msg("Traveler lost. Select a living ally to set a route.");
-        } else if (travel_hold_reason(a)) {
-            /* Count obstruction only while movement is possible. Never confuse
-             * a knockout, carrier or combat animation with impassable terrain. */
-            ui.travelStall = 0;
-            ui.travelLastX = a->x;
-            ui.travelLastY = a->y;
-        } else if (distance(a->x, a->y, ui.travelX, ui.travelY) < .7f) {
-            ui.waypoint = 0;
-            log_msg("Waypoint reached.");
-        } else {
-            route_toward(a, ui.travelX, ui.travelY, step);
-            if (distance(a->x, a->y, ui.travelLastX, ui.travelLastY) > .5f) {
-                ui.travelStall = 0;
-                ui.travelLastX = a->x;
-                ui.travelLastY = a->y;
-            } else
-                ui.travelStall += step;
-            if (ui.travelStall > 8) {
-                ui.waypoint = 0;
-                log_msg("Route blocked. Choose a nearer waypoint or walk around it.");
-            }
-        }
     }
+
     simulate(step);
     g.autosave += step;
     if (g.autosave > 90 && a->target < 0) {

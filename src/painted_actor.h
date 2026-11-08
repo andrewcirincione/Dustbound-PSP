@@ -272,7 +272,7 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
     int tf = gear_family(torso), hf = gear_family(head), lf = gear_family(legs), bf = gear_family(back),
         ff = gear_family(boots);
     if (tf < 32 || tf > 47)
-        tf = torso == DUSTER ? 32 : torso == PLATE ? 38 : torso == LEATHER ? 35 : 33;
+        tf = torso == DUSTER ? 32 : torso == PLATE ? 38 : torso == LEATHER ? 35 : torso == RAGS ? 46 : torso ? 33 : 72;
     if (hf < 48 || hf > 59)
         hf = head == STRAW ? 48 : head == HELM ? 50 : head == HAT ? 49 : -1;
     if (lf < 68 || lf > 75)
@@ -392,14 +392,14 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
               ey = (sy + hy) * .5f + (d > .01f ? dx / d : 1) * bend * (i ? 1 : -1) * face;
         int mech = race==2 || (a->prostheticMask & (1 << limb)),grade=limb_item_grade(limb_installed(a,limb));
         uint32_t limbTint=grade>=0?limbGrades[grade].color:cloth;
-        part(mech ? 76 : 72, sx, sy, ex, ey, 4 * sc, limbTint, li, 0, i ^ (face < 0), 0, 1);
+        part(mech ? 76 : 72, sx, sy, ex, ey, 4 * sc, mech?limbTint:(!torso||torso==RAGS?skin:limbTint), li, 0, i ^ (face < 0), 0, 1);
         part(mech ? 77 : 75, ex, ey, hx, hy, 3 * sc, mech ? limbTint : skin, li, 0, i ^ (face < 0), 0, 1);
     }
     int coat = tf == 32 || tf == 33 || tf == 39 || tf == 40 || tf == 42 || tf == 44 || tf == 47;
     // Join the chin to the collar; transparent face/collar edges otherwise
     // leave a floating head, most visible with the smaller fitted hats.
     PART(72, 0, -27.5f, 0, -24, 2.8f, skin, 0);
-    PART(tf, 0, -26, coat ? -rig.shift * .35f * forward : 0, coat ? -5 : -12, bw * 2.8f, cloth,
+    PART(tf, 0, -26, coat ? -rig.shift * .35f * forward : 0, coat ? -5 : -12, bw * (torso?2.8f:1.8f), torso?cloth:skin,
          itemDefs[torso].quality);
     // Painted face with independently tinted hair and visible creator details.
     int faceid = race==2 || a->hair == 0 ? 61 : a->hair == 3 ? 62 : a->beard ? 63 : 60;
@@ -714,4 +714,13 @@ static float portrait_scale(Actor *a, int width, int height, int drawX, int draw
                 rgba_over(fb + dy * pitch + dx, portraitCache[slot].pixels[yy * PORTRAIT_W + xx]);
         }
     return scale;
+}
+
+/* Late silhouette pass retains the real pose through foreground scenery. */
+static void actor_outline(Actor*a,int x,int y,int chosen){
+ Actor dressed;if(!a->gear[1]&&g.depth.actors[a-g.actors].layer){dressed=*a;dressed.gear[1]=g.depth.actors[a-g.actors].layer;a=&dressed;}
+ float li=fminf(1.15f,light()+(chosen?.16f:.06f));uint64_t key=actor_key(a,(int)(li*64));int slot=-1;for(int i=0;i<ACT_CACHE;i++)if(actorCache[i].key==key){slot=i;break;}if(slot<0)return;
+ uint32_t col=a->squad?(a->dead||a->unconscious>0?0xc0a98572:0xb0a1b5ad):0x907a8bb7;
+ uint32_t*p=actorCache[slot].pixels;
+ for(int yy=1;yy<ACT_H-1;yy++)for(int xx=1;xx<ACT_W-1;xx++){int k=yy*ACT_W+xx;if((p[k]>>24)>24)continue;if((p[k-1]>>24)<128&&(p[k+1]>>24)<128&&(p[k-ACT_W]>>24)<128&&(p[k+ACT_W]>>24)<128)continue;int sx=x-ACT_W/2+xx,sy=y-ACT_ANCHOR/2+yy;if(sx>=clipLeft&&sx<clipRight&&sy>=clipTop&&sy<clipBottom)rgba_over(fb+sy*pitch+sx,col);}
 }

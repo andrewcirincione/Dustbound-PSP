@@ -128,7 +128,7 @@ void interior_interact(void) {
         interior_leave();
         return;
     }
-    if(depth_room_interact())return;
+    /* Explicit furniture selection must never be intercepted by a nearby NPC. */
     if (c < 0) {
         log_msg("Walk closer to a counter, bed or workstation.");
         return;

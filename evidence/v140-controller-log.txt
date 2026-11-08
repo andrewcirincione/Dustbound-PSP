@@ -1,0 +1,17 @@
+SCREENSHOT v140-psp-title 480x272 screen 13
+SCREENSHOT v140-psp-fresh-world 480x272 screen 0
+SCREENSHOT v140-psp-map-pin 480x272 screen 5
+SCREENSHOT v140-psp-manual-walking 480x272 screen 0
+SCREENSHOT v140-psp-bed-beside-innkeeper 480x272 screen 35
+SCREENSHOT v140-psp-bed-rest 480x272 screen 0
+SCREENSHOT v140-psp-starving-bandits 480x272 screen 0
+SCREENSHOT v140-psp-army 480x272 screen 0
+SCREENSHOT v140-psp-elites 480x272 screen 0
+SCREENSHOT v140-psp-downed 480x272 screen 0
+SCREENSHOT v140-psp-ambush-hidden 480x272 screen 0
+SCREENSHOT v140-psp-ambush-sprung 480x272 screen 0
+SCREENSHOT v140-psp-last-seen 480x272 screen 40
+SCREENSHOT v140-psp-council-caretaker 480x272 screen 41
+SCREENSHOT v140-psp-council-challenger 480x272 screen 41
+SCREENSHOT v140-psp-factions 480x272 screen 20
+V140 CONTROLLER CHECKS PASSED /workspace/scratch/b5020404f5d8/Dustbound/build/v140-_98b5xcl

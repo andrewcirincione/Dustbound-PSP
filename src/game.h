@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.13.0"
+#define VERSION "0.14.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -248,6 +248,7 @@ typedef struct {
     /* v12: persistent population; all earlier save bytes stay in place. */
     Population population;
     FrontierLife life;
+    FieldNotes fieldNotes;
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -421,6 +422,7 @@ int research_tech(void);
 int heal_actor(int medic, int patient);
 void interact(void);
 void find_context(void);
+void log_progress(const char *fmt, ...);
 void log_msg(const char *fmt, ...);
 void log_warn(const char *fmt, ...);
 void log_tick(float dt);

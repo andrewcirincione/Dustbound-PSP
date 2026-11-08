@@ -99,6 +99,19 @@ static void make_actor(int k,int i){
     a->homeX=a->tx=a->x;a->homeY=a->ty=a->y;a->blood=a->hunger=100;a->speechCooldown=20+seed%40;
     living_gear(a,i%8,tier,(int)(seed%10000));
     if(e->type==POP_REFUGEES||e->type==POP_WOUNDED){a->gear[0]=STAFF;a->gear[1]=RAGS;a->gear[2]=0;}
+    if(e->type==POP_ARMY||e->type==POP_PATROL){
+        int m=tier>=2?3:1,q=tier>=2?2:1;
+        a->gear[0]=gear_id(i%4==3?29:e->faction==SHOGUN?5:16,m,q);
+        a->gear[1]=gear_id(e->faction==SHOGUN?38:34,m,q);
+        a->gear[2]=gear_id(e->faction==SHOGUN?51:50,m,q);
+        a->gear[3]=gear_id(62,m,q);a->gear[4]=gear_id(70,m,q);
+        if(i==0)a->gear[5]=gear_id(77,m,q);
+        if(weapon_ranged(a->gear[0]))inventory_add(a,CARTRIDGE,20);
+    }
+    if(e->type==POP_DUELISTS){a->gear[2]=gear_id(53,5,3);a->gear[3]=gear_id(62,5,3);a->gear[4]=gear_id(75,5,3);a->gear[5]=gear_id(80,5,3);}
+    if((e->type==POP_RAIDERS||e->type==POP_AMBUSH)&&e->modifier==1){
+        a->gear[0]=gear_id(i%2?14:0,0,0);a->gear[1]=i%3?RAGS:0;a->gear[2]=a->gear[3]=a->gear[5]=0;a->gear[4]=gear_id(68,0,0);
+    }
     if(e->modifier==1)a->hunger=28;
     population_roll_limbs(a,random_step(&seed),tier);
     if(e->type==POP_WOUNDED){a->health[CHEST]=species_health(a)*.38f;a->health[LLEG]=24;a->bleed=.08f;inventory_remove(a,MEDKIT,99);}
@@ -217,7 +230,7 @@ void population_tick(float dt){
         if(population_object_count(k))near[k]=fminf(near[k],observers(P.state[k].siteX,P.state[k].siteY));
         for(int i=0;i<P.groups[k].count;i++){Actor*a=member(k,i);if(a&&(a->dead||a->unconscious>0))near[k]=fminf(near[k],observers(a->x,a->y));}}
     for(int i=1;i<POP_GROUPS;i++){int k=order[i],j=i;while(j>0&&near[order[j-1]]>near[k]){order[j]=order[j-1];j--;}order[j]=k;}
-    for(int j=0;j<POP_GROUPS;j++){int k=order[j];if(near[k]<55){population_materialize(k);if(near[k]<22)P.state[k].seen=1;}}
+    for(int j=0;j<POP_GROUPS;j++){int k=order[j];if(near[k]<55){population_materialize(k);if(near[k]<14)field_observe(k);}}
     for(int k=0;k<POP_GROUPS;k++){WorldEvent*e=&P.groups[k];physiology(k,step);group_behavior(k,step);forage_offline(k,step);
         if(P.state[k].phase==POP_RUINS&&e->presence>7200&&!e->spawned&&near[k]>120)population_generate(k,random_step(&P.rng)%POP_TYPES);
         if(e->spawned&&e->type==POP_PRISONERS&&P.state[k].phase==POP_TRAVEL)for(int i=e->count-2;i<e->count;i++){Actor*a=member(k,i);if(a&&!a->dead&&a->unconscious<=0&&g.depth.actors[e->members[i]].captive){float x=e->x-2+i%2,y=e->y+3;route_toward(a,x,y,step*.55f);}}
@@ -227,7 +240,9 @@ void population_tick(float dt){
 int population_walk(int n,float dt){
     int owned=population_owned(n);if(!owned)return 0;int k=owned-1;WorldEvent*e=&P.groups[k];PopulationState*m=&P.state[k];Actor*a=&g.actors[n];
     if(a->squad||g.society.freed[n]||merc_slot(a)>=0)return 0;int i=0;while(i<e->count&&e->members[i]!=n)i++;if(i==e->count)return 1;
-    float x=e->x+(i%4-1)*1.8f,y=e->y+(i/4)*1.8f;
+    float x,y;
+    if(e->type==POP_ARMY||e->type==POP_PATROL){float dx=m->targetX-e->x,dy=m->targetY-e->y,d=fmaxf(1,sqrtf(dx*dx+dy*dy));float side=(i%3-1)*2.2f,back=(i/3)*2.3f;x=e->x-dy/d*side-dx/d*back;y=e->y+dx/d*side-dy/d*back;}
+    else {float angle=i*2.39996f+e->serial;x=e->x+cosf(angle)*(2+i%3);y=e->y+sinf(angle)*(2+i%3);}
     if(camp_type(e->type)&&g.life.groups[k].goal==LIFE_ROAM&&g.life.groups[k].camp==CAMP_READY){
         if(m->phase==POP_REST&&i<m->beds-1){x=m->siteX+m->offsetX[i+1];y=m->siteY+m->offsetY[i+1];if(distance(a->x,a->y,x,y)<.8f){a->taskKind=3;a->taskIndex=-1000-k*4-i;a->action=180;return 1;}}
         else if(m->phase==POP_FORAGE){float angle=(i*1.7f+e->serial);x=e->x+cosf(angle)*(8+i%3*3);y=e->y+sinf(angle)*(8+i%3*3);
@@ -292,7 +307,13 @@ int population_action(int k,int action){
     if(action==20){if(!m->cacheQty){log_msg("These supplies have already been taken.");return 0;}int owner=e->type==POP_BATTLEFIELD||e->faction==HOSTILE?0:e->faction;if(!inventory_add_owned(a,m->cacheItem,m->cacheQty,owner)){log_msg("Make pack room for the supplies.");return 0;}m->cacheQty=0;if(owner){for(int i=0;i<e->count;i++){Actor*b=member(k,i);if(b&&!b->dead&&b->unconscious<=0&&distance(a->x,a->y,b->x,b->y)<7){crime_add(a,owner,80);g.rep[owner]-=12;if(e->spawned&&e->members[i]>=0)population_anger(e->members[i]);log_warn("The camp saw you steal their supplies.");return 1;}}}log_msg("Took the remaining camp supplies.");return 1;}
     if(action>=30&&action<=32){static const int items[]={RATION,MEDKIT,PARTS},price[]={40,80,100};int i=action-30;if(!safe_at(a)||g.rep[e->faction]<-25||!standing(k)){log_msg("No safe, willing trader here.");return 0;}if(m->stock[i]<=0||g.money<price[i]){log_msg("Not enough silver or trader stock.");return 0;}if(!inventory_add(a,items[i],1)){log_msg("Make pack room first.");return 0;}g.money-=price[i];m->stock[i]--;log_msg("Bought %s for %d silver.",itemDefs[items[i]].name,price[i]);return 1;}return 0;
 }
-const char *population_actor_role(int n){int k=population_owned(n);return k?names[P.groups[k-1].type]:NULL;}
+const char *population_actor_role(int n){
+ static const char *roles[POP_TYPES]={"SCAVENGER","REFUGEE","HUNTER","SMUGGLER","TRADER","PATROL SOLDIER","BANDIT","BEAST","PILGRIM","WOUNDED TRAVELER","FALLEN SOLDIER","SOLDIER","BANDIT","SALVAGER","CONVOY GUARD","ELITE DUELIST"};
+ int k=population_owned(n);if(!k)return NULL;WorldEvent*e=&P.groups[k-1];
+ if(g.depth.actors[n].captive)return "PRISONER";
+ if((e->type==POP_RAIDERS||e->type==POP_AMBUSH)&&e->modifier==1)return "STARVING BANDIT";
+ return roles[e->type];
+}
 const char *population_dialogue(int n){static char line[220];int k=population_owned(n);if(!k)return NULL;population_detail(k-1,line,sizeof(line));return line;}
 int population_validate(const Game*s){
     const Population*p=&s->population;if(!p->version){for(int n=0;n<s->actorCount;n++)if(s->living.owned[n]>EVENTS)return 0;return 1;}if(p->version!=1||p->serial<0||!isfinite(p->pulse)||!isfinite(p->offlinePulse)||p->pulse<0||p->offlinePulse<0)return 0;

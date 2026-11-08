@@ -508,7 +508,7 @@ int expansion_input(float dt, Input in) {
                 ui.mapX = towns[town].x;
                 ui.mapY = towns[town].y;
                 ui.mapZoom = 1; /* A contract may name a town not yet discovered. Keep its exact pin. */
-                log_msg("Contract: %s. Choose travel on the map when ready.", towns[town].name);
+                log_msg("Contract: %s. Use this bearing and walk there.", towns[town].name);
             } else
                 log_msg("Select an active contract to locate its destination.");
         }

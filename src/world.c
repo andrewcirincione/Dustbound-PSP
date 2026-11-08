@@ -480,7 +480,7 @@ int start_sleep(int town) {
     Actor *a = &g.actors[g.selected];
     int bed = nearby_station(BED, 1.7f);
     if (bed < 0) {
-        log_msg("Find an inn bed or build a shelter.");
+        log_msg("Enter the inn and choose Sleep in bed beside a bed. 25 silver.");
         return 0;
     }
     if (g.buildings[bed].owner < 0) {
@@ -594,7 +594,7 @@ int complete_contract(int n) {
     g.rep[g.townOwner[c->town]] += 8;
     g.prosperity[c->town] = (int)limit(g.prosperity[c->town] + 5, 0, 100);
     gain(a, PERCEPTION, 70);
-    log_msg("Contract paid: %d silver; faction standing +8.", c->reward);
+    log_warn("Contract paid: %d silver; faction standing +8.", c->reward);
     return 1;
 }
 const char *dialogue_line(int n, int page) {

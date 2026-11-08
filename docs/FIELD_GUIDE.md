@@ -8,7 +8,7 @@ Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down:
 
 ![cross](../assets/ui/cross.svg): interact. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. Hold L + Square: choose someone to attack (also Start > Squad). ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): pause menu: ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) change Pause, Squad and World tabs. D-pad navigates menus.
 
-Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch members or guide pages. Cross opens nearby actions. Pause with R, choose an action to queue it, then R resumes. Four actions can wait; moving cancels them. Analog movement cancels work or travel.
+Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch members or guide pages. Cross opens nearby actions. Pause with R, choose an action to queue it, then R resumes. Four actions can wait; moving cancels them. Analog movement cancels work; map pins are only navigation references.
 
 ## 2. Your Drifter
 
@@ -20,7 +20,7 @@ Origins change equipment, supplies and skills. Outlaws begin with a bounty. Cara
 
 The 1536 by 1536 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. Rivers have fords near roads; hills rise into mesas and snowfields.
 
-![select](../assets/ui/select.svg) opens the atlas. D-pad selects a known town; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) changes pages. The blue triangle is you; white squares are towns. Incidents are discovered on the road and never marked on maps. ![cross](../assets/ui/cross.svg) orders travel. ![triangle](../assets/ui/triangle.svg) opens local view: move its cursor freely; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist.
+![select](../assets/ui/select.svg) opens the atlas. D-pad selects a known town; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) changes pages. The blue triangle is you; white squares are towns. Incidents are discovered on the road. World activity retains last-seen reports which you can locate on the map. ![cross](../assets/ui/cross.svg) places a reference pin. Walk with the analog stick; the pin does not move anyone. ![triangle](../assets/ui/triangle.svg) opens local view: move its cursor freely; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist.
 
 ## 4. Combat
 
@@ -138,7 +138,7 @@ Repair the culvert after bringing Sora home: 3 timber, 1 iron bar and tools. Or 
 
 Squad management sets Balanced, Defensive, Keep range or Hold fire. Defensive gives +18 defence but never attacks. Ranged allies retreat if a foe closes within 3.5m. Projectiles travel and hit walls or allies: clear your firing line.
 
-Assign each survivor to one of three groups and choose its leader. In the atlas, hold ![r](../assets/ui/r.svg) and press ![cross](../assets/ui/cross.svg) for a group route. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume the Priority queue in Squad management.
+Assign each survivor to one of three groups and choose its leader. There are no group travel orders. Followers follow their leader; move the selected leader with the analog stick. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume the Priority queue in Squad management.
 
 ## 23. Camp Work & Fuel
 
@@ -164,3 +164,9 @@ Outer body covers 95% of chest hits and 65% of arm hits; headwear covers 85%, le
 ## Limb replacements and surgery (0.11.0)
 
 Health → R opens individual limb slots. Fit a matching mechanical arm or leg for two machine parts, compare grades, detach an old part, or repair metal. Natural limbs must be lost first. Surgeon Venn in Dusk Haven can permanently remove an arm or leg for 400 silver. Buy the replacement before removing a leg: one missing leg causes crawling. Copper Cross stocks Reinforced, Iron Gate Precision, and Black Mesa Relic replacements. Fallen wandering elites may have real FITTED limbs to loot. Bandages never regrow lost limbs. See [full grades and locations](CONTENT_V110.md).
+
+## Nearby identities and sightings
+
+Read equipment and formation to judge a group. Small nearby labels show a broad role in the faction color, with a red ! for hostility. Start > World > Factions explains the colors and shows your standing. Hidden ambushers stay unidentified until detected.
+
+Start > World > World activity records a group's last-seen place and time. Cross opens that location on the map; Cross there sets a manual pin. Groups may have moved. A council entry shows named claimants and their policy before you pledge silver or relief.

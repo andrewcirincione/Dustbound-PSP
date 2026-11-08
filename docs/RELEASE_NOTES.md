@@ -1,16 +1,14 @@
-# Dustbound 0.13.0 — A frontier with consequences
+# Dustbound 0.14.0 — Read the frontier
 
-World encounters now have more distinct behavior and lasting outcomes.
+- Removed map and group auto-travel. Maps place reference pins; walking is controlled with the analog stick.
+- Starving bandits wear incomplete clothing and carry poor weapons. Soldiers wear coordinated equipment and march in formation. Elite duelists wear full superior gear. Appearance and loot use the same equipment.
+- Nearby labels show role, faction color and a red **!** for hostility. No enemy health bars or encounter tier readouts. The faction menu includes matching colors, reputation and wanted standing.
+- World activity records actual last-seen locations and times, with map references that do not follow distant groups.
+- Fixed beds/workstations being intercepted by nearby NPC dialogue; improved character silhouettes through scenery.
+- Added named claimants and policy previews to councils. Quieted successful autosaves and routine skill notices; prioritized contract rewards.
 
-- **Hunters and ambushers:** hunters pursue real beast groups and return with finite carcass loot; ambushers conceal themselves and flank when triggered.
-- **Survivors respond to losses:** groups regroup, spend medicine, carry wounded companions, recover and retreat. One casualty no longer stops the whole group.
-- **Camps change over time:** finite provisions, supply trips, relocation and abandonment. Refugees can reach safety and become recruitable. Bedrolls, trader beds and varied layouts distinguish camps.
-- **Armies have duties:** reinforce vulnerable holdings, move actual supplies or assault a town's garrison.
-- **Succession after ruler deaths:** visit a council to back a claimant or deliver relief. Outcomes change ownership and administration prices. Track discovered developments through Start > World > World activity.
-- **Prosthetic choices have tradeoffs:** Reinforced favors power, toughness and hauling; Precision favors dexterity and speed; Relic is a costly all-round option. Prosthetics remain uncommon in random encounters.
+Extract `Dustbound-0.14.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Keep saves before upgrading. Save v14 reads earlier formats; a real v13 save is included in migration tests. Existing saved gear remains intact; newly generated encounters use the new outfit rules.
 
-Install `Dustbound-0.13.0-PSP.zip` at the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Saves use v13; a real v12 save was migrated and reloaded. Earlier readers remain. Back up saves before overwriting them with a newer version.
+[Details](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/CONTENT_V140.md) · [Screenshots and review](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/FEEDBACK_V140.md) · [Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V140.md)
 
-[Details](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/CONTENT_V130.md) · [PSP screenshots](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/FEEDBACK_V130.md) · [Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V130.md)
-
-Verified through native regression/sanitizer suites, a 20-minute full simulation, a five-hour coarse world run and controller-driven PPSSPP checks. Offline battles remain simplified. Physical PSP performance and naturally played full-campaign balance remain unqualified. Playable alpha.
+Tested with native sanitizer/regression suites and controller-driven PPSSPP checks of the release executable. Playable alpha; physical PSP performance and full-campaign balance remain unqualified.

@@ -226,7 +226,7 @@ void depth_locate(int site) {
     ui.mapY = D.siteY[site];
     ui.mapZoom = 0;
     depth_open(SCREEN_MAP);
-    log_msg("%s marked. \001 sets travel when ready.", landmarkNames[site]);
+    log_msg("%s marked. \001 places a manual map pin.", landmarkNames[site]);
 }
 static void route_state(int state) {
     if (D.route)
@@ -836,12 +836,7 @@ int depth_group_job(Actor *a, float dt) {
     if (leader < 0)
         return 1;
     if (n == leader) {
-        if (D.groupTravel[group]) {
-            if (distance(a->x, a->y, D.groupX[group], D.groupY[group]) < 1) {
-                D.groupTravel[group] = 0;
-            } else
-                route_toward(a, D.groupX[group], D.groupY[group], dt);
-        }
+        D.groupTravel[group] = 0;
         return 1;
     }
     Actor *b = &g.actors[leader];
@@ -1100,19 +1095,6 @@ int depth_input(float dt, Input in) {
             ui.selection = (ui.selection + count - 1) % count;
         if (p & KEY_CROSS)
             depth_dialog(ui.dialogActor, ui.selection);
-        return 1;
-    }
-    if (ui.screen == SCREEN_MAP && (p & KEY_CROSS) && (in.held & KEY_R)) {
-        if (actor_inside(a) || !can_walk(ui.mapX, ui.mapY)) {
-            log_msg("Group route needs a walkable exterior destination.");
-            return 1;
-        }
-        D.groupX[z->group] = ui.mapX;
-        D.groupY[z->group] = ui.mapY;
-        D.groupTravel[z->group] = 1;
-        z->paused = 0;
-        log_msg("Group %d route set. Other groups keep their orders.", z->group + 1);
-        depth_open(SCREEN_WORLD);
         return 1;
     }
     if (ui.screen == SCREEN_WORLD && z->captive) {

@@ -622,14 +622,7 @@ static void objects_draw(void) {
         else if (o->kind == 2) {
             Actor *a = &g.actors[o->index];
             person(a, o->x, o->y, 1, o->index == g.selected);
-            if (a->target >= 0 || a->unconscious > 0 || a->squad) {
-                float hp = (a->health[HEAD] + a->health[CHEST]) * 50 / species_health(a);
-                bar(o->x - 10, o->y - 43, 21, 2, hp, a->squad ? TEAL : RED);
-            }
-            if (!a->squad && a->kind != BEAST && a->kind != RAIDER && ui.contextKind == 0 &&
-                ui.contextIndex == o->index && context_distance() <= context_reach()) {
-                center(o->x, o->y - 52, npc_role_name(a), a->kind == RECRUIT ? TEAL : GOLD, 1);
-            }
+            if (a->squad) {float hp=(a->health[HEAD]+a->health[CHEST])*50/species_health(a);bar(o->x-10,o->y-43,21,2,hp,TEAL);}
             if (a->squad && o->index == g.selected) {
                 triangle(o->x - 3, o->y - 49, o->x + 3, o->y - 49, o->x, o->y - 45, TEAL);
             }
@@ -652,6 +645,25 @@ static void objects_draw(void) {
             art(sprite, x, y + 4, light(), 0);
         }
     }
+    for(int i=0;i<n;i++)if(objects[i].kind==2){int id=objects[i].index;Actor*a=&g.actors[id];if(a->squad||((a->target==g.selected||g.actors[g.selected].target==id)&&distance(a->x,a->y,ui.camX,ui.camY)<9))actor_outline(a,objects[i].x,objects[i].y,id==g.selected);}
+}
+static void room_project(float x, float y, int *sx, int *sy);
+static uint32_t label_color(int faction){uint32_t c=factionColors[faction];return (((c>>16)*3+255)/4<<16)|((((c>>8&255)*3+255)/4)<<8)|(((c&255)*3+255)/4);}
+static void nearby_labels(int indoors){
+ int ids[MAX_ACTORS],count=0;float ds[MAX_ACTORS];Actor*p=&g.actors[g.selected];
+ for(int i=0;i<g.actorCount;i++){Actor*a=&g.actors[i];if(!a->active||a->squad||a->carriedBy>=0||population_hidden(i)||depth_room(a)!=depth_room(p))continue;float d=depth_distance(p,a);if(d>9)continue;ids[count]=i;ds[count++]=d;}
+ for(int i=1;i<count;i++){int n=ids[i],j=i;float d=ds[i];while(j>0&&ds[j-1]>d){ids[j]=ids[j-1];ds[j]=ds[j-1];j--;}ids[j]=n;ds[j]=d;}
+ int boxes[8][4],used=0;
+ for(int i=0;i<count&&used<8;i++){Actor*a=&g.actors[ids[i]];int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);
+  char label[48];snprintf(label,sizeof(label),"%.20s%s",npc_role_name(a),a->dead?" / DEAD":a->unconscious>0?" / DOWN":actor_relation(ids[i])<0?" !":"");int w=text_width(label)+8,l=x-w/2,t=y-(a->dead||a->unconscious>0?24:51);if(l<4)l=4;if(l+w>476)l=476-w;if(t<26)t=26;
+  for(int attempt=0;attempt<5;attempt++){int hit=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])hit=1;if(!hit)break;t-=13;}
+  int overlaps=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])overlaps=1;
+  if(overlaps||t<25||t>221||x<0||x>480||(l+w>398&&t<100))continue;
+  boxes[used][0]=l;boxes[used][1]=t;boxes[used][2]=w;used++;
+  line(x,y-(a->dead||a->unconscious>0?8:35),l+w/2,t+10,shade(factionColors[a->faction],.65f));
+  rect(l,t,w,11,INK);rect(l,t,2,11,factionColors[a->faction]);text(l+5,t+2,label,label_color(a->faction),1);
+  if(!a->dead&&actor_relation(ids[i])<0)text(l+w-9,t+2,"!",RED,1);
+ }
 }
 static void speech_bubbles(void) {
     int best = -1;
@@ -905,6 +917,7 @@ static void hud(void) {
         return;
     if (!g.interiorBuilding)
         mini_map();
+    if(ui.waypoint&&!g.interiorBuilding){float dx=ui.travelX-a->x,dy=ui.travelY-a->y;const char*d=fabsf(dx)>fabsf(dy)?(dx<0?"W":"E"):(dy<0?"N":"S");snprintf(b,sizeof(b),"PIN %.0fm %s",distance(a->x,a->y,ui.travelX,ui.travelY),d);text(350,104,b,GOLD,1);}
     if (ui.paused) {
         panel(192, 43, 94, 18);
         center(239, 49, "PAUSED", GOLD, 1);
@@ -1202,12 +1215,16 @@ static void limbs_screen(void) {
 
 static void life_screen(void){
  char b[220];if(ui.screen==SCREEN_POLITICS){int t=ui.tradeTown;TownPolitics*p=&g.life.towns[t];overlay_header("COUNCIL & SUCCESSION",p->stage==1?"\015 SELECT   \001 COMMIT   \002 CLOSE":"\001 / \002 CLOSE");clipped(31,83,towns[t].name,65,GOLD);
-  if(p->stage==1){snprintf(b,sizeof(b),"CARETAKER %s: %d / CHALLENGER %s: %d",factionNames[p->original],p->support[0],factionNames[p->rival],p->support[1]);clipped(31,99,b,68,TEAL);wrap(31,112,68,"One pledge per dispute. Relief backs the caretaker. Local guards, food and arriving armies affect the outcome.",TEXT);
-   const char*labels[]={"Back caretaker: 200 silver / +30 influence","Back challenger: 200 silver / +30 influence","Deliver 4 rations: caretaker +12 influence","Leave"};for(int i=0;i<4;i++)row(156+i*15,i==ui.selection,labels[i],NULL);
-   snprintf(b,sizeof(b),"SILVER %d/200  RATIONS %d/4  PLEDGE %s",g.money,inventory_count(&g.actors[g.selected],RATION),p->pledge<0?"OPEN":"RECORDED");clipped(31,222,b,68,GOLD);
+  if(p->stage==1){
+   snprintf(b,sizeof(b),"%s / %s",politics_claimant(t,p->original),factionNames[p->original]);clipped(31,97,b,68,TEAL);
+   snprintf(b,sizeof(b),"%s / %s",politics_claimant(t,p->rival),factionNames[p->rival]);clipped(31,110,b,68,GOLD);
+   int side=ui.selection==1,fac=side?p->rival:p->original;
+   snprintf(b,sizeof(b),"%s %d vs %d influence. %s",side?"CHALLENGER":"CARETAKER",p->support[side],p->support[!side],politics_policy_text(fac));wrap(31,125,68,b,TEXT);
+   const char*labels[]={"Back caretaker: 200 silver / +30 influence","Back challenger: 200 silver / +30 influence","Relief: 4 rations / caretaker +12 influence","Leave"};for(int i=0;i<4;i++)row(166+i*13,i==ui.selection,labels[i],NULL);
+   snprintf(b,sizeof(b),"ONE PLEDGE / SILVER %d/200  FOOD %d/4  %s",g.money,inventory_count(&g.actors[g.selected],RATION),p->pledge<0?"OPEN":"PLEDGED");clipped(31,222,b,68,GOLD);
   }else{snprintf(b,sizeof(b),"GOVERNMENT: %s",factionNames[g.townOwner[t]]);clipped(31,105,b,68,TEAL);wrap(31,127,68,p->policy==1?"Relief administration: food, water and medicine prices reduced 15%.":p->policy==2?"Military administration: equipment prices increased 12%.":"Trade administration: supply prices reduced 7%.",TEXT);snprintf(b,sizeof(b),"REFUGEES %d / SHIPMENTS %d",p->refugees,p->shipments);text(31,184,b,GOLD,1);wrap(31,207,68,"The former ruler and their unique equipment remain where they fell.",MUTED);}return;
  }
- overlay_header("WORLD ACTIVITY","\015 SELECT   \001 COUNCIL   \002 CLOSE");int count=life_ledger_count(),first=start_row(ui.selection,count,6);for(int j=0;j<6&&first+j<count;j++){life_ledger_label(first+j,b,sizeof(b));row(84+j*14,first+j==ui.selection,b,NULL);}life_ledger_detail(ui.selection,b,sizeof(b));wrap(31,178,68,b,TEXT);
+ overlay_header("WORLD ACTIVITY","\015 SELECT   \001 COUNCIL / MAP   \002 CLOSE");int count=life_ledger_count(),first=start_row(ui.selection,count,6);for(int j=0;j<6&&first+j<count;j++){life_ledger_label(first+j,b,sizeof(b));row(84+j*14,first+j==ui.selection,b,NULL);}life_ledger_detail(ui.selection,b,sizeof(b));wrap(31,178,68,b,TEXT);
 }
 
 static void squad_screen(void) {
@@ -1315,7 +1332,7 @@ static void world_atlas(void) {
     if(selected==-1){text(235,180,a->name,0x72cfd2,1);text(235,195,regionNames[biome(a->x,a->y)],MUTED,1);}
     else {
         if(selected<TOWNS)snprintf(info,sizeof(info),"HELD BY %s",factionNames[g.townOwner[selected]]);
-        else {WorldEvent*e=&g.living.events[selected-TOWNS];snprintf(info,sizeof(info),"TIER %d / %s",e->tier+1,e->type==1||e->type>=5?"COMBAT":e->type==2?"SUPPLY DELIVERY":e->type==4?"RESCUE":e->type==3?"SEARCH":"ESCORT");}
+        else {WorldEvent*e=&g.living.events[selected-TOWNS];snprintf(info,sizeof(info),"%s",e->type==1||e->type>=5?"COMBAT":e->type==2?"SUPPLY DELIVERY":e->type==4?"RESCUE":e->type==3?"SEARCH":"ESCORT");}
         clipped(235,180,info,38,GOLD);
         float dx=ui.mapX-a->x,dy=ui.mapY-a->y;const char*dir=fabsf(dx)<fabsf(dy)*.4f?(dy<0?"N":"S"):fabsf(dy)<fabsf(dx)*.4f?(dx<0?"W":"E"):dy<0?(dx<0?"NW":"NE"):(dx<0?"SW":"SE");
         snprintf(info,sizeof(info),"%.0fm %s / DIRECT DISTANCE",distance(a->x,a->y,ui.mapX,ui.mapY),dir);text(235,195,info,MUTED,1);
@@ -1324,14 +1341,14 @@ static void world_atlas(void) {
     frame(289,215,6,6,TEXT);text(301,215,"TOWN",TEXT,1);
 
     line(235,235,249,235,0xc1b08a);text(255,232,"ROAD",MUTED,1);text(301,232,"DARK: UNEXPLORED",MUTED,1);
-    text(14,257,selected==-1?"\011 SELECT   \004 LOCAL VIEW   \002 BACK":"\011 SELECT   \001 TRAVEL   \004 LOCAL VIEW   \002 BACK",TEXT,1);
+    text(14,257,selected==-1?"\011 SELECT   \004 LOCAL VIEW   \002 BACK":"\011 SELECT   \001 PIN   \004 LOCAL VIEW   \002 BACK",TEXT,1);
 #undef AX
 #undef AY
 }
 static void map_screen(void) {
     if(!ui.mapZoom){world_atlas();return;}
-    overlay_header(ui.mapZoom ? "LOCAL ROUTES / FRONTIER" : "WORLD ATLAS / FRONTIER",
-                   "\011 CURSOR  \001 TRAVEL  \005/\006 TOWNS  \004 ZOOM  \003 CHART");
+    overlay_header(ui.mapZoom ? "LOCAL MAP / BEARINGS" : "WORLD ATLAS / FRONTIER",
+                   "\011 CURSOR  \001 PIN  \005/\006 TOWNS  \004 ZOOM  \003 CHART");
     float nearest=1e9f;
     for(int t=0;t<TOWNS;t++){float d=distance(ui.mapX,ui.mapY,towns[t].x,towns[t].y);if(d<nearest){nearest=d;ui.mapTown=t;}}
     int ox = ui.mapZoom?29:105, oy = 82, mw = ui.mapZoom?288:136, mh = 136;
@@ -1458,13 +1475,13 @@ static void map_screen(void) {
     text(328,209,"TEAL: YOU",TEAL,1);
     if(!ui.mapZoom){text(38,89,"N",TEXT,1);line(41,103,41,116,TEXT);line(41,103,37,108,TEXT);line(41,103,45,108,TEXT);}
     char b[90];
-    snprintf(b, 90, "%s %.0fm  / %s", ui.waypoint ? "TRAVELLING" : "PLANNED COURSE",
+    snprintf(b, 90, "%s %.0fm  / %s", ui.waypoint ? "MAP PIN" : "BEARING",
              distance(leader->x, leader->y, ui.waypoint ? ui.travelX : ui.mapX,
                       ui.waypoint ? ui.travelY : ui.mapY),
              regionNames[biome(ui.mapX, ui.mapY)]);
     text(31, 222, b, TEAL, 1);
     rect(25, 233, 425, 15, PANEL);
-    text(31, 237, "\002 BACK   PALE: ROAD   GOLD: SITE   DASHED: COURSE", GOLD, 1);
+    text(31, 237, "\002 BACK   PALE: ROAD   GOLD: SITE   DASHED: BEARING", GOLD, 1);
 #undef MAPX
 #undef MAPY
 #undef INMAP
@@ -1810,7 +1827,7 @@ static void journal_screen(void) {
     text(31, 221, b, TEAL, 1);
 }
 static void factions_screen(void) {
-    overlay_header("FLAGS OF THE FRONTIER", "REPUTATION AFFECTS PRICES, GUARDS AND REFUGE");
+    overlay_header("FLAGS OF THE FRONTIER", "FACTION COLORS / ! HOSTILE TO YOU / YOUR STANDING");
     char b[100];
     for (int f = 0; f < FACTIONS; f++) {
         int townsHeld = 0;
@@ -1819,6 +1836,7 @@ static void factions_screen(void) {
                 townsHeld++;
         snprintf(b, 100, "%+d REP  %d WANTED", g.rep[f], wanted_amount(&g.actors[g.selected],f));
         row(80 + f * 12, ui.selection == f, factionNames[f], b);
+        rect(19,80+f*12,7,7,factionColors[f]);
     }
     wrap(31, 183, 68, faction_identity(ui.selection), TEXT);
     int active = 0;
@@ -1927,8 +1945,9 @@ void render_game(uint32_t *pixels, int stride) {
         }
     }
     depth_world_draw();
-    if (ui.screen == SCREEN_WORLD && !g.interiorBuilding)
-        speech_bubbles();
+    if (ui.screen == SCREEN_WORLD)
+        nearby_labels(!!g.interiorBuilding);
+    if(ui.screen==SCREEN_WORLD && !g.interiorBuilding && g.actors[g.selected].target<0 && g.actors[g.selected].unconscious<=0 && !g.actors[g.selected].dead) speech_bubbles();
     hud();
     switch (ui.screen) {
     case SCREEN_EXPEDITION:case SCREEN_ORDERS:case SCREEN_CAMP:case SCREEN_CARE:case SCREEN_ENCOUNTER:case SCREEN_LAYERS:

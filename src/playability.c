@@ -73,7 +73,7 @@ int dialogue_action(int actor, int row) {
 const char *dialogue_option(int actor, int row) {
     static const char *labels[] = {"Show me your stock.",
                                    "Any paying work?",
-                                   "Rent a bed. 25 silver",
+                                   "Where can I rest? Beds: 25 silver",
                                    "Treat my wounds. 80 silver",
                                    "Bounties and local news.",
                                    "Change my appearance.",
