@@ -292,16 +292,16 @@ const char *guideBodies[GUIDE_PAGES] = {
     "hit hard; anchor cleavers bleed. Guns use cartridges; "
     "bows use bolts.\nArmor protects specific body locations. Piercing weapons ignore some armor; serrated "
     "blades bleed; staggering hits interrupt. Skills improve through use. Retreat from stronger opponents "
-    "and use terrain.",
+    "and use terrain. Gold windup marks show incoming strikes. Enemy combat bars show remaining knockout reserve from head, chest and blood. Square to passive cancels your attack; move away to disengage.",
     "Six body parts, blood and fatigue are separate. Head or chest failure knocks a survivor out. Bleeding "
     "can kill an unconscious character. Start > Squad > Health & recovery, \001 treats the selected survivor; \001 near an injured "
-    "ally opens First Aid, Carry and Recover Gear choices.\nDressings stop bleeding and restore some health. Sleeping restores the "
+    "ally opens First Aid, Carry and Recover Gear choices.\nDressings stop bleeding and restore some health. Nearby actions can consume two cloth or tear worn rags to stop bleeding without healing. Friendly medics and pilgrims help when safe, using their supplies. Sleeping restores the "
     "rest. A doctor charges for full treatment. Lost limbs never regrow. A missing leg makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Prosthetics are uncommon on ordinary travelers; high-grade parts are rarer. Actual fitted limbs on fallen wanderers can be looted. Death is "
     "permanent; dismiss the body from Squad to free its slot.",
     "Rations are eaten below forty hunger: first your pack, then a companion backpack or owned depot within "
     "three meters. Water supports "
     "farms; tonics restore blood and treat exposure. Starvation damages the chest.\nAn inn bed costs 25 "
-    "silver and starts safe rest. Camp shelters are free. Sleeping reduces fatigue and restores wounds once "
+    "silver and starts safe rest. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and restores wounds once "
     "bleeding stops and hunger is above twenty. Move to wake. The sun completes a day in thirty minutes of "
     "simulation; menus and "
     "tactical pause stop time.",

@@ -1,14 +1,19 @@
-# Dustbound 0.14.0 — Read the frontier
+# Dustbound 0.15.0 — Fight and recover
 
-- Removed map and group auto-travel. Maps place reference pins; walking is controlled with the analog stick.
-- Starving bandits wear incomplete clothing and carry poor weapons. Soldiers wear coordinated equipment and march in formation. Elite duelists wear full superior gear. Appearance and loot use the same equipment.
-- Nearby labels show role, faction color and a red **!** for hostility. No enemy health bars or encounter tier readouts. The faction menu includes matching colors, reputation and wanted standing.
-- World activity records actual last-seen locations and times, with map references that do not follow distant groups.
-- Fixed beds/workstations being intercepted by nearby NPC dialogue; improved character silhouettes through scenery.
-- Added named claimants and policy previews to councils. Quieted successful autosaves and routine skill notices; prioritized contract rewards.
+- Enemy health bars return during combat. They show remaining knockout reserve from head, chest and blood, using the actual knockout thresholds. Arm and leg injuries still affect fighting and movement without falsely emptying the bar.
+- Clearer fighting: brighter outlined bars, visible windup marks, brief hit/block/dodge feedback, one focused role label during combat and less foreground vegetation around combatants.
+- At most two AI melee attacks prepare or strike against one target simultaneously. Other attackers reposition; ranged enemies remain dangerous. Passive stance cancels your attack and explicit attack order, with recovery time before another attack.
+- Bare and ragged torsos have slimmer profiles; heavy armor has broader silhouettes. Appearance still reflects actual equipment and loot. Nearby identification remains role, faction color and hostility.
+- Six roadside rock passes provide collision and projectile cover, open central routes and outer bypasses. Six free wayfarer beds have finite medicine, food and parts caches. Discovered shelters provide recovery directions when wounded or exhausted.
+- Emergency recovery: consume two cloth or destroy worn rags to stop bleeding without healing. Nearby friendly medics and pilgrims approach and help endangered squad members when safe, spending actual medicine or machine parts.
+- New governments reposition surviving guards, displace some ordinary civilians and move medics to relief posts. Faction banners and policy signs show the settlement's new government. Named equipment owners are not respawned.
 
-Extract `Dustbound-0.14.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Keep saves before upgrading. Save v14 reads earlier formats; a real v13 save is included in migration tests. Existing saved gear remains intact; newly generated encounters use the new outfit rules.
+- Long field-guide chapters now page with left/right, keeping recovery instructions readable.
 
-[Details](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/CONTENT_V140.md) · [Screenshots and review](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/FEEDBACK_V140.md) · [Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V140.md)
+There is **no map or group auto-travel**. Map choices place reference pins; movement remains manual.
 
-Tested with native sanitizer/regression suites and controller-driven PPSSPP checks of the release executable. Playable alpha; physical PSP performance and full-campaign balance remain unqualified.
+Extract `Dustbound-0.15.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Keep saves before upgrading. Save v15 reads earlier formats; a genuine v14 PSP save is included in migration tests. Existing equipment, injuries and world state remain intact; roadside additions initialize once.
+
+[Details](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/CONTENT_V150.md) · [Screenshots and review](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/FEEDBACK_V150.md) · [Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V150.md)
+
+Tested with native regression/sanitizer suites and controller-driven PPSSPP checks of the release executable. Playable alpha; physical PSP performance and full-campaign balance remain unqualified.

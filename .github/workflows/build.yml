@@ -73,6 +73,7 @@ jobs:
           bash scripts/validate_v120.sh
           bash scripts/validate_v130.sh
           bash scripts/validate_v140.sh
+          bash scripts/validate_v150.sh
       - name: Install pinned PSPDEV toolchain
         run: |
           curl -L --fail --retry 3 -o "$RUNNER_TEMP/pspdev.tar.gz" https://github.com/pspdev/pspdev/releases/download/v20261101/pspdev-ubuntu-latest-x86_64.tar.gz
@@ -84,7 +85,7 @@ jobs:
         run: |
           make -j2
           python3 scripts/validate_pbp.py EBOOT.PBP
-          python3 -c 'import hashlib,json,pathlib; m=json.loads(pathlib.Path("evidence/v140-build-manifest.json").read_text()); assert hashlib.sha256(pathlib.Path("EBOOT.PBP").read_bytes()).hexdigest()==m["eboot_sha256"], "EBOOT differs from emulated build"'
+          python3 -c 'import hashlib,json,pathlib; m=json.loads(pathlib.Path("evidence/v150-build-manifest.json").read_text()); assert hashlib.sha256(pathlib.Path("EBOOT.PBP").read_bytes()).hexdigest()==m["eboot_sha256"], "EBOOT differs from emulated build"'
       - name: Package PSP installer
         run: |
           mkdir -p release/PSP/GAME/DUSTBOUND
@@ -92,12 +93,12 @@ jobs:
           cp LICENSE release/LICENSE
           cp docs/RELEASE_NOTES.md release/README.md
           cd release
-          zip -r ../Dustbound-0.14.0-PSP.zip PSP LICENSE README.md
+          zip -r ../Dustbound-0.15.0-PSP.zip PSP LICENSE README.md
           cd ..
-          zip -r Dustbound-0.14.0-Screenshots.zip evidence/v140-psp-*.png evidence/v140-controller-checks.json evidence/v140-build-manifest.json evidence/v140-native-checks.txt docs/CONTENT_V140.md docs/FEEDBACK_V140.md docs/VALIDATION_V140.md
-          sha256sum EBOOT.PBP Dustbound-0.14.0-PSP.zip Dustbound-0.14.0-Screenshots.zip > SHA256SUMS-0.14.0.txt
+          zip -r Dustbound-0.15.0-Screenshots.zip evidence/v150-psp-*.png evidence/v150-controller-checks.json evidence/v150-build-manifest.json evidence/v150-native-checks.txt docs/CONTENT_V150.md docs/FEEDBACK_V150.md docs/VALIDATION_V150.md
+          sha256sum EBOOT.PBP Dustbound-0.15.0-PSP.zip Dustbound-0.15.0-Screenshots.zip > SHA256SUMS-0.15.0.txt
       - name: Publish EBOOT and PSP installer
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v0.14.0 EBOOT.PBP Dustbound-0.14.0-PSP.zip Dustbound-0.14.0-Screenshots.zip SHA256SUMS-0.14.0.txt --target "$GITHUB_SHA" --title 'Dustbound 0.14.0 — Read the frontier' --notes-file docs/RELEASE_NOTES.md --prerelease
+          gh release create v0.15.0 EBOOT.PBP Dustbound-0.15.0-PSP.zip Dustbound-0.15.0-Screenshots.zip SHA256SUMS-0.15.0.txt --target "$GITHUB_SHA" --title 'Dustbound 0.15.0 — Fight and recover' --notes-file docs/RELEASE_NOTES.md --prerelease

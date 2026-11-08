@@ -7,6 +7,7 @@ extern int add_actor(const char *, int, int, float, float, int);
 extern int add_build(float, float, int, int, int);
 extern void add_node(float, float, int, int, int, int);
 extern int conscious(const Actor *);
+extern int hostile(const Actor *,const Actor *);
 extern int nearby_station(int, float);
 extern void restock(void);
 static unsigned wrand(void) {
@@ -483,7 +484,7 @@ int start_sleep(int town) {
         log_msg("Enter the inn and choose Sleep in bed beside a bed. 25 silver.");
         return 0;
     }
-    if (g.buildings[bed].owner < 0) {
+    if (g.buildings[bed].owner < 0 && !trail_bed(bed)) {
         int cost=regional_bed_cost(town);
         if (town < 0 || g.money < cost) {
             log_msg("An inn bed costs %d silver.",cost);
@@ -1026,3 +1027,50 @@ void tick_expansion(float dt) {
 #include "regional.h"
 
 #include "living.h"
+
+/* Six fixed roadside landmarks. Geometry leaves a direct lane and outer bypasses. */
+void trail_point(int site,float*x,float*y,float*dx,float*dy){
+ static const int ends[6][2]={{0,1},{0,2},{1,3},{5,6},{9,10},{11,13}};
+ int a=ends[site][0],b=ends[site][1];float vx=towns[b].x-towns[a].x,vy=towns[b].y-towns[a].y,d=fmaxf(1,sqrtf(vx*vx+vy*vy));
+ *dx=vx/d;*dy=vy/d;*x=towns[a].x+vx*.46f;*y=towns[a].y+vy*.46f;
+}
+int trail_rock(int site,int rock,float*x,float*y){float cx,cy,dx,dy;trail_point(site,&cx,&cy,&dx,&dy);float u=rock<2?-4:4,v=rock%2?-3.8f:3.8f;*x=cx+dx*u-dy*v;*y=cy+dy*u+dx*v;return !(g.trails.omit&(1<<(site*4+rock)));}
+int trail_blocked(float x,float y){
+ if(!world_is_expanded())return 0;
+ for(int k=0;k<6;k++){float cx,cy,dx,dy;trail_point(k,&cx,&cy,&dx,&dy);if(fabsf(x-cx)>12||fabsf(y-cy)>12)continue;
+  for(int r=0;r<4;r++){float rx,ry;if(!trail_rock(k,r,&rx,&ry))continue;if(distance(x,y,rx,ry)<1.65f)return 1;}
+ }return 0;
+}
+int trail_bed(int b){for(int k=0;k<6;k++)if(g.trails.bed[k]==b+1)return 1;return 0;}
+void trail_init(void){
+ if(g.trails.version)return;g.trails.version=1;
+ for(int n=0;n<g.actorCount;n++)if(g.actors[n].active&&!g.actors[n].squad&&npc_role(&g.actors[n])==ROLE_MEDIC){inventory_add(&g.actors[n],MEDKIT,3);inventory_add(&g.actors[n],PARTS,2);}
+ for(int k=0;k<6;k++)for(int r=0;r<4;r++){float x,y;trail_rock(k,r,&x,&y);for(int n=0;n<g.actorCount;n++)if(g.actors[n].active&&distance(x,y,g.actors[n].x,g.actors[n].y)<2.5f)g.trails.omit|=1<<(k*4+r);for(int b=0;b<g.buildingCount;b++)if(distance(x,y,g.buildings[b].x,g.buildings[b].y)<4.5f)g.trails.omit|=1<<(k*4+r);}
+
+ for(int k=0;k<6;k++){float x,y,dx,dy;trail_point(k,&x,&y,&dx,&dy);x-=dy*10;y+=dx*10;
+  int found=0;for(int r=0;r<12;r++){float xx=x+dx*r,yy=y+dy*r;if(can_walk(xx,yy)&&town_near(xx,yy,22)<0){x=xx;y=yy;found=1;break;}}if(!found)continue;
+  int b=add_build(x,y,BED,FREE,-1);if(b<0)continue;g.trails.bed[k]=b+1;g.depth.buildings[b].labor=0;g.depth.buildings[b].condition=100;
+  add_node(x+1.5f,y+.5f,NODE_LOOT,0,MEDKIT,2);add_node(x-1.5f,y+.5f,NODE_LOOT,0,RATION,2);add_node(x,y+1.5f,NODE_LOOT,0,PARTS,2);
+ }
+}
+static int aid_safe(Actor*a){for(int j=0;j<g.actorCount;j++){Actor*b=&g.actors[j];if(b->active&&conscious(b)&&hostile(a,b)&&depth_distance(a,b)<9)return 0;}return 1;}
+int field_aid(int n,float dt){
+ Actor*m=&g.actors[n];if(m->squad||!conscious(m)||actor_inside(m)||m->target>=0||m->carrying>=0||m->kind==BEAST)return 0;
+ int owner=population_owned(n);if(npc_role(m)!=ROLE_MEDIC&&!(owner&&g.population.groups[owner-1].type==POP_PILGRIMS))return 0;
+ for(int j=0;j<g.actorCount;j++){Actor*a=&g.actors[j];if(!a->active||!a->squad||a->dead||actor_inside(a)||a->carriedBy>=0||a->prisonTime>0||g.depth.actors[j].captive||hostile(m,a)||g.rep[m->faction]<-25)continue;
+  if(a->bleed<=.01f&&!(a->unconscious>0&&(a->health[HEAD]<5||a->health[CHEST]<5)))continue;
+  int item=a->race==2?PARTS:MEDKIT;if(!inventory_count(m,item)||distance(m->x,m->y,a->x,a->y)>10||!aid_safe(a)||!aid_safe(m))continue;
+  if(depth_distance(m,a)>TALK_REACH){route_toward(m,a->x,a->y,dt);return 1;}
+  if(item==MEDKIT)heal_actor(n,j);else if(inventory_remove(m,PARTS,1)){for(int l=0;l<LIMBS;l++)if(!depth_organic(a,l)&&!limb_missing(a,l))a->health[l]=fminf(limb_max_health(a,l)-g.depth.actors[j].trauma[l],a->health[l]+25);log_warn("%s used spare parts to stabilize %s.",m->name,a->name);}
+  return 1;
+ }return 0;
+}
+void recovery_hint(char*out,int size){
+ Actor*a=&g.actors[g.selected];out[0]=0;if(a->dead)return;
+ if(a->bleed>.01f){snprintf(out,size,a->unconscious>0?"BLEEDING: switch ally for first aid; medics help when safe.":"BLEEDING: field dressing, or Nearby > tear rags / use cloth.");return;}
+ if(a->unconscious>0){snprintf(out,size,"STABILIZED: recovering consciousness; allies can carry you.");return;}
+ if(a->health[HEAD]>60&&a->health[CHEST]>60&&a->fatigue<70)return;
+ int b=-1;float near=1e9f;for(int k=0;k<6;k++)if(g.trails.bed[k]&&(g.trails.seen&(1<<k))){int n=g.trails.bed[k]-1;float d=distance(a->x,a->y,g.buildings[n].x,g.buildings[n].y);if(d<near){near=d;b=n;}}
+ if(b>=0){float dx=g.buildings[b].x-a->x,dy=g.buildings[b].y-a->y;snprintf(out,size,"RECOVER: known roadside shelter %.0fm %s",near,fabsf(dx)>fabsf(dy)?(dx<0?"W":"E"):(dy<0?"N":"S"));}
+ else snprintf(out,size,"RECOVER: bandage, find a safe bed, then rest. Medics help nearby.");
+}

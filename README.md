@@ -1,18 +1,20 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.14.0 — Read the frontier
+## 0.15.0 — Fight and recover
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
-[Download 0.14.0](https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v0.14.0) · [Release notes](docs/RELEASE_NOTES.md) · [Field guide](docs/FIELD_GUIDE.md) · [Playtest review](docs/FEEDBACK_V140.md) · [Validation](docs/VALIDATION_V140.md)
+[Download 0.15.0](https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v0.15.0) · [Release notes](docs/RELEASE_NOTES.md) · [Field guide](docs/FIELD_GUIDE.md) · [Playtest review](docs/FEEDBACK_V150.md) · [Validation](docs/VALIDATION_V150.md)
 
-![Nearby roles and military equipment](evidence/v140-psp-army.png)
+![Nearby roles and military equipment](evidence/v150-psp-army.png)
 
 There is no map or group auto-travel. Cross on the map places a reference pin; walk with the analog stick. Squad followers, work jobs and NPC movement remain part of the simulation.
 
-Starving bandits carry poor weapons and wear incomplete clothing. Soldiers wear coordinated armor and move in three-wide formations. Elite duelists wear complete superior equipment. Nearby labels show a broad role in faction colors, with a red **!** for hostility. NPC health bars and encounter tier readouts are removed. Start > World > Factions shows the color key, reputation and wanted standing.
+Starving bandits carry poor weapons and wear incomplete clothing. Soldiers wear coordinated armor and move in three-wide formations. Elite duelists wear complete superior equipment. Nearby labels show a broad role in faction colors, with a red **!** for hostility. Enemy combat bars show knockout reserve from head, chest and blood. Nearby characters do not expose skill values or encounter tiers. Start > World > Factions shows the color key, reputation and wanted standing.
 
 The world activity ledger records where and when you actually saw a group. A report can be located on the map, but does not track the group after it leaves. Councils show named claimants and the price policy each would implement. Beds beside NPCs now perform the selected rest action reliably. Characters retain a visible silhouette through foreground scenery, successful autosaves are silent, and routine skill gains cannot fill an existing message queue.
+
+Fighting now has clearer windups, outlined knockout bars and staggered AI melee attacks. Passive stance cancels your attack so you can retreat. Six roadside rock passes offer cover and alternate routes; free wayfarer beds provide finite supplies and recovery stops. Emergency dressings can consume cloth or worn rags, and friendly medics can approach and stabilize you when safe. Government changes reposition surviving guards, civilians and relief medics.
 
 ## The wider game
 
@@ -27,7 +29,7 @@ The world activity ledger records where and when you actually saw a group. A rep
 
 ## Install
 
-Extract `Dustbound-0.14.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Format v14 reads prior saves; actual v13 and earlier migration fixtures are tested. Existing characters retain their earned and looted equipment; the new outfit rules apply to newly generated encounters.
+Extract `Dustbound-0.15.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Format v15 reads prior saves; actual v14 and earlier migration fixtures are tested. Existing characters retain their earned and looted equipment; the new outfit rules apply to newly generated encounters.
 
 ## Controls
 
@@ -50,7 +52,7 @@ The pause menu has Pause, Squad and World tabs. Factions and World activity are 
 
 With PSPDEV available, run `make -j2`, then `python3 scripts/validate_pbp.py EBOOT.PBP`. The release workflow pins the compiler and checks that its executable matches the EBOOT tested in PPSSPP.
 
-Run `scripts/validate_v080.sh` through the current `scripts/validate_v140.sh` gates listed in `.github/workflows/build.yml`. For current controller checks, run `python3 scripts/emulator_v140.py /path/to/PPSSPPHeadless` after the native gates generate ordinary test saves. Completed-frame captures and results are in `evidence/v140-*`.
+Run `scripts/validate_v080.sh` through the current `scripts/validate_v150.sh` gates listed in `.github/workflows/build.yml`. For current controller checks, run `python3 scripts/emulator_v150.py /path/to/PPSSPPHeadless` after the native gates generate ordinary test saves. Completed-frame captures and results are in `evidence/v150-*`.
 
 This remains a playable alpha. PPSSPP testing does not qualify physical PSP performance, and the focused controller scenarios are not a naturally played full campaign. Offline battles use a simplified model. See the current validation record for exact scope.
 

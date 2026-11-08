@@ -289,6 +289,7 @@ static void actor_painted(Actor *a, int x, int y, int sc, float li) {
     if (a->hitFlash > 0 && a->impactKind == 1)
         lean -= (a->recoilX - a->recoilY) * 3 * pose_ease(a->hitFlash / .38f);
     float crouch = rig.crouch + (a->sneaking ? 3 : 0), bw = a->body == 1 ? 5 : a->body == 2 ? 3.8f : 4.4f;
+    if(!torso||torso==RAGS)bw*=.82f;else if(itemDefs[torso].armor>=18)bw*=1.12f;
     bw*=race==3?.85f:race==4?1.18f:1;
 #define RX(xx, yy) (x + ((xx) * (1 + rig.twist) + lean * fminf(1, fmaxf(0, -(yy) / 24.f))) * sc)
 #define RY(yy) (y + ((yy) + crouch * fminf(1, fmaxf(0, -(yy) / 13.f))) * sc)

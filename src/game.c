@@ -267,7 +267,7 @@ int town_near(float x, float y, float r) {
 int can_walk(float x, float y) {
     if (x < 2 || y < 2 || x > WORLD - 3 || y > WORLD - 3)
         return 0;
-    if (terrain_water(x, y))
+    if (trail_blocked(x,y) || terrain_water(x, y))
         return 0;
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
@@ -490,6 +490,7 @@ void game_new(uint32_t seed, int scenario) {
     limbs_init();
     population_init();
     life_init();
+    trail_init();
     ui.camX = a->x;
     ui.camY = a->y;
     ui.mapX = a->x;
@@ -522,6 +523,10 @@ int hostile(const Actor *a, const Actor *b) {
         return 1;
     return 0;
 }
+int combat_slot_available(int ai,int bi){
+ int active=0;for(int i=0;i<g.actorCount;i++)if(i!=ai&&g.actors[i].active&&conscious(&g.actors[i])&&g.actors[i].attackTarget==bi&&g.actors[i].attackPhase>=1&&g.actors[i].attackPhase<=2&&!weapon_ranged(g.actors[i].attackWeapon))active++;
+ return active<2;
+}
 void strike(int ai, int bi) {
     if (ai < 0 || bi < 0 || ai >= g.actorCount || bi >= g.actorCount || ai == bi)
         return;
@@ -530,6 +535,7 @@ void strike(int ai, int bi) {
         a->attackPhase || a->prisonTime > 0)
         return;
     int w = a->gear[0], ranged = weapon_ranged(w);
+    if(ai!=g.selected&&!ranged&&!combat_slot_available(ai,bi))return;
     if (!limb_arms(a)) { if(limb_missing(a,LLEG)&&limb_missing(a,RLEG))return; w=NONE; ranged=0; }
     if (depth_distance(a, b) > (w ? itemDefs[w].range : 1.55f))
         return;
@@ -547,7 +553,7 @@ void strike(int ai, int bi) {
     a->attackPhase = 1;
     a->attackTarget = bi;
     a->attackWeapon = w;
-    a->attackDuration = a->attackClock = fmaxf(.16f, cadence * (ranged ? .46f : .28f));
+    a->attackDuration = a->attackClock = fmaxf(a->squad?.20f:.45f, cadence * (ranged ? .46f : .34f));
     a->cooldown = cadence;
     a->taskKind = 0;
     a->attackAngle = atan2f((depth_x(b)+depth_y(b)-depth_x(a)-depth_y(a))*11, (depth_x(b)-depth_y(b)-depth_x(a)+depth_y(a))*22);
@@ -1172,10 +1178,11 @@ void interact_context(int kind,int target) {
             log_msg("Drew 2 water.");
         }
     } else if (b->type == BED || b->type == CAMPFIRE) {
-        if (b->type == BED && b->owner < 0) {
+        if (b->type == BED && b->owner < 0 && !trail_bed(n)) {
             start_sleep(town_near(a->x, a->y, 12));
             return;
         }
+        a->autoattack=0;
         a->taskKind = 3;
         a->taskIndex = n;
         a->action = 180;
@@ -1355,6 +1362,8 @@ static int take_ration(Actor *a) {
 void simulate(float dt) {
     memset(g.depth.groupTravel,0,sizeof(g.depth.groupTravel));
     frontier_tick(dt);
+    for(int k=0;k<6;k++)if(g.trails.bed[k]){Building*b=&g.buildings[g.trails.bed[k]-1];if(distance(g.actors[g.selected].x,g.actors[g.selected].y,b->x,b->y)<13)g.trails.seen|=1<<k;}
+
     g.shake = fmaxf(0, g.shake - dt);
     if (g.hitstop > 0) {
         g.hitstop = fmaxf(0, g.hitstop - dt);
@@ -1494,6 +1503,7 @@ void simulate(float dt) {
         }
         if (actor_inside(a) || !conscious(a) || a->prisonTime>0 || society_rescue_busy(i) || g.depth.actors[i].captive || (a->carrying>=0 && g.depth.actors[a->carrying].captive>=2))
             continue;
+        if(field_aid(i,dt))continue;
         if(population_tactics(i,dt))continue;
         int target = -1;
         float best = weapon_ranged(a->gear[0]) ? itemDefs[a->gear[0]].range + 1 : 6.0f;
@@ -1527,6 +1537,9 @@ void simulate(float dt) {
             Actor *b = &g.actors[target];
             if(depth_tactics(a,target,dt))continue;
             float range = (a->gear[0] ? itemDefs[a->gear[0]].range : 1.55f) - .2f;
+            if(i!=g.selected&&!weapon_ranged(a->gear[0])&&!combat_slot_available(i,target)&&!a->attackPhase){
+                float angle=i*2.39996f;route_toward(a,b->x+cosf(angle)*(range+1.2f),b->y+sinf(angle)*(range+1.2f),dt*.5f);continue;
+            }
             if (best > range) {
                 if (i != g.selected)
                     route_toward(a, b->x, b->y, dt);
@@ -1555,7 +1568,7 @@ void simulate(float dt) {
                 squad_job(a, dt);
         } else if (depth_named(i)>=0 && (depth_named(i)<=NPC_TAMSIN || depth_named(i)==NPC_CONVOY)) {
             /* Authored residents and rescue movement are controlled by the expedition. */
-        } else if (npc_role(a) == ROLE_MERCENARY || a->kind == GUARD) {
+        } else if (npc_role(a) == ROLE_MERCENARY || a->kind == GUARD || (npc_role(a)==ROLE_MEDIC && a->homeTown>=0 && g.life.towns[a->homeTown].stage==2)) {
             if (distance(a->x, a->y, a->homeX, a->homeY) > 1)
                 route_toward(a, a->homeX, a->homeY, dt * .6f);
         } else if (a->kind == RAIDER || a->kind == BEAST ||
@@ -1623,7 +1636,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 14, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 15, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1724,6 +1737,9 @@ static int validate_game(const Game *t) {
         if (a->carrying >= t->actorCount || a->carriedBy >= t->actorCount)
             return 0;
     }
+    if(t->trails.version<0||t->trails.version>1||t->trails.seen<0||t->trails.seen>63||t->trails.omit<0||t->trails.omit>0xffffff)return 0;
+    for(int k=0;k<6;k++){int b=t->trails.bed[k];if(b<0||b>t->buildingCount||(b&&t->buildings[b-1].type!=BED)||(!t->trails.version&&b))return 0;}
+    if(!t->trails.version&&(t->trails.seen||t->trails.omit))return 0;
     return field_notes_valid(t) && depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t) && population_validate(t) && life_validate(t);
 }
 static int migrate_legacy(const LegacyGame *old) {
@@ -1811,7 +1827,7 @@ static int migrate_legacy(const LegacyGame *old) {
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
-    return (version==14 && size==sizeof(Game)) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version==15 && size==sizeof(Game)) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -1887,6 +1903,7 @@ int load_game(const char *path) {
     limbs_init();
     population_init();
     life_init();
+    trail_init();
         memset(&ui, 0, sizeof(ui));
         ui.attackFocus=-1;
         ui.speed = 1;
@@ -2285,7 +2302,7 @@ void game_tick(float dt, Input in) {
     }
     if (p & KEY_SQUARE) {
         a->autoattack = !a->autoattack;
-        if(!a->autoattack)g.living.command[g.selected]=-1;
+        if(!a->autoattack){g.living.command[g.selected]=-1;a->target=-1;a->attackPhase=0;a->cooldown=fmaxf(.6f,a->cooldown);}
         log_msg(a->autoattack ? "Combat stance: attack nearby hostiles."
                               : "Passive stance: flee or move freely.");
     }
@@ -2419,6 +2436,9 @@ void debug_snapshot(const char *path) {
     int council[10]={0};int councilTown=ui.tradeTown;if(councilTown>=0&&councilTown<TOWNS){TownPolitics*z=&g.life.towns[councilTown];int v[10]={councilTown,z->stage,z->support[0],z->support[1],z->pledge,z->relief,z->winner,z->leader,z->policy,g.townOwner[councilTown]};memcpy(council,v,sizeof(v));}VALUE("council",council,sizeof(council));
 
     VALUE("attack", &a->attackPhase, 4);
+    VALUE("bleed", &a->bleed, 4);
+    VALUE("autoattack", &a->autoattack, 4);
+    VALUE("trails", &g.trails, sizeof(g.trails));
     VALUE("time", &g.time, 4);
     VALUE("framecount", &rendered_frames, 4);
     VALUE("selected", &g.selected, 4);

@@ -1,0 +1,270 @@
+[
+  {
+    "eboot_sha256": "eb8cee056b31217642516073e0c2b7fe5a1e2454d05ca2f877b1a8a91a1f4dcb",
+    "version": "0.15.0"
+  },
+  {
+    "capture": "v150-psp-title",
+    "screen": 13,
+    "expected": 13,
+    "frame": 22,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-fresh-world",
+    "screen": 0,
+    "expected": 0,
+    "frame": 202,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-map-pin",
+    "screen": 5,
+    "expected": 5,
+    "frame": 273,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "pin_only_stationary": true,
+    "before": [
+      26.0,
+      29.5
+    ],
+    "after": [
+      26.0,
+      29.5
+    ],
+    "idle_frames": 180
+  },
+  {
+    "capture": "v150-psp-manual-walking",
+    "screen": 0,
+    "expected": 0,
+    "frame": 712,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-bed-beside-innkeeper",
+    "screen": 35,
+    "expected": 35,
+    "frame": 1452,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-bed-rest",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1636,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "bed_beside_npc": true,
+    "silver_charged": 25,
+    "arm_before": 94.67032623291016,
+    "arm_after": 100.0
+  },
+  {
+    "capture": "v150-psp-starving-bandits",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1831,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-army",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2024,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-elites",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2198,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-downed",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2433,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-ambush-hidden",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2626,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-ambush-sprung",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2834,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-last-seen",
+    "screen": 40,
+    "expected": 40,
+    "frame": 3327,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-council-caretaker",
+    "screen": 41,
+    "expected": 41,
+    "frame": 3784,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-council-challenger",
+    "screen": 41,
+    "expected": 41,
+    "frame": 3818,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-factions",
+    "screen": 20,
+    "expected": 20,
+    "frame": 4154,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-rock-pass",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4367,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-through-pass",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4550,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-outer-route",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4902,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-shelter-actions",
+    "screen": 35,
+    "expected": 35,
+    "frame": 5148,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-shelter-rest",
+    "screen": 0,
+    "expected": 0,
+    "frame": 5399,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-emergency-dressing",
+    "screen": 35,
+    "expected": 35,
+    "frame": 6204,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-bandaged",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6244,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-passing-medic",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6530,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-combat",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6759,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-disengage",
+    "screen": 0,
+    "expected": 0,
+    "frame": 6876,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-occupied-town",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7176,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-relief-post",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7380,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-migrated-save",
+    "screen": 0,
+    "expected": 0,
+    "frame": 7582,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-guide-wounds",
+    "screen": 12,
+    "expected": 12,
+    "frame": 7810,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v150-psp-guide-continued",
+    "screen": 12,
+    "expected": 12,
+    "frame": 7858,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "v150_checks": true,
+    "manual_pass_and_bypass": true,
+    "free_shelter_health_and_fatigue_recovery": true,
+    "shelter_save_reload": true,
+    "rags_consumed_bleeding_stopped_without_healing": true,
+    "passing_medic_stabilized_player": true,
+    "combat_and_passive_cancellation": true,
+    "occupation_and_migrated_v14_captured": true
+  },
+  {
+    "completed": true,
+    "fresh_controller_walk": true,
+    "save_reload": true,
+    "prepared_saves": [
+      "inn-near-npc",
+      "starving-bandits",
+      "army",
+      "elites",
+      "downed",
+      "hidden-ambush",
+      "sighting",
+      "council"
+    ],
+    "bed_and_recovery": true,
+    "hidden_then_triggered_ambush": true,
+    "sighting_pin_does_not_walk": true,
+    "council_pledge_spent_once": true
+  }
+]

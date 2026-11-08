@@ -20,6 +20,7 @@ void open_help(int topic) {
     ui.helpScroll = ui.scroll;
     ui.screen = SCREEN_HELP;
     ui.selection = topic;
+    ui.scroll=ui.helpTopic=0;
 }
 void character_begin(int origin) {
     Actor *a = &g.actors[g.selected];
@@ -177,10 +178,10 @@ int expansion_input(float dt, Input in) {
             ui.scroll = ui.helpScroll;
             return 1;
         }
-        if (p & (KEY_DOWN | KEY_R))
-            ui.selection = wrapi(ui.selection + 1, GUIDE_PAGES);
-        if (p & (KEY_UP | KEY_L))
-            ui.selection = wrapi(ui.selection - 1, GUIDE_PAGES);
+        if (p & (KEY_DOWN | KEY_R)){ui.selection = wrapi(ui.selection + 1, GUIDE_PAGES);ui.scroll=0;}
+        if (p & (KEY_UP | KEY_L)){ui.selection = wrapi(ui.selection - 1, GUIDE_PAGES);ui.scroll=0;}
+        if(p&KEY_RIGHT)ui.scroll=(int)fminf(ui.helpTopic,ui.scroll+110);
+        if(p&KEY_LEFT)ui.scroll=(int)fmaxf(0,ui.scroll-110);
         return 1;
     }
     if(ui.screen==SCREEN_ACTIONS){

@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.10.0
+# Dustbound field guide — 0.15.0
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -8,7 +8,7 @@ Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down:
 
 ![cross](../assets/ui/cross.svg): interact. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. Hold L + Square: choose someone to attack (also Start > Squad). ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): pause menu: ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) change Pause, Squad and World tabs. D-pad navigates menus.
 
-Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch members or guide pages. Cross opens nearby actions. Pause with R, choose an action to queue it, then R resumes. Four actions can wait; moving cancels them. Analog movement cancels work; map pins are only navigation references.
+Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch members or guide pages. Cross opens nearby actions. Pause with R, choose an action to queue it, then R resumes. Four actions can wait; moving cancels them. Analog movement cancels work. Map pins never move you.
 
 ## 2. Your Drifter
 
@@ -20,25 +20,25 @@ Origins change equipment, supplies and skills. Outlaws begin with a bounty. Cara
 
 The 1536 by 1536 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. Rivers have fords near roads; hills rise into mesas and snowfields.
 
-![select](../assets/ui/select.svg) opens the atlas. D-pad selects a known town; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) changes pages. The blue triangle is you; white squares are towns. Incidents are discovered on the road. World activity retains last-seen reports which you can locate on the map. ![cross](../assets/ui/cross.svg) places a reference pin. Walk with the analog stick; the pin does not move anyone. ![triangle](../assets/ui/triangle.svg) opens local view: move its cursor freely; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist.
+![select](../assets/ui/select.svg) opens the atlas. D-pad selects a known town; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) changes pages. The blue triangle is you; white squares are towns. World activity records last-seen sightings, not live tracking. ![cross](../assets/ui/cross.svg) places a reference pin. Walk with the analog stick. ![triangle](../assets/ui/triangle.svg) opens local view: move its cursor freely; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist.
 
 ## 4. Combat
 
 ![square](../assets/ui/square.svg) toggles fighting. L + Square opens opponents; Cross orders an attack, including neutrals (assault adds bounty). Small feet marks: teal line friendly, gold dot neutral, red chevron hostile. Red corners mark your opponent. Move into weapon reach to attack automatically; followers engage nearby threats. ![r](../assets/ui/r.svg) pauses combat for orders. Heavy steel needs strength equal to twice its weight. Weak or injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords hit hard; anchor cleavers bleed. Guns use cartridges; bows use bolts.
 
-Armor protects specific body locations. Piercing weapons ignore some armor; serrated blades bleed; staggering hits interrupt. Skills improve through use. Retreat from stronger opponents and use terrain.
+Armor protects specific body locations. Piercing weapons ignore some armor; serrated blades bleed; staggering hits interrupt. Skills improve through use. Retreat from stronger opponents and use terrain. Gold windup marks show incoming strikes. Enemy combat bars show remaining knockout reserve from head, chest and blood. Square to passive cancels your attack; move away to disengage.
 
 ## 5. Wounds & Rescue
 
 Six body parts, blood and fatigue are separate. Head or chest failure knocks a survivor out. Bleeding can kill an unconscious character. Start > Squad > Health & recovery, ![cross](../assets/ui/cross.svg) treats the selected survivor; ![cross](../assets/ui/cross.svg) near an injured ally opens First Aid, Carry and Recover Gear choices.
 
-Dressings stop bleeding and restore some health. Sleeping restores the rest. A doctor charges for full treatment. Lost limbs require a mechanical replacement. Death is permanent; dismiss the body from Squad to free its slot.
+Dressings stop bleeding and restore some health. Nearby actions can consume two cloth or tear worn rags to stop bleeding without healing. Friendly medics and pilgrims help when safe, using their supplies. Sleeping restores the rest. A doctor charges for full treatment. Lost limbs never regrow. A missing leg makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Prosthetics are uncommon on ordinary travelers; high-grade parts are rarer. Actual fitted limbs on fallen wanderers can be looted. Death is permanent; dismiss the body from Squad to free its slot.
 
 ## 6. Food & Sleep
 
 Rations are eaten below forty hunger: first your pack, then a companion backpack or owned depot within three meters. Water supports farms; tonics restore blood and treat exposure. Starvation damages the chest.
 
-An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Sleeping reduces fatigue and restores wounds once bleeding stops and hunger is above twenty. Move to wake. The sun completes a day in thirty minutes of simulation; menus and tactical pause stop time.
+An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and restores wounds once bleeding stops and hunger is above twenty. Move to wake. The sun completes a day in thirty minutes of simulation; menus and tactical pause stop time.
 
 ## 7. Equipment
 
@@ -98,7 +98,7 @@ Journal shows contracts and local agreements. Incidents renew naturally; nearby 
 
 Six manual slots plus autosave. ![start](../assets/ui/start.svg), Save or Load opens a ledger with name, day, party size and silver. Choose a slot; ![cross](../assets/ui/cross.svg) asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.
 
-Saves use version, size and checksum validation and preserve a previous .bak file. Invalid files never replace your running expedition. Older saves through 0.8.1 remain loadable. Back them up before overwriting. Autosave is slot zero and is never used for manual saving.
+Saves use version, size and checksum validation and preserve a previous .bak file. Invalid files never replace your running expedition. Older saves through 0.11.0 remain loadable. Back them up before overwriting. Autosave is slot zero and is never used for manual saving.
 
 ## 17. Weather
 
@@ -138,9 +138,11 @@ Repair the culvert after bringing Sora home: 3 timber, 1 iron bar and tools. Or 
 
 Squad management sets Balanced, Defensive, Keep range or Hold fire. Defensive gives +18 defence but never attacks. Ranged allies retreat if a foe closes within 3.5m. Projectiles travel and hit walls or allies: clear your firing line.
 
-Assign each survivor to one of three groups and choose its leader. There are no group travel orders. Followers follow their leader; move the selected leader with the analog stick. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume the Priority queue in Squad management.
+Assign each survivor to one of three groups and choose its leader. Map pins are bearings only. Walk with the analog stick; group members follow their leader. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume the Priority queue in Squad management.
 
 ## 23. Camp Work & Fuel
+
+The wilderness has persistent camps, patrols, refugees, raiders, beasts, prisoners and armies. Groups travel, rest, gather and clash even far away. Camp beds are free when safe and unoccupied. Campfires cook 2 meat into 1 ration. Traders sell finite supplies by their fire; taking owned caches is theft.
 
 Construction consumes materials when a foundation is placed. Stay beside it to build; moving cancels work. Resume from the nearby action or Camp ledger. Unfinished stations and beds cannot work.
 
@@ -160,13 +162,8 @@ Use Armor Layers to fit a light body garment under outer armor. Weight must be f
 
 Outer body covers 95% of chest hits and 65% of arm hits; headwear covers 85%, legwear 90%, boots 35%. An uncovered hit bypasses that piece. Blunt impacts use 72% of outer protection. Underlayers add reduced protection. Wear lowers protection to a minimum of 65%; maintain with cloth. Inspect both armor and movement before equipping.
 
-
-## Limb replacements and surgery (0.11.0)
-
-Health → R opens individual limb slots. Fit a matching mechanical arm or leg for two machine parts, compare grades, detach an old part, or repair metal. Natural limbs must be lost first. Surgeon Venn in Dusk Haven can permanently remove an arm or leg for 400 silver. Buy the replacement before removing a leg: one missing leg causes crawling. Copper Cross stocks Reinforced, Iron Gate Precision, and Black Mesa Relic replacements. Fallen wandering elites may have real FITTED limbs to loot. Bandages never regrow lost limbs. See [full grades and locations](CONTENT_V110.md).
-
 ## Nearby identities and sightings
 
-Read equipment and formation to judge a group. Small nearby labels show a broad role in the faction color, with a red ! for hostility. Start > World > Factions explains the colors and shows your standing. Hidden ambushers stay unidentified until detected.
+Read equipment and formation to judge a group. Nearby labels show role, faction color and hostility. Start > World > Factions shows the color key and your standing. Hidden ambushers remain hidden until detected. Combat bars show remaining knockout reserve; no skill readouts appear from proximity.
 
-Start > World > World activity records a group's last-seen place and time. Cross opens that location on the map; Cross there sets a manual pin. Groups may have moved. A council entry shows named claimants and their policy before you pledge silver or relief.
+World activity records last-seen places and times. Cross locates a report on the map; Cross there sets a manual pin. Councils show named claimants and policies before a pledge.

@@ -26,6 +26,13 @@ void politics_occupy(int t,int faction){
  for(int n=0;n<g.actorCount;n++){Actor*a=&g.actors[n];if(!a->squad&&!a->dead&&!population_owned(n)&&a->homeTown==t&&a->faction==old&&!g.society.freed[n]&&merc_slot(a)<0)a->faction=faction;}
  for(int b=0;b<g.buildingCount;b++)if(g.buildings[b].owner<0&&town_near(g.buildings[b].x,g.buildings[b].y,20)==t)g.buildings[b].faction=faction;
  TownPolitics*p=&L.towns[t];p->stage=2;p->winner=faction;p->policy=faction==MONKS?1:faction==UNION||faction==SCAVENGERS?3:2;appoint(t,faction);
+ /* Physical aftermath uses surviving residents, never respawns unique loot. */
+ int posts=0,displaced=0;
+ for(int n=0;n<g.actorCount;n++){Actor*a=&g.actors[n];if(!a->active||a->dead||a->squad||a->homeTown!=t||population_owned(n)||g.society.freed[n]||merc_slot(a)>=0||civil_elite_index(n)>=0||depth_named(n)>=0||regional_named(n))continue;
+  if(a->kind==GUARD){float x=towns[t].x+(posts%2?-6:6),y=towns[t].y+(posts/2%2?6:-6);posts++;if(can_walk(x,y)){a->homeX=a->tx=x;a->homeY=a->ty=y;a->routeLen=a->routePos=0;}}
+  else if(old!=faction&&a->kind==SETTLER&&npc_role(a)==ROLE_CITIZEN&&displaced<2){float x=towns[t].x+17+displaced*2,y=towns[t].y+10;if(can_walk(x,y)){a->homeX=a->tx=x;a->homeY=a->ty=y;a->faction=FREE;displaced++;snprintf(a->name,sizeof(a->name),"Displaced local");}}
+  else if(p->policy==1&&npc_role(a)==ROLE_MEDIC){float x=towns[t].x+6,y=towns[t].y+6;if(can_walk(x,y)){a->homeX=a->tx=x;a->homeY=a->ty=y;}}
+ }
  g.prosperity[t]=bound(g.prosperity[t]+(faction==old?4:-5),10,95);L.succession++;notice(t,faction==old?"the caretaker has secured the succession":"a new government controls the settlement");
 }
 void politics_tick(float dt){

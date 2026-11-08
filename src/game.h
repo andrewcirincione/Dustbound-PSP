@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.14.0"
+#define VERSION "0.15.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -249,6 +249,7 @@ typedef struct {
     Population population;
     FrontierLife life;
     FieldNotes fieldNotes;
+    struct { int version, seen, bed[6], omit; } trails;
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -507,4 +508,14 @@ void render_catalog_sample(uint32_t *pixels, int stride, int item);
 #include "limbs.h"
 #include "population.h"
 #include "life.h"
+
+void trail_init(void);
+void trail_point(int site,float *x,float *y,float *dx,float *dy);
+int trail_rock(int site,int rock,float *x,float *y);
+int trail_blocked(float x,float y);
+int trail_bed(int building);
+int field_aid(int actor,float dt);
+int combat_slot_available(int attacker,int target);
+void recovery_hint(char *out,int size);
+
 #endif

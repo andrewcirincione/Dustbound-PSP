@@ -286,7 +286,7 @@ static void text(int x, int y, const char *s, uint32_t c, int scale) {
 static void center(int x, int y, const char *s, uint32_t c, int z) {
     text(x - text_width(s) * z / 2, y, s, c, z);
 }
-static void wrap(int x, int y, int cols, const char *s, uint32_t c) {
+static int wrap(int x, int y, int cols, const char *s, uint32_t c) {
     while (*s) {
         char b[128];
         int n = 0, width = 0, lastSpace = -1;
@@ -313,6 +313,7 @@ static void wrap(int x, int y, int cols, const char *s, uint32_t c) {
             y += 4;
         }
     }
+    return y;
 }
 static void panel(int x, int y, int w, int h) {
     rect(x + 2, y + 3, w, h, 0x141a1b);
@@ -527,7 +528,10 @@ static int compare_obj(const void *a, const void *b) {
     float d = ((Object *)a)->depth - ((Object *)b)->depth;
     return d < 0 ? -1 : d > 0 ? 1 : 0;
 }
+static int squad_combatant(int n);
 static void objects_draw(void) {
+    int clearIds[MAX_ACTORS],clearCount=0;
+    for(int j=0;j<g.actorCount;j++)if(g.actors[j].active&&(g.actors[j].squad||squad_combatant(j)))clearIds[clearCount++]=j;
     int n = 0;
     for (int i = 0; i < g.nodeCount; i++) {
         Node *b = &g.nodes[i];
@@ -552,6 +556,7 @@ static void objects_draw(void) {
         float wx,wy;int type=population_object(k,j,&wx,&wy);if(!type||fabsf(wx-ui.camX)>20||fabsf(wy-ui.camY)>20)continue;
         int x,y;project(wx,wy,&x,&y);objects[n++]=(Object){wx+wy,4,k*POP_PROPS+j,x,y};
     }
+    for(int k=0;k<6;k++)for(int r=0;r<4;r++){float x,y;if(!trail_rock(k,r,&x,&y)||fabsf(x-ui.camX)>20||fabsf(y-ui.camY)>20)continue;int sx,sy;project(x,y,&sx,&sy);objects[n++]=(Object){x+y,5,k*4+r,sx,sy};}
     int cx = ui.camX, cy = ui.camY;
     for (int y = cy - 16; y < cy + 16; y++)
         for (int x = cx - 16; x < cx + 16; x++) {
@@ -560,6 +565,8 @@ static void objects_draw(void) {
                 continue;
             int campGround=0;for(int k=0;k<POP_GROUPS;k++)if(population_object_count(k)&&fabsf(x-g.population.state[k].siteX)<7&&fabsf(y-g.population.state[k].siteY)<7){campGround=1;break;}
             if(campGround)continue;
+            int clear=0;for(int j=0;j<clearCount;j++){Actor*a=&g.actors[clearIds[j]];if(distance(x,y,a->x,a->y)<2.3f){clear=1;break;}}if(clear)continue;
+            if(trail_blocked(x,y))continue;
             int sx, sy;
             project(x + .3f, y + .4f, &sx, &sy);
             if (sx < 0 || sx > 480 || sy < 0 || sy > 252)
@@ -626,6 +633,7 @@ static void objects_draw(void) {
             if (a->squad && o->index == g.selected) {
                 triangle(o->x - 3, o->y - 49, o->x + 3, o->y - 49, o->x, o->y - 45, TEAL);
             }
+        } else if(o->kind==5){art(11,o->x,o->y,light(),0);art(9,o->x+10,o->y+4,light(),0);
         } else if(o->kind==4){
             float wx,wy;int t=population_object(o->index/POP_PROPS,o->index%POP_PROPS,&wx,&wy),id=population_prop_art(o->index/POP_PROPS,o->index%POP_PROPS),style=population_prop_style(o->index/POP_PROPS,o->index%POP_PROPS);int x=o->x,y=o->y;
             if(style==1){uint32_t cloth=shade(0x81725a,light());triangle(x-14,y-4,x+1,y-12,x+13,y-6,cloth);triangle(x-14,y-4,x+13,y-6,x-2,y+2,cloth);line(x-12,y-5,x-1,y+1,shade(0xb6aa87,light()));line(x-10,y-6,x+1,y,shade(0xb6aa87,light()));}
@@ -649,13 +657,29 @@ static void objects_draw(void) {
 }
 static void room_project(float x, float y, int *sx, int *sy);
 static uint32_t label_color(int faction){uint32_t c=factionColors[faction];return (((c>>16)*3+255)/4<<16)|((((c>>8&255)*3+255)/4)<<8)|(((c&255)*3+255)/4);}
+/* Knockout follows either vital region failing or blood falling below 20.
+   Disabled arms/legs impair combat and mobility, not consciousness. */
+static float knockout_reserve(const Actor *a){
+ if(a->dead||a->unconscious>0)return 0;
+ float vital=fminf(a->health[HEAD],a->health[CHEST])/species_health(a);
+ return fmaxf(0,fminf(1,fminf(vital,(a->blood-20)/80.f)))*100;
+}
+static int squad_combatant(int n){
+ Actor*a=&g.actors[n];if(a->dead)return 0;
+ for(int i=0;i<g.actorCount;i++)if(g.actors[i].active&&g.actors[i].squad){
+  if(a->target==i||g.actors[i].target==n||g.living.command[i]==n)return 1;
+ }
+ return 0;
+}
 static void nearby_labels(int indoors){
  int ids[MAX_ACTORS],count=0;float ds[MAX_ACTORS];Actor*p=&g.actors[g.selected];
  for(int i=0;i<g.actorCount;i++){Actor*a=&g.actors[i];if(!a->active||a->squad||a->carriedBy>=0||population_hidden(i)||depth_room(a)!=depth_room(p))continue;float d=depth_distance(p,a);if(d>9)continue;ids[count]=i;ds[count++]=d;}
  for(int i=1;i<count;i++){int n=ids[i],j=i;float d=ds[i];while(j>0&&ds[j-1]>d){ids[j]=ids[j-1];ds[j]=ds[j-1];j--;}ids[j]=n;ds[j]=d;}
  int boxes[8][4],used=0;
- for(int i=0;i<count&&used<8;i++){Actor*a=&g.actors[ids[i]];int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);
-  char label[48];snprintf(label,sizeof(label),"%.20s%s",npc_role_name(a),a->dead?" / DEAD":a->unconscious>0?" / DOWN":actor_relation(ids[i])<0?" !":"");int w=text_width(label)+8,l=x-w/2,t=y-(a->dead||a->unconscious>0?24:51);if(l<4)l=4;if(l+w>476)l=476-w;if(t<26)t=26;
+ int fighting=0;for(int i=0;i<count;i++)if(squad_combatant(ids[i]))fighting=1;
+ if(fighting)for(int i=1;i<count;i++)if(ids[i]==p->target){int swap=ids[0];ids[0]=ids[i];ids[i]=swap;break;}
+ for(int i=0;i<count&&used<(fighting?1:8);i++){Actor*a=&g.actors[ids[i]];int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);
+  char label[48];snprintf(label,sizeof(label),"%.20s%s",npc_role_name(a),a->dead?" / DEAD":a->unconscious>0?" / DOWN":actor_relation(ids[i])<0?" !":"");int w=text_width(label)+8,l=x-w/2,t=y-(a->dead||a->unconscious>0?24:56);if(l<4)l=4;if(l+w>476)l=476-w;if(t<26)t=26;
   for(int attempt=0;attempt<5;attempt++){int hit=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])hit=1;if(!hit)break;t-=13;}
   int overlaps=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])overlaps=1;
   if(overlaps||t<25||t>221||x<0||x>480||(l+w>398&&t<100))continue;
@@ -664,6 +688,9 @@ static void nearby_labels(int indoors){
   rect(l,t,w,11,INK);rect(l,t,2,11,factionColors[a->faction]);text(l+5,t+2,label,label_color(a->faction),1);
   if(!a->dead&&actor_relation(ids[i])<0)text(l+w-9,t+2,"!",RED,1);
  }
+ for(int i=0;i<count;i++)if(squad_combatant(ids[i])){Actor*a=&g.actors[ids[i]];int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);rect(x-14,y-42,29,7,0x14110e);bar(x-13,y-41,27,5,knockout_reserve(a),a->unconscious>0?MUTED:0xe36552);
+ if(a->attackPhase==1){float q=1-a->attackClock/fmaxf(.01f,a->attackDuration);bar(x-12,y+8,25,3,q*100,GOLD);line(x,y+5,x+(int)(cosf(a->attackAngle)*18),y+5+(int)(sinf(a->attackAngle)*9),GOLD);}
+ if(a->hitFlash>0&&a->impactKind){const char*hit=a->unconscious>0?"DOWN":a->impactKind==2?"BLOCK":a->impactKind==3?"DODGE":"HIT";text(x-10,y-29,hit,a->unconscious>0?GOLD:TEXT,1);}}
 }
 static void speech_bubbles(void) {
     int best = -1;
@@ -918,6 +945,7 @@ static void hud(void) {
     if (!g.interiorBuilding)
         mini_map();
     if(ui.waypoint&&!g.interiorBuilding){float dx=ui.travelX-a->x,dy=ui.travelY-a->y;const char*d=fabsf(dx)>fabsf(dy)?(dx<0?"W":"E"):(dy<0?"N":"S");snprintf(b,sizeof(b),"PIN %.0fm %s",distance(a->x,a->y,ui.travelX,ui.travelY),d);text(350,104,b,GOLD,1);}
+    recovery_hint(b,sizeof(b));if(b[0]){rect(4,222,472,12,INK);b[77]=0;text(8,224,b,TEAL,1);}
     if (ui.paused) {
         panel(192, 43, 94, 18);
         center(239, 49, "PAUSED", GOLD, 1);
@@ -1613,11 +1641,15 @@ static void theft_screen(void) {
 }
 
 static void help_screen(void) {
-    overlay_header("FIELD GUIDE", "\005/\006 OR \015 CHAPTER   \002 RETURN TO PREVIOUS SCREEN");
+    overlay_header("FIELD GUIDE", "\005/\006 CHAPTER   \014 MORE TEXT   \002 BACK");
     char b[100];
     snprintf(b, 100, "%02d / %02d   %s", ui.selection + 1, GUIDE_PAGES, guideTitles[ui.selection]);
     text(31, 86, b, TEAL, 1);
-    wrap(31, 106, 68, guideBodies[ui.selection], TEXT);
+    int oldT=clipTop,oldB=clipBottom;clipTop=106;clipBottom=221;
+    int end=wrap(31,106-ui.scroll,68,guideBodies[ui.selection],TEXT);
+    ui.helpTopic=end+ui.scroll-221;if(ui.helpTopic<0)ui.helpTopic=0;
+    clipTop=oldT;clipBottom=oldB;
+    if(ui.helpTopic){snprintf(b,sizeof(b),"TEXT %d / %d    \014 CONTINUE",1+(ui.scroll+109)/110,1+(ui.helpTopic+109)/110);text(31,226,b,GOLD,1);}
 }
 static void creator_screen(void) {
     overlay_header(ui.titleChoice ? "THE BARBER" : "A NAME IN THE DUST",
@@ -1945,6 +1977,10 @@ void render_game(uint32_t *pixels, int stride) {
         }
     }
     depth_world_draw();
+    if(!g.interiorBuilding){
+      for(int k=0;k<6;k++)if(g.trails.bed[k]){Building*b=&g.buildings[g.trails.bed[k]-1];if(distance(b->x,b->y,ui.camX,ui.camY)<13){int x,y;project(b->x,b->y,&x,&y);text(x-30,y-25,"WAYFARER REST",TEAL,1);}}
+      for(int t=0;t<TOWNS;t++)if(g.life.towns[t].stage==2&&distance(towns[t].x,towns[t].y,ui.camX,ui.camY)<18){int x,y;project(towns[t].x+5,towns[t].y+5,&x,&y);line(x,y,x,y-35,TEXT);triangle(x,y-35,x+16,y-30,x,y-23,factionColors[g.townOwner[t]]);text(x-20,y+3,g.life.towns[t].policy==1?"RELIEF POST":g.life.towns[t].policy==2?"GARRISON":"TRADE COURT",GOLD,1);}
+    }
     if (ui.screen == SCREEN_WORLD)
         nearby_labels(!!g.interiorBuilding);
     if(ui.screen==SCREEN_WORLD && !g.interiorBuilding && g.actors[g.selected].target<0 && g.actors[g.selected].unconscious<=0 && !g.actors[g.selected].dead) speech_bubbles();
