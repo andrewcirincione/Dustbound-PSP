@@ -4,6 +4,48 @@
 #include "weapon_design.h"
 static uint64_t partKeys[ART_COUNT];
 static uint32_t paintHair = 0x30251e;
+/* Exclusive edges in the current paint target. The tracked rectangle bounds
+   the scratch work without changing how individual parts are rasterized. */
+typedef struct {
+    int left, top, right, bottom;
+} PaintBounds;
+static PaintBounds *trackedPaint;
+
+static inline PaintBounds clip_paint(PaintBounds b, int left, int top, int right, int bottom) {
+    if (b.left < left) b.left = left;
+    if (b.top < top) b.top = top;
+    if (b.right > right) b.right = right;
+    if (b.bottom > bottom) b.bottom = bottom;
+    return b;
+}
+static inline void include_paint(PaintBounds *b, PaintBounds area) {
+    if (area.left >= area.right || area.top >= area.bottom)
+        return;
+    if (area.left < b->left) b->left = area.left;
+    if (area.top < b->top) b->top = area.top;
+    if (area.right > b->right) b->right = area.right;
+    if (area.bottom > b->bottom) b->bottom = area.bottom;
+}
+static inline void track_paint(PaintBounds area) {
+    if (trackedPaint)
+        include_paint(trackedPaint, clip_paint(area, clipLeft, clipTop, clipRight, clipBottom));
+}
+static void painted_line(int x0, int y0, int x1, int y1, uint32_t color) {
+    track_paint((PaintBounds){x0 < x1 ? x0 : x1, y0 < y1 ? y0 : y1,
+                              (x0 > x1 ? x0 : x1) + 1, (y0 > y1 ? y0 : y1) + 1});
+    line(x0, y0, x1, y1, color);
+}
+static void painted_quad(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3,
+                         uint32_t color) {
+    if (trackedPaint) {
+        PaintBounds b = {x0, y0, x0 + 1, y0 + 1};
+        include_paint(&b, (PaintBounds){x1, y1, x1 + 1, y1 + 1});
+        include_paint(&b, (PaintBounds){x2, y2, x2 + 1, y2 + 1});
+        include_paint(&b, (PaintBounds){x3, y3, x3 + 1, y3 + 1});
+        track_paint(b);
+    }
+    quad(x0, y0, x1, y1, x2, y2, x3, y3, color);
+}
 static void rgba_over(uint32_t *dst, uint32_t src) {
     unsigned a = src >> 24;
     if (!a)
@@ -13,11 +55,19 @@ static void rgba_over(uint32_t *dst, uint32_t src) {
         return;
     }
     uint32_t d = *dst;
+    if (!(d >> 24)) {
+        *dst = src;
+        return;
+    }
     unsigned da = d >> 24, remain = da * (255 - a) / 255, out = a + remain;
-    unsigned r = ((src & 255) * a + (d & 255) * remain) / out;
-    unsigned g0 = (((src >> 8) & 255) * a + ((d >> 8) & 255) * remain) / out;
-    unsigned b = (((src >> 16) & 255) * a + ((d >> 16) & 255) * remain) / out;
-    *dst = (out << 24) | r | (g0 << 8) | (b << 16);
+    unsigned red = (src & 255) * a + (d & 255) * remain;
+    unsigned green = ((src >> 8) & 255) * a + ((d >> 8) & 255) * remain;
+    unsigned blue = ((src >> 16) & 255) * a + ((d >> 16) & 255) * remain;
+    /* The world framebuffer is opaque. Constant division is cheaper on MIPS. */
+    if (out == 255)
+        *dst = 0xff000000 | (red / 255) | (green / 255 << 8) | (blue / 255 << 16);
+    else
+        *dst = (out << 24) | (red / out) | (green / out << 8) | (blue / out << 16);
 }
 static void part_palette(int id, uint32_t tint, float li, int quality) {
     int lum = (int)(li * 64);
@@ -73,6 +123,8 @@ static void part(int id, float ax, float ay, float bx, float by, float width, ui
         right = clipRight;
     if (bottom > clipBottom)
         bottom = clipBottom;
+    if (trackedPaint)
+        include_paint(trackedPaint, (PaintBounds){left, top, right, bottom});
     part_palette(id, tint, li, quality);
     float dux = ux / width, duy = uy / width, dvx = dx / (length * length), dvy = dy / (length * length);
     for (int y = top; y < bottom; y++) {
@@ -151,8 +203,8 @@ static void weapon_fitting(int item,float x,float y,int sc,float angle,int face,
     uint32_t metal=shade(itemDefs[item].color,li*1.15f),trim=shade(itemDefs[item].trim,li),dark=shade(0x3e3025,li);
 #define WX(a,b) (x+(ca*(a)-sa*((b)+weapon_center(item,a))*face)*sc)
 #define WY(a,b) (y+(sa*(a)+ca*((b)+weapon_center(item,a))*face)*sc)
-#define WL(a,b,c,e,col) line(WX(a,b),WY(a,b),WX(c,e),WY(c,e),col)
-#define WQ(a,b,c,e,f,h,j,k,col) quad(WX(a,b),WY(a,b),WX(c,e),WY(c,e),WX(f,h),WY(f,h),WX(j,k),WY(j,k),col)
+#define WL(a,b,c,e,col) painted_line(WX(a,b),WY(a,b),WX(c,e),WY(c,e),col)
+#define WQ(a,b,c,e,f,h,j,k,col) painted_quad(WX(a,b),WY(a,b),WX(c,e),WY(c,e),WX(f,h),WY(f,h),WX(j,k),WY(j,k),col)
     if(d.group==0){
         float guard=(p==0?2:p==1?5:p==2?3:p==3?1.5f:p==4?4:p==5?2.5f:5.5f)*.7f;
         WQ(1,-guard,2,-guard,2,guard,1,guard,trim);
@@ -191,8 +243,8 @@ static void weapon_sprite(int item, float x, float y, int sc, float angle, int f
     WeaponDesign design=weapon_design(item);float ca=cosf(angle),sa=sinf(angle),anchor=weapon_design_anchor(item);
     if(weapon_rapier(item)){
         float len=24*design.length;uint32_t steel=shade(itemDefs[item].color,li);
-        for(int i=0;i<(design.pattern==1?2:1)*sc;i++)line(x+ca*3*sc-sa*i,y+sa*3*sc+ca*i,x+ca*len*sc,y+sa*len*sc,steel);
-        line(x,y,x-ca*4*sc,y-sa*4*sc,0x614a38);
+        for(int i=0;i<(design.pattern==1?2:1)*sc;i++)painted_line(x+ca*3*sc-sa*i,y+sa*3*sc+ca*i,x+ca*len*sc,y+sa*len*sc,steel);
+        painted_line(x,y,x-ca*4*sc,y-sa*4*sc,0x614a38);
         weapon_fitting(item,x,y,sc,angle,face,li,len);return;
     }
     int f=weapon_family(item),id=WEAPON_ART_FIRST+f;
@@ -212,6 +264,8 @@ static void weapon_sprite(int item, float x, float y, int sc, float angle, int f
     float margin=(fabsf(design.sweep)+1)*sc;
     int x0=fmaxf(clipLeft,floorf(left-margin)),x1=fminf(clipRight,ceilf(right+margin));
     int y0=fmaxf(clipTop,floorf(top-margin)),y1=fminf(clipBottom,ceilf(bottom+margin));
+    if (trackedPaint)
+        include_paint(trackedPaint, (PaintBounds){x0, y0, x1, y1});
     weapon_palette(id,&itemDefs[item],li);
     for(int yy=y0;yy<y1;yy++)for(int xx=x0;xx<x1;xx++){
         float dx=(xx+.5f-x)/sc,dy=(yy+.5f-y)/sc;
@@ -353,10 +407,17 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         Actor standing=*a;standing.dead=0;standing.unconscious=0;standing.taskKind=0;
         standing.attackPhase=0;standing.movedTimer=0;standing.hitFlash=0;standing.sneaking=0;
         uint32_t *oldfb=fb;int oldpitch=pitch,l=clipLeft,t=clipTop,r=clipRight,b=clipBottom;
+        PaintBounds *oldPaint = trackedPaint, pronePaint = {128, 120, 0, 0};
         memset(prone,0,sizeof(prone));fb=prone;pitch=128;clipLeft=clipTop=0;clipRight=128;clipBottom=120;
+        trackedPaint = &pronePaint;
         actor_painted_stance(&standing,64,104,1,li,0,0);
+        trackedPaint = oldPaint;
         fb=oldfb;pitch=oldpitch;clipLeft=l;clipTop=t;clipRight=r;clipBottom=b;
-        for(int sy=0;sy<120;sy++)for(int sx=0;sx<128;sx++)if(prone[sy*128+sx]) {
+        if (pronePaint.left >= pronePaint.right || pronePaint.top >= pronePaint.bottom)
+            return;
+        track_paint((PaintBounds){x + (85 - pronePaint.bottom) * sc, y - 3 * sc + (pronePaint.left - 64) * sc / 2,
+                                  x + (85 - pronePaint.top) * sc, y - 2 * sc + (pronePaint.right - 1 - 64) * sc / 2});
+        for(int sy=pronePaint.top;sy<pronePaint.bottom;sy++)for(int sx=pronePaint.left;sx<pronePaint.right;sx++)if(prone[sy*128+sx]) {
             int dx=x+(84-sy)*sc,dy=y-3*sc+(sx-64)*sc/2;
             for(int yy=0;yy<sc;yy++)for(int xx=0;xx<sc;xx++)if(dx+xx>=clipLeft&&dx+xx<clipRight&&dy+yy>=clipTop&&dy+yy<clipBottom)fb[(dy+yy)*pitch+dx+xx]=prone[sy*128+sx];
         }
@@ -441,7 +502,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         shoulders[i][1]=RY(-24);
     }
     float support=weapon_support_distance(weapon);
-    if(weapon_class(weapon)==WC_BOWS){
+    if(weapon_style(weapon)==WS_BOW){
         float draw=a->attackPhase==1?pose_ease(progress):a->attackPhase==2?1-pose_ease((progress-STRIKE_CONTACT)/(1-STRIKE_CONTACT)):0;
         support=-3+(support+3)*draw;
     }
@@ -493,10 +554,10 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
             PART(72, -face * 3, -31, -face * 5, -25, 2.2f, paintHair, 0);
     }
     if (a->scar)
-        line(RX(face, -29), RY(-29), RX(face * 1.5f, -27), RY(-27), shade(0x874b38, li));
+        painted_line(RX(face, -29), RY(-29), RX(face * 1.5f, -27), RY(-27), shade(0x874b38, li));
     if(race==2){
-        line(RX(-1.8f,-29),RY(-29),RX(1.8f,-29),RY(-29),0x9ec1b6);
-        line(RX(-1.4f,-26),RY(-26),RX(1.4f,-26),RY(-26),shade(0x343d3c,li));
+        painted_line(RX(-1.8f,-29),RY(-29),RX(1.8f,-29),RY(-29),0x9ec1b6);
+        painted_line(RX(-1.4f,-26),RY(-26),RX(1.4f,-26),RY(-26),shade(0x343d3c,li));
     }
     if(race==3)for(int side=-1;side<=1;side+=2){
         PART(72,side*2,-29,side*5.5f,-32,1.8f,skin,0);
@@ -530,20 +591,95 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
 #undef RY
 }
 /* Direct previews use the same pose resolver as the cached world renderer. */
-static void actor_painted(Actor *a,int x,int y,int sc,float li){
+static inline void actor_painted(Actor *a,int x,int y,int sc,float li){
     actor_painted_stance(a,x,y,sc,li,combat_stance(a),combat_attack_variant(a));
 }
 #define ACT_W 128
 #define ACT_H 120
 #define ACT_ANCHOR 152
 #define ACT_CACHE 24
-static uint32_t actorScratch[ACT_W * 2 * ACT_H * 2];
-static struct {
+#define ACT_SCRATCH_STRIDE (ACT_W * 2)
+static uint32_t actorScratch[ACT_SCRATCH_STRIDE * ACT_H * 2];
+static PaintBounds actorScratchBounds;
+typedef struct {
     uint64_t key;
-    int left, top, right, bottom;
+    PaintBounds bounds;
     uint32_t pixels[ACT_W * ACT_H];
-} actorCache[ACT_CACHE];
+} ActorSprite;
+static ActorSprite actorCache[ACT_CACHE];
 static unsigned actorNext;
+
+static void clear_paint(uint32_t *pixels, int stride, PaintBounds b) {
+    if (b.left >= b.right)
+        return;
+    for (int y = b.top; y < b.bottom; y++)
+        memset(pixels + y * stride + b.left, 0, (b.right - b.left) * sizeof(*pixels));
+}
+static void paint_actor_scratch(Actor *a, float li, float stance, int variant) {
+    uint32_t *oldfb = fb;
+    int oldpitch = pitch;
+    PaintBounds oldClip = {clipLeft, clipTop, clipRight, clipBottom}, *oldPaint = trackedPaint;
+    clear_paint(actorScratch, ACT_SCRATCH_STRIDE, actorScratchBounds);
+    actorScratchBounds = (PaintBounds){ACT_SCRATCH_STRIDE, ACT_H * 2, 0, 0};
+    trackedPaint = &actorScratchBounds;
+    fb = actorScratch;
+    pitch = ACT_SCRATCH_STRIDE;
+    clipLeft = clipTop = 0;
+    clipRight = ACT_SCRATCH_STRIDE;
+    clipBottom = ACT_H * 2;
+    actor_painted_stance(a, ACT_W, ACT_ANCHOR, 2, li, stance, variant);
+    fb = oldfb;
+    pitch = oldpitch;
+    clipLeft = oldClip.left;
+    clipTop = oldClip.top;
+    clipRight = oldClip.right;
+    clipBottom = oldClip.bottom;
+    trackedPaint = oldPaint;
+}
+static void paint_cached_actor(ActorSprite *sprite, Actor *a, float li, float stance, int variant) {
+    paint_actor_scratch(a, li, stance, variant);
+    clear_paint(sprite->pixels, ACT_W, sprite->bounds);
+    sprite->bounds = (PaintBounds){ACT_W, ACT_H, 0, 0};
+    PaintBounds b = actorScratchBounds;
+    /* Round outward to full 2x2 filter samples, including transparent pixels. */
+    for (int y = b.top / 2; y < (b.bottom + 1) / 2; y++) {
+        for (int x = b.left / 2; x < (b.right + 1) / 2; x++) {
+            const uint32_t *p = actorScratch + y * 2 * ACT_SCRATCH_STRIDE + x * 2;
+            const uint32_t samples[] = {p[0], p[1], p[ACT_SCRATCH_STRIDE], p[ACT_SCRATCH_STRIDE + 1]};
+            unsigned alpha = (samples[0] >> 24) + (samples[1] >> 24) +
+                             (samples[2] >> 24) + (samples[3] >> 24);
+            if (alpha < 4)
+                continue;
+            uint32_t result;
+            if (alpha == 4 * 255) {
+                /* An opaque 2x2 patch needs only an ordinary channel average. */
+                unsigned redBlue = 0, green = 0;
+                for (int i = 0; i < 4; i++) {
+                    redBlue += samples[i] & 0xff00ff;
+                    green += samples[i] & 0xff00;
+                }
+                result = 0xff000000 | (redBlue >> 2 & 0xff00ff) | (green >> 2 & 0xff00);
+            } else {
+                unsigned red = 0, green = 0, blue = 0;
+                for (int i = 0; i < 4; i++) {
+                    uint32_t color = samples[i];
+                    unsigned a0 = color >> 24;
+                    red += (color & 255) * a0;
+                    green += (color >> 8 & 255) * a0;
+                    blue += (color >> 16 & 255) * a0;
+                }
+                result = (alpha / 4 << 24) | (red / alpha) | (green / alpha << 8) | (blue / alpha << 16);
+            }
+            sprite->pixels[y * ACT_W + x] = result;
+            include_paint(&sprite->bounds, (PaintBounds){x, y, x + 1, y + 1});
+        }
+    }
+}
+static PaintBounds outline_paint_bounds(PaintBounds b, int originX, int originY) {
+    b.left--; b.top--; b.right++; b.bottom++;
+    b = clip_paint(b, 1, 1, ACT_W - 1, ACT_H - 1);
+    return clip_paint(b, clipLeft - originX, clipTop - originY, clipRight - originX, clipBottom - originY);
+}
 static uint64_t actor_key(const Actor *a, int lum, float stance, int variant) {
     uint64_t k = 1469598103934665603ull;
 #define HASHV(v) k = (k ^ (uint32_t)(v)) * 1099511628211ull
@@ -626,51 +762,7 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
     if (slot < 0) {
         slot = actorNext++ % ACT_CACHE;
         actorCache[slot].key = key;
-        actorCache[slot].left = ACT_W;
-        actorCache[slot].top = ACT_H;
-        actorCache[slot].right = actorCache[slot].bottom = 0;
-        uint32_t *oldfb = fb;
-        int oldpitch = pitch, l = clipLeft, t = clipTop, r = clipRight, b = clipBottom;
-        memset(actorScratch, 0, sizeof(actorScratch));
-        fb = actorScratch;
-        pitch = ACT_W * 2;
-        clipLeft = clipTop = 0;
-        clipRight = ACT_W * 2;
-        clipBottom = ACT_H * 2;
-        actor_painted_stance(a, ACT_W, ACT_ANCHOR, 2, li,stance,variant);
-        fb = oldfb;
-        pitch = oldpitch;
-        clipLeft = l;
-        clipTop = t;
-        clipRight = r;
-        clipBottom = b;
-        for (int yy = 0; yy < ACT_H; yy++)
-            for (int xx = 0; xx < ACT_W; xx++) {
-                unsigned alpha = 0, red = 0, green = 0, blue = 0;
-                for (int dy = 0; dy < 2; dy++)
-                    for (int dx = 0; dx < 2; dx++) {
-                        uint32_t c = actorScratch[(yy * 2 + dy) * ACT_W * 2 + xx * 2 + dx];
-                        unsigned a0 = c >> 24;
-                        alpha += a0;
-                        red += (c & 255) * a0;
-                        green += ((c >> 8) & 255) * a0;
-                        blue += ((c >> 16) & 255) * a0;
-                    }
-                actorCache[slot].pixels[yy * ACT_W + xx] = alpha ? ((alpha / 4) << 24) | (red / alpha) |
-                                                                       ((green / alpha) << 8) |
-                                                                       ((blue / alpha) << 16)
-                                                                 : 0;
-                if (alpha >= 4) {
-                    if (xx < actorCache[slot].left)
-                        actorCache[slot].left = xx;
-                    if (yy < actorCache[slot].top)
-                        actorCache[slot].top = yy;
-                    if (xx + 1 > actorCache[slot].right)
-                        actorCache[slot].right = xx + 1;
-                    if (yy + 1 > actorCache[slot].bottom)
-                        actorCache[slot].bottom = yy + 1;
-                }
-            }
+        paint_cached_actor(&actorCache[slot], a, li, stance, variant);
     }
     // Small directional contact shadow, matching the environment light vector.
     for (int j = 0; j < 12; j++) {
@@ -684,27 +776,25 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
             }
     }
     /* One-pixel silhouette edge separates clothing from earth without a panel. */
-    for(int yy=1;yy<ACT_H-1;yy++) for(int xx=1;xx<ACT_W-1;xx++) {
-        uint32_t *px=actorCache[slot].pixels;int k=yy*ACT_W+xx;
-        if((px[k]>>24)>24) continue;
-        int above=(px[k-ACT_W]>>24)>128,below=(px[k+ACT_W]>>24)>128,
-            left=(px[k-1]>>24)>128,right=(px[k+1]>>24)>128;
-        if(!above&&!below&&!left&&!right) continue;
-        int sx=x-ACT_W/2+xx,sy=y-ACT_ANCHOR/2+yy;
-        if(sx>=clipLeft&&sx<clipRight&&sy>=clipTop&&sy<clipBottom)
-            rgba_over(fb+sy*pitch+sx,chosen && (below||right)?0x997aada1:0x99101513);
-    }
-    for (int yy = actorCache[slot].top; yy < actorCache[slot].bottom; yy++) {
-        int sy = y - ACT_ANCHOR / 2 + yy;
-        if (sy < clipTop || sy >= clipBottom)
-            continue;
-        for (int xx = actorCache[slot].left; xx < actorCache[slot].right; xx++) {
-            int sx = x - ACT_W / 2 + xx;
-            if (sx < clipLeft || sx >= clipRight)
-                continue;
-            rgba_over(fb + sy * pitch + sx, actorCache[slot].pixels[yy * ACT_W + xx]);
+    const ActorSprite *sprite = &actorCache[slot];
+    int originX = x - ACT_W / 2, originY = y - ACT_ANCHOR / 2;
+    PaintBounds outline = outline_paint_bounds(sprite->bounds, originX, originY);
+    for (int yy = outline.top; yy < outline.bottom; yy++) {
+        for (int xx = outline.left; xx < outline.right; xx++) {
+            const uint32_t *p = sprite->pixels + yy * ACT_W + xx;
+            if ((*p >> 24) > 24) continue;
+            int above = (p[-ACT_W] >> 24) > 128, below = (p[ACT_W] >> 24) > 128;
+            int left = (p[-1] >> 24) > 128, right = (p[1] >> 24) > 128;
+            if (above || below || left || right)
+                rgba_over(fb + (originY + yy) * pitch + originX + xx,
+                          chosen && (below || right) ? 0x997aada1 : 0x99101513);
         }
     }
+    PaintBounds body = clip_paint(sprite->bounds, clipLeft - originX, clipTop - originY,
+                                  clipRight - originX, clipBottom - originY);
+    for (int yy = body.top; yy < body.bottom; yy++)
+        for (int xx = body.left; xx < body.right; xx++)
+            rgba_over(fb + (originY + yy) * pitch + originX + xx, sprite->pixels[yy * ACT_W + xx]);
     if (a->hitFlash > 0) {
         char damage[16];
         snprintf(damage, sizeof(damage), "-%d", a->impactDamage);
@@ -727,21 +817,7 @@ static struct {
 } portraitCache[2];
 static unsigned portraitNext;
 static void portrait_source(Actor *a) {
-    uint32_t *oldfb = fb;
-    int oldpitch = pitch, l = clipLeft, t = clipTop, r = clipRight, b = clipBottom;
-    fb = actorScratch;
-    pitch = ACT_W * 2;
-    clipLeft = clipTop = 0;
-    clipRight = ACT_W * 2;
-    clipBottom = ACT_H * 2;
-    memset(actorScratch, 0, sizeof(actorScratch));
-    actor_painted(a, ACT_W, ACT_ANCHOR, 2, 1);
-    fb = oldfb;
-    pitch = oldpitch;
-    clipLeft = l;
-    clipTop = t;
-    clipRight = r;
-    clipBottom = b;
+    paint_actor_scratch(a, 1, combat_stance(a), combat_attack_variant(a));
 }
 static float portrait_scale(Actor *a, int width, int height, int drawX, int drawY, float limit) {
     if (width > PORTRAIT_W || height > PORTRAIT_H || width < 1 || height < 1)
@@ -762,9 +838,9 @@ static float portrait_scale(Actor *a, int width, int height, int drawX, int draw
         portrait_source(a);
         sourceReady = 1;
         int x0 = ACT_W * 2, y0 = ACT_H * 2, x1 = 0, y1 = 0;
-        for (int yy = 0; yy < ACT_H * 2; yy++)
-            for (int xx = 0; xx < ACT_W * 2; xx++)
-                if (actorScratch[yy * ACT_W * 2 + xx] >> 24 >= 16) {
+        for (int yy = actorScratchBounds.top; yy < actorScratchBounds.bottom; yy++)
+            for (int xx = actorScratchBounds.left; xx < actorScratchBounds.right; xx++)
+                if (actorScratch[yy * ACT_SCRATCH_STRIDE + xx] >> 24 >= 16) {
                     if (xx < x0)
                         x0 = xx;
                     if (xx + 1 > x1)
@@ -797,7 +873,7 @@ static float portrait_scale(Actor *a, int width, int height, int drawX, int draw
             for (int xx = 0; xx < w; xx++) {
                 int sx = x0 + (int)((xx + .5f) / scale), sy = y0 + (int)((yy + .5f) / scale);
                 portraitCache[slot].pixels[(top + yy) * PORTRAIT_W + left + xx] =
-                    actorScratch[sy * ACT_W * 2 + sx];
+                    actorScratch[sy * ACT_SCRATCH_STRIDE + sx];
             }
         portraitCache[slot].outputValid = 1;
         portraitCache[slot].drawnScale = scale;
@@ -817,8 +893,16 @@ static void actor_outline(Actor*a,int x,int y,int chosen){
  Actor dressed;if(!a->gear[1]&&g.depth.actors[a-g.actors].layer){dressed=*a;dressed.gear[1]=g.depth.actors[a-g.actors].layer;a=&dressed;}
  float li=fminf(1.15f,light()+(chosen?.16f:.06f));uint64_t key=actor_key(a,(int)(li*64),stance,variant);int slot=-1;for(int i=0;i<ACT_CACHE;i++)if(actorCache[i].key==key){slot=i;break;}if(slot<0)return;
  uint32_t col=a->squad?(a->dead||a->unconscious>0?0xc0a98572:0xb0a1b5ad):0x907a8bb7;
- uint32_t*p=actorCache[slot].pixels;
- int top=fmaxf(1,actorCache[slot].top-1),bottom=fminf(ACT_H-1,actorCache[slot].bottom+1);
- int left=fmaxf(1,actorCache[slot].left-1),right=fminf(ACT_W-1,actorCache[slot].right+1);
- for(int yy=top;yy<bottom;yy++)for(int xx=left;xx<right;xx++){int k=yy*ACT_W+xx;if((p[k]>>24)>24)continue;if((p[k-1]>>24)<128&&(p[k+1]>>24)<128&&(p[k-ACT_W]>>24)<128&&(p[k+ACT_W]>>24)<128)continue;int sx=x-ACT_W/2+xx,sy=y-ACT_ANCHOR/2+yy;if(sx>=clipLeft&&sx<clipRight&&sy>=clipTop&&sy<clipBottom)rgba_over(fb+sy*pitch+sx,col);}
+ const ActorSprite *sprite = &actorCache[slot];
+ int originX = x - ACT_W / 2, originY = y - ACT_ANCHOR / 2;
+ PaintBounds outline = outline_paint_bounds(sprite->bounds, originX, originY);
+ for (int yy = outline.top; yy < outline.bottom; yy++) {
+     for (int xx = outline.left; xx < outline.right; xx++) {
+         const uint32_t *p = sprite->pixels + yy * ACT_W + xx;
+         if ((*p >> 24) > 24) continue;
+         if ((p[-1] >> 24) < 128 && (p[1] >> 24) < 128 && (p[-ACT_W] >> 24) < 128 && (p[ACT_W] >> 24) < 128)
+             continue;
+         rgba_over(fb + (originY + yy) * pitch + originX + xx, col);
+     }
+ }
 }

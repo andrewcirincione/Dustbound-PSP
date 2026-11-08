@@ -122,6 +122,56 @@ static void movement(void){
  puts("PASS: gait follows distance; blocked indoor movement and active strikes do not walk in place.");
 }
 static int sample_weapon(int i){return i==0?NONE:i<=WEAPON_FAMILIES?gear_id(weapon_family_index(i-1),1,1):i==37?SCIMITAR_ITEMS:RAPIER_ITEMS;}
+static void sprite_cache_bounds(void) {
+ static uint32_t full[ACT_SCRATCH_STRIDE * ACT_H * 2];
+ static ActorSprite cached;
+ Actor a = *fresh();
+ a.gear[2] = HELM;
+ a.gear[5] = gear_id(77, 1, 1);
+ for (int family = 0; family < 39; family++) {
+  a.gear[0] = a.attackWeapon = sample_weapon(family);
+  for (int pose = 0; pose < 6; pose++) {
+   a.facing = pose % 2;
+   a.attackAngle = a.facing ? .38f : 2.76f;
+   a.attackPhase = pose < 4 ? pose : 0;
+   a.attackClock = .44f;
+   a.attackDuration = 1;
+   a.unconscious = pose == 4;
+   a.lostMask = pose == 5 ? 1 << LLEG : 0;
+   int variant = family % ATTACK_VARIANTS;
+   memset(full, 0, sizeof(full));
+   fb = full;
+   pitch = ACT_SCRATCH_STRIDE;
+   clipLeft = clipTop = 0;
+   clipRight = ACT_SCRATCH_STRIDE;
+   clipBottom = ACT_H * 2;
+   actor_painted_stance(&a, ACT_W, ACT_ANCHOR, 2, 1, 1, variant);
+   paint_cached_actor(&cached, &a, 1, 1, variant);
+   assert(!memcmp(full, actorScratch, sizeof(full)));
+   for (int y = 0; y < ACT_H; y++) {
+    for (int x = 0; x < ACT_W; x++) {
+     const uint32_t *p = full + y * 2 * ACT_SCRATCH_STRIDE + x * 2;
+     unsigned alpha = 0, red = 0, green = 0, blue = 0;
+     for (int dy = 0; dy < 2; dy++) {
+      for (int dx = 0; dx < 2; dx++) {
+       uint32_t color = p[dy * ACT_SCRATCH_STRIDE + dx];
+       unsigned a0 = color >> 24;
+       alpha += a0;
+       red += (color & 255) * a0;
+       green += (color >> 8 & 255) * a0;
+       blue += (color >> 16 & 255) * a0;
+      }
+     }
+     uint32_t expected = alpha < 4 ? 0 : (alpha / 4 << 24) | (red / alpha) |
+                                        (green / alpha << 8) | (blue / alpha << 16);
+     assert(cached.pixels[y * ACT_W + x] == expected);
+    }
+   }
+  }
+ }
+ blank();
+ puts("PASS: bounded sprite filtering matches full-raster reference, including prone and crawling poses and cache reuse.");
+}
 static void sparring_save(int caseNumber, int weapon, int master) {
  Actor *a = fresh();
  a->x = 160;
@@ -185,6 +235,6 @@ static void world_render(void){
 }
 int main(int argc, char **argv) {
  if (argc > 1) outputDir = argv[1];
- content_init();reach_catalog();timing();attack_sequence();movement();sheets();world_render();
+ content_init();reach_catalog();timing();attack_sequence();movement();sprite_cache_bounds();sheets();world_render();
  return 0;
 }

@@ -311,9 +311,12 @@ float movement_speed(const Actor *a) {
            (1 + gear_bonus(a, 1) * .005f) * speciesDefs[species_index(a)].move * limb_move_bonus(a);
 }
 int town_near(float x, float y, float r) {
-    for (int i = 0; i < TOWNS; i++)
+    for (int i = 0; i < TOWNS; i++) {
+        if (fabsf(x - towns[i].x) >= r || fabsf(y - towns[i].y) >= r)
+            continue;
         if (distance(x, y, towns[i].x, towns[i].y) < r)
             return i;
+    }
     return -1;
 }
 int can_walk(float x, float y) {
@@ -1579,6 +1582,8 @@ void simulate(float dt) {
         for (int j = 0; j < g.actorCount; j++) {
             Actor *b = &g.actors[j];
             if (i == j || !conscious(b))continue;
+            if (fabsf(a->x - b->x) >= best || fabsf(a->y - b->y) >= best)
+                continue;
             float d = distance(a->x, a->y, b->x, b->y);
             if(d>=best||!hostile(a,b))continue;
             float detect =
@@ -1694,6 +1699,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
+enum { SAVE_VERSION = 16 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -1701,7 +1707,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 15, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, SAVE_VERSION, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1900,7 +1906,7 @@ static int migrate_legacy(const LegacyGame *old) {
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
-    return (version==15 && size==sizeof(Game)) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return ((version==SAVE_VERSION || version==15) && size==sizeof(Game)) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -1914,7 +1920,11 @@ static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t si
         for(int t=0;t<TOWNS;t++)memcpy(out->stock[t],src+144+t*oldItems*4,oldItems*4);
         memcpy((unsigned char*)out+offsetof(Game,lastRestock),src+oldTail,size-oldTail);
     }
-    return validate_game(out);
+    if (!validate_game(out))
+        return 0;
+    if (version < SAVE_VERSION)
+        weapon_xp_migrate(out);
+    return 1;
 }
 int load_game(const char *path) {
     content_init();

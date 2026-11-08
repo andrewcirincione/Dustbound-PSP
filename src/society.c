@@ -9,21 +9,74 @@ extern int hostile(const Actor*,const Actor*);
 #define S (g.society)
 static float bound(float v,float a,float b){return fminf(b,fmaxf(a,v));}
 static int actor_no(const Actor*a){return (uintptr_t)a>=(uintptr_t)g.actors&&(uintptr_t)a<(uintptr_t)(g.actors+g.actorCount)?(int)(a-g.actors):-1;}
-const char *weaponClassNames[WEAPON_CLASSES]={"Katanas","Sabres","Hackers","Heavy blades","Blunt","Polearms","Rapiers","Knives","Bows","Crossbows","Firearms"};
-int weapon_class(int it){
- if(!it)return -1;if(weapon_rapier(it))return WC_RAPIERS;
- int f=gear_family(it);if(it>=SCIMITAR_ITEMS&&it<SCIMITAR_ITEMS+24)return WC_SABRES;
- if(it==RUSTSWORD||it==SABRE)return WC_SABRES;if(it==CLEAVER)return WC_HACKERS;if(it==STAFF)return WC_POLEARMS;if(it==CROSSBOW)return WC_CROSSBOWS;
- if(f==0||f==1||f==2)return WC_KATANAS;if(f==3||f==9)return WC_KNIVES;
- if(f==4||f==5||f==6||f==16||f==86)return WC_POLEARMS;
- if(f==11||f==12||f==13||f==87)return WC_HACKERS;if(f==20||f==84)return WC_HEAVY;
- if(f==14||f==15||f==23||f==85)return WC_BLUNT;if(f==24||f==28)return WC_BOWS;
- if(f>=25&&f<=27)return WC_CROSSBOWS;if(f>=29&&f<=31)return WC_FIREARMS;
- return f>=0&&f<24?WC_SABRES:-1;
+const char *weaponClassNames[WEAPON_CLASSES] = {
+    "Slashing Blades", "Light Blades", "Heavy Weapons", "Polearms", "Archery", "Firearms"
+};
+static const unsigned char styleSkill[WEAPON_STYLES] = {
+    [WS_KATANA] = WC_SLASHING, [WS_SABRE] = WC_SLASHING,
+    [WS_HACKER] = WC_HEAVY, [WS_HEAVY] = WC_HEAVY, [WS_BLUNT] = WC_HEAVY,
+    [WS_POLEARM] = WC_POLEARMS, [WS_RAPIER] = WC_LIGHT, [WS_KNIFE] = WC_LIGHT,
+    [WS_BOW] = WC_ARCHERY, [WS_CROSSBOW] = WC_ARCHERY, [WS_FIREARM] = WC_FIREARMS
+};
+_Static_assert(WEAPON_STYLES == WEAPON_XP_SLOTS, "Legacy weapon XP order");
+int weapon_style(int it) {
+    if (!it) return -1;
+    if (weapon_rapier(it)) return WS_RAPIER;
+    if (it == RUSTSWORD || it == SABRE || (it >= SCIMITAR_ITEMS && it < SCIMITAR_ITEMS + 24))
+        return WS_SABRE;
+    if (it == CLEAVER) return WS_HACKER;
+    if (it == STAFF) return WS_POLEARM;
+    if (it == CROSSBOW) return WS_CROSSBOW;
+    int family = gear_family(it);
+    switch (family) {
+    case 0: case 1: case 2: return WS_KATANA;
+    case 3: case 9: return WS_KNIFE;
+    case 4: case 5: case 6: case 16: case 86: return WS_POLEARM;
+    case 11: case 12: case 13: case 87: return WS_HACKER;
+    case 20: case 84: return WS_HEAVY;
+    case 14: case 15: case 23: case 85: return WS_BLUNT;
+    case 24: case 28: return WS_BOW;
+    case 25: case 26: case 27: return WS_CROSSBOW;
+    case 29: case 30: case 31: return WS_FIREARM;
+    default: return family >= 0 && family < 24 ? WS_SABRE : -1;
+    }
 }
-int weapon_class_level(const Actor*a,int c){int n=actor_no(a);if(c<0||c>=WEAPON_CLASSES||n<0)return 1;if(!a->squad)return level(a,c>=WC_BOWS?CROSSBOWS:MELEE);return (int)bound(1+sqrtf(S.weaponXP[n][c]/12),1,100);}
+int weapon_class(int it) {
+    int style = weapon_style(it);
+    return style < 0 ? -1 : styleSkill[style];
+}
+static void merge_weapon_xp(float xp[WEAPON_XP_SLOTS]) {
+    float merged[WEAPON_CLASSES] = {0};
+    for (int i = 0; i < WEAPON_XP_SLOTS; i++)
+        merged[styleSkill[i]] += xp[i];
+    memset(xp, 0, sizeof(float) * WEAPON_XP_SLOTS);
+    for (int i = 0; i < WEAPON_CLASSES; i++)
+        xp[i] = fminf(117612, merged[i]);
+}
+void weapon_xp_migrate(Game *save) {
+    for (int actor = 0; actor < MAX_ACTORS; actor++)
+        merge_weapon_xp(save->society.weaponXP[actor]);
+    if (save->population.version) {
+        for (int group = 0; group < POP_GROUPS; group++)
+            for (int member = 0; member < save->population.groups[group].count; member++)
+                merge_weapon_xp(save->population.social[group][member].weaponXP);
+    }
+}
+int weapon_class_level(const Actor*a,int c){int n=actor_no(a);if(c<0||c>=WEAPON_CLASSES||n<0)return 1;if(!a->squad)return level(a,c>=WC_ARCHERY?CROSSBOWS:MELEE);return (int)bound(1+sqrtf(S.weaponXP[n][c]/12),1,100);}
 void weapon_class_gain(Actor*a,int w,float amount){int n=actor_no(a),c=weapon_class(w);if(n<0||c<0||!a->squad)return;int before=weapon_class_level(a,c);S.weaponXP[n][c]=bound(S.weaponXP[n][c]+amount,0,117612);if(n==g.selected&&weapon_class_level(a,c)>before)log_progress("%s: %s %d",a->name,weaponClassNames[c],weapon_class_level(a,c));}
-float weapon_cut_ratio(int it){int c=weapon_class(it);if(!it)return 1;if(c==WC_BLUNT)return .05f;if(it==STAFF||gear_family(it)==16)return .05f;return c==WC_HEAVY?.45f:c==WC_HACKERS?.55f:c==WC_KATANAS?.9f:c==WC_SABRES?.8f:c==WC_RAPIERS||c==WC_KNIVES?.95f:.75f;}
+float weapon_cut_ratio(int it) {
+    if (!it) return 1;
+    if (it == STAFF || gear_family(it) == 16) return .05f;
+    switch (weapon_style(it)) {
+    case WS_BLUNT: return .05f;
+    case WS_HEAVY: return .45f;
+    case WS_HACKER: return .55f;
+    case WS_KATANA: return .9f;
+    case WS_SABRE: return .8f;
+    case WS_RAPIER: case WS_KNIFE: return .95f;
+    default: return .75f;
+    }
+}
 float combat_learning(float learner,float opponent){float d=opponent-learner;return bound(1+d*(d>=0?.1f:.04f),.1f,6);}
 int combat_evasion(const Actor*a){return !a->gear[0]||weapon_ranged(a->gear[0])||a->stun>0;}
 float dodge_mobility(const Actor*a){float capacity=actor_capacity(a);return bound(1-fmaxf(0,encumbrance(a)-capacity)/fmaxf(1,capacity),.05f,1);}
@@ -362,7 +415,7 @@ void nearby_action_choose(int row){const NearbyAction*p=nearby_action(row);if(!p
 void society_queue_tick(void){int n=g.selected;Actor*a=&g.actors[n];if(ui.paused||ui.screen!=SCREEN_WORLD||!S.queueCount[n]||a->taskKind||a->attackPhase||society_rescue_busy(n))return;NearbyAction x=S.queue[n][0];for(int i=1;i<S.queueCount[n];i++)S.queue[n][i-1]=S.queue[n][i];S.queueCount[n]--;perform_action(&x);}
 int society_validate(const Game*v){const Society*s=&v->society;if(!s->version)return 1;if(s->version!=1||!isfinite(s->economyClock)||s->economyClock<0||s->prisonSeeded<0||s->prisonSeeded>1)return 0;
  for(int t=0;t<TOWNS;t++)if(s->crisis[t]<0||s->crisis[t]>2)return 0;
- for(int n=0;n<MAX_ACTORS;n++){if(s->rescueHelper[n]<0||s->rescueHelper[n]>v->actorCount||s->freed[n]<0||s->freed[n]>3||s->captorFaction[n]<0||s->captorFaction[n]>=FACTIONS)return 0;for(int c=0;c<WEAPON_CLASSES;c++)if(!isfinite(s->weaponXP[n][c])||s->weaponXP[n][c]<0||s->weaponXP[n][c]>117612)return 0;if(s->queueCount[n]<0||s->queueCount[n]>ACTION_QUEUE||s->cannibal[n]<0||s->cannibal[n]>2||!isfinite(s->eating[n])||!isfinite(s->suspicion[n])||!isfinite(s->gateMessage[n]))return 0;
+ for(int n=0;n<MAX_ACTORS;n++){if(s->rescueHelper[n]<0||s->rescueHelper[n]>v->actorCount||s->freed[n]<0||s->freed[n]>3||s->captorFaction[n]<0||s->captorFaction[n]>=FACTIONS)return 0;for(int c=0;c<WEAPON_XP_SLOTS;c++)if(!isfinite(s->weaponXP[n][c])||s->weaponXP[n][c]<0||s->weaponXP[n][c]>117612)return 0;if(s->queueCount[n]<0||s->queueCount[n]>ACTION_QUEUE||s->cannibal[n]<0||s->cannibal[n]>2||!isfinite(s->eating[n])||!isfinite(s->suspicion[n])||!isfinite(s->gateMessage[n]))return 0;
   for(int f=0;f<FACTIONS;f++)if(s->wanted[n][f]<0||s->wanted[n][f]>100000||!isfinite(s->recognized[n][f]))return 0;
   for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_EMERGENCY||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
    if(a->type==ACTION_EMERGENCY){if(a->target>=v->actorCount||a->kind!=0)return 0;continue;}

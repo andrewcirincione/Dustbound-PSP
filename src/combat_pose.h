@@ -101,10 +101,10 @@ static inline CombatPose pose_stroke(CombatPose load, CombatPose hit, CombatPose
 static inline const CombatProfile *combat_profile(int weapon) {
     if (!weapon)
         return &combatProfiles[UNARMED_PROFILE];
-    int weaponClass = weapon_class(weapon);
-    if (weaponClass == WC_POLEARMS && gear_family(weapon) == 5)
+    int style = weapon_style(weapon);
+    if (style == WS_POLEARM && gear_family(weapon) == 5)
         return &combatProfiles[SPEAR_PROFILE];
-    return &combatProfiles[weaponClass < 0 ? WC_SABRES : weaponClass];
+    return &combatProfiles[style < 0 ? WS_SABRE : style];
 }
 static inline CombatPose combat_idle(int weapon) { return combat_profile(weapon)->idle; }
 static inline CombatPose combat_pose(int weapon, int phase, float p, int variant) {

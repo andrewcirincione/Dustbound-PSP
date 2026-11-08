@@ -329,9 +329,15 @@ static void bar(int x, int y, int w, int h, float value, uint32_t c) {
     rect(x, y, v, h, c);
 }
 static int projectionX, projectionY;
+static inline int project_x(float x, float y) {
+    return 240 + projectionX + (int)((x - y - ui.camX + ui.camY) * 22);
+}
+static inline int project_y(float x, float y) {
+    return 126 + projectionY + (int)((x + y - ui.camX - ui.camY) * 11) - terrain_height(x, y);
+}
 static void project(float x, float y, int *sx, int *sy) {
-    *sx = 240 + projectionX + (int)((x - y - ui.camX + ui.camY) * 22);
-    *sy = 126 + projectionY + (int)((x + y - ui.camX - ui.camY) * 11) - terrain_height(x, y);
+    *sx = project_x(x, y);
+    *sy = project_y(x, y);
 }
 static uint32_t ground(int b) {
     static const uint32_t p[] = {0x998063, 0x98664b, 0xb1a58a, 0x646b50, 0x65625d,
@@ -345,15 +351,48 @@ static float light(void) {
                                                : .55f;
 }
 static int road(float x, float y) { return terrain_road(x, y); }
+static void texture_ground(void) {
+    static uint16_t multipliers[64][64];
+    static int initialized;
+    if (!initialized) {
+        const ArtSprite *tex = &artSprites[107];
+        for (int y = 0; y < 64; y++) {
+            for (int x = 0; x < 64; x++) {
+                uint32_t c = tex->palette[tex->pixels[tex->rows[y * 3] + x]];
+                multipliers[y][x] = 222 + ((c & 255) + ((c >> 8) & 255) + ((c >> 16) & 255)) / 14;
+            }
+        }
+        initialized = 1;
+    }
+    for (int y = 0; y < clipBottom; y++) {
+        float u = (ui.camX + (y - 126 - projectionY) / 22.f + (-240 - projectionX) / 44.f) * 8;
+        float v = (ui.camY + (y - 126 - projectionY) / 22.f - (-240 - projectionX) / 44.f) * 8;
+        uint32_t *row = fb + y * pitch;
+        for (int x = 0; x < clipRight; x++, u += 8 / 44.f, v -= 8 / 44.f) {
+            unsigned m = multipliers[(int)v & 63][(int)u & 63];
+            uint32_t d = row[x];
+            row[x] = 0xff000000 | (((d & 0xff00ff) * m >> 8) & 0xff00ff) | (((d & 0xff00) * m >> 8) & 0xff00);
+        }
+    }
+}
+static void ground_tile(int x, int y, uint32_t color) {
+    /* The 22x11 tile has an integer slope. Fill both halves in a single span. */
+    for (int dy = -11; dy <= 11; dy++) {
+        int half = 22 - 2 * abs(dy);
+        rect(x - half, y + dy, 2 * half + 1, 1, color);
+    }
+}
 static void terrain_raw(void) {
     float li = light();
     rect(0, 0, clipRight, clipBottom, shade(ground(biome(ui.camX, ui.camY)), li));
     int cx = (int)ui.camX, cy = (int)ui.camY;
     for (int y = cy - 18; y <= cy + 18; y++)
         for (int x = cx - 18; x <= cx + 18; x++) {
-            int sx, sy;
-            project(x + .5f, y + .5f, &sx, &sy);
-            if (sx < -24 || sx > clipRight + 24 || sy < -12 || sy > clipBottom + 12)
+            int sx = project_x(x + .5f, y + .5f);
+            if (sx < -24 || sx > clipRight + 24)
+                continue;
+            int sy = project_y(x + .5f, y + .5f);
+            if (sy < -12 || sy > clipBottom + 12)
                 continue;
             unsigned h = hash(x, y);
             int t = town_near(x, y, 7);
@@ -369,19 +408,19 @@ static void terrain_raw(void) {
                 c = shade(blend(c, 0xd4bd8e, .23f), li);
             if (terrain_water(x, y)) {
                 c = shade(0x485f5b, li);
-                diamond(sx, sy, 22, 11, c);
+                ground_tile(sx, sy, c);
                 int shift = (x + y) % 5;
                 line(sx - 9 + shift, sy - 3, sx + 6 + shift, sy - 3, shade(c, 1.25f));
                 line(sx - 8, sy + 3, sx + 8, sy + 3, shade(c, .8f));
                 continue;
             }
-            diamond(sx, sy, 22, 11, c);
+            ground_tile(sx, sy, c);
             for (int grain = 0; grain < 35; grain++) {
                 unsigned z = hash(x + grain * 9, y - grain * 7);
                 int gx = (int)(z % 31) - 15, gy = (int)((z >> 8) % 13) - 6;
                 if (abs(gx) + abs(gy) * 2 < 22) {
                     uint32_t fleck = shade(c, .85f + (z % 5) * .06f);
-                    line(sx + gx, sy + gy, sx + gx + 1 + (z % 2), sy + gy, fleck);
+                    rect(sx + gx, sy + gy, 2 + (z % 2), 1, fleck);
                 }
             }
             if (h % 5 == 0) {
@@ -396,19 +435,7 @@ static void terrain_raw(void) {
                 line(sx - 18, sy, sx - 2, sy + 8, shade(c, .92f));
             }
         }
-    const ArtSprite *tex = &artSprites[107];
-    for (int yy = 0; yy < clipBottom; yy++) {
-        float u = (ui.camX + (yy - 126 - projectionY) / 22.f + (-240 - projectionX) / 44.f) * 8;
-        float v = (ui.camY + (yy - 126 - projectionY) / 22.f - (-240 - projectionX) / 44.f) * 8;
-        for (int xx = 0; xx < clipRight; xx++, u += 8 / 44.f, v -= 8 / 44.f) {
-            int tx = ((int)u) & 63, ty = ((int)v) & 63;
-            uint32_t c = tex->palette[tex->pixels[tex->rows[ty * 3] + tx]];
-            unsigned m = 222 + ((c & 255) + ((c >> 8) & 255) + ((c >> 16) & 255)) / 14;
-            uint32_t d = fb[yy * pitch + xx];
-            fb[yy * pitch + xx] =
-                0xff000000 | (((d & 0xff00ff) * m >> 8) & 0xff00ff) | (((d & 0xff00) * m >> 8) & 0xff00);
-        }
-    }
+    texture_ground();
 }
 /* 32-pixel overscan: scrolling reuses terrain until the camera crosses a
    cache margin. Buildings/actors/weather remain live and depth-sorted. */
@@ -528,10 +555,25 @@ static int compare_obj(const void *a, const void *b) {
     float d = ((Object *)a)->depth - ((Object *)b)->depth;
     return d < 0 ? -1 : d > 0 ? 1 : 0;
 }
-static int squad_combatant(int n);
 static void objects_draw(void) {
-    int clearIds[MAX_ACTORS],clearCount=0;
-    for(int j=0;j<g.actorCount;j++)if(g.actors[j].active&&(g.actors[j].squad||squad_combatant(j)))clearIds[clearCount++]=j;
+    int clearIds[MAX_ACTORS], clearCount = 0;
+    unsigned char squadTargets[MAX_ACTORS] = {0};
+    for (int i = 0; i < g.actorCount; i++) {
+        const Actor *a = &g.actors[i];
+        if (!a->active || !a->squad) continue;
+        int target = a->target, command = g.living.command[i];
+        if (target >= 0 && target < g.actorCount) squadTargets[target] = 1;
+        if (command >= 0 && command < g.actorCount) squadTargets[command] = 1;
+    }
+    for (int i = 0; i < g.actorCount; i++) {
+        const Actor *a = &g.actors[i];
+        if (!a->active) continue;
+        int target = a->target;
+        int targetsSquad = target >= 0 && target < g.actorCount &&
+                           g.actors[target].active && g.actors[target].squad;
+        if (a->squad || (!a->dead && (squadTargets[i] || targetsSquad)))
+            clearIds[clearCount++] = i;
+    }
     int n = 0;
     for (int i = 0; i < g.nodeCount; i++) {
         Node *b = &g.nodes[i];
@@ -547,24 +589,46 @@ static void objects_draw(void) {
         Actor *a = &g.actors[i];
         if (!a->active || a->carriedBy >= 0 || actor_inside(a) || population_hidden(i))
             continue;
-        int x, y;
-        project(a->x, a->y, &x, &y);
-        if (x > -30 && x < 510 && y > -20 && y < 250)
+        int x = project_x(a->x, a->y);
+        if (x <= -30 || x >= 510)
+            continue;
+        int y = project_y(a->x, a->y);
+        if (y > -20 && y < 250)
             objects[n++] = (Object){a->x + a->y, 2, i, x, y};
     }
-    for(int k=0;k<POP_GROUPS;k++)for(int j=0;j<population_object_count(k);j++){
-        float wx,wy;int type=population_object(k,j,&wx,&wy);if(!type||fabsf(wx-ui.camX)>20||fabsf(wy-ui.camY)>20)continue;
-        int x,y;project(wx,wy,&x,&y);objects[n++]=(Object){wx+wy,4,k*POP_PROPS+j,x,y};
+    int cx = ui.camX, cy = ui.camY;
+    int campSites[POP_GROUPS], campCount = 0;
+    for (int k = 0; k < POP_GROUPS; k++) {
+        int props = population_object_count(k);
+        if (!props)
+            continue;
+        const PopulationState *site = &g.population.state[k];
+        if (fabsf(site->siteX - cx) < 24 && fabsf(site->siteY - cy) < 24)
+            campSites[campCount++] = k;
+        for (int j = 0; j < props; j++) {
+            float wx, wy;
+            if (!population_object(k, j, &wx, &wy) || fabsf(wx - ui.camX) > 20 || fabsf(wy - ui.camY) > 20)
+                continue;
+            int x, y;
+            project(wx, wy, &x, &y);
+            objects[n++] = (Object){wx + wy, 4, k * POP_PROPS + j, x, y};
+        }
     }
     for(int k=0;k<6;k++)for(int r=0;r<4;r++){float x,y;if(!trail_rock(k,r,&x,&y)||fabsf(x-ui.camX)>20||fabsf(y-ui.camY)>20)continue;int sx,sy;project(x,y,&sx,&sy);objects[n++]=(Object){x+y,5,k*4+r,sx,sy};}
-    int cx = ui.camX, cy = ui.camY;
     for (int y = cy - 16; y < cy + 16; y++)
         for (int x = cx - 16; x < cx + 16; x++) {
             unsigned h = hash(x, y);
             if (h % 13 || town_near(x, y, 8) >= 0 || road(x, y))
                 continue;
-            int campGround=0;for(int k=0;k<POP_GROUPS;k++)if(population_object_count(k)&&fabsf(x-g.population.state[k].siteX)<7&&fabsf(y-g.population.state[k].siteY)<7){campGround=1;break;}
-            if(campGround)continue;
+            int campGround = 0;
+            for (int k = 0; k < campCount; k++) {
+                const PopulationState *site = &g.population.state[campSites[k]];
+                if (fabsf(x - site->siteX) < 7 && fabsf(y - site->siteY) < 7) {
+                    campGround = 1;
+                    break;
+                }
+            }
+            if (campGround) continue;
             int clear=0;for(int j=0;j<clearCount;j++){Actor*a=&g.actors[clearIds[j]];if(distance(x,y,a->x,a->y)<2.3f){clear=1;break;}}if(clear)continue;
             if(trail_blocked(x,y))continue;
             int sx, sy;
@@ -1164,7 +1228,17 @@ static void skills_screen(void) {
     overlay_header(ui.skillPage?"SKILLS / WEAPON CLASSES":"SKILLS & TRAINING", "\014 CORE / WEAPONS   \015 SELECT   BARS SHOW NEXT LEVEL");
     if(ui.skillPage){
         if(ui.selection>=WEAPON_CLASSES)ui.selection=0;
-        for(int i=0;i<WEAPON_CLASSES;i++){int x=31+(i/6)*214,y=84+(i%6)*15,lv=weapon_class_level(a,i);if(i==ui.selection)rect(x-3,y-2,199,13,0x4a4030);text(x,y,weaponClassNames[i],i==ui.selection?TEXT:MUTED,1);snprintf(b,sizeof(b),"%02d",lv);text(x+147,y,b,GOLD,1);float low=12.f*(lv-1)*(lv-1),hi=12.f*lv*lv;bar(x+166,y+2,24,3,lv>=100?100:100*(g.society.weaponXP[g.selected][i]-low)/(hi-low),TEAL);}
+        int equipped = weapon_class(a->gear[0]);
+        for (int i = 0; i < WEAPON_CLASSES; i++) {
+            int y = 84 + i * 15, lv = weapon_class_level(a, i);
+            if (i == ui.selection) rect(28, y - 2, 416, 13, 0x4a4030);
+            text(31, y, weaponClassNames[i], i == ui.selection ? TEXT : MUTED, 1);
+            if (i == equipped) text(212, y, "EQUIPPED", TEAL, 1);
+            snprintf(b, sizeof(b), "%02d", lv);
+            text(319, y, b, GOLD, 1);
+            float low = 12.f * (lv - 1) * (lv - 1), high = 12.f * lv * lv;
+            bar(348, y + 2, 88, 3, lv >= 100 ? 100 : 100 * (g.society.weaponXP[g.selected][i] - low) / (high - low), TEAL);
+        }
         int lv=weapon_class_level(a,ui.selection);snprintf(b,sizeof(b),"%s LEVEL %d / DAMAGE +%.1f%% / DELAY -%.1f%%",weaponClassNames[ui.selection],lv,(lv-1)*.25f,(lv-1)*.15f);clipped(31,187,b,68,GOLD);
         wrap(31,203,68,"Use this weapon class. Strong opponents teach faster; blocked attacks teach less. Progress persists when switching weapons.",TEXT);return;
     }

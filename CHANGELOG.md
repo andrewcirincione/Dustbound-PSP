@@ -1,3 +1,9 @@
+# 0.16.2 — Weapon skills and PSP performance
+
+- Weapon training uses Slashing Blades, Light Blades, Heavy Weapons, Polearms, Archery and Firearms. Each weapon uses its own motion profile and damage balance.
+- Save format v16 adds together the earned XP in each merged skill, capped at level 100. Earlier saves migrate for both live squad members and stored encounters.
+- Limit sprite filtering and outlines to their painted bounds, batch ground spans, and skip distant candidates before costly lookups. The world benchmark compares framebuffer and gameplay-state hashes alongside CPU timings.
+
 # 0.16.1 — Combat motion
 
 - Fighters draw from three attacks per weapon type, with different windup, stroke and recovery times. Each cycle uses all three before shuffling again, and adjacent attacks use different moves.

@@ -18,7 +18,7 @@ typedef struct {
     float offsetX[5], offsetY[5];
 } PopulationState;
 typedef struct {
-    float weaponXP[WEAPON_CLASSES], recognized[FACTIONS];
+    float weaponXP[WEAPON_XP_SLOTS], recognized[FACTIONS];
     int wanted[FACTIONS], cannibal, captorFaction;
 } PopulationSocial;
 typedef struct {

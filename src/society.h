@@ -1,9 +1,11 @@
 #ifndef DUSTBOUND_SOCIETY_H
 #define DUSTBOUND_SOCIETY_H
 extern const char *weaponClassNames[WEAPON_CLASSES];
+int weapon_style(int item);
 int weapon_class(int item);
 int weapon_class_level(const Actor*a,int category);
 void weapon_class_gain(Actor*a,int weapon,float amount);
+void weapon_xp_migrate(Game *save);
 float weapon_cut_ratio(int item);
 float combat_learning(float learner,float opponent);
 int combat_evasion(const Actor*a);

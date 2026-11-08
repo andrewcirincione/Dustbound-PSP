@@ -1,7 +1,7 @@
 #ifndef DUST_COMBAT_MOVES_H
 #define DUST_COMBAT_MOVES_H
 
-enum { UNARMED_PROFILE = WEAPON_CLASSES, SPEAR_PROFILE };
+enum { UNARMED_PROFILE = WEAPON_STYLES, SPEAR_PROFILE };
 
 /* Forward hand position, blade pitch, weight shift, crouch, lead step and torso
    turn. Negative blade pitch points up. Fists also key the rear hand separately. */
@@ -9,7 +9,7 @@ enum { UNARMED_PROFILE = WEAPON_CLASSES, SPEAR_PROFILE };
 #define FISTS(x, y, rearX, rearY, shift, crouch, step, twist) {x, y, 0, shift, crouch, step, twist, rearX, rearY}
 
 static const CombatProfile combatProfiles[] = {
-    [WC_KATANAS] = {
+    [WS_KATANA] = {
         .idle = POSE(4, -16, .22f, 0, 0, 0, 0),
         .guard = POSE(6, -21, -.64f, .2f, .5f, .7f, 0),
         .strokeSeconds = .24f,
@@ -34,7 +34,7 @@ static const CombatProfile combatProfiles[] = {
             }
         }
     },
-    [WC_HEAVY] = {
+    [WS_HEAVY] = {
         .idle = POSE(2, -18, -2.47f, -.4f, .4f, 0, 0),
         .guard = POSE(3, -21, -1.40f, -.6f, 1.2f, 2, -.04f),
         .strokeSeconds = .35f,
@@ -59,7 +59,7 @@ static const CombatProfile combatProfiles[] = {
             }
         }
     },
-    [WC_SABRES] = {
+    [WS_SABRE] = {
         .idle = POSE(4, -16, .32f, 0, 0, 0, 0),
         .guard = POSE(7, -20, -.56f, .2f, .4f, 1, .04f),
         .strokeSeconds = .25f,
@@ -84,7 +84,7 @@ static const CombatProfile combatProfiles[] = {
             }
         }
     },
-    [WC_HACKERS] = {
+    [WS_HACKER] = {
         .idle = POSE(3, -17, -.96f, 0, 0, 0, 0),
         .guard = POSE(5, -19, -1.06f, .3f, .8f, 1, 0),
         .strokeSeconds = .30f,
@@ -109,7 +109,7 @@ static const CombatProfile combatProfiles[] = {
             }
         }
     },
-    [WC_BLUNT] = {
+    [WS_BLUNT] = {
         .idle = POSE(3, -18, -1.34f, 0, 0, 0, 0),
         .guard = POSE(6, -20, -1.19f, -.2f, 1.2f, 1.6f, -.06f),
         .strokeSeconds = .32f,
@@ -134,7 +134,7 @@ static const CombatProfile combatProfiles[] = {
             }
         }
     },
-    [WC_POLEARMS] = {
+    [WS_POLEARM] = {
         .idle = POSE(4, -18, -.77f, 0, 0, 0, 0),
         .guard = POSE(6, -20, -.34f, -.3f, .9f, 1.1f, 0),
         .strokeSeconds = .27f,
@@ -184,7 +184,7 @@ static const CombatProfile combatProfiles[] = {
             }
         }
     },
-    [WC_RAPIERS] = {
+    [WS_RAPIER] = {
         .idle = POSE(4, -17, -.58f, 0, 0, 0, 0),
         .guard = POSE(7, -21, -.11f, -.1f, .8f, 1.4f, -.12f),
         .strokeSeconds = .21f,
@@ -209,7 +209,7 @@ static const CombatProfile combatProfiles[] = {
             }
         }
     },
-    [WC_KNIVES] = {
+    [WS_KNIFE] = {
         .idle = POSE(3, -15, -.19f, 0, 0, 0, 0),
         .guard = POSE(5, -20, -.42f, .7f, 1, 1, -.03f),
         .strokeSeconds = .21f,
@@ -234,7 +234,7 @@ static const CombatProfile combatProfiles[] = {
             }
         }
     },
-    [WC_BOWS] = {
+    [WS_BOW] = {
         .idle = POSE(4, -17, .48f, 0, 0, 0, 0),
         .guard = POSE(6, -20, -.34f, 0, .5f, 1, 0),
         .strokeSeconds = .25f,
@@ -259,7 +259,7 @@ static const CombatProfile combatProfiles[] = {
             }
         }
     },
-    [WC_CROSSBOWS] = {
+    [WS_CROSSBOW] = {
         .idle = POSE(4, -17, .45f, 0, 0, 0, 0),
         .guard = POSE(6, -20, -.23f, .1f, .6f, 1, 0),
         .strokeSeconds = .25f,
@@ -284,7 +284,7 @@ static const CombatProfile combatProfiles[] = {
             }
         }
     },
-    [WC_FIREARMS] = {
+    [WS_FIREARM] = {
         .idle = POSE(4, -17, .53f, 0, 0, 0, 0),
         .guard = POSE(5, -20, -.38f, 0, .6f, .8f, 0),
         .strokeSeconds = .25f,

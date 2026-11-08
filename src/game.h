@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.16.1"
+#define VERSION "0.16.2"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
