@@ -1,10 +1,10 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.15.0 — Fight and recover
+## 0.16.0 — Weight and motion
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
-[Download 0.15.0](https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v0.15.0) · [Release notes](docs/RELEASE_NOTES.md) · [Field guide](docs/FIELD_GUIDE.md) · [Playtest review](docs/FEEDBACK_V150.md) · [Validation](docs/VALIDATION_V150.md)
+[Download 0.16.0](https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v0.16.0) · [Release notes](docs/RELEASE_NOTES.md) · [Field guide](docs/FIELD_GUIDE.md) · [Animation validation](docs/VALIDATION_V160.md)
 
 ![Nearby roles and military equipment](evidence/v150-psp-army.png)
 
@@ -15,6 +15,8 @@ Starving bandits carry poor weapons and wear incomplete clothing. Soldiers wear 
 The world activity ledger records where and when you actually saw a group. A report can be located on the map, but does not track the group after it leaves. Councils show named claimants and the price policy each would implement. Beds beside NPCs now perform the selected rest action reliably. Characters retain a visible silhouette through foreground scenery, successful autosaves are silent, and routine skill gains cannot fill an existing message queue.
 
 Fighting now has clearer windups, outlined knockout bars and staggered AI melee attacks. Passive stance cancels your attack so you can retreat. Six roadside rock passes offer cover and alternate routes; free wayfarer beds provide finite supplies and recovery stops. Emergency dressings can consume cloth or worn rags, and friendly medics can approach and stabilize you when safe. Government changes reposition surviving guards, civilians and relief medics.
+
+Weapon handling now changes the actual strike speed. Relaxed carry and combat guards blend smoothly; fists, bows, firearms, thrusting weapons and heavy swings have distinct motion. Rigid grips prevent overstretched arms, walking follows distance, and combat labels leave raised weapons visible.
 
 ## The wider game
 
@@ -29,7 +31,7 @@ Fighting now has clearer windups, outlined knockout bars and staggered AI melee 
 
 ## Install
 
-Extract `Dustbound-0.15.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Format v15 reads prior saves; actual v14 and earlier migration fixtures are tested. Existing characters retain their earned and looted equipment; the new outfit rules apply to newly generated encounters.
+Extract `Dustbound-0.16.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Format v15 reads prior saves; actual v14 and earlier migration fixtures are tested. Existing characters retain their earned and looted equipment; the new outfit rules apply to newly generated encounters.
 
 ## Controls
 

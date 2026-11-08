@@ -1,19 +1,16 @@
-# Dustbound 0.15.0 — Fight and recover
+# Dustbound 0.16.0 — Weight and motion
 
-- Enemy health bars return during combat. They show remaining knockout reserve from head, chest and blood, using the actual knockout thresholds. Arm and leg injuries still affect fighting and movement without falsely emptying the bar.
-- Clearer fighting: brighter outlined bars, visible windup marks, brief hit/block/dodge feedback, one focused role label during combat and less foreground vegetation around combatants.
-- At most two AI melee attacks prepare or strike against one target simultaneously. Other attackers reposition; ranged enemies remain dangerous. Passive stance cancels your attack and explicit attack order, with recovery time before another attack.
-- Bare and ragged torsos have slimmer profiles; heavy armor has broader silhouettes. Appearance still reflects actual equipment and loot. Nearby identification remains role, faction color and hostility.
-- Six roadside rock passes provide collision and projectile cover, open central routes and outer bypasses. Six free wayfarer beds have finite medicine, food and parts caches. Discovered shelters provide recovery directions when wounded or exhausted.
-- Emergency recovery: consume two cloth or destroy worn rags to stop bleeding without healing. Nearby friendly medics and pilgrims approach and help endangered squad members when safe, spending actual medicine or machine parts.
-- New governments reposition surviving guards, displace some ordinary civilians and move medics to relief posts. Faction banners and policy signs show the settlement's new government. Named equipment owners are not respawned.
+- Weapon proficiency now speeds the actual strike, as well as preparation and recovery. Heavy weapons and arm injuries retain their handling penalties.
+- Separate relaxed carry and combat guards, with smooth transitions in the live world renderer, including layered armor.
+- Dedicated unarmed punches and bow draw/release; firearms keep their recoil. Swords, thrusting weapons and heavy overhead attacks retain distinct motion.
+- Continuous movement through the contact point and into follow-through. Rigid grips keep both hands attached without stretching arms beyond their reach. Long weapons stay clear of the ground in relaxed and finishing poses.
+- Walking cadence follows actual distance. Blocked indoor movement and active strikes no longer walk in place. Rear feet stay planted during attacks, and hit reactions lean away from impact.
+- Downed beasts use prone sprites. Combat role labels and knockout bars sit below the fighters, leaving raised weapons visible.
 
-- Long field-guide chapters now page with left/right, keeping recovery instructions readable.
+All 0.15 gameplay remains, including manual travel, combat health bars, permanent injuries and prosthetics, wandering armies and camps, recovery options, and faction succession.
 
-There is **no map or group auto-travel**. Map choices place reference pins; movement remains manual.
+Extract `Dustbound-0.16.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Preserve your saves before upgrading. The save format remains v15; animation state is transient and does not change existing characters or equipment.
 
-Extract `Dustbound-0.15.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Keep saves before upgrading. Save v15 reads earlier formats; a genuine v14 PSP save is included in migration tests. Existing equipment, injuries and world state remain intact; roadside additions initialize once.
+[Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V160.md) · [Recovery record](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/RECOVERY_V160.md)
 
-[Details](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/CONTENT_V150.md) · [Screenshots and review](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/FEEDBACK_V150.md) · [Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V150.md)
-
-Tested with native regression/sanitizer suites and controller-driven PPSSPP checks of the release executable. Playable alpha; physical PSP performance and full-campaign balance remain unqualified.
+Playable homebrew alpha. Physical PSP testing has not been performed.
