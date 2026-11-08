@@ -54,7 +54,7 @@ The pause menu has Pause, Squad and World tabs. Factions and World activity are 
 
 With PSPDEV available, run `make -j2`, then `python3 scripts/validate_pbp.py EBOOT.PBP`. The release workflow pins the compiler and checks that its executable matches the EBOOT tested in PPSSPP.
 
-Run `scripts/validate_v080.sh` through the current `scripts/validate_v150.sh` gates listed in `.github/workflows/build.yml`. For current controller checks, run `python3 scripts/emulator_v150.py /path/to/PPSSPPHeadless` after the native gates generate ordinary test saves. Completed-frame captures and results are in `evidence/v150-*`.
+Run the regression gates from `scripts/validate_v080.sh` through `scripts/validate_v160.sh` listed in `.github/workflows/build.yml`. For current controller checks, run `python3 scripts/emulator_v160.py /path/to/PPSSPPHeadless` after the native gates generate ordinary test saves (Python dependencies: Pillow and websockets). Completed-frame captures and results are in `evidence/v160/` and `evidence/v160-controller-checks.json`. Run `python3 scripts/verify_release_v160.py` to check the compiled executable, build inputs and evidence against the release manifest.
 
 This remains a playable alpha. PPSSPP testing does not qualify physical PSP performance, and the focused controller scenarios are not a naturally played full campaign. Offline battles use a simplified model. See the current validation record for exact scope.
 

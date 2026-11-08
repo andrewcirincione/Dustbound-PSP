@@ -1,0 +1,14 @@
+{
+  "case": 26,
+  "frames": 240,
+  "attack_phase_counts": {
+    "0": 1,
+    "1": 124,
+    "2": 34,
+    "3": 81
+  },
+  "completed": true,
+  "capture": "Final EBOOT completed framebuffer; normal controller-loaded save",
+  "run": "/workspace/scratch/09d4a75565cd/Dustbound/build/v160-26-4zqaw8xl",
+  "extra": {}
+}

@@ -18,7 +18,11 @@ Production-renderer sheets cover relaxed carry, guard, windup, contact, follow-t
 
 ## PSP runtime audit
 
-Validation pending until the final executable finishes the controller-driven PPSSPP audit. Each case loads an ordinary save through the title/load/confirmation screens and records 240 completed world frames at 30 Hz. It does not write emulator memory or inject gameplay state. Prepared saves isolate one opponent and provide ammunition; they are animation scenarios, not campaign balance tests.
+All 39 controller-driven PPSSPP cases completed: 240 world frames per case, 9,360 frames total, with idle, preparation, strike and recovery observed in every case. Each case loads an ordinary save through the title/load/confirmation screens and records completed world frames at 30 Hz. It does not write emulator memory or inject gameplay state. Prepared saves isolate one opponent and provide ammunition; they are animation scenarios, not campaign balance tests. The katana case also verifies passive attack cancellation and analog movement.
+
+The audited EBOOT is 1,786,886 bytes with SHA-256 `1300d97fbfb5ff597d8a95bf98951b39e4ed518c05381b8ad18cf95eaadcccd7`. A clean rebuild with PSPDEV v20261101 produced the same bytes. The release workflow independently rebuilds and verifies this checksum, all recorded build inputs and the saved evidence before publishing.
+
+The [controller report](../evidence/v160-controller-checks.json) records each case. The [evidence directory](../evidence/v160/) includes four-phase PSP sheets and eight-second animation clips for all 39 cases. The release screenshot archive includes these clips and the native pose sheets. Physical PSP hardware remains untested.
 
 | Case | Weapon family |
 |---|---|
