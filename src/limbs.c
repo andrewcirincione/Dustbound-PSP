@@ -62,7 +62,7 @@ void limbs_init(void){
  for(int e=12;e<ELITES;e++){int n=g.civil.eliteActor[e]-1;if(n<0||g.actors[n].dead||g.actors[n].squad)continue;Actor*a=&g.actors[n];int l=e%2?LLEG:RARM,grade=e==14?4:e==15?2:3;if(!(a->lostMask&(1<<l))){limb_set(a,l,limb_item(grade,l>=LLEG),0);a->health[l]=limb_max_health(a,l);}}
  for(int t=0;t<TOWNS;t++)limbs_stock(t);
 }
-static int valid_mask(const Actor*a){
+int limb_actor_valid(const Actor*a){
  if(a->lostMask&~60)return 0;if(((uint32_t)a->prostheticMask&255u)&~60u)return 0;
  for(int l=LARM;l<=RLEG;l++){unsigned grade=((uint32_t)a->prostheticMask>>(8+3*(l-LARM)))&7,owner=limb_owner(a,l);int fitted=a->prostheticMask&(1<<l);
   if(fitted&&(!(a->lostMask&(1<<l))||grade>5))return 0;if(!fitted&&(grade||owner))return 0;
@@ -70,8 +70,8 @@ static int valid_mask(const Actor*a){
 }
 int limbs_validate(const Game*s){
  if(s->limbs.version<0||s->limbs.version>1||s->limbs.surgeonActor<0||s->limbs.surgeonActor>s->actorCount)return 0;
- for(int n=0;n<s->actorCount;n++)if(!valid_mask(&s->actors[n]))return 0;
- for(int e=0;e<EVENTS;e++)if(s->living.events[e].stored)for(int n=0;n<s->living.events[e].count;n++)if(!valid_mask(&s->living.events[e].reserve[n]))return 0;
+ for(int n=0;n<s->actorCount;n++)if(!limb_actor_valid(&s->actors[n]))return 0;
+ for(int e=0;e<EVENTS;e++)if(s->living.events[e].stored)for(int n=0;n<s->living.events[e].count;n++)if(!limb_actor_valid(&s->living.events[e].reserve[n]))return 0;
  return 1;
 }
 void limb_sever(Actor*a,int l,int surgery){

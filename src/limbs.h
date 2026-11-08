@@ -23,6 +23,7 @@ int limb_attack_penalty(const Actor *a,int weapon);
 void limbs_content(void);
 void limbs_init(void);
 void limbs_stock(int town);
+int limb_actor_valid(const Actor *a);
 int limbs_validate(const Game *state);
 void limb_sever(Actor *a,int limb,int surgery);
 void limb_hit(Actor *a,int limb,float cut);

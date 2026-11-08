@@ -1,5 +1,13 @@
 # Dustbound — PSP frontier survival RPG
 
+## 0.12.0 — An unquiet frontier
+
+Eighty persistent encounter groups across sixteen situations: camps with usable beds, scavengers, refugees, hunters, smugglers, traders, patrols, raiders, beasts, pilgrims, wounded travelers, battlefields, marching armies, ambushes, salvage crews, prisoner convoys and duelists. Groups travel, rest, gather and clash off-screen. Their wounds, actual equipment, corpses and finite supplies survive leaving and returning. Prosthetics are uncommon, with stronger grades much rarer.
+
+[Latest release](https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v0.12.0) · [Encounter details](docs/CONTENT_V120.md) · [PSP screenshots](docs/FEEDBACK_V120.md) · [Validation](docs/VALIDATION_V120.md)
+
+![Marching army in the PSP EBOOT](evidence/v120-psp-marching-army.png)
+
 ## 0.11.0 — Flesh and iron
 
 Permanent limb loss, crawling, remaining-hand combat, five grades of mechanical arms and legs, regional replacement shops, Surgeon Venn in Dusk Haven, and physically lootable fitted parts on six wandering elites.
@@ -16,7 +24,7 @@ Five playable species with visible starting stats; different fortress, monastery
 
 An original isometric western–samurai squad RPG for PSP homebrew. Build a band of drifters, survive wounds and hunger, trade, steal, forge equipment and establish an outpost across a changing frontier. Inspired by Kenshi's systemic survival; this is a separate game using original code and original generated / procedural art, not a Kenshi port.
 
-**Current milestone: 0.11.0, limbs and replacements — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
+**Current milestone: 0.12.0, persistent wilderness populations — playable alpha.** A much broader sandbox than 0.1, with working versions of the requested core loops. It does not reproduce every Kenshi system or its scale. Physical PSP qualification remains outstanding.
 
 [Download releases](https://github.com/andrewcirincione/Dustbound-PSP/releases) · [Field guide](docs/FIELD_GUIDE.md) · [Validation](docs/VALIDATION.md) · [Progress](docs/ROADMAP.md)
 

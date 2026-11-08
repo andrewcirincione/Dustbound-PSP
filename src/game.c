@@ -486,6 +486,7 @@ void game_new(uint32_t seed, int scenario) {
     society_init();
     civil_init();
     limbs_init();
+    population_init();
     ui.camX = a->x;
     ui.camY = a->y;
     ui.mapX = a->x;
@@ -1358,6 +1359,7 @@ void simulate(float dt) {
     depth_tick(dt);
     tick_expansion(dt);
     regional_tick();
+    population_tick(dt);
     living_tick(dt);
     society_tick(dt);
     civil_tick(dt);
@@ -1417,7 +1419,7 @@ void simulate(float dt) {
                 }
             }
         }
-        if (!a->squad && distance(a->x, a->y, g.actors[g.selected].x, g.actors[g.selected].y) > 45)
+        if (!a->squad && distance(a->x, a->y, g.actors[g.selected].x, g.actors[g.selected].y) > 45 && !population_owned(i))
             continue;
         if (a->carriedBy >= 0) {
             Actor *c = &g.actors[a->carriedBy];
@@ -1472,6 +1474,7 @@ void simulate(float dt) {
             (a->taskIndex < 0 || a->taskIndex >= g.nodeCount ||
              distance(a->x, a->y, g.nodes[a->taskIndex].x, g.nodes[a->taskIndex].y) > WORK_REACH))
             a->taskKind = 0;
+        if (a->taskKind == 3 && a->taskIndex <= -1000 && !population_sleep_valid(a)) a->taskKind=0;
         if (a->taskKind) {
             if (a->taskKind == 3) {
                 a->fatigue = fmaxf(0, a->fatigue - dt * 1.8f);
@@ -1614,7 +1617,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
-    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 11, sizeof(g), checksum(&g, sizeof(g))};
+    SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, 12, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
         ok = 0;
@@ -1715,7 +1718,7 @@ static int validate_game(const Game *t) {
         if (a->carrying >= t->actorCount || a->carriedBy >= t->actorCount)
             return 0;
     }
-    return depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t);
+    return depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t) && population_validate(t);
 }
 static int migrate_legacy(const LegacyGame *old) {
     if (old->actorCount < 1 || old->actorCount > 80 || old->buildingCount < 0 || old->buildingCount > 100 ||
@@ -1797,16 +1800,17 @@ static int migrate_legacy(const LegacyGame *old) {
     memset(&g.society,0,sizeof(g.society));
     memset(&g.civil,0,sizeof(g.civil));
     memset(&g.limbs,0,sizeof(g.limbs));
+    memset(&g.population,0,sizeof(g.population));
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
-    return (version==11 && size==sizeof(Game)) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version==12 && size==sizeof(Game)) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if(version==11)memcpy(out,data,size);
+    if(version>=11)memcpy(out,data,size);
     else {
         const unsigned char *src=data;int oldItems=version==10?V100_ITEMS:version==9?V090_ITEMS:version==8?OLD_ITEMS:version>=5?CATALOG_ITEMS:2052;
         unsigned oldTail=144+TOWNS*oldItems*4;
@@ -1873,6 +1877,7 @@ int load_game(const char *path) {
     society_init();
     civil_init();
     limbs_init();
+    population_init();
         memset(&ui, 0, sizeof(ui));
         ui.attackFocus=-1;
         ui.speed = 1;
@@ -2428,6 +2433,15 @@ void debug_snapshot(const char *path) {
     VALUE("fitted", fitted, sizeof(fitted));
     int lootFitted[4]={0};if(ui.lootActor>=0&&ui.lootActor<g.actorCount)for(int l=0;l<4;l++)lootFitted[l]=limb_installed(&g.actors[ui.lootActor],LARM+l);
     VALUE("loot_fitted", lootFitted, sizeof(lootFitted));
+    int popNear=-1,popOnline=0,popUnits=0,popWearers=0;float popDistance=100000;
+    for(int k=0;k<POP_GROUPS;k++){WorldEvent*e=&g.population.groups[k];if(e->spawned)popOnline++;float d=distance(a->x,a->y,e->x,e->y);if(d<popDistance){popDistance=d;popNear=k;}
+        for(int j=0;j<e->count;j++){if(g.population.state[k].detached&(1<<j))continue;Actor*b=e->spawned&&e->members[j]>=0?&g.actors[e->members[j]]:&e->reserve[j];popUnits++;popWearers+=b->prostheticMask!=0;}}
+    int popStats[8]={POP_GROUPS,popOnline,popUnits,popWearers,g.population.conflicts,g.population.deaths,g.population.arrivals,g.population.imported};VALUE("population",popStats,sizeof(popStats));
+    int popInfo[12]={0};float popPosition[2]={0};
+    if(popNear>=0){WorldEvent*e=&g.population.groups[popNear];PopulationState*m=&g.population.state[popNear];int data[12]={popNear,e->type,m->phase,e->serial,m->beds,e->spawned,e->count,m->stock[0],m->stock[1],m->stock[2],m->cacheQty,m->harvests};memcpy(popInfo,data,sizeof(data));popPosition[0]=e->x;popPosition[1]=e->y;}
+    VALUE("pop_near",popInfo,sizeof(popInfo));VALUE("pop_position",popPosition,sizeof(popPosition));
+    VALUE("fatigue",&a->fatigue,4);
+
     VALUE("attack", &a->attackPhase, 4);
     VALUE("time", &g.time, 4);
     VALUE("framecount", &rendered_frames, 4);

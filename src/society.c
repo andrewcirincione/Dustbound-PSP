@@ -231,7 +231,7 @@ int society_npc_job(int n,float dt){
   else if(S.freed[n]==2){route_toward(freed,freed->homeX,freed->homeY,dt);if(distance(freed->x,freed->y,freed->homeX,freed->homeY)<2){S.freed[n]=3;log_msg("%s reached refuge at %s.",freed->name,towns[freed->homeTown].name);}}
   return 1;
  }
- Actor*cook=&g.actors[n];if(cook->kind==GUARD&&cook->homeTown==14&&g.townOwner[14]==HOSTILE){for(int v=0;v<g.actorCount;v++)if(S.cannibal[v]==2&&!g.actors[v].dead&&distance(cook->x,cook->y,g.actors[v].x,g.actors[v].y)<24){if(distance(cook->x,cook->y,g.actors[v].x,g.actors[v].y)>2.5f)route_toward(cook,g.actors[v].x,g.actors[v].y,dt*.7f);return 1;}}
+ Actor*cook=&g.actors[n];if(cook->kind==GUARD&&cook->faction==HOSTILE&&cook->homeTown==14&&g.townOwner[14]==HOSTILE){for(int v=0;v<g.actorCount;v++)if(S.cannibal[v]==2&&!g.actors[v].dead&&distance(cook->x,cook->y,g.actors[v].x,g.actors[v].y)<24){if(distance(cook->x,cook->y,g.actors[v].x,g.actors[v].y)>2.5f)route_toward(cook,g.actors[v].x,g.actors[v].y,dt*.7f);return 1;}}
 
  for(int i=0;i<CONTRACTS;i++){Contract*c=&g.contracts[i];if(c->active!=1||(c->type!=5&&c->type!=6)||S.jobActor[i]!=n+1||c->progress)continue;
  Actor*a=&g.actors[n];float x=towns[c->target].x,y=towns[c->target].y;
@@ -256,7 +256,7 @@ static void tick_jobs(float dt){
  if(S.jobElapsed[i]>3600){c->active=3;log_warn("Service contract expired.");}
  }
 }
-static int near_guard(const Actor*a,int town,float reach){for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(!b->squad&&b->kind==GUARD&&b->homeTown==town&&conscious(b)&&depth_distance(a,b)<reach)return n;}return -1;}
+static int near_guard(const Actor*a,int town,float reach){for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(!b->squad&&b->kind==GUARD&&b->faction==g.townOwner[town]&&b->homeTown==town&&conscious(b)&&depth_distance(a,b)<reach)return n;}return -1;}
 static void tick_cannibals(float dt){
  for(int n=0;n<g.actorCount;n++){Actor*a=&g.actors[n];if(a->dead)continue;
  if(S.cannibal[n]==1){int captor=a->carriedBy;if(captor<0||!conscious(&g.actors[captor])){S.cannibal[n]=0;g.depth.actors[n].captive=0;continue;}
@@ -301,10 +301,20 @@ int nearby_actions(void){
  for(int b=0;b<g.buildingCount;b++){Building*v=&g.buildings[b];if(building_has_interior(v->type)&&distance(a->x,a->y,v->x+1.45f,v->y+.65f)<=1.7f)add_action(ACTION_CONTEXT,3,b);if(v->type>=WELL&&v->type!=WALL&&v->type!=WINDMILL&&distance(a->x,a->y,v->x,v->y)<=1.7f)add_action(ACTION_CONTEXT,2,b);}
  for(int k=0;k<LANDMARKS;k++)if(distance(a->x,a->y,g.depth.siteX[k],g.depth.siteY[k])<=1.7f)add_action(ACTION_CONTEXT,4,k);
  for(int i=0;i<living_local_count();i++)add_action(ACTION_EVENT,6,living_local_slot(i));
+ for(int k=0;k<POP_GROUPS;k++)if(g.population.version&&distance(a->x,a->y,g.population.groups[k].x,g.population.groups[k].y)<55){
+  if(distance(a->x,a->y,g.population.groups[k].x,g.population.groups[k].y)<8)add_action(ACTION_POPULATION,0,k);
+  int count=population_object_count(k);
+  for(int j=0;j<count;j++){float x,y;int type=population_object(k,j,&x,&y);if(distance(a->x,a->y,x,y)>1.7f)continue;
+   if(type==1){add_action(ACTION_POPULATION,1,k);if(g.population.groups[k].type==POP_MERCHANTS||g.population.groups[k].type==POP_SMUGGLERS)for(int v=0;v<3;v++)add_action(ACTION_POPULATION,30+v,k);}
+   else if(type==2)add_action(ACTION_POPULATION,10+j,k);
+   else if(type==3)add_action(ACTION_POPULATION,20,k);
+  }
+ }
  return actionCount;
 }
 const NearbyAction *nearby_action(int row){return row>=0&&row<actionCount?&actions[row]:NULL;}
 void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_action(row);if(!x){snprintf(out,size,"Nothing within reach");return;}
+ if(x->type==ACTION_POPULATION){population_action_label(x->target,x->kind,out,size);return;}
  if(x->type==ACTION_EVENT){char name[70];living_title(x->target,name,sizeof(name));snprintf(out,size,"Investigate %s",name);return;}
  if(x->type>=ACTION_RESCUED_FOLLOW){snprintf(out,size,"%s %s",x->type==ACTION_RESCUED_FOLLOW?"Ask to follow:":x->type==ACTION_RESCUED_LEAVE?"Leave me alone:":"Recruit:",g.actors[x->target].name);return;}
  if(x->kind==5){snprintf(out,size,"%s",interior_prompt());return;}
@@ -313,6 +323,7 @@ void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_
  snprintf(out,size,"%s %s",x->type==ACTION_UNLOCK?"Pick lock":x->type==ACTION_OPEN?"Open after unlocking":context_action(),context_name());ui.contextKind=kind;ui.contextIndex=index;
 }
 static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!conscious(a)||depth_room(a)!=x->room)return 0;int n=x->target;
+ if(x->type==ACTION_POPULATION)return population_action_valid(n,x->kind);
  if(x->type==ACTION_EVENT)return n>=0&&n<EVENTS&&!g.living.events[n].status&&distance(a->x,a->y,g.living.events[n].x,g.living.events[n].y)<=8;
  if(x->kind==0)return n>=0&&n<g.actorCount&&g.actors[n].active&&depth_room(&g.actors[n])==x->room&&depth_distance(a,&g.actors[n])<=TALK_REACH;
  if(x->kind==1)return n>=0&&n<g.nodeCount&&g.nodes[n].remaining&&distance(a->x,a->y,g.nodes[n].x,g.nodes[n].y)<=WORK_REACH;
@@ -321,6 +332,7 @@ static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!
  return n>=0&&n<g.buildingCount&&distance(a->x,a->y,g.buildings[n].x+(x->kind==3?1.45f:0),g.buildings[n].y+(x->kind==3?.65f:0))<=1.7f;
 }
 static void perform_action(const NearbyAction*x){Actor*a=&g.actors[g.selected];int n=x->target;if(!action_valid(x)){log_msg("Queued target is no longer within reach.");return;}
+ if(x->type==ACTION_POPULATION){population_action(n,x->kind);return;}
  if(x->type==ACTION_EVENT){WorldEvent*e=&g.living.events[n];if(e->type==2||e->type==3||e->type==4)living_action(n);else{char b[160];living_detail(n,b,sizeof(b));log_msg("%s",b);}return;}
  if(x->type==ACTION_ATTACK){command_attack(n);return;}
  if(x->type==ACTION_RESCUE){society_rescue_start(n);return;}
@@ -341,7 +353,9 @@ int society_validate(const Game*v){const Society*s=&v->society;if(!s->version)re
  for(int t=0;t<TOWNS;t++)if(s->crisis[t]<0||s->crisis[t]>2)return 0;
  for(int n=0;n<MAX_ACTORS;n++){if(s->rescueHelper[n]<0||s->rescueHelper[n]>v->actorCount||s->freed[n]<0||s->freed[n]>3||s->captorFaction[n]<0||s->captorFaction[n]>=FACTIONS)return 0;for(int c=0;c<WEAPON_CLASSES;c++)if(!isfinite(s->weaponXP[n][c])||s->weaponXP[n][c]<0||s->weaponXP[n][c]>117612)return 0;if(s->queueCount[n]<0||s->queueCount[n]>ACTION_QUEUE||s->cannibal[n]<0||s->cannibal[n]>2||!isfinite(s->eating[n])||!isfinite(s->suspicion[n])||!isfinite(s->gateMessage[n]))return 0;
   for(int f=0;f<FACTIONS;f++)if(s->wanted[n][f]<0||s->wanted[n][f]>100000||!isfinite(s->recognized[n][f]))return 0;
-  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_RESCUED_RECRUIT||a->kind<0||a->kind>6||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
+  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_POPULATION||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
+   if(a->type==ACTION_POPULATION){if(a->target>=POP_GROUPS||!(a->kind==0||a->kind==1||(a->kind>=11&&a->kind<=13)||a->kind==20||(a->kind>=30&&a->kind<=32)))return 0;continue;}
+   if(a->kind>6)return 0;
    if((a->type==ACTION_OPEN||a->type==ACTION_UNLOCK)&&a->kind!=1)return 0;
    if((a->type==ACTION_ATTACK||a->type==ACTION_CARRY||a->type==ACTION_STEAL||a->type==ACTION_RESCUE||a->type>=ACTION_RESCUED_FOLLOW)&&a->kind!=0)return 0;
    if(a->type==ACTION_EVENT&&a->kind!=6)return 0;}

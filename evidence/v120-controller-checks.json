@@ -1,0 +1,360 @@
+[
+  {
+    "eboot_sha256": "04cfa557c5fabc94541821529b194e369eead8febb3cb509e1b62b48b2dba918",
+    "version": "0.12.0"
+  },
+  {
+    "capture": "v120-psp-title",
+    "screen": 13,
+    "expected": 13,
+    "frame": 25,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-fresh-expedition",
+    "screen": 0,
+    "expected": 0,
+    "frame": 250,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "fresh_start_population": [
+      80,
+      1,
+      320,
+      13,
+      0,
+      0,
+      0,
+      20
+    ],
+    "normal_character_creation": true
+  },
+  {
+    "capture": "v120-psp-scavenger-camp",
+    "screen": 0,
+    "expected": 0,
+    "frame": 800,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "scavenger-camp",
+    "members": 5,
+    "beds": 3,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-actions-scavenger-camp",
+    "screen": 35,
+    "expected": 35,
+    "frame": 827,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-refugee-camp",
+    "screen": 0,
+    "expected": 0,
+    "frame": 983,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "refugee-camp",
+    "members": 5,
+    "beds": 3,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-hunters-camp",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1121,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "hunters-camp",
+    "members": 5,
+    "beds": 3,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-smugglers-den",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1263,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "smugglers-den",
+    "members": 5,
+    "beds": 3,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-traders-rest",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1406,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "traders-rest",
+    "members": 5,
+    "beds": 3,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-actions-traders-rest",
+    "screen": 35,
+    "expected": 35,
+    "frame": 1429,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-road-patrol",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1589,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "road-patrol",
+    "members": 4,
+    "beds": 0,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-raiding-band",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1742,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "raiding-band",
+    "members": 5,
+    "beds": 0,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-beast-pack",
+    "screen": 0,
+    "expected": 0,
+    "frame": 1888,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "beast-pack",
+    "members": 3,
+    "beds": 0,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-pilgrimage",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2038,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "pilgrimage",
+    "members": 5,
+    "beds": 0,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-wounded-travelers",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2182,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "wounded-travelers",
+    "members": 2,
+    "beds": 2,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-actions-wounded-travelers",
+    "screen": 35,
+    "expected": 35,
+    "frame": 2218,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-battlefield",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2408,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "battlefield",
+    "members": 5,
+    "beds": 0,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-actions-battlefield",
+    "screen": 35,
+    "expected": 35,
+    "frame": 2450,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-marching-army",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2628,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "marching-army",
+    "members": 16,
+    "beds": 0,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-actions-marching-army",
+    "screen": 35,
+    "expected": 35,
+    "frame": 2654,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "army_moves_without_player_order": true,
+    "distance": 5.024871826171875
+  },
+  {
+    "capture": "v120-psp-bandit-ambush",
+    "screen": 0,
+    "expected": 0,
+    "frame": 2913,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "bandit-ambush",
+    "members": 5,
+    "beds": 3,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-salvage-crew",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3055,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "salvage-crew",
+    "members": 5,
+    "beds": 3,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-prisoner-convoy",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3200,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "prisoner-convoy",
+    "members": 7,
+    "beds": 0,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-actions-prisoner-convoy",
+    "screen": 35,
+    "expected": 35,
+    "frame": 3238,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-wandering-duelists",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3417,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "encounter": "wandering-duelists",
+    "members": 3,
+    "beds": 0,
+    "serial": 97
+  },
+  {
+    "capture": "v120-psp-free-bed-action",
+    "screen": 35,
+    "expected": 35,
+    "frame": 3680,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-resting-in-camp-bed",
+    "screen": 0,
+    "expected": 0,
+    "frame": 3814,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-bed-recovered-health",
+    "screen": 3,
+    "expected": 3,
+    "frame": 3944,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-camp-barter",
+    "screen": 35,
+    "expected": 35,
+    "frame": 4130,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-camp-cooking",
+    "screen": 35,
+    "expected": 35,
+    "frame": 4221,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-camp-state-reloaded",
+    "screen": 0,
+    "expected": 0,
+    "frame": 4718,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-random-wanderer-limb",
+    "screen": 24,
+    "expected": 24,
+    "frame": 5131,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-random-limb-taken",
+    "screen": 24,
+    "expected": 24,
+    "frame": 5160,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "capture": "v120-psp-random-loot-stays-gone",
+    "screen": 24,
+    "expected": 24,
+    "frame": 5772,
+    "method": "EBOOT completed framebuffer; QA request does not modify state"
+  },
+  {
+    "completed": true,
+    "prepared_encounter_types": 16,
+    "bed_health_and_fatigue_recovery": true,
+    "finite_barter_and_cooking": true,
+    "camp_stock_save_reload": true,
+    "naturally_rolled_fitted_limb_looted_once_and_saved": true,
+    "read_only_qa": true,
+    "eboot_sha256": "04cfa557c5fabc94541821529b194e369eead8febb3cb509e1b62b48b2dba918"
+  }
+]

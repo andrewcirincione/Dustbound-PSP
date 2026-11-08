@@ -25,6 +25,7 @@ const char *npc_role_name(const Actor *a) {
         int ai=(int)(a-g.actors);
         if(a->prisonTime>0)return "PRISONER";
         if(limb_surgeon(ai))return "LIMB SURGEON";
+        if(population_owned(ai))return population_actor_role(ai);
         int elite=civil_elite_index(ai);if(elite>=0)return eliteDefs[elite].title;
         if(g.society.freed[ai])return "FREED SURVIVOR";
         int n = depth_named(ai);

@@ -1,0 +1,41 @@
+{
+  "version": "0.12.0",
+  "save_version": 12,
+  "qualified_date_utc": "2026-11-08",
+  "eboot_sha256": "04cfa557c5fabc94541821529b194e369eead8febb3cb509e1b62b48b2dba918",
+  "eboot_bytes": 1708502,
+  "prx_sha256": "28404bb5217a651d01a6b0fbd243fb641f2e1a3206d26aec50fd4491023305bb",
+  "game_bytes": 2127704,
+  "population_bytes": 1500196,
+  "actor_bytes": 932,
+  "catalog_items": 2378,
+  "persistent_population_groups": 80,
+  "encounter_archetypes": 16,
+  "existing_living_event_slots": 8,
+  "max_live_actors": 192,
+  "elf_text_bytes": 1253196,
+  "elf_data_bytes": 3516,
+  "elf_bss_bytes": 6525940,
+  "psp_framebuffer_captures": 33,
+  "psp_emulator_controller_completed": true,
+  "physical_psp_tested": false,
+  "natural_full_campaign_tested": false,
+  "controller_evidence": "evidence/v120-controller-checks.json",
+  "capture_method": "Completed PSP EBOOT framebuffers; normal character creation and controller-driven prepared saves; read-only QA snapshots",
+  "native_release_suites": [
+    "validate_v080.sh",
+    "validate_v081.sh",
+    "validate_v090.sh",
+    "validate_v100.sh",
+    "validate_v110.sh",
+    "validate_v120.sh"
+  ],
+  "population_sample": {
+    "seeds": 6,
+    "members": 1821,
+    "prosthetic_wearers": 122
+  },
+  "limb_generation_trials": 80000,
+  "strongest_tier_relic_parts": 5,
+  "historical_build_native_result": "Not rerun for this release; known obsolete dialogue-count assertion documented in VALIDATION_V110.md. Current release gates passed separately."
+}

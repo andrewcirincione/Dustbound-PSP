@@ -522,7 +522,7 @@ typedef struct {
     float depth;
     int kind, index, x, y;
 } Object;
-static Object objects[MAX_NODES + MAX_BUILDINGS + MAX_ACTORS + 1200];
+static Object objects[MAX_NODES + MAX_BUILDINGS + MAX_ACTORS + 1200 + POP_GROUPS*POP_PROPS];
 static int compare_obj(const void *a, const void *b) {
     float d = ((Object *)a)->depth - ((Object *)b)->depth;
     return d < 0 ? -1 : d > 0 ? 1 : 0;
@@ -547,6 +547,10 @@ static void objects_draw(void) {
         project(a->x, a->y, &x, &y);
         if (x > -30 && x < 510 && y > -20 && y < 250)
             objects[n++] = (Object){a->x + a->y, 2, i, x, y};
+    }
+    for(int k=0;k<POP_GROUPS;k++)for(int j=0;j<population_object_count(k);j++){
+        float wx,wy;int type=population_object(k,j,&wx,&wy);if(!type||fabsf(wx-ui.camX)>20||fabsf(wy-ui.camY)>20)continue;
+        int x,y;project(wx,wy,&x,&y);objects[n++]=(Object){wx+wy,4,k*POP_PROPS+j,x,y};
     }
     int cx = ui.camX, cy = ui.camY;
     for (int y = cy - 16; y < cy + 16; y++)
@@ -574,6 +578,7 @@ static void objects_draw(void) {
             int id = resource_sprite(o->index);
             art_shadow(id, x, y + (id < 24 ? 5 : 0));
         }
+        if(o->kind==4){float wx,wy;int t=population_object(o->index/POP_PROPS,o->index%POP_PROPS,&wx,&wy);art_shadow(t==1?27:t==2?16:t==4?26:31,x,y);}
         if (o->kind == 3) {
             int region = o->index / 4, variant = o->index % 4;
             int id = region == 7                    ? 10
@@ -626,6 +631,10 @@ static void objects_draw(void) {
             if (a->squad && o->index == g.selected) {
                 triangle(o->x - 3, o->y - 49, o->x + 3, o->y - 49, o->x, o->y - 45, TEAL);
             }
+        } else if(o->kind==4){
+            float wx,wy;int t=population_object(o->index/POP_PROPS,o->index%POP_PROPS,&wx,&wy),id=t==1?27:t==2?16:t==4?26:31;
+            art(id,o->x,o->y,light(),0);
+            if(t==1){int flicker=(int)(g.time*8)%3;diamond(o->x,o->y-6,2+flicker,4+flicker,0xe0a24b);}
         } else {
             int x = o->x, y = o->y;
             int region = o->index / 4, variant = o->index % 4;

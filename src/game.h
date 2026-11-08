@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.11.0"
+#define VERSION "0.12.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -213,6 +213,7 @@ typedef struct {
     float pulse; WorldEvent events[EVENTS];
 } LivingWorld;
 #include "society_types.h"
+#include "population_types.h"
 typedef struct {
     uint32_t seed, rng;
     float time, dayTime, raidTimer, autosave;
@@ -243,6 +244,8 @@ typedef struct {
     Society society;
     struct { int version,eliteActor[ELITES],routeTown[ELITES],fallen[ELITES]; float pulse; } civil;
     struct { int version, surgeonActor; } limbs;
+    /* v12: persistent population; all earlier save bytes stay in place. */
+    Population population;
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -319,6 +322,7 @@ int living_owned(int n);
 int living_hostile(const Actor *a,const Actor *b);
 int living_walk(int n,float dt);
 void living_loot(int n,int role,int tier);
+void living_gear(Actor *actor,int role,int tier,int seed);
 void living_title(int slot,char *out,int size);
 void living_detail(int slot,char *out,int size);
 void living_action(int slot);
@@ -497,4 +501,5 @@ void render_catalog_sample(uint32_t *pixels, int stride, int item);
 #include "society.h"
 #include "civilization.h"
 #include "limbs.h"
+#include "population.h"
 #endif

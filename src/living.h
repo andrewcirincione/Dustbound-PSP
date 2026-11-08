@@ -7,9 +7,9 @@ static const char *eventTypes[8]={"CARAVAN","RAIDING COLUMN","RELIEF APPEAL","LO
 static const char *eventMods[4]={"DUSTBOUND","STARVING","IRONCLAD","VETERAN"};
 int living_owned(int n){return n>=0&&n<MAX_ACTORS&&LW.owned[n]!=0;}
 static int actor_index(const Actor*a){return (uintptr_t)a>=(uintptr_t)g.actors&&(uintptr_t)a<(uintptr_t)(g.actors+g.actorCount)?(int)(a-g.actors):-1;}
-static int event_for(int n){return n>=0&&n<MAX_ACTORS&&LW.owned[n]>0?LW.owned[n]-1:-1;}
-void living_loot(int n,int role,int tier){
-    Actor*a=&g.actors[n];tier=(int)limit(tier,0,4);role%=8;
+static int event_for(int n){return n>=0&&n<MAX_ACTORS&&LW.owned[n]>0&&LW.owned[n]<=EVENTS?LW.owned[n]-1:-1;}
+void living_gear(Actor*a,int role,int tier,int n){
+    tier=(int)limit(tier,0,4);role%=8;
     static const int weapons[8]={8,3,85,29,5,87,0,16},armor[8]={45,43,38,32,34,36,47,39};
     int q=tier>=3?3:tier,m=tier>=3?5:tier==2?3:1;
     a->gear[0]=gear_id(weapons[role],m,q);a->gear[1]=gear_id(armor[role],m,q);
@@ -26,6 +26,7 @@ void living_loot(int n,int role,int tier){
     if(tier>=3)inventory_add(a,RELIC,tier-2);
     if(a->kind==BEAST){memset(a->gear,0,sizeof(a->gear));memset(a->pack,0,sizeof(a->pack));inventory_add(a,HIDE,2+tier);inventory_add(a,MEAT,2+tier);if(tier>=3)inventory_add(a,CATALOG_ITEMS+22,1);}
 }
+void living_loot(int n,int role,int tier){living_gear(&g.actors[n],role,tier,n);}
 void living_title(int slot,char*out,int size){WorldEvent*e=&LW.events[slot];snprintf(out,size,"%s %s",eventMods[e->modifier],eventTypes[e->type]);}
 void living_detail(int slot,char*out,int size){
     WorldEvent*e=&LW.events[slot];
@@ -81,7 +82,7 @@ void living_init(void){
 }
 int living_validate(const Game*s){
     const LivingWorld*d=&s->living;if(!d->version)return 1;if(d->version!=1||d->serial<0||d->historyPos<0||d->historyPos>=16||!isfinite(d->pulse))return 0;
-    for(int i=0;i<MAX_ACTORS;i++)if(d->owned[i]<-1||d->owned[i]>EVENTS||d->command[i]<-1||d->command[i]>=s->actorCount)return 0;
+    for(int i=0;i<MAX_ACTORS;i++)if(d->owned[i]<-1||d->owned[i]>EVENTS+POP_GROUPS||d->command[i]<-1||d->command[i]>=s->actorCount)return 0;
     for(int i=0;i<EVENTS;i++){const WorldEvent*e=&d->events[i];if(e->type<0||e->type>7||e->modifier<0||e->modifier>3||e->tier<0||e->tier>4||e->count<0||e->count>16||e->status<0||e->status>2||e->town<0||e->town>=TOWNS||e->origin<0||e->origin>=TOWNS||e->faction<0||e->faction>=FACTIONS||!isfinite(e->x)||!isfinite(e->y)||!isfinite(e->age)||!isfinite(e->presence)||e->x<0||e->y<0||e->x>WORLD||e->y>WORLD)return 0;
         for(int j=0;j<16;j++)if(e->members[j]<-1||e->members[j]>=s->actorCount)return 0;
         if(e->stored<0||e->stored>1||e->spawned<0||e->spawned>1)return 0;
@@ -107,14 +108,14 @@ static int materialize(int slot){
         static const char *roles[8]={"VANGUARD","SCOUT","BREAKER","GUNNER","SPEAR GUARD","REAVER","CAPTAIN","MEDIC"};
         char name[16];snprintf(name,sizeof(name),"%s %s",e->modifier==3?"VET":"ROAD",i==0&&e->type==7?"WARLORD":roles[i%8]);
         if(e->stored){
-            g.actors[n]=e->reserve[i];g.depth.actors[n]=e->reserveDepth[i];
+            society_actor_reset(n);g.actors[n]=e->reserve[i];g.depth.actors[n]=e->reserveDepth[i];
             Actor*a=&g.actors[n];a->x=x;a->y=y;a->active=1;a->target=a->attackTarget=-1;a->attackPhase=0;a->routeLen=a->routePos=0;
             e->members[i]=n;LW.owned[n]=slot+1;LW.command[n]=-1;LW.anger[n]=e->reserveAnger[i]?1:0;continue;
         }
         int tier=i==0?e->tier:(int)fmaxf(0,e->tier-1),skill=5+tier*12+(e->modifier==3?7:0);
         init_actor(n,name,e->type==5?BEAST:e->type==4?SETTLER:GUARD,e->faction,x,y,skill);
         memset(&g.depth.actors[n],0,sizeof(DepthActor));g.depth.actors[n].upkeep=100;
-        living_loot(n,i%8,tier);Actor*a=&g.actors[n];
+        living_loot(n,i%8,tier);Actor*a=&g.actors[n];population_roll_limbs(a,e->seed^(i*73819u),tier);
         if(e->modifier==1)a->hunger=25;
         if(e->modifier==2&&a->kind!=BEAST)a->gear[1]=gear_id(38,3,tier>=3?3:tier);
         if(e->type==4){a->health[CHEST]=35;a->health[LLEG]=25;a->bleed=.1f;}
@@ -171,13 +172,13 @@ void living_tick(float dt){
         else if(e->spawned){for(int i=0;i<e->count;i++){Actor*a=&g.actors[e->members[i]];if(!a->active&&!a->dead){a->active=1;a->x=e->x+(i%4)*1.6f;a->y=e->y+(i/4)*1.7f;}}}
     }
 }
-int living_walk(int n,float dt){int k=event_for(n);if(k<0)return 0;WorldEvent*e=&LW.events[k];Actor*a=&g.actors[n];
+int living_walk(int n,float dt){if(population_walk(n,dt))return 1;int k=event_for(n);if(k<0)return 0;WorldEvent*e=&LW.events[k];Actor*a=&g.actors[n];
     if(e->type==4){if(e->status==1)route_toward(a,a->homeX,a->homeY,dt);return 1;}
     if(e->status)return 1;
     int i=0;while(i<16&&e->members[i]!=n)i++;float x=e->x+(i%4)*1.6f,y=e->y+(i/4)*1.7f;
     if(distance(a->x,a->y,x,y)>1)route_toward(a,x,y,dt);return 1;
 }
-int living_hostile(const Actor*a,const Actor*b){int ai=actor_index(a),bi=actor_index(b);if(ai<0||bi<0)return 0;
+int living_hostile(const Actor*a,const Actor*b){if(population_hostile(a,b))return 1;int ai=actor_index(a),bi=actor_index(b);if(ai<0||bi<0)return 0;
     if((LW.anger[ai]&&b->squad)||(LW.anger[bi]&&a->squad))return 1;
     int k=event_for(ai);if(k>=0&&LW.events[k].type==6&&!b->squad&&b->kind==GUARD&&b->faction!=a->faction)return 1;
     k=event_for(bi);return k>=0&&LW.events[k].type==6&&!a->squad&&a->kind==GUARD&&b->faction!=a->faction;
@@ -200,7 +201,7 @@ int combat_candidates(void){return combat_candidate(-1);}
 int actor_relation(int n){if(n<0||n>=g.actorCount)return 0;Actor*a=&g.actors[n],*p=&g.actors[g.selected];return hostile(a,p)?-1:a->squad||a->faction==p->faction||g.rep[a->faction]>=15?1:0;}
 void command_attack(int n){Actor*a=&g.actors[g.selected];if(n<0||n>=g.actorCount||g.actors[n].squad||!conscious(a)||!conscious(&g.actors[n])||depth_distance(a,&g.actors[n])>14)return;
     Actor*b=&g.actors[n];if(!hostile(a,b)){crime_add(a,b->faction,100);g.rep[b->faction]-=20;log_msg("Assault: +100 bounty; faction standing -20.");}
-    LW.anger[n]=1;int k=event_for(n);if(k>=0)for(int i=0;i<LW.events[k].count;i++){int j=LW.events[k].members[i];if(j>=0)LW.anger[j]=1;}
+    population_anger(n);LW.anger[n]=1;int k=event_for(n);if(k>=0)for(int i=0;i<LW.events[k].count;i++){int j=LW.events[k].members[i];if(j>=0)LW.anger[j]=1;}
     LW.command[g.selected]=n;a->target=n;a->autoattack=1;ui.attackFocus=n;
 }
 #undef LW

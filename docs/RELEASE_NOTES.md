@@ -1,17 +1,16 @@
-# Dustbound 0.11.0 — Flesh and iron
+# Dustbound 0.12.0 — An unquiet frontier
 
-Limbs can now be severed, individually replaced, surgically removed and physically looted from equipped wanderers.
+Persistent world encounters now range from small camps and wounded travelers to prisoner convoys and marching armies. Prosthetic limbs remain uncommon.
 
-- **Five grades of arms and legs:** Scrap, Standard, Reinforced, Precision and Relic. Different durability, strength/dexterity, movement and carrying bonuses. Individual left/right fitting with old/new stat comparison.
-- **Regional limb shops:** basic replacements in Dusk Haven, Reinforced in Copper Cross/Red Gulch, Precision in Iron Gate/Shogun's Rest, and Relic in Black Mesa. Markets have a dedicated Mechanical Limbs filter and stock repair/fitting parts.
-- **Surgeon Venn in Dusk Haven:** permanent arm or leg removal for 400 silver, with an explicit confirmation. The wound is closed; buy a replacement before surgery.
-- **Crawling:** losing either leg changes movement and posture; losing both is slower still. Fitting replacements restores standing movement.
-- **Remaining-hand combat:** either hand can retain a weapon. Missing an arm reduces two-handed damage and accuracy and increases attack delay. One-handed weapons avoid those missing-arm penalties.
-- **Lootable fitted limbs:** six named wanderers carry real mechanical parts. Taking a fitted part from a fallen owner removes that owner's function and keeps ordinary theft provenance. Loss and looting persist through saves.
-- **Permanent consequences:** organic severing leaves a physical limb and bleeding. Mechanical destruction leaves parts. Bandages cannot regrow limbs or repair metal. Replacements require two parts per fitting; ordinary mechanical repairs use parts.
+- **80 persistent encounter groups, 16 situations:** scavengers, refugees, hunters, smugglers, traders, patrols, raiders, beasts, pilgrims, wounded travelers, battlefields, 12–16-member armies, ambushes, salvage crews, prisoner convoys and duelists.
+- **Camps you can use:** tents, fires, actual beds, cooking, finite supply caches and limited-stock traveling traders. Beds heal and reduce fatigue when safe; taking owned supplies can provoke the camp.
+- **Activity beyond your view:** groups travel, rest, gather resources and fight other factions off-screen. Nearby groups use the ordinary actor simulation.
+- **Persistent consequences:** injuries, corpses, equipment, stolen goods, fitted limbs and supplies survive streaming and saves. Leaving and returning cannot reroll the loot. Freed prisoners retain the existing follow/flee/recruit behavior.
+- **Uncommon prosthetics:** low-tier humanoids have a 4% chance to wear one, increasing modestly with tier. Strong grades are scarcer; Relic parts are exceptional. Actual fitted parts can be looted once from fallen owners.
+- **Earlier limb mechanics retained:** five grades, replacement shops, Surgeon Venn, crawling with a missing leg and two-handed weapon penalties with a missing arm.
 
-Install `Dustbound-0.11.0-PSP.zip` at the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Save format is v11; an actual v10 save was migrated and reloaded. Earlier readers remain supported. Back up saves before overwriting them with a newer version.
+Install `Dustbound-0.12.0-PSP.zip` at the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Save format is v12; an actual v11 save was migrated and reloaded. Earlier readers remain supported. Back up saves before overwriting them with a newer version.
 
-[Grades, locations and controls](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/CONTENT_V110.md) · [PSP screenshots](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/FEEDBACK_V110.md) · [Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V110.md)
+[Encounter details](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/CONTENT_V120.md) · [PSP screenshots](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/FEEDBACK_V120.md) · [Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V120.md)
 
-Verified with native simulation/sanitizer suites and a controller-driven PPSSPP walkthrough of prepared saves. Physical PSP testing and a full naturally played campaign balance pass are not claimed. This remains a playable alpha.
+Verified with native simulation/sanitizer suites and controller-driven PPSSPP scenarios. This is a bounded simulation with coarse off-screen battles. Physical PSP testing and naturally played long-run campaign balance are not claimed. Playable alpha.

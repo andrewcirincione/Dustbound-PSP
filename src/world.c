@@ -598,6 +598,7 @@ int complete_contract(int n) {
     return 1;
 }
 const char *dialogue_line(int n, int page) {
+    if(!page&&population_owned(n))return population_dialogue(n);
     const char *authored=depth_line(n);if(authored)return authored;
     if (n < 0 || n >= g.actorCount)
         return "The road is quiet.";
