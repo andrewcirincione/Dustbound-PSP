@@ -77,6 +77,9 @@ int main(void) {
     inventory_add_owned(a, MEDKIT, 1, UNION);
     a->health[CHEST] = 50;
     use_item(owned(a, MEDKIT, UNION));
+    CHECK(a->taskKind == TASK_TREAT && owned(a, MEDKIT, UNION) >= 0 && a->health[CHEST] == 50);
+    for (int i = 0; i < 100 && a->taskKind == TASK_TREAT; i++)
+        simulate(.05f);
     CHECK(owned(a, MEDKIT, UNION) < 0 && inventory_count(a, MEDKIT) == 1 && a->health[CHEST] > 50);
     /* Full-pack craft failure must restore both cargo and ownership bytes. */
     fresh();
@@ -108,6 +111,7 @@ int main(void) {
     CHECK(owned(a, IRONBAR, UNION) >= 0);
     /* Navigation: help and cancel are exact round trips; save-and-title never writes immediately. */
     fresh();
+    g.actors[g.selected].pack[17] = (Stack){ORE, 1};
     ui.screen = SCREEN_PACK;
     ui.selection = 17;
     ui.scroll = 9;
@@ -215,18 +219,18 @@ int main(void) {
     g.interiorY = 2.5;
     CHECK(nearby_station(FORGE, 1.7f) == 0);
     g.interiorBuilding = 0;
-    a->x = 42;
-    a->y = 44;
+    a->x = towns[0].x + 5;
+    a->y = towns[0].y + 4;
     b = &g.actors[1];
     b->active = 1;
     b->dead = 0;
     b->unconscious = 0;
     b->voice = ROLE_BARBER;
     b->kind = SETTLER;
-    b->x = 48;
-    b->y = 44;
+    b->x = a->x + 6;
+    b->y = a->y;
     CHECK(nearby_service(ROLE_BARBER) < 0);
-    b->x = 43;
+    b->x = a->x + 1;
     CHECK(nearby_service(ROLE_BARBER) == 1);
     dialogue_open(1);
     ui.selection = 0;
@@ -246,12 +250,14 @@ int main(void) {
     g.buildings[0].storage[1] = (Stack){WATER, 6};
     g.buildings[1] = (Building){.x = 48, .y = 44, .type = CAMPFIRE, .owner = 0};
     CHECK(strstr(job_status(a), "water"));
+    ui.playerIdle = 5;
     step(75);
     CHECK(stored(0, RATION) > 0);
     CHECK(stored(0, GRAIN) < 18 && stored(0, WATER) < 6);
     CHECK(inventory_count(a, RATION) >= 2);
     CHECK(a->x > 42 && a->x < 49);
     for(int i=0;i<LANDMARKS;i++)g.depth.siteBuilding[i]=-1; /* This fixture replaces all world buildings. */
+    memset(g.trails.bed, 0, sizeof(g.trails.bed));
     CHECK(save_game("build/v052-workers.sav"));
     int q = stored(0, RATION);
     CHECK(load_game("build/v052-workers.sav"));

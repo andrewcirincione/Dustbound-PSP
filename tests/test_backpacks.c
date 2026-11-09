@@ -64,10 +64,11 @@ int main(void) {
     inventory_add(a, MEDKIT, 3);
     Actor hurt = *a;
     assert(heal_actor(0, 0));
-    float ordinary = a->health[HEAD];
+    float ordinary = a->action;
+    assert(a->health[HEAD] == hurt.health[HEAD]);
     *a = hurt;
     a->gear[5] = gear_id(78, 0, 0);
-    assert(heal_actor(0, 0) && a->health[HEAD] > ordinary);
+    assert(heal_actor(0, 0) && a->action < ordinary && a->health[HEAD] == hurt.health[HEAD]);
 
     game_new(73819, 0);
     g.identityVersion = 1;
@@ -101,7 +102,7 @@ int main(void) {
     inventory_add(&g.actors[0], ORE, 3);
     char desc[180];
     contract_description(1, desc, sizeof(desc));
-    assert(strstr(desc, "3/8 held"));
+    assert(strstr(desc, "3/8 in squad"));
     assert(load_game("build/v050-expedition.sav"));
     assert(g.identityVersion == 2 && g.money == 85 && g.squadCount == 2);
     assert(g.actors[g.selected].gear[1] == LEATHER);
