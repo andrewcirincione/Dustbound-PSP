@@ -1320,7 +1320,8 @@ static void overlay_header(const char *name, const char *sub) {
     text(27, 40, name, GOLD, 2);
     text(28, 61, sub, MUTED, 1);
     line(27, 75, 451, 75, EDGE);
-    text(28, 237, ui.menuReturn ? "\002 BACK   \010 GUIDE" : "\002 CLOSE   \010 GUIDE", MUTED, 1);
+    int summons = ui.screen == SCREEN_DIALOG && ui.dialogPage == DIALOG_SUMMONS;
+    text(28, 237, summons ? "\010 GUIDE" : ui.menuReturn ? "\002 BACK   \010 GUIDE" : "\002 CLOSE   \010 GUIDE", MUTED, 1);
     if ((ui.screen >= SCREEN_PACK && ui.screen <= SCREEN_SQUAD) || ui.screen==SCREEN_EQUIPPED) {
         char who[60];snprintf(who,sizeof(who),ui.screen==SCREEN_HEALTH?"\005 MEMBER   \006 LIMBS":"\005/\006 MEMBER: %.16s",g.actors[g.selected].name);text(249,237,who,MUTED,1);
     }
