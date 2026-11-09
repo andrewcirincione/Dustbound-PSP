@@ -46,7 +46,7 @@ const char *npc_role_name(const Actor *a) {
 }
 static const int services[][7] = {
  {6,12,8,-1}, {0,14,1,6,12,8,-1}, {6,12,18,8,-1}, {1,4,15,6,8,-1}, {2,1,6,12,8,-1},
- {3,6,12,8,-1}, {7,1,6,12,8,-1}, {5,6,12,8,-1}, {1,14,6,12,8,-1}, {9,10,6,12,8,-1}};
+ {3,6,12,8,-1}, {0,7,1,6,12,8,-1}, {5,6,12,8,-1}, {1,14,6,12,8,-1}, {9,10,6,12,8,-1}};
 int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
         return 0;
@@ -69,7 +69,7 @@ const char *dialogue_option(int actor, int row) {
                                    "Any paying work?",
                                    "Where can I rest? Beds: 25 silver",
                                    "Treat my wounds. 80 silver",
-                                   "Bounties and local news.",
+                                   "Review bounty and local news.",
                                    "Change my appearance.",
                                    "What have you heard?",
                                    "Use the smithy.",
@@ -103,7 +103,7 @@ float context_distance(void) {
                     b->y + (ui.contextKind == 3 ? .65f : 0));
 }
 float context_reach(void) {
-    return ui.contextKind == 1 ? WORK_REACH : ui.contextKind == 0 ? TALK_REACH : 1.7f;
+    return ui.contextKind == 1 ? WORK_REACH : ui.contextKind == 0 ? TALK_REACH : ui.contextKind == 3 ? DOOR_REACH : 1.7f;
 }
 const char *context_name(void) {
     int n = ui.contextIndex;
@@ -547,7 +547,7 @@ int loot_take(int slot, int all) {
     int it = limb_loot_item(b,slot);
     int qty = slot < PACK && all ? b->pack[slot].qty : 1;
     int owner = slot < PACK ? b->stolen[slot] : slot<PACK+GEARS?b->gearStolen[slot-PACK]:limb_owner(b,LARM+slot-PACK-GEARS);
-    int theft = !b->squad && b->faction != HOSTILE && b->faction != WILDLIFE;
+    int theft = !b->squad && b->faction > FREE && b->faction != HOSTILE && b->faction != WILDLIFE;
     if (theft)
         owner = b->faction;
     if (!it || !inventory_add_owned(a, it, qty, owner)) {
@@ -566,7 +566,7 @@ int loot_take(int slot, int all) {
             Actor *w = &g.actors[i];
             if (!w->squad && w->faction == b->faction && conscious(w) &&
                 depth_distance(a, w) < (a->sneaking ? 3 : 6)) {
-                crime_add(a,b->faction,20);
+                crime_charge(a,b->faction,20,CRIME_THEFT);
                 g.rep[b->faction] -= 4;
                 log_warn("Witnessed looting! Bounty +20; stolen goods stay marked.");
                 return 1;

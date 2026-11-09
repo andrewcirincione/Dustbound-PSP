@@ -120,19 +120,22 @@ int main(void) {
     float health = 0;
     for (int i = 0; i < LIMBS; i++)
         health += e->health[i];
+    int bleeding = 0;
     for (int i = 0; i < 15; i++) {
         a->cooldown = 0;
         a->attackPhase = 0;
         e->stun = 0;
         strike(0, enemy);
-        for (int j = 0; j < 12; j++)
+        for (int j = 0; j < 12; j++) {
             simulate(.1f);
+            bleeding |= e->bleed > 0;
+        }
     }
     float after = 0;
     for (int i = 0; i < LIMBS; i++)
         after += e->health[i];
     CHECK(after < health && a->xp[MELEE] > 48, "melee causes body-part damage and skill XP");
-    CHECK(e->bleed > 0, "cutting weapons cause bleeding");
+    CHECK(bleeding, "cutting weapons cause bleeding");
     a->health[CHEST] = 40;
     a->bleed = 2;
     int kits = inventory_count(a, MEDKIT);

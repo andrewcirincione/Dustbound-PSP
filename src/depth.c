@@ -134,6 +134,7 @@ int depth_validate(const Game *s) {
 }
 int depth_trade_open(int town) {
     ui.roadTrader = 0;
+    ui.tradeSmith = 0;
     if (town < 0)
         return 0;
     if (g.dayTime < 6 || g.dayTime >= 22) {

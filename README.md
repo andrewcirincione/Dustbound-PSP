@@ -1,6 +1,6 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.17.5 — Field survival
+## 0.17.6 — The town watch
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
@@ -20,7 +20,7 @@ Starving bandits carry poor weapons and wear incomplete clothing. Soldiers wear 
 
 New expeditions start in one of five settlements with different equipment, companions, and difficulty. The atlas and local map share the walking view's orientation. Nearby Actions lists self-treatment and shows why unavailable actions are disabled. Wounds recover after treatment. A bed speeds up recovery, and portable bedrolls can be deployed and packed away. Toughness determines the threshold for a recovery coma. Jail staff treat prisoners, and rare travelers can help injured strangers.
 
-The thin control strip shows common menu shortcuts. Squad management separates direct assignments from job priorities. Follow tracks the controlled member, and the active character's assigned work waits for five idle seconds in Passive stance. The scrolling news bar includes squad skill gains and urgent injury alerts.
+The thin control strip shows common menu shortcuts. Squad management separates direct assignments from job priorities. Follow tracks the controlled member, and the active character's assigned work waits for five idle seconds in Passive stance. The scrolling news bar keeps urgent injury alerts and gives the last message more time on screen.
 
 The world activity ledger records where and when you actually saw a group. A report can be located on the map, but does not track the group after it leaves. Councils show named claimants and the price policy each would implement. Beds beside NPCs now perform the selected rest action reliably. Successful autosaves are silent.
 
@@ -28,7 +28,7 @@ Fighting now has clearer windups, outlined knockout bars and staggered AI melee 
 
 Weapon handling now changes the actual strike speed. Relaxed carry and combat guards blend smoothly; fists, bows, firearms, thrusting weapons and heavy swings have distinct motion. Rigid grips prevent overstretched arms, walking follows distance, and combat labels leave raised weapons visible.
 
-Guards physically carry wanted survivors to cells. In custody they treat wounds and seize stolen goods. Work camps issue slave garb and hold confiscated belongings in a chest. Road traders carry their own stock, and treating faction members, trading or completing work can improve standing.
+For a minor bounty the watch approaches and offers payment or jail. A bounty of 100 silver or more triggers pursuit on sight. Guards carry subdued or surrendered survivors to cells, treat wounds and seize stolen goods. Work camps issue slave garb and hold confiscated belongings in a chest. Road traders carry their own stock, and treating faction members, trading or completing work can improve standing.
 
 ## The wider game
 
@@ -43,7 +43,7 @@ Guards physically carry wanted survivors to cells. In custody they treat wounds 
 
 ## Install
 
-Extract `Dustbound-0.17.5-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v22 reads earlier expeditions and remembers deployed bedrolls, custody and confiscated belongings. Existing equipment, training and town control carry over.
+Extract `Dustbound-0.17.6-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v23 reads earlier expeditions and remembers each faction’s charges alongside custody and confiscated belongings. Existing equipment, training and town control carry over.
 
 ## Controls
 

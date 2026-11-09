@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.17.5
+# Dustbound field guide — 0.17.6
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -30,7 +30,7 @@ Armor protects specific body locations. Piercing weapons ignore some armor; serr
 
 ## 5. Wounds & Rescue
 
-Head or chest injuries and blood loss can knock a survivor out. Below your Toughness threshold, a recovery coma lasts until your vitals recover. Severe head trauma or bleeding out can kill.
+Head or chest injuries and blood loss can knock a survivor out. Below your Toughness threshold, a recovery coma lasts until your vitals recover. A waking survivor stays down and can treat their own injuries. Move to get up. Severe head trauma or bleeding out can kill.
 
 Dress an injured body part before it can heal. Clotting stops blood loss. It still takes a dressing to start healing. Severe wounds take longer to bandage and recover. Beds and clinic care speed up recovery. Health shows healthy tissue in teal, untreated damage in red and dressed damage in gold. Nearby Actions offers first aid, emergency dressings and Play dead. You can treat yourself while playing dead. An ally can treat or carry someone who is down. A rare passerby may help or carry you to a safe bed. Lost limbs never regrow. A bad leg injury makes you limp; a missing leg or two disabled legs makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Prosthetics are uncommon on ordinary travelers; high-grade parts are rarer. Actual fitted limbs on fallen wanderers can be looted. Death is permanent; dismiss the body from Squad to free its slot.
 
@@ -50,7 +50,7 @@ Plate protects more but slows movement and hinders stealth. Cloth is light; trav
 
 Talk to a trader and choose Trade. ![horizontal](../assets/ui/horizontal.svg) switches buying and selling; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) filters supplies, weapons, armor or backpacks. ![cross](../assets/ui/cross.svg) trades one item. Shops have finite stocks and refresh daily with different gear.
 
-Regional exports are cheap; imports and shortages cost more. Green percentages mean a good buy or sale; red means poor, relative to ordinary buy/resale value. Ask merchants for trading tips. Hostile factions refuse trade unless fooled by a disguise. Selling stolen goods back to their owner can expose you; Black Mesa fences accept them. The item details show its stats and effects before purchase.
+Regional exports are cheap; imports and shortages cost more. Green percentages mean a good buy or sale; red means poor, relative to ordinary buy/resale value. Ask merchants for trading tips. Hostile factions refuse trade unless fooled by a disguise. Stolen goods appear in red. The selling list shows the chance a trader accepts the item without reporting you. Stealth and Thievery improve the odds. Black Mesa fences most outside goods. The item details show its stats and effects before purchase.
 
 ## 9. Forging Gear
 
@@ -80,13 +80,13 @@ Smelt and Cook use nearby stations and can collect ingredients from a nearby dep
 
 ![circle](../assets/ui/circle.svg) sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and ![cross](../assets/ui/cross.svg) near a civilian to inspect a pickpocket attempt. Select an item with ![vertical](../assets/ui/vertical.svg). Risk reflects weight, value, approach and visible witnesses. Getting behind the target improves odds. ![cross](../assets/ui/cross.svg) steals one; ![circle](../assets/ui/circle.svg) cancels. Owned salvage says STEAL. Locks take time to pick; tools are optional.
 
-Shop and house chests are private. Repeated theft can bring pocket checks for two days. Witnesses can warn you or raise a bounty. A theft can fail, drawing guards. Stolen stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a defeated wanted survivor. Jail staff treat injuries while you serve time. Press Cross for bail or a timed lockpick. Tools help, and a failed attempt adds to your sentence and bounty. Nearby Actions frees other prisoners or slaves. Work takes time and guards can catch you. Some freed people flee; others follow independently. Only Recruit adds them to your squad. Leave me alone dismisses a follower.
+Shop and house chests are private. Repeated theft can bring pocket checks for two days. Witnesses can warn you or raise a bounty. A theft can fail, drawing guards. Stolen stacks retain an owner until fenced. Review the charges with a watch officer before confirming a payment. Jail staff treat injuries while you serve time. Failed lockpicks train your skill. Nearby Actions frees other prisoners or slaves. Work takes time and guards can catch you. Some freed people flee; others follow independently. Only Recruit adds them to your squad. Leave me alone dismisses a follower.
 
 ## 14. Factions
 
 Compact guards roads and wells; Rust Caravans trade salvage. Shogunate markets sell lamellar and glaives. Ash monks sell medicine; Black Mesa fences stolen goods. Vultures raid; wild packs hunt.
 
-Contracts raise standing; theft lowers it. The Factions ledger shows separate wanted amounts. Ash Monastery, Shogun Rest and Vulture Nest require matching body armor and headwear; close inspections can expose a disguise. Hired guards cost 240 silver for escort or 180 for camp duty: one simulated day. They fight and bandage independently, keep their gear, wait outside interiors and return home on expiry.
+Contracts raise standing; theft lowers it. The Factions ledger shows each faction’s outstanding amount and charges. Ash Monastery, Shogun Rest and Vulture Nest require matching body armor and headwear; close inspections can expose a disguise. Hired guards cost 240 silver for escort or 180 for camp duty: one simulated day. They fight and bandage independently, keep their gear, wait outside interiors and return home on expiry.
 
 ## 15. Contracts
 
@@ -108,7 +108,7 @@ Tonics and rest help recover. Rain irrigates farms. The northern highlands are c
 
 ## 18. Captivity
 
-The watch carries wanted survivors to a jail cell, treats injuries and confiscates stolen goods. In the cell, ![cross](../assets/ui/cross.svg) offers bail or lockpicking. The watch can relock an open cell if you linger. Move to the exit and press ![cross](../assets/ui/cross.svg) to leave.
+For a minor bounty the watch asks you to pay or serve time. At 100 silver or more they pursue and arrest you when you fall. Jail staff treat injuries and seize stolen goods. In the cell, ![cross](../assets/ui/cross.svg) offers bail or lockpicking. The watch can relock an open cell if you linger. Move to the exit and press ![cross](../assets/ui/cross.svg) to leave. Escaping adds a charge and the watch can pursue you.
 
 Slavers carry fallen survivors to a work camp. Shackled prisoners work in issued garb. The camp chest holds their seized equipment and supplies. Press ![cross](../assets/ui/cross.svg) to pick your shackles. Former captors can recognize escapees.
 
@@ -116,7 +116,7 @@ Slavers carry fallen survivors to a work camp. Shackled prisoners work in issued
 
 Approach a house, inn, shop, tower or workshop door and press ![cross](../assets/ui/cross.svg) to enter. Walk around the room with the analog stick. Furniture blocks movement; use the aisles. ![cross](../assets/ui/cross.svg) near the door returns outside.
 
-Counters open local trade. Beds cost 25 silver in town; owned beds are free. Workshop stations open forging, research or storage. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other groups and hired guards remain outside.
+Counters open local trade and smithies sell weapons and armor. Inns offer multiple beds for 25 silver each. Owned beds are free. Use a research bench directly from outside. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other groups and hired guards remain outside.
 
 Save games preserve the building and indoor position. Switching squad members leaves the room. Interiors shelter you from weather; occupants who distrust you may demand you leave and attack if you stay.
 

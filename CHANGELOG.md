@@ -1,3 +1,12 @@
+# 0.17.6 — The town watch
+
+- Passive and unarmed walks use relaxed arms. One-handed weapon grips leave both arms readable. Fallen and resting survivors have a revised ground pose and stay down after waking until they act. Self-treatment can be done while down.
+- Trading posts have more forgiving door reach. Town NPCs walk into and out of buildings on their own schedules. Inns have four beds, and smithies sell weapons and armor. Research benches are used outdoors.
+- Inventory and loot show quantity and base value per item. Stolen stacks are marked red and traders show sale odds based on Stealth and Thievery. Shopkeepers watch owned stock. New low-level bandits carry fewer useful supplies.
+- Factions shows charges and bounty amounts. Minor bounties prompt a fine or jail. The watch pursues serious bounties, and paying clears the charge and ends that pursuit. A jail escape renews the pursuit. Novice lockpicks usually fail and train the skill.
+- Dropped bodies stay where you set them down. The last ticker entry stays longer. Skill gains are silent, room labels clear the ticker, and the minimap shows a plain N.
+- Save format v23 reads v22 and older expeditions.
+
 # 0.17.5 — Field survival
 
 - Untreated limb damage stays until bandaged. Treated wounds recover slowly on the trail and faster in beds. Severe damage takes longer. Limb bars show healthy tissue, untreated damage and dressed damage separately, and bleeding is marked red.

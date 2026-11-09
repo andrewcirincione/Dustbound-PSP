@@ -31,7 +31,7 @@ float depth_distance(const Actor *a, const Actor *b) {
 static int room_clear(int room, float x, float y) {
     if (room <= 0 || room > g.buildingCount || x < .4f || y < .4f || x > 6.6f || y > 6.6f)
         return 0;
-    InteriorProp props[8];
+    InteriorProp props[ROOM_PROPS];
     int n = interior_props(room - 1, props);
     for (int i = 0; i < n; i++)
         if (fabsf(x - props[i].x) < props[i].w + .18f && fabsf(y - props[i].y) < props[i].d + .18f)
@@ -76,49 +76,38 @@ void depth_move_room(Actor *a, float dx, float dy, float dt) {
 }
 void depth_enter_room(int building) {
     Actor *a = &g.actors[g.selected];
-    int room = building + 1, keeper = -1;
-    float near = 14;
+    int room = building + 1;
     for (int i = 0; i < g.actorCount; i++) {
         Actor *b = &g.actors[i];
-        if (!conscious(b) || b == a || depth_room(b))
+        if (b == a || !b->squad || !conscious(b) || depth_room(b) || D.actors[i].paused ||
+            assigned_job(b) != JOB_FOLLOW || distance(a->x, a->y, b->x, b->y) >= 4)
             continue;
-        if (b->squad && assigned_job(b) == JOB_FOLLOW && !D.actors[i].paused &&
-            distance(a->x, a->y, b->x, b->y) < 4) {
-            D.actors[i].room = room;
-            D.actors[i].rx = 2.8f + (i % 2) * 1.3f;
-            D.actors[i].ry = 5.8f;
-        }
-        int role = npc_role(b), type = g.buildings[building].type;
-        if (!b->squad && depth_named(i) < 0 &&
-            b->faction == g.buildings[building].faction &&
-            ((type == SHOP && role == ROLE_MERCHANT) || (type == BAR && role == ROLE_INNKEEPER) ||
-             ((type == TOWER || type == JAIL) && b->kind == GUARD))) {
-            float d = distance(a->x, a->y, b->x, b->y);
-            if (d < near) {
-                near = d;
-                keeper = i;
-            }
-        }
+        D.actors[i].room = room;
+        D.actors[i].rx = 2.8f + (i % 2) * 1.3f;
+        D.actors[i].ry = 5.8f;
     }
-    int home = g.buildings[building].type == HOUSE;
-    if (home)
-        keeper = home_occupant(building);
-    if (keeper >= 0) {
-        D.actors[keeper].room = room;
-        D.actors[keeper].rx = home ? 2.6f : 3;
-        D.actors[keeper].ry = home ? 3.3f : .9f;
-    }
+}
+void actor_leave_room(int n) {
+    Actor *a = &g.actors[n];
+    int room = depth_room(a);
+    if (!room)
+        return;
+    const Building *b = &g.buildings[room - 1];
+    D.actors[n].room = 0;
+    D.actors[n].trespass = 0;
+    a->x = b->x + 1.45f;
+    a->y = b->y + .65f;
+    a->routeLen = a->routePos = 0;
+    a->target = -1;
+    a->attackPhase = 0;
+    if (g.interiorBuilding && n == g.interiorActor)
+        g.interiorBuilding = 0;
 }
 void depth_leave_room(int building) {
     for (int i = 0; i < g.actorCount; i++)
-        if (D.actors[i].room == building + 1 && g.actors[i].prisonTime <= 0) {
-            D.actors[i].room = 0;
-            D.actors[i].trespass = 0;
-            g.actors[i].target = -1;
-            g.actors[i].attackPhase = 0;
-            g.actors[i].x = g.buildings[building].x + 1.45f + (i % 2) * .4f;
-            g.actors[i].y = g.buildings[building].y + .65f;
-        }
+        if (g.actors[i].squad && D.actors[i].room == building + 1 && g.actors[i].prisonTime <= 0 &&
+            !g.field.intake[i])
+            actor_leave_room(i);
 }
 int depth_room_target(void) {
     Actor *a = &g.actors[g.selected];
@@ -196,7 +185,7 @@ void depth_room_tick(float dt) {
                 if (before < 5 && z->trespass >= 5)
                     log_msg("Private property. Leave before the occupants raise alarm.");
                 if (before < 12 && z->trespass >= 12) {
-                    crime_add(a, b->faction, 80);
+                    crime_charge(a, b->faction, 80, CRIME_TRESPASS);
                     g.rep[b->faction] -= 30;
                     log_warn("The occupants called the watch.");
                 }

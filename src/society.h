@@ -18,8 +18,14 @@ int society_gate(Actor*a,float x,float y);
 int disguise_faction(const Actor*a);
 int disguise_score(const Actor*a,int faction);
 int wanted_amount(const Actor*a,int faction);
-void crime_add(Actor*a,int faction,int amount);
+enum { CRIME_THEFT = 1, CRIME_PICKPOCKET = 2, CRIME_ASSAULT = 4, CRIME_TRESPASS = 8,
+       CRIME_STOLEN_SALE = 16, CRIME_ESCAPE = 32, CRIME_AID_ESCAPE = 64,
+       CRIME_DISGUISE = 128, CRIME_PRIOR = 256, CRIME_MASK = 511, SERIOUS_BOUNTY = 100 };
+void crime_charge(Actor *a, int faction, int amount, unsigned reason);
+void crime_add(Actor *a, int faction, int amount);
 void crime_clear(Actor*a,int faction);
+int crime_pay(Actor *a, int faction);
+void crime_description(const Actor *a, int faction, char *out, int size);
 float market_factor(int town,int item);
 int market_percent(int town,int item,int selling);
 const char *trade_tip(int town);

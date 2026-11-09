@@ -85,6 +85,7 @@ static void shops_and_theft(void) {
     assert(ui.screen == SCREEN_WORLD && wanted_amount(a, faction) == 40);
     for (int i = 0; i < PACK; i++)
         assert(a->stolen[i] != faction);
+    crime_clear(a, faction);
     g.day += 2;
     step(2);
     assert(ui.screen == SCREEN_WORLD);
@@ -100,15 +101,16 @@ static void shops_and_theft(void) {
 static void homes(void) {
     game_new(73819, 0);
     int present = 0, vacant = 0, bare = 0;
-    for (int hour = 8; hour <= 20; hour += 12) {
+    for (int hour = 1; hour <= 20; hour += 19) {
         g.dayTime = hour;
+        step(45);
         for (int i = 0; i < g.buildingCount; i++) {
             if (g.buildings[i].type != HOUSE)
                 continue;
             int occupant = home_occupant(i);
             present += occupant >= 0;
             vacant += occupant < 0;
-            InteriorProp props[8];
+            InteriorProp props[ROOM_PROPS];
             int has_chest = 0, count = interior_props(i, props);
             for (int j = 0; j < count; j++)
                 has_chest |= props[j].action == ROOM_CHEST;

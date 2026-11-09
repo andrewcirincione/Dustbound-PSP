@@ -399,14 +399,15 @@ static void head_attachment(int family, float *width, float *top, float *bottom)
     *bottom = *top + height;
 }
 static void painted_arm(const Actor *a, int i, const float shoulder[2], const float wrist[2],
-                        int sc, int face, int race, uint32_t skin, uint32_t cloth, float li, int unarmed) {
+                        int sc, int face, int race, uint32_t skin, uint32_t cloth, float li, int fist, int relaxed) {
     int limb = LARM + i;
     if (limb_missing(a, limb))
         return;
     float sx = shoulder[0], sy = shoulder[1], hx = wrist[0], hy = wrist[1];
     float dx = hx - sx, dy = hy - sy, d = hypotf(dx, dy);
     float bend = sqrtf(fmaxf(0, 49 * sc * sc - d * d * .25f));
-    int elbowSide = (unarmed || i ? 1 : -1) * face;
+    if (relaxed) bend *= .25f;
+    int elbowSide = (fist || i ? 1 : -1) * face;
     float ex = (sx + hx) * .5f - (d > .01f ? dy / d : 0) * bend * elbowSide;
     float ey = (sy + hy) * .5f + (d > .01f ? dx / d : 1) * bend * elbowSide;
     int grade = limb_item_grade(limb_installed(a, limb)), mech = race == 2 || grade >= 0;
@@ -414,7 +415,7 @@ static void painted_arm(const Actor *a, int i, const float shoulder[2], const fl
     uint32_t tint = grade >= 0 ? limbGrades[grade].color : cloth;
     part(mech ? 76 : 72, sx, sy, ex, ey, 4 * sc, !mech && (!torso || torso == RAGS) ? skin : tint, li, 0, flip, 0, 1);
     part(mech ? 77 : 75, ex, ey, hx, hy, 3 * sc, mech ? tint : skin, li, 0, flip, 0, 1);
-    if (unarmed) {
+    if (fist) {
         /* Rotate the closed fist with its forearm so it reads during contact. */
         float length = fmaxf(1, hypotf(hx - ex, hy - ey));
         float ux = (hx - ex) / length * sc, uy = (hy - ey) / length * sc;
@@ -542,7 +543,7 @@ static uint32_t actor_hair(const Actor *a) {
     static const uint32_t hairs[] = {0x211e1b, 0x433026, 0x776047, 0xa4835c, 0xc1b5a0, 0x713e32};
     return hairs[a->hairColor % 6];
 }
-static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float stance, int variant) {
+static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float stance, int variant, int laid_out) {
     uint32_t skin = actor_skin(a);
     int race = species_index(a);
     paintHair = actor_hair(a);
@@ -562,7 +563,9 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     float block = a->impactKind == 2 && a->hitFlash > 0 ? pose_ease(a->hitFlash / .27f) : 0;
     int stowed = a->squad && !a->autoattack && !a->attackPhase && block <= 0 ? a->gear[0] : 0;
     int weapon = a->attackPhase ? a->attackWeapon : stowed ? 0 : a->gear[0];
-    if (stowed)
+    int relaxed = !a->attackPhase && block <= 0 &&
+                  ((a->squad && !a->autoattack) || (!weapon && stance < .2f));
+    if (relaxed)
         stance = 0;
     const CombatProfile *profile = combat_profile(weapon);
     CombatPose rig = combat_pose(weapon, a->attackPhase, progress, variant);
@@ -615,9 +618,11 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         static uint32_t prone[128*120];
         Actor standing=*a;standing.dead=0;standing.unconscious=0;standing.taskKind=0;
         standing.attackPhase=0;standing.movedTimer=0;standing.hitFlash=0;standing.sneaking=0;
+        standing.gear[0] = 0;
+        standing.carrying = -1;
         int in_bed = actor_in_bed(a);
         if (in_bed) {
-            standing.gear[0] = standing.gear[2] = standing.gear[5] = 0;
+            standing.gear[2] = standing.gear[5] = 0;
             standing.facing = 1;
             standing.health[LLEG] = standing.health[RLEG] = species_health(a);
         }
@@ -625,27 +630,37 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         PaintBounds *oldPaint = trackedPaint, pronePaint = {128, 120, 0, 0};
         memset(prone,0,sizeof(prone));fb=prone;pitch=128;clipLeft=clipTop=0;clipRight=128;clipBottom=120;
         trackedPaint = &pronePaint;
-        actor_painted_stance(&standing,64,104,1,li,0,0);
+        actor_painted_stance(&standing,64,104,1,li,0,0,1);
         trackedPaint = oldPaint;
         fb=oldfb;pitch=oldpitch;clipLeft=l;clipTop=t;clipRight=r;clipBottom=b;
         if (pronePaint.left >= pronePaint.right || pronePaint.top >= pronePaint.bottom)
             return;
-        if (in_bed)
-            track_paint((PaintBounds){x - 40 * sc, y - 25 * sc, x + 40 * sc, y + 25 * sc});
-        else
-            track_paint((PaintBounds){x + (85 - pronePaint.bottom) * sc, y - 3 * sc + (pronePaint.left - 64) * sc / 2,
-                                      x + (85 - pronePaint.top) * sc, y - 2 * sc + (pronePaint.right - 1 - 64) * sc / 2});
-        for (int sy = pronePaint.top; sy < pronePaint.bottom; sy++)
-            for (int sx = pronePaint.left; sx < pronePaint.right; sx++) {
+        /* Project the relaxed figure onto the ground. Sample backward so
+           adjacent shoulders and limbs stay distinct at the gameplay scale. */
+        float ax = in_bed ? -.84f : .91f * face, ay = in_bed ? -.42f : -.31f;
+        float bx = in_bed ? .29f : .25f * face, by = in_bed ? -.60f : .74f;
+        float det = ax * by - ay * bx;
+        float minX = 1e9f, minY = 1e9f, maxX = -1e9f, maxY = -1e9f;
+        for (int corner = 0; corner < 4; corner++) {
+            float along = 84 - (corner & 1 ? pronePaint.top : pronePaint.bottom);
+            float across = (corner & 2 ? pronePaint.left : pronePaint.right) - 64;
+            float px = x + sc * (ax * along + bx * across);
+            float py = y - 3 * sc + sc * (ay * along + by * across);
+            minX = fminf(minX, px); maxX = fmaxf(maxX, px);
+            minY = fminf(minY, py); maxY = fmaxf(maxY, py);
+        }
+        PaintBounds ground = clip_paint((PaintBounds){floorf(minX), floorf(minY), ceilf(maxX), ceilf(maxY)},
+                                        clipLeft, clipTop, clipRight, clipBottom);
+        track_paint(ground);
+        for (int py = ground.top; py < ground.bottom; py++)
+            for (int px = ground.left; px < ground.right; px++) {
+                float dx = (px + .5f - x) / sc, dy = (py + .5f - y) / sc + 3;
+                int sx = (int)floorf(64 + (ax * dy - ay * dx) / det);
+                int sy = (int)floorf(84 - (by * dx - bx * dy) / det);
+                if (sx < pronePaint.left || sx >= pronePaint.right || sy < pronePaint.top || sy >= pronePaint.bottom)
+                    continue;
                 uint32_t pixel = prone[sy * 128 + sx];
-                if (!pixel) continue;
-                int along = sy - 84, across = sx - 64;
-                int dx = in_bed ? x + (along * 4 + across * 2) * sc / 5 : x - along * sc;
-                int dy = in_bed ? y + (along * 2 - across * 2) * sc / 5 : y - 3 * sc + across * sc / 2;
-                for (int yy = 0; yy < sc; yy++)
-                    for (int xx = 0; xx < sc; xx++)
-                        if (dx + xx >= clipLeft && dx + xx < clipRight && dy + yy >= clipTop && dy + yy < clipBottom)
-                            fb[(dy + yy) * pitch + dx + xx] = pixel;
+                if (pixel) fb[py * pitch + px] = pixel;
             }
         return;
     }
@@ -655,7 +670,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         PART(96 + species, 0, -22 - bob, 0, 0, 33, 0xb4a38e, 0);
         return;
     }
-    if(limb_crawling(a)) {
+    if(!laid_out && limb_crawling(a)) {
         float cycle=a->movedTimer>0?sinf(a->anim*2):0;
         /* Horizontal torso, dragging legs, and alternating grounded hands. */
         for(int i=0;i<2;i++){
@@ -753,9 +768,15 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     grip=reachable_grip(grip,shoulders[primary][0],shoulders[primary][1],
         shoulders[1-primary][0],shoulders[1-primary][1],support,
         combat_two_hands(weapon)&&arms==2,13.5f*sc);
+    int twoHands = combat_two_hands(weapon);
     int rearPunch = !weapon && a->attackPhase && variant == UNARMED_CROSS;
     for (int i = 0; i < 2; i++) {
-        if (!weapon) {
+        if (relaxed || (weapon && !twoHands && i != primary)) {
+            float swing = -feet[i].stride * walk * (1 - .65f * blend);
+            float out = (i ? face : -face) * (weapon ? 1.9f : 1.2f);
+            wrists[i][0] = shoulders[i][0] + (out + swing * walkX * 2.5f) * sc;
+            wrists[i][1] = shoulders[i][1] + (12.9f - blend * 1.2f + swing * walkY * .8f) * sc;
+        } else if (!weapon) {
             float hx = i == primary ? rig.handX : rig.rearX;
             float hy = i == primary ? rig.handY : rig.rearY;
             if (i == primary && arms == 1 && rearPunch) {
@@ -772,18 +793,14 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
             fist = reachable_grip(fist, shoulders[i][0], shoulders[i][1], 0, 0, 0, 0, 13.5f * sc);
             wrists[i][0] = fist.x;
             wrists[i][1] = fist.y;
-            continue;
+        } else {
+            float along = i != primary ? support : 0;
+            wrists[i][0] = grip.x + grip.ux * along;
+            wrists[i][1] = grip.y + grip.uy * along;
         }
-        float along=i!=primary?support:0;
-        wrists[i][0]=grip.x+grip.ux*along;
-        wrists[i][1]=grip.y+grip.uy*along;
-        if (i!=primary && !combat_two_hands(weapon)) {
-            float swing = -feet[i].stride * walk * (1 - blend);
-            wrists[i][0] = RX(-face * 5 + swing * walkX * 2.8f, -14 - 8 * blend + rig.crouch);
-            wrists[i][1] = RY(-14 - 8 * blend + rig.crouch + swing * walkY);
-        }
-        painted_arm(a, i, shoulders[i], wrists[i], sc, face, race, skin, cloth, li, 0);
     }
+    if (relaxed || (weapon && !twoHands))
+        painted_arm(a, 1 - primary, shoulders[1 - primary], wrists[1 - primary], sc, face, race, skin, cloth, li, 0, 1);
     int coat = tf == 32 || tf == 33 || tf == 39 || tf == 40 || tf == 42 || tf == 44 || tf == 47;
     // Join the chin to the collar; transparent face/collar edges otherwise
     // leave a floating head, most visible with the smaller fitted hats.
@@ -799,17 +816,18 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         head_attachment(hf, &wide, &top, &bottom);
         PART(hf, 0, top, 0, bottom, wide, itemDefs[head].color, itemDefs[head].quality);
     }
-    if (!weapon) {
-        /* Keep both fists readable above the coat, with the near arm on top. */
-        painted_arm(a, 1 - primary, shoulders[1 - primary], wrists[1 - primary], sc, face, race, skin, cloth, li, 1);
-        painted_arm(a, primary, shoulders[primary], wrists[primary], sc, face, race, skin, cloth, li, 1);
-    } else if (arms) {
+    if (!relaxed && (!weapon || twoHands))
+        painted_arm(a, 1 - primary, shoulders[1 - primary], wrists[1 - primary], sc, face, race, skin, cloth, li, !weapon, 0);
+    painted_arm(a, primary, shoulders[primary], wrists[primary], sc, face, race, skin, cloth, li, !weapon && !relaxed, relaxed);
+    if (weapon && arms) {
         weapon_sprite(weapon, grip.x, grip.y, sc, angle, face, li);
         for (int i = 0; i < 2; i++) {
-            if (!(missing & (1 << (LARM + i)))) {
-                float hx = wrists[i][0], hy = wrists[i][1];
-                part(78, hx, hy - 1.6f * sc, hx, hy + 1.6f * sc, 2.8f * sc, skin, li, 0, i ^ (face < 0), 0, 1);
-            }
+            if (missing & (1 << (LARM + i)))
+                continue;
+            float hx = wrists[i][0], hy = wrists[i][1];
+            int grade = limb_item_grade(limb_installed(a, LARM + i));
+            uint32_t tint = grade >= 0 ? limbGrades[grade].color : skin;
+            part(78, hx, hy - 1.6f * sc, hx, hy + 1.6f * sc, 2.8f * sc, tint, li, 0, i ^ (face < 0), 0, 1);
         }
     }
     if (a->carrying >= 0 && a->carrying < g.actorCount) {
@@ -829,7 +847,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
 }
 /* Direct previews use the same pose resolver as the cached world renderer. */
 static inline void actor_painted(Actor *a,int x,int y,int sc,float li){
-    actor_painted_stance(a,x,y,sc,li,combat_stance(a),combat_attack_variant(a));
+    actor_painted_stance(a,x,y,sc,li,combat_stance(a),combat_attack_variant(a),0);
 }
 #define ACT_W 128
 #define ACT_H 120
@@ -864,7 +882,7 @@ static void paint_actor_scratch(Actor *a, float li, float stance, int variant) {
     clipLeft = clipTop = 0;
     clipRight = ACT_SCRATCH_STRIDE;
     clipBottom = ACT_H * 2;
-    actor_painted_stance(a, ACT_W, ACT_ANCHOR, 2, li, stance, variant);
+    actor_painted_stance(a, ACT_W, ACT_ANCHOR, 2, li, stance, variant, 0);
     fb = oldfb;
     pitch = oldpitch;
     clipLeft = oldClip.left;
@@ -1017,7 +1035,7 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
         line(x, y + 6, x + 10, y + 1, TEAL);
     }
     if (sc != 1) {
-        actor_painted_stance(a, x, y, sc, li,stance,variant);
+        actor_painted_stance(a, x, y, sc, li,stance,variant,0);
         return;
     }
     uint64_t key = actor_key(a, (int)(li * 64), stance, variant);

@@ -186,7 +186,7 @@ static void jail(void) {
     g.interiorX = 3.5f;
     g.interiorY = 6.35f;
     game_tick(.03f, (Input){.pressed = KEY_CROSS});
-    assert(!a->prisonTime && !actor_inside(a) && wanted_amount(a, g.townOwner[0]) == wanted);
+    assert(!a->prisonTime && !actor_inside(a) && wanted_amount(a, g.townOwner[0]) == wanted + 60);
 }
 
 static void slavery(void) {
@@ -288,7 +288,10 @@ static void unwelcome_entry(void) {
     init_actor(guard, "Watch", GUARD, b->faction, a->x, a->y, 12);
     g.rep[b->faction] = -45;
     assert(interior_enter(building));
-    assert(depth_room(&g.actors[guard]) == building + 1);
+    assert(!depth_room(&g.actors[guard]));
+    g.depth.actors[guard].room = building + 1;
+    g.depth.actors[guard].rx = 3;
+    g.depth.actors[guard].ry = .9f;
     depth_room_tick(1);
     assert(g.depth.actors[0].trespass >= 1 && g.actors[guard].target < 0);
     depth_room_tick(6);

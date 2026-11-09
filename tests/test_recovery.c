@@ -233,7 +233,7 @@ static void custody(void) {
     assert(jail_pick_start(0));
     g.rng = roll_seed(100, 0);
     tick_expansion(a->action + .01f);
-    assert(!a->prisonTime && wanted_amount(a, g.townOwner[0]) == 0);
+    assert(!a->prisonTime && wanted_amount(a, g.townOwner[0]) == SERIOUS_BOUNTY);
     puts("PASS: jail intake always begins gradual care, including when the guard leaves. Timed lockpicking supports tools, wire, save/load and failed attempts.");
 }
 

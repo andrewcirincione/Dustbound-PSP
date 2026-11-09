@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.17.5"
+#define VERSION "0.17.6"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -220,7 +220,8 @@ typedef struct {
 } Contract;
 enum { CONTRACT_DISPATCH, CONTRACT_ORE, CONTRACT_HUNT, CONTRACT_RELIC, CONTRACT_FREIGHT,
        CONTRACT_ESCORT, CONTRACT_PATROL, CONTRACT_BOUNTY, CONTRACT_TYPES };
-enum { DIALOG_WORK = 1, DIALOG_INSPECTION = 6, DIALOG_DISMISS = 7, DIALOG_WORK_HINT = 8 };
+enum { DIALOG_WORK = 1, DIALOG_INSPECTION = 6, DIALOG_DISMISS = 7, DIALOG_WORK_HINT = 8,
+       DIALOG_BOUNTY = 9, DIALOG_SUMMONS = 10 };
 typedef struct {
     int layout;
     int chestRefresh[MAX_BUILDINGS];
@@ -299,9 +300,12 @@ typedef struct {
         Stack seized[SLAVE_CAMPS][SEIZED_STACKS];
         unsigned char seizedOwner[SLAVE_CAMPS][SEIZED_STACKS];
     } field; /* v22 extension */
+    unsigned short charges[MAX_ACTORS][FACTIONS]; /* v23 extension */
 } Game;
 enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
-enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE, ROOM_CHEST };
+enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE };
+enum { ROOM_PROPS = 10 };
+#define DOOR_REACH 2.75f
 typedef struct {
     float x, y, w, d;
     int art, action;
@@ -342,7 +346,7 @@ typedef struct {
     int createRow, createOrigin, createBody, createSkin, createHair, createHairColor, createBeard,
         createRace;
     int nameCursor, nameCell, storageIndex, storageSide, shopFilter, saveMode, lootActor, mapZoom, mapTown;
-    int chestKind, roadTrader; /* road trader index plus one */
+    int chestKind, roadTrader, tradeSmith, watchApproach; /* actor indices plus one */
     char createName[16];
     SaveInfo saves[SAVE_SLOTS];
     int helpSelection, helpScroll, saveReturn, saveExit, contextChoice, contextCount, squadCyclePending;
@@ -438,6 +442,13 @@ void town_life_init(void);
 float settlement_time(void);
 void town_theft(int town);
 void pocket_inspection(int guard, int allow);
+int watch_town(const Actor *guard);
+int watch_surrender(int guard);
+float stolen_sale_chance(int town, int slot);
+int stolen_sale(int town, int slot);
+int town_npc_routine(int actor, float dt);
+void actor_leave_room(int actor);
+void put_down(Actor *carrier);
 int nearest_ore(float x, float y, float reach, int type);
 enum { CORE_SKILL_ROWS = SKILLS - 1 };
 float context_distance(void);

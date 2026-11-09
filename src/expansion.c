@@ -26,7 +26,7 @@ const StartScenario startScenarios[START_SCENARIOS] = {
     {3, "Standard", "Start alone in the Dry Market, a Scavenger trading town. You have field dressings and enough silver to buy supplies or hire help."},
     {11, "Hard", "Start at Shogun's Rest with a soldier's blade, armor, and combat training. There is little silver to spare, and the Iron Throne's war runs through this region."},
     {16, "Standard", "Start at Brass Junction with metal, coal, and a heavy pack. Labour and smithing give you a head start. Work the nearby deposits or trade your stock."},
-    {8, "Hardest", "Start outside Black Mesa with 180 silver and a Union bounty. You know how to sneak and steal. Union patrols will look for you beyond the enclave."},
+    {8, "Hardest", "Start outside Black Mesa with 180 silver and a Union theft bounty. You know how to sneak and steal. Union patrols will look for you beyond the enclave."},
     {10, "Easy", "Start at Cinder Port with Reed and Vale. You have more silver, a travel pack, a crossbow and dressings. Three people need food and care."}
 };
 void scenario_menu(int origin, int from) {
@@ -126,7 +126,7 @@ void character_finish(void) {
         }
         if (origin == 3) {
             g.money = 180;
-            crime_add(a,UNION,160);
+            crime_charge(a, UNION, 160, CRIME_THEFT);
             g.rep[UNION] = -20;
         }
         if (origin == 4)
@@ -420,7 +420,12 @@ int expansion_input(float dt, Input in) {
     if (ui.screen == SCREEN_TRADE && (p & (KEY_L | KEY_R))) {
         if (ui.sell)
             return 1;
-        ui.shopFilter = wrapi(ui.shopFilter + (p & KEY_L ? -1 : 1), 6);
+        if (ui.tradeSmith) {
+            static const int filters[] = {0, 2, 3};
+            int index = ui.shopFilter == 2 ? 1 : ui.shopFilter == 3 ? 2 : 0;
+            ui.shopFilter = filters[wrapi(index + (p & KEY_L ? -1 : 1), 3)];
+        } else
+            ui.shopFilter = wrapi(ui.shopFilter + (p & KEY_L ? -1 : 1), 6);
         ui.selection = 0;
         return 1;
     }
@@ -685,9 +690,11 @@ int expansion_input(float dt, Input in) {
         Actor *b = &g.actors[n];
         int town = town_near(a->x, a->y, 14), prison = a->prisonTime > 0 && n == g.selected,
             count = prison ? 3 : ui.dialogPage == DIALOG_WORK ? work_dialogue_count(town)
-                    : ui.dialogPage == DIALOG_INSPECTION ? 2
+                    : ui.dialogPage == DIALOG_BOUNTY ? 3
+                    : (ui.dialogPage == DIALOG_INSPECTION || ui.dialogPage == DIALOG_SUMMONS) ? 2
                     : (ui.dialogPage == DIALOG_DISMISS || ui.dialogPage == DIALOG_WORK_HINT) ? 1 : dialogue_count(n);
         if (p & (KEY_CIRCLE | KEY_START)) {
+            if (ui.dialogPage == DIALOG_SUMMONS) return 1;
             if (ui.dialogPage == DIALOG_INSPECTION)
                 pocket_inspection(n, 0);
             open_view(SCREEN_WORLD);
@@ -699,7 +706,17 @@ int expansion_input(float dt, Input in) {
             ui.selection = wrapi(ui.selection + 1, count);
         if (p & KEY_CROSS) {
             int choice = ui.selection;
-            if (ui.dialogPage == DIALOG_WORK_HINT) {
+            if (ui.dialogPage == DIALOG_SUMMONS) {
+                if ((choice == 0 && crime_pay(a, b->faction)) || (choice == 1 && watch_surrender(n)))
+                    open_view(SCREEN_WORLD);
+            } else if (ui.dialogPage == DIALOG_BOUNTY) {
+                if (choice == 0 && crime_pay(a, b->faction))
+                    open_view(SCREEN_WORLD);
+                if (choice > 0) {
+                    ui.dialogPage = choice == 1 ? 5 : 0;
+                    ui.selection = 0;
+                }
+            } else if (ui.dialogPage == DIALOG_WORK_HINT) {
                 ui.dialogPage = 0;
                 ui.selection = 0;
             } else if (ui.dialogPage == DIALOG_INSPECTION || ui.dialogPage == DIALOG_DISMISS) {
@@ -727,11 +744,13 @@ int expansion_input(float dt, Input in) {
                 case 0:
                     if (population_vendor(n) && conscious(b) && depth_distance(a, b) <= TALK_REACH) {
                         ui.roadTrader = n + 1;
+                        ui.tradeSmith = 0;
                         ui.tradeTown = -1;
                         ui.sell = ui.shopFilter = 0;
                         open_view(SCREEN_TRADE);
                     } else if (town >= 0 && depth_trade_open(town)) {
                         ui.tradeTown = town;
+                        ui.tradeSmith = npc_role(b) == ROLE_SMITH;
                         ui.sell = 0;
                         ui.shopFilter = 0;
                         open_view(SCREEN_TRADE);
@@ -749,15 +768,8 @@ int expansion_input(float dt, Input in) {
                     doctor_heal(town);
                     break;
                 case 4:
-                    if (town >= 0 && wanted_amount(a,g.townOwner[town]) > 0 && g.money >= wanted_amount(a,g.townOwner[town])) {
-                        g.money -= wanted_amount(a,g.townOwner[town]);
-                        crime_clear(a,g.townOwner[town]);
-                        g.rep[g.townOwner[town]] = 0;
-                        log_msg("Bounty paid to the local authority.");
-                    } else {
-                        ui.dialogPage = 5;
-                        ui.selection = 0;
-                    }
+                    ui.dialogPage = watch_town(b) >= 0 && wanted_amount(a, b->faction) ? DIALOG_BOUNTY : 5;
+                    ui.selection = 0;
                     break;
                 case 5:
                     if (town >= 0)

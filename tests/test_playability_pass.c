@@ -176,18 +176,19 @@ static void retreat_and_news(void) {
     assert(distance(x, y, npc->x, npc->y) < 1);
     assert(ash->x == 400);
     ui.feedCount = ui.logCount = 0;
+    float xp = reed->xp[MEDICINE];
     gain(reed, MEDICINE, 400);
+    assert(reed->xp[MEDICINE] > xp && !ui.feedCount);
+    log_msg("The trader has new stock.");
     reed->bleed = 2;
     log_tick(.03f);
     assert(strstr(ui.feed[0], "REED is bleeding") && ui.feedPriority[0] > ui.feedPriority[1]);
-    char levelup[80];
-    snprintf(levelup, sizeof(levelup), "REED reached %s", skillNames[MEDICINE]);
-    assert(strstr(ui.feed[1], levelup));
+    assert(strstr(ui.feed[1], "new stock"));
     int priority, offset;
     log_tick(.9f);
     log_current(&priority, &offset);
     assert(offset > 0);
-    puts("PASS: fleeing scavenger holds a safe position; urgent squad warning queues ahead of ally level-up and scrolls.");
+    puts("PASS: fleeing scavenger holds a safe position; skill gains are silent and urgent news queues ahead of routine messages.");
 }
 static void scenarios_and_atlas(void) {
     for (int i = 0; i < START_SCENARIOS; i++) {

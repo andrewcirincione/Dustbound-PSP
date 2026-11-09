@@ -230,6 +230,8 @@ void route_toward(Actor *a, float x, float y, float dt) {
     }
 }
 static void outfit(Actor *a, int n) {
+    if (a->kind == RAIDER && level(a, MELEE) <= 12)
+        return;
     if (a->kind == BEAST)
         return;
     int f = a->faction, m = (n + f) % MATERIALS, q = a->kind == GUARD ? 2 : n % 2;
@@ -364,6 +366,39 @@ static Actor *road_vendor(void) {
         return NULL;
     return &g.actors[n];
 }
+static float sale_chance(const Actor *a, int slot, int faction) {
+    int owner = a->stolen[slot];
+    if (!owner || (faction == OUTLAWS && owner != faction))
+        return 1;
+    int value = itemDefs[a->pack[slot].item].price;
+    return limit(.16f + level(a, STEALTH) * .003f + level(a, THEFT) * .005f +
+                 (faction != owner ? .22f : 0) - fminf(.12f, value * .00012f), .05f, .96f);
+}
+float stolen_sale_chance(int town, int slot) {
+    if (slot < 0 || slot >= PACK)
+        return 0;
+    const Actor *m = town == -1 ? road_vendor() : NULL;
+    int faction = m ? m->faction : town >= 0 && town < TOWNS ? g.townOwner[town] : FREE;
+    return sale_chance(&g.actors[g.selected], slot, faction);
+}
+int stolen_sale(int town, int slot) {
+    Actor *a = &g.actors[g.selected];
+    if (!a->stolen[slot])
+        return 1;
+    float chance = stolen_sale_chance(town, slot);
+    gain(a, THEFT, 22);
+    if (chance >= 1 || wrand() % 1000 < chance * 1000)
+        return 1;
+    const Actor *m = town == -1 ? road_vendor() : NULL;
+    int faction = m ? m->faction : town >= 0 && town < TOWNS ? g.townOwner[town] : FREE;
+    if (faction > FREE && faction < WILDLIFE) {
+        crime_charge(a, faction, 40, CRIME_STOLEN_SALE);
+        g.rep[faction] -= 8;
+        log_warn("The trader recognized the stolen goods and reported you. Bounty +40.");
+    } else
+        log_warn("The trader recognized the stolen goods and refused the sale.");
+    return 0;
+}
 int item_price(int town, int it, int selling) {
     if (it <= 0 || it >= ITEMS)
         return 0;
@@ -386,6 +421,8 @@ int market_quantity(int town, int item) {
 }
 static int shop_visible(int item) {
     int slot = itemDefs[item].slot;
+    if (ui.tradeSmith && (slot < 0 || slot == 5))
+        return 0;
     switch (ui.shopFilter) {
     case 1: return slot < 0;
     case 2: return slot == 0;
@@ -439,14 +476,15 @@ int road_trade(int item, int slot) {
         log_msg("Not enough silver.");
         return 0;
     }
-    if (selling && a->stolen[slot] && m->faction != OUTLAWS) {
-        log_msg("The trader won't take stolen goods.");
-        return 0;
-    }
-    if (!inventory_transfer(from, to, slot, 1)) {
+    Actor check = *to;
+    if (!inventory_add(&check, item, 1)) {
         log_msg(selling ? "The trader has no room for that." : "Pack full.");
         return 0;
     }
+    if (selling && !stolen_sale(-1, slot))
+        return 0;
+    inventory_add(to, item, 1);
+    inventory_remove_slot(from, slot, 1);
     g.money += selling ? price : -price;
     trade_goodwill(m->faction, price);
     log_msg("%s %s for %d silver.", selling ? "Sold" : "Bought", itemDefs[item].name, price);
@@ -1279,6 +1317,19 @@ static const char *faction_conversation(const Actor *a) {
     return lines[a->faction][(g.seed + (unsigned)(a - g.actors) * 17 + g.day) % 3];
 }
 const char *dialogue_line(int n, int page) {
+    if (page == DIALOG_SUMMONS || page == DIALOG_BOUNTY) {
+        static char line[200];
+        char offenses[116];
+        const Actor *suspect = &g.actors[g.selected];
+        int faction = g.actors[n].faction;
+        crime_description(suspect, faction, offenses, sizeof(offenses));
+        snprintf(line, sizeof(line), page == DIALOG_SUMMONS
+                 ? "Hold up, %s. You're wanted for %s. Pay %d silver or come with me."
+                 : "%s has you down for %s. The outstanding fine is %d silver.",
+                 page == DIALOG_SUMMONS ? suspect->name : factionNames[faction],
+                 offenses, wanted_amount(suspect, faction));
+        return line;
+    }
     if (page == DIALOG_INSPECTION)
         return "We've had thefts in town. Mind if I look through your pockets?";
     if (page == DIALOG_DISMISS) {
@@ -1352,8 +1403,7 @@ const char *dialogue_line(int n, int page) {
         return "Eighty silver for wound care. I can stop bleeding and restore health, but lost limbs need "
                "mechanical replacements.";
     case ROLE_SMITH:
-        return "The forge is here. Bring iron, cloth and fuel. Your smithing skill and research determine "
-               "what you can make.";
+        return "I've got arms and armor for sale. If you want to work the forge yourself, bring your own materials.";
     case ROLE_BARBER:
         return "Sit down and tell me how you want to look. I can change hair, beard and appearance without "
                "changing your skills.";
@@ -1457,10 +1507,14 @@ int npc_sees(const Actor *observer, const Actor *a, float reach) {
         return 0;
     float dx = depth_x(a) - depth_x(observer), dy = depth_y(a) - depth_y(observer);
     float d = sqrtf(dx * dx + dy * dy);
+    int room = actor_inside(a);
+    int shop_watch = room && g.buildings[room - 1].type == SHOP && npc_role(observer) == ROLE_MERCHANT;
     if (a->sneaking) {
-        reach *= fmaxf(.14f, .66f - level(a, STEALTH) * .004f - gear_bonus(a, 2) * .004f);
+        if (shop_watch && d < 2.65f)
+            return 1;
+        reach *= fmaxf(.14f, (shop_watch ? .90f : .66f) - level(a, STEALTH) * .004f - gear_bonus(a, 2) * .004f);
         if (d > 1.1f && (observer->facing ? dx - dy < -.45f : dx - dy > .45f))
-            reach *= .38f;
+            reach *= shop_watch ? .72f : .38f;
     }
     if (d > reach)
         return 0;
@@ -1506,7 +1560,7 @@ int pickpocket_slot(int n,int source) {
     gain(a,THEFT,22);
     if((wrand()%1000)/1000.f>=chance) {
         town_theft(town_near(a->x, a->y, 17));
-        crime_add(a,b->faction,80);g.rep[b->faction]-=18;b->speech=19;b->speechTime=5;
+        crime_charge(a,b->faction,80,CRIME_PICKPOCKET);g.rep[b->faction]-=18;b->speech=19;b->speechTime=5;
         log_warn("Caught stealing! Bounty +80; faction standing -18.");return 0;
     }
     if(!inventory_add_owned(a,it,1,b->faction)) return 0;
@@ -1659,23 +1713,17 @@ int jail_cell_open(const Actor *a) {
 void jail_exit(Actor *a) {
     if (!jail_cell_open(a))
         return;
+    int f = jail_faction(a);
+    crime_charge(a, f, (int)fmaxf(60, SERIOUS_BOUNTY - wanted_amount(a, f)), CRIME_ESCAPE);
     jail_release(a);
-    g.field.cellOpen[a - g.actors] = 12;
-    log_warn("%s slipped out of the jail.", a->name);
+    log_warn("%s escaped from jail. The watch is looking for them.", a->name);
 }
 int jail_bail(int n) {
     Actor *a = &g.actors[n];
     if (!conscious(a) || a->prisonTime <= 0 || a->taskKind == TASK_JAIL_CARE)
         return 0;
-    int cost = jail_bail_cost(a), faction = jail_faction(a);
-    if (g.money < cost) {
-        log_msg("Insufficient silver for bail.");
+    if (jail_bail_cost(a) && !crime_pay(a, jail_faction(a)))
         return 0;
-    }
-    g.money -= cost;
-    crime_clear(a, faction);
-    if (faction != FREE)
-        g.rep[faction] = 0;
     jail_release(a);
     log_msg("%s was released on bail.", a->name);
     return 1;
@@ -1733,9 +1781,9 @@ static void jail_tick(Actor *a, float dt) {
             a->taskKind = 0;
         } else if ((a->action -= dt) <= 0) {
             int tools = a->taskIndex && inventory_count(a, TOOLS);
-            float chance = 28 + level(a, LOCKPICK) * .72f + (tools ? 20 : 0);
+            float chance = 5 + level(a, LOCKPICK) * .90f + (tools ? 12 : 0);
             a->taskKind = 0;
-            gain(a, LOCKPICK, 34);
+            gain(a, LOCKPICK, 42);
             if (wrand() % 100 < fminf(97, chance)) {
                 *open = 5;
                 log_warn("Cell unlocked. Get to the exit.");
@@ -1762,10 +1810,7 @@ static void jail_tick(Actor *a, float dt) {
 /* The carrier owns movement until the prisoner reaches an actual intake site. */
 static void begin_intake(int n, int guard, int building) {
     Actor *a = &g.actors[n], *b = &g.actors[guard];
-    if (a->carrying >= 0) {
-        g.actors[a->carrying].carriedBy = -1;
-        a->carrying = -1;
-    }
+    if (a->carrying >= 0) put_down(a);
     b->carrying = n;
     a->carriedBy = guard;
     a->x = b->x;
@@ -1779,6 +1824,15 @@ static void begin_intake(int n, int guard, int building) {
     log_warn("%s is carrying %s to %s.", b->name, a->name,
              g.buildings[building].type == JAIL ? "jail" : "a work camp");
     jail_medical(a, 0);
+}
+int watch_surrender(int guard) {
+    Actor *a = &g.actors[g.selected], *b = &g.actors[guard];
+    int town = watch_town(b);
+    if (town < 0 || !conscious(a) || !conscious(b) || b->carrying >= 0 || depth_distance(a, b) >= 2.1f ||
+        !wanted_amount(a, b->faction))
+        return 0;
+    begin_intake(g.selected, guard, g.field.jail[town] - 1);
+    return 1;
 }
 static int camp_has_space(int c, const Actor *a) {
     int need = g.depth.actors[a - g.actors].layer != NONE;
@@ -1842,8 +1896,8 @@ static void intake_jail(int n, int building, Actor *guard) {
     cell_place(n, building);
     DepthActor *watch = &g.depth.actors[guard - g.actors];
     watch->room = building + 1;
-    watch->rx = 4.8f;
-    watch->ry = 5.2f;
+    watch->rx = 3.5f;
+    watch->ry = 6.15f;
     log_warn("%s locked in a cell at %s.", a->name, towns[a->prisonTown].name);
     if (seized) log_msg("The watch confiscated %d stolen goods.", seized);
     jail_medical(a, 0);
@@ -1920,6 +1974,15 @@ void custody_tick(float dt) {
                 continue;
             }
             jail_medical(a, dt);
+            if (actor_inside(carrier)) {
+                float dx = 3.5f - depth_x(carrier), dy = 6.3f - depth_y(carrier);
+                if (dx * dx + dy * dy > .32f) {
+                    depth_move_room(carrier, dx, dy, dt);
+                    continue;
+                }
+                actor_leave_room(guard);
+                actor_leave_room(n);
+            }
             Building *dest = &g.buildings[b];
             int camp = slave_camp_at(b);
             float x = dest->x + 1.45f, y = dest->y + .65f;
@@ -1944,7 +2007,7 @@ void custody_tick(float dt) {
             labor_tick(n, dt);
             continue;
         }
-        if (a->unconscious <= 0 || a->carriedBy >= 0 || a->prisonTime > 0 || actor_inside(a) ||
+        if (a->unconscious <= 0 || a->carriedBy >= 0 || a->prisonTime > 0 ||
             g.depth.actors[n].captive)
             continue;
         for (int j = 0; j < g.actorCount; j++) {
@@ -1953,14 +2016,13 @@ void custody_tick(float dt) {
                 fabsf(guard->x - a->x) > 2.3f || fabsf(guard->y - a->y) > 2.3f ||
                 depth_distance(a, guard) > 2.3f)
                 continue;
-            int town = guard->homeTown;
+            int town = watch_town(guard);
             int jail = town >= 0 && town < TOWNS ? g.field.jail[town] - 1 : -1;
-            if (guard->kind == GUARD && jail >= 0 && g.townOwner[town] == guard->faction &&
-                wanted_amount(a, guard->faction) >= 80) {
+            if (jail >= 0 && wanted_amount(a, guard->faction) >= SERIOUS_BOUNTY) {
                 begin_intake(n, j, jail);
                 break;
             }
-            int camp = nearby_slave_camp(guard, a);
+            int camp = actor_inside(a) ? -1 : nearby_slave_camp(guard, a);
             if (camp >= 0 && hostile(guard, a)) {
                 begin_intake(n, j, camp);
                 break;

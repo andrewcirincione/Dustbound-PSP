@@ -117,7 +117,8 @@ static void make_actor(int k,int i){
     for(int l=0;l<LIMBS;l++)a->health[l]=species_health(a);
     a->x=a->homeX=a->tx=e->x+(i%4-1)*1.8f;a->y=a->homeY=a->ty=e->y+(i/4)*1.8f;clear_position(&a->x,&a->y);
     a->homeX=a->tx=a->x;a->homeY=a->ty=a->y;a->blood=a->hunger=100;a->speechCooldown=20+seed%40;
-    living_gear(a,i%8,tier,(int)(seed%10000));
+    int poor = a->kind == RAIDER && e->modifier == 1;
+    living_gear(a,i%8,poor ? 0 : tier,(int)(seed%10000));
     if (i == vendor_member(e)) {
         inventory_add(a, RATION, 3 + tier);
         inventory_add(a, MEDKIT, 2);

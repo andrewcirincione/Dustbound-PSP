@@ -10,6 +10,18 @@ static int actor_index(const Actor*a){return (uintptr_t)a>=(uintptr_t)g.actors&&
 static int event_for(int n){return n>=0&&n<MAX_ACTORS&&LW.owned[n]>0&&LW.owned[n]<=EVENTS?LW.owned[n]-1:-1;}
 void living_gear(Actor*a,int role,int tier,int n){
     tier=(int)limit(tier,0,4);role%=8;
+    if (a->kind == RAIDER && tier <= 1) {
+        a->gear[0] = gear_id(n % 2 ? 14 : 0, 0, 0);
+        a->gear[1] = n % 3 ? RAGS : NONE;
+        a->gear[2] = a->gear[5] = NONE;
+        a->gear[3] = n % 4 ? NONE : SANDALS;
+        a->gear[4] = gear_id(68, 0, 0);
+        memset(a->pack, 0, sizeof(a->pack));
+        memset(a->stolen, 0, sizeof(a->stolen));
+        if (n % 11 == 0) inventory_add(a, RATION, 1);
+        else if (n % 5 == 0) inventory_add(a, CLOTH, 1);
+        return;
+    }
     static const int weapons[8]={8,3,85,29,5,87,0,16},armor[8]={45,43,38,32,34,36,47,39};
     int q=tier>=3?3:tier,m=tier>=3?5:tier==2?3:1;
     a->gear[0]=gear_id(weapons[role],m,q);a->gear[1]=gear_id(armor[role],m,q);
@@ -24,10 +36,6 @@ void living_gear(Actor*a,int role,int tier,int n){
     if(role==3)inventory_add(a,PARTS,1+tier);
     if(role==7)inventory_add(a,TONIC,1+tier);
     if(tier>=3)inventory_add(a,RELIC,tier-2);
-    if(a->kind==RAIDER&&tier<=1){
-        a->gear[0]=gear_id(n%2?14:0,0,0);a->gear[1]=n%3?RAGS:0;
-        a->gear[2]=0;a->gear[3]=n%3?0:gear_id(60,0,0);a->gear[4]=gear_id(68,0,0);a->gear[5]=0;
-    }
     if(a->kind==BEAST){memset(a->gear,0,sizeof(a->gear));memset(a->pack,0,sizeof(a->pack));inventory_add(a,HIDE,2+tier);inventory_add(a,MEAT,2+tier);if(tier>=3)inventory_add(a,CATALOG_ITEMS+22,1);}
 }
 void living_loot(int n,int role,int tier){living_gear(&g.actors[n],role,tier,n);}
@@ -200,7 +208,8 @@ int combat_candidate(int row){int ids[MAX_ACTORS],count=0;float ds[MAX_ACTORS];A
 int combat_candidates(void){return combat_candidate(-1);}
 int actor_relation(int n){if(n<0||n>=g.actorCount)return 0;Actor*a=&g.actors[n],*p=&g.actors[g.selected];return hostile(a,p)?-1:a->squad||a->faction==p->faction||g.rep[a->faction]>=15?1:0;}
 void command_attack(int n){Actor*a=&g.actors[g.selected];if(n<0||n>=g.actorCount||g.actors[n].squad||!conscious(a)||!conscious(&g.actors[n])||depth_distance(a,&g.actors[n])>14)return;
-    Actor*b=&g.actors[n];if(!hostile(a,b)){crime_add(a,b->faction,100);g.rep[b->faction]-=20;log_msg("Assault: +100 bounty; faction standing -20.");}
+    g.field.playingDead[g.selected]=0;
+    Actor*b=&g.actors[n];if(!hostile(a,b)){crime_charge(a,b->faction,100,CRIME_ASSAULT);g.rep[b->faction]-=20;log_msg("Assault: +100 bounty; faction standing -20.");}
     population_anger(n);LW.anger[n]=1;int k=event_for(n);if(k>=0)for(int i=0;i<LW.events[k].count;i++){int j=LW.events[k].members[i];if(j>=0)LW.anger[j]=1;}
     LW.command[g.selected]=n;a->target=n;a->autoattack=1;ui.attackFocus=n;
 }
