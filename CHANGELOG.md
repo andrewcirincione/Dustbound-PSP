@@ -1,3 +1,12 @@
+# 0.18.1 — Painted frontier
+
+- Restored painted building and furniture art, with new generated models for inns, trade posts, homes, temples, stockades, cages and lodges. All nineteen settlements retain their layouts and services. Loose chests clear buildings and doors, including in existing saves.
+- Inn guests use separate spaces and move between the inn, streets and homes. Keepers work at their counters and take short rounds nearby. Traders and smiths can mark a nearby iron seam. Iron, copper and cuttable timber have distinct sprites.
+- Character creation uses the actual starting loadout. The head sits at the collar, and fallen and sleeping survivors use separate articulated poses.
+- Escort caravans wait for the squad, show their location in the Journal and on the maps, and stop if separated. Fight stance moves into range automatically. Analog movement takes priority.
+- The Ronin starts in a valid Shogunate uniform. Town watch attacks subdue suspects for custody and treatment. Ordinary faction clothing is legal in open towns.
+- Stable coma patients wake prone and can treat themselves. Undressed wounds still retain their damage. Shortened item and action copy.
+
 # 0.18.0 — Frontier towns and survival
 
 - Rebuilt all nineteen settlements with distinct street plans, entrances, custody facilities, faction architecture and furnished rooms. Larger towns can have specialized armorers. Small stores carry a few essentials.

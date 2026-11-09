@@ -90,8 +90,11 @@ static void injuries(void) {
     bleeding_cut(a, -19, 90, 1.3f);
     injury_knockout(a, 36);
     step(60);
-    assert(recovery_coma(a) && a->bleed == 0 && (a->woundFlags & WOUND_CUTS));
-    dress_wounds(a);
+    assert(conscious(a) && a->bleed == 0 && (a->woundFlags & WOUND_CUTS));
+    assert(a->health[CHEST] <= -19 && (a->woundFlags & WOUND_CRITICAL_AWAKE));
+    assert(heal_actor(0, 0));
+    while (a->taskKind == TASK_TREAT)
+        step(a->action + .15f);
     lay_in_bed(a);
     step(50);
     assert(conscious(a) && !(a->woundFlags & WOUND_CUTS));
@@ -194,7 +197,7 @@ static void custody(void) {
     assert(a->carriedBy == 1 && a->taskKind == TASK_JAIL_CARE && !a->prisonTime);
     step(4);
     assert(a->prisonTown == 0 && actor_inside(a) == g.field.jail[0] &&
-           a->taskKind == TASK_JAIL_CARE && a->health[CHEST] < 0 && a->bleed > 0);
+           a->taskKind == TASK_JAIL_CARE && a->health[CHEST] < 0 && a->bleed == 0);
     assert(!hostile(&g.actors[1], a));
     assert(save_game("build/v174/jail-bleeding.sav"));
     g.actors[1].active = 0;

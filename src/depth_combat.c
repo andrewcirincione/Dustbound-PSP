@@ -206,8 +206,8 @@ void depth_room_tick(float dt) {
             float range = a->gear[0] ? itemDefs[a->gear[0]].range : 1.55f;
             if (best <= range)
                 strike(i, target);
-            else if (i != g.selected)
-                depth_move_room(a, depth_x(b) - depth_x(a), depth_y(b) - depth_y(a), dt);
+            else if (i != g.selected || !ui.manualMove)
+                room_route_toward(a, depth_x(b), depth_y(b), dt);
         } else
             a->target = -1;
     }

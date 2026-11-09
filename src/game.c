@@ -300,12 +300,12 @@ int food_capacity(int item) {
 }
 void portion_content(void) {
     static char labels[PORTION_TYPES][99][32];
-    itemDefs[MEDKIT].desc = "Uses supplies in proportion to the wound. Stops bleeding first.";
-    itemDefs[RATION].desc = "Fills up to 48 hunger. Unfinished portions stay in your pack.";
-    itemDefs[JERKY] = (ItemDef){"Smoked jerky", "Dried strips of meat. Fills up to 36 hunger.", 26, 1, -1, 0, 0, 0x976946, -1};
-    itemDefs[OATCAKE] = (ItemDef){"Oatcake", "A crumbly grain cake. Fills up to 25 hunger.", 18, 1, -1, 0, 0, 0xcba477, -1};
-    itemDefs[STEW] = (ItemDef){"Bean stew", "A crock of thick stew. Fills up to 68 hunger.", 49, 2, -1, 0, 0, 0xa57a43, -1};
-    itemDefs[HERBAL_TEA] = (ItemDef){"Herbal tea", "A flask of steeped leaves. Fills up to 16 hunger.", 12, 1, -1, 0, 0, 0xa9a86c, -1};
+    itemDefs[MEDKIT].desc = "";
+    itemDefs[RATION].desc = "";
+    itemDefs[JERKY] = (ItemDef){"Smoked jerky", "", 26, 1, -1, 0, 0, 0x976946, -1};
+    itemDefs[OATCAKE] = (ItemDef){"Oatcake", "", 18, 1, -1, 0, 0, 0xcba477, -1};
+    itemDefs[STEW] = (ItemDef){"Bean stew", "", 49, 2, -1, 0, 0, 0xa57a43, -1};
+    itemDefs[HERBAL_TEA] = (ItemDef){"Herbal tea", "", 12, 1, -1, 0, 0, 0xa9a86c, -1};
     for (int i = 0; i < PORTION_TYPES; i++) {
         ItemDef base = itemDefs[portionBases[i]];
         for (int pct = 1; pct < 100; pct++) {
@@ -723,6 +723,7 @@ static void new_world(uint32_t seed, int scenario) {
     content_init();
     memset(&g, 0, sizeof(g));
     combat_visual_reset();
+    town_routines_reset();
     memset(&ui, 0, sizeof(ui));
     ui.attackFocus=-1;
     world_layout(0);
@@ -972,12 +973,15 @@ static void credit_squad_defeat(Actor *a) {
     g.kills++;
     contract_defeat(a);
     if (a->bountyReward)
-        log_msg("Bounty target down. Take them to a jailkeeper who will pay.");
+        log_msg("Bounty target down.");
 }
 void combat_impact(int ai, int bi, int w) {
     if(ai<0||bi<0||ai>=g.actorCount||bi>=g.actorCount)return;
     Actor *a=&g.actors[ai], *b=&g.actors[bi];
     if (b->dead || b->unconscious > 0 || jail_authority(a, b)) return;
+    int watch = watch_town(a);
+    int arresting = b->squad && watch >= 0 && a->faction != HOSTILE &&
+        (town_near(b->x,b->y,18) == watch || wanted_amount(b,a->faction) >= SERIOUS_BOUNTY);
     int ranged=weapon_ranged(w);
     int sk = ranged ? CROSSBOWS : w ? MELEE : MARTIAL;
     int evading=combat_evasion(b),defSkill=evading?DODGE:DEFENCE;
@@ -1036,6 +1040,9 @@ void combat_impact(int ai, int bi, int w) {
     if (distance(b->x, b->y, g.actors[g.selected].x, g.actors[g.selected].y) < 12)
         audio_event(2);
     b->health[limb] -= damage;
+    b->woundFlags &= ~WOUND_CRITICAL_AWAKE;
+    if (arresting && limb <= CHEST)
+        b->health[limb] = fmaxf(b->health[limb], -.08f * species_health(b));
     g.field.playingDead[bi] = 0;
     depth_wound(b, limb, damage);
     b->taskKind = 0; /* A hit interrupts resting and gathering even in passive stance. */
@@ -1059,7 +1066,7 @@ void combat_impact(int ai, int bi, int w) {
     }
 
     gain(b, TOUGHNESS, rawDamage * .65f * combat_learning(level(b,TOUGHNESS),rawDamage));
-    if (depth_organic(b, limb) && w && (cut >= .25f || ranged)) {
+    if (!arresting && depth_organic(b, limb) && w && (cut >= .25f || ranged)) {
         b->woundFlags |= 1u << limb;
         b->bleed += damage * (ranged ? .028f : cut * .043f);
     }
@@ -1068,9 +1075,11 @@ void combat_impact(int ai, int bi, int w) {
     b->target = ai;
     if (a->squad || b->squad)
         log_progress("%s hits %s: %s -%d", a->name, b->name, limbNames[limb], (int)damage);
-    limb_hit(b,limb,cut);
+    if (!arresting) limb_hit(b,limb,cut);
     if (b->health[HEAD] <= 0 || b->health[CHEST] <= 0 || b->blood < 20) {
         injury_knockout(b, damage);
+        if (arresting && wanted_amount(b,a->faction) < SERIOUS_BOUNTY)
+            crime_charge(b,a->faction,SERIOUS_BOUNTY - wanted_amount(b,a->faction),CRIME_TRESPASS);
         credit_squad_defeat(b);
         if (a->squad || b->squad)
             log_warn("%s %s.", b->name, recovery_coma(b) ? "is in a recovery coma" : "is unconscious");
@@ -1086,10 +1095,15 @@ int fatal_injury(const Actor *a) {
     return (a->race != 2 && a->blood <= 0) || a->health[HEAD] <= -.85f * species_health(a);
 }
 void injury_knockout(Actor *a, float impact) {
-    if (fminf(a->health[HEAD], a->health[CHEST]) <= coma_threshold(a))
+    float vital = fminf(a->health[HEAD], a->health[CHEST]);
+    if (vital <= coma_threshold(a)) {
+        if (!(a->woundFlags & WOUND_COMA) || a->unconscious <= 0)
+            a->unconscious = clamp(28 - vital * .42f, 28, 60);
         a->woundFlags |= WOUND_COMA;
-    if (a->unconscious <= 0)
+    } else if (a->unconscious <= 0) {
         a->unconscious = clamp(9 + impact * .12f - level(a, TOUGHNESS) * .075f, 5, 18);
+    }
+    a->woundFlags &= ~WOUND_CRITICAL_AWAKE;
     a->autoattack = a->attackPhase = 0;
     if (a->taskKind != TASK_JAIL_CARE && a->taskKind != 3)
         a->taskKind = 0;
@@ -1152,7 +1166,9 @@ int injury_tick(Actor *a, DepthActor *z, float dt, int resting) {
     }
     if (fatal_injury(a))
         return 1;
-    if (fminf(a->health[HEAD], a->health[CHEST]) <= coma_threshold(a) || (a->race != 2 && a->blood < 20))
+    if ((!(a->woundFlags & WOUND_CRITICAL_AWAKE) &&
+         fminf(a->health[HEAD], a->health[CHEST]) <= coma_threshold(a)) ||
+        (a->race != 2 && a->blood < 20))
         injury_knockout(a, 0);
     if (a->woundFlags & (WOUND_TONIC | WOUND_CLINIC))
         a->exposure = fmaxf(0, a->exposure - dt * 2.0f);
@@ -1206,13 +1222,18 @@ int injury_tick(Actor *a, DepthActor *z, float dt, int resting) {
     if (a->unconscious > 0) {
         float left = a->unconscious - dt;
         int bloodReady = a->race == 2 || a->blood >= 25;
-        int stabilized = a->health[HEAD] > 0 && a->health[CHEST] > 0 && bloodReady;
-        if (left <= 0 && (!bloodReady || (recovery_coma(a) && !stabilized)))
+        int critical = a->health[HEAD] <= 0 || a->health[CHEST] <= 0;
+        if (left <= 0 && (!bloodReady || (recovery_coma(a) && critical && a->bleed > .01f)))
             left = .25f;
         a->unconscious = fmaxf(0, left);
-        if (!a->unconscious)
+        if (!a->unconscious) {
+            if (critical && (a->woundFlags & WOUND_COMA))
+                a->woundFlags |= WOUND_CRITICAL_AWAKE;
             a->woundFlags &= ~WOUND_COMA;
+        }
     }
+    if (a->health[HEAD] > 0 && a->health[CHEST] > 0)
+        a->woundFlags &= ~WOUND_CRITICAL_AWAKE;
     if (a->unconscious <= 0 && a->bleed <= .01f && a->blood >= 35)
         a->woundFlags &= ~WOUND_AID_CHECKED;
     return 0;
@@ -1365,9 +1386,6 @@ int begin_treatment(int mi, int pi, int type, int slot) {
         ui.screen = SCREEN_WORLD;
         ui.selection = ui.menuReturn = 0;
     }
-    if (m->squad || a->squad)
-        log_msg("%s starts %s.", m->name, type == TREAT_REPAIR ? "repairs" :
-                type == TREAT_CLINIC ? "clinic care" : "first aid");
     return 1;
 }
 static void treatment_tick(float dt) {
@@ -1404,10 +1422,7 @@ static void treatment_tick(float dt) {
             }
             if (needed && l < 0) {
                 a->bleed = 0;
-                if (m->squad || a->squad) {
-                if (m == a) log_msg("%s stopped the bleeding.", m->name);
-                else log_msg("%s stopped %s's bleeding.", m->name, a->name);
-            }
+                if (a->squad) log_msg("%s's bleeding stopped.", a->name);
             } else if (needed) {
                 a->treatedMask |= 1 << l;
                 a->woundFlags &= ~(1u << l);
@@ -1416,8 +1431,6 @@ static void treatment_tick(float dt) {
             if (plan_dressing(mi, a))
                 continue;
             m->taskKind = 0;
-            if (m->squad || a->squad)
-                log_msg("%s finished dressing %s's wounds.", m->name, a->name);
         } else {
             m->taskKind = 0;
             if (!treatment_ready(a, type) || !treatment_supplies(m, type, slot, 1))
@@ -1426,14 +1439,14 @@ static void treatment_tick(float dt) {
         if (type == TREAT_REPAIR) {
             injury_repair(a, &g.depth.actors[pi]);
             gain(m, ENGINEERING, 25);
-            log_msg("%s repaired %s. Parts are recovering.", m->name, a->name);
+            log_msg("%s repaired %s.", m->name, a->name);
         } else if (type == TREAT_PRESSURE) {
             a->bleed = 0;
             if (m->squad || a->squad) log_msg("%s stopped %s's bleeding.", m->name, a->name);
         } else if (type == TREAT_CLINIC) {
             dress_wounds(a);
             a->woundFlags |= WOUND_CLINIC;
-            log_msg("Clinic care begins. Rest here while you recover.");
+            log_msg("Wounds dressed.");
         }
         if (m->squad && !a->squad && mi != pi)
             faction_goodwill(a->faction, 3);
@@ -1496,7 +1509,7 @@ void use_item(int s) {
         if(!limb_missing(a,ui.limbTarget)&&limb_missing(a,ui.limbTarget+1))ui.limbTarget++;
         limb_open(SCREEN_LIMBS);ui.selection=ui.limbTarget-LARM;
         log_msg("Choose left or right limb, then choose the replacement.");
-    } else
+    } else if (itemDefs[it].desc[0])
         log_msg("%s", itemDefs[it].desc);
 }
 int buy_item(int town, int it) {
@@ -2421,7 +2434,7 @@ void simulate(float dt) {
             ui.jobGather[i] = 0;
         if (!conscious(a) || playing_dead(a) || a->prisonTime>0 || society_rescue_busy(i) || g.depth.actors[i].captive || (a->carrying >= 0 && (g.depth.actors[a->carrying].captive >= 2 || g.field.intake[a->carrying])))
             continue;
-        if (ui.watchApproach == i + 1)
+        if (ui.watchApproach == i + 1 || watch_collecting(i))
             continue;
         if (actor_inside(a)) {
             if (town_npc_routine(i, dt))
@@ -2514,7 +2527,7 @@ void simulate(float dt) {
                 float angle=i*2.39996f;route_toward(a,b->x+cosf(angle)*(range+1.2f),b->y+sinf(angle)*(range+1.2f),dt*.5f);continue;
             }
             if (best > range) {
-                if (i != g.selected)
+                if (i != g.selected || !ui.manualMove)
                     route_toward(a, b->x, b->y, dt * (a->squad ? 1 : 1.06f));
             } else
                 strike(i, target);
@@ -2635,7 +2648,7 @@ static int validate_game(const Game *t) {
         t->squadCount < 1 || t->squadCount > SQUAD)
         return 0;
     if (!field_validate(t) || t->townLife.layout < 0 || t->townLife.layout > 1 ||
-        t->frontier.version < 0 || t->frontier.version > 1 || t->frontier.clanMember < 0 ||
+        t->frontier.version < 0 || t->frontier.version > 2 || t->frontier.clanMember < 0 ||
         t->frontier.clanMember > 1 || t->frontier.completedCount > COMPLETED_CONTRACTS ||
         t->frontier.completedNext >= COMPLETED_CONTRACTS || t->frontier.tollKnown > 1)
         return 0;
@@ -3007,6 +3020,7 @@ int load_game(const char *path) {
     fclose(f);
     if (ok) {
         combat_visual_reset();
+    town_routines_reset();
         memset(g.depth.groupTravel,0,sizeof(g.depth.groupTravel));
         frontier_identity();
         depth_init();
@@ -3185,8 +3199,8 @@ static void pause_menu_open(void) {
 }
 void game_tick(float dt, Input in) {
     dt = clamp(dt, 0, .1f);
-    if (ui.screen != SCREEN_WORLD || ui.paused || in.held || in.pressed ||
-        fabsf(in.ax) + fabsf(in.ay) > .15f)
+    ui.manualMove = fabsf(in.ax) + fabsf(in.ay) > .15f;
+    if (ui.screen != SCREEN_WORLD || ui.paused || in.held || in.pressed || ui.manualMove)
         interrupt_work();
     else
         ui.playerIdle = fminf(5, ui.playerIdle + dt);
@@ -3468,8 +3482,6 @@ void game_tick(float dt, Input in) {
         if (a->autoattack && g.depth.actors[g.selected].order == ORDER_HOLD_FIRE)
             g.depth.actors[g.selected].order = ORDER_BALANCED;
         if(!a->autoattack){g.living.command[g.selected]=-1;a->target=-1;a->attackPhase=0;a->cooldown=fmaxf(.6f,a->cooldown);}
-        log_msg(a->autoattack ? "Combat stance: attack nearby hostiles."
-                              : "Passive stance: flee or move freely.");
     }
     if (p & KEY_CROSS) {
         if (g.interiorBuilding) {

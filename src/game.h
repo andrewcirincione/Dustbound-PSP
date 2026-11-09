@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.18.0"
+#define VERSION "0.18.1"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -83,7 +83,8 @@ enum {
     WOUND_CUTS = (1u << LIMBS) - 1, WOUND_COMA = 1u << LIMBS, WOUND_AID_CHECKED = 1u << (LIMBS + 1),
     WOUND_REPAIR_SHIFT = LIMBS + 2, WOUND_REPAIRS = WOUND_CUTS << WOUND_REPAIR_SHIFT,
     WOUND_CLINIC = 1u << (WOUND_REPAIR_SHIFT + LIMBS), WOUND_TONIC = WOUND_CLINIC << 1,
-    WOUND_FLAGS = (WOUND_TONIC << 1) - 1
+    WOUND_CRITICAL_AWAKE = WOUND_TONIC << 1,
+    WOUND_FLAGS = (WOUND_CRITICAL_AWAKE << 1) - 1
 };
 enum { TASK_CELL_LOCK = 5, TASK_TREAT, TASK_JAIL_CARE, TASK_TRAIN };
 enum { REST_DURATION = 300 };
@@ -232,7 +233,7 @@ typedef struct {
 enum { CONTRACT_DISPATCH, CONTRACT_ORE, CONTRACT_HUNT, CONTRACT_RELIC, CONTRACT_FREIGHT,
        CONTRACT_ESCORT, CONTRACT_PATROL, CONTRACT_BOUNTY, CONTRACT_TYPES };
 enum { DIALOG_WORK = 1, DIALOG_INSPECTION = 6, DIALOG_DISMISS = 7, DIALOG_WORK_HINT = 8,
-       DIALOG_BOUNTY = 9, DIALOG_SUMMONS = 10 };
+       DIALOG_BOUNTY = 9, DIALOG_SUMMONS = 10, DIALOG_IRON = 11 };
 typedef struct {
     int layout;
     int chestRefresh[MAX_BUILDINGS];
@@ -329,7 +330,6 @@ typedef struct {
 enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN };
 enum { ROOM_PROPS = 18 };
-enum { ROOM_HEARTH_ART = 25, ROOM_SHRINE_ART, ROOM_ARMOR_ART, ROOM_BALES_ART, ROOM_STOVE_ART };
 #define DOOR_REACH 1.65f
 enum { BUILD_NORMAL, BUILD_ARMORER, BUILD_LODGE };
 enum { TRADE_GENERAL, TRADE_SMITH, TRADE_INN, TRADE_ARMORER, TRADE_APOTHECARY };
@@ -362,6 +362,8 @@ void interior_leave(void);
 int actor_inside(const Actor *a);
 int interior_props(int building, InteriorProp *props);
 int interior_walkable(int room, float x, float y);
+void room_route_toward(Actor *a, float x, float y, float dt);
+void town_routines_reset(void);
 int interior_context(void);
 const char *interior_prompt(void);
 void interior_interact(void);
@@ -413,6 +415,7 @@ typedef struct {
     int limbTarget, limbSourceSlot, limbReturn, limbConfirm;
     float travelStall, travelLastX, travelLastY;
     float playerIdle;
+    int manualMove;
     int passSlot, squadPage, scenarioReturn;
     uint32_t chatterSeen;
     float chatterNext;
@@ -508,6 +511,7 @@ int town_npc_routine(int actor, float dt);
 void actor_leave_room(int actor);
 void put_down(Actor *carrier);
 int nearest_ore(float x, float y, float reach, int type);
+int town_ore(int town);
 enum { CORE_SKILL_ROWS = SKILLS - 1 };
 float context_distance(void);
 float context_reach(void);
@@ -551,6 +555,7 @@ int jail_bail_cost(const Actor *a);
 int jail_cell_open(const Actor *a);
 void jail_exit(Actor *a);
 void custody_tick(float dt);
+int watch_collecting(int actor);
 int conscious(const Actor *a);
 int playing_dead(const Actor *a);
 void faction_goodwill(int faction, int amount);
@@ -704,6 +709,7 @@ static inline void view_to_world(float u, float v, float *x, float *y) {
     *y = (v - u) * .5f;
 }
 void character_finish(void);
+void starting_gear(Actor *a, int origin);
 int save_inspect(int slot, SaveInfo *info);
 void save_refresh(void);
 int terrain_height(float x, float y);

@@ -97,10 +97,12 @@ static void shops_and_theft(void) {
 }
 static void homes(void) {
     game_new(73819, 0);
+    g.actors[0].x = towns[3].x;
+    g.actors[0].y = towns[3].y + 3;
     int present = 0, vacant = 0, bare = 0;
     for (int hour = 1; hour <= 20; hour += 19) {
         g.dayTime = hour;
-        step(340);
+        step(900);
         for (int i = 0; i < g.buildingCount; i++) {
             if (g.buildings[i].type != HOUSE)
                 continue;
@@ -121,6 +123,75 @@ static void homes(void) {
             assert(g.actors[contact].homeTown == t && g.actors[contact].faction == g.townOwner[t]);
     }
     printf("PASS: homes can have occupants, be vacant, or have no loot chest; work contacts belong to their town.\n");
+}
+static void inn_traffic(void) {
+    game_new(73819, 0);
+    int town = 3, inn = building_in(town, BAR) + 1;
+    g.actors[0].x = towns[town].x;
+    g.actors[0].y = towns[town].y + 3;
+    g.dayTime = 8;
+    step(250);
+    int guests = 0, keeper = -1, resident = -1;
+    for (int i = 1; i < g.actorCount; i++) {
+        Actor *a = &g.actors[i];
+        if (depth_room(a) != inn) continue;
+        if (npc_role(a) == ROLE_INNKEEPER) keeper = i;
+        else guests++;
+        if (npc_role(a) == ROLE_CITIZEN) resident = i;
+        for (int j = 1; j < i; j++)
+            if (depth_room(&g.actors[j]) == inn)
+                assert(depth_distance(a, &g.actors[j]) > 1.1f);
+    }
+    assert(guests >= 2 && keeper >= 0 && resident >= 0);
+    step(550);
+    assert(!depth_room(&g.actors[resident]));
+    assert(depth_room(&g.actors[keeper]) == inn ||
+           building_door_distance(inn - 1, g.actors[keeper].x, g.actors[keeper].y) < 3);
+    puts("PASS: Dry Market guests occupy separate places and return to the street while the keeper stays close.");
+}
+static void chest_migration(void) {
+    Actor *a = fresh();
+    int home = building_in(3, HOUSE);
+    float x = g.buildings[home].x, y = g.buildings[home].y;
+    int node = g.nodeCount;
+    add_node(x, y, NODE_LOCKED, SCAVENGERS, RELIC, 2);
+    assert(g.nodeCount == node + 1);
+    g.frontier.version = 1;
+    assert(save_game("build/v174/overlapping-chest.sav") && load_game("build/v174/overlapping-chest.sav"));
+    const Node *chest = &g.nodes[node];
+    assert(g.frontier.version == 2 && distance(chest->x,chest->y,x,y) > 1.5f && can_walk(chest->x,chest->y));
+    assert(chest->item == RELIC && chest->owner == SCAVENGERS && chest->qty == 2);
+    assert(a->active && !actor_inside(a));
+    puts("PASS: a saved chest moves clear of a building and keeps its contents and owner.");
+}
+static void escort_job(void) {
+    Actor *a = fresh();
+    int town = 3;
+    a->x = towns[town].x;
+    a->y = towns[town].y + 3;
+    assert(accept_contract(town, CONTRACT_ESCORT));
+    int n = escort_contact(0);
+    assert(n >= 0);
+    Actor *convoy = &g.actors[n];
+    float x, y;
+    assert(contract_location(0,&x,&y) == town && x == convoy->x && y == convoy->y);
+    step(180);
+    assert(!g.society.jobStage[0] && convoy->x == x && convoy->y == y && !g.society.jobNear[0]);
+    a->x = x;
+    a->y = y;
+    step(45);
+    assert(g.society.jobStage[0] == 1 && g.society.jobNear[0] > 0 && distance(x,y,convoy->x,convoy->y) > 1);
+    a->x = towns[town].x;
+    a->y = towns[town].y;
+    assert(contract_location(0,&x,&y) == town && x == convoy->x && y == convoy->y);
+    float work = g.society.jobNear[0];
+    step(70);
+    assert(g.society.jobWarned[0] && convoy->x == x && convoy->y == y && g.society.jobNear[0] == work);
+    a->x = x;
+    a->y = y;
+    step(45);
+    assert(!g.society.jobWarned[0] && g.society.jobNear[0] > work && distance(x,y,convoy->x,convoy->y) > 1);
+    puts("PASS: escorts wait to rendezvous, give a live marker, pause on separation and resume with the squad.");
 }
 static void rest_food_and_locks(void) {
     Actor *a = fresh();
@@ -388,6 +459,9 @@ int main(void) {
     lodging_and_bounties();
     shops_and_theft();
     homes();
+    inn_traffic();
+    chest_migration();
+    escort_job();
     rest_food_and_locks();
     contracts();
     combat();

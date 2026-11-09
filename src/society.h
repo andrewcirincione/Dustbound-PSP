@@ -35,6 +35,8 @@ int society_contract(int town,int kind);
 int society_complete(int n);
 int society_npc_job(int n,float dt);
 void society_contract_text(int n,char*out,int size);
+int escort_contact(int slot);
+int escorting_actor(int actor);
 int bounty_contract_active(int actor);
 int nearby_actions(void);
 const NearbyAction *nearby_action(int row);

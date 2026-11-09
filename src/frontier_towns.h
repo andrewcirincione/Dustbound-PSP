@@ -47,6 +47,53 @@ const char *building_name(int id) {
     };
     return labels[b->type];
 }
+int building_sprite(int id) {
+    const Building *b = &g.buildings[id];
+    int town = building_town(id), style = town < 0 ? -1 : civil_style(town);
+    const TownDesign *plan = town_design(town);
+    if (g.frontier.variant[id] == BUILD_LODGE) return ART_DUSTWARD;
+    if (g.frontier.variant[id] == BUILD_ARMORER) return ART_ARMORER;
+    static const int base[] = {0, 1, 2, 3, 24, 25, 27, 26, 28, 6, 29, 30, 7, 3, 31};
+    switch (b->type) {
+    case HOUSE:
+        if (town == 9 || town == 13 || town == 15) return id % 3 ? ART_REED_HOME : ART_ASH_HOME;
+        if (town == 12) return id % 2 ? ART_SNOW_LODGE : ART_ASH_HOME;
+        if (style == 1) return id % 3 ? 4 : 0;
+        if (style == 2) return id % 2 ? ART_ASH_HOME : ART_HERB_SHOP;
+        if (style == 3 || style == 4) return id % 3 ? ART_RUST_HOME : 0;
+        if (style == 5) return id % 2 ? 5 : ART_RUST_HOME;
+        return id % 3 == 0 ? ART_RUST_HOME : 0;
+    case SHOP:
+        if (style == 2) return ART_HERB_SHOP;
+        if (town == 3 || town == 8 || town == 16) return ART_DRY_SHOP;
+        return 1;
+    case BAR:
+        if (town == 12) return ART_SNOW_LODGE;
+        if (town == 9 || town == 13) return ART_REED_HOME;
+        if (style == 1) return plan->beds >= 4 ? ART_COURT_INN : 2;
+        if (style == 2) return plan->beds >= 4 ? ART_ASH_HOME : ART_SNOW_LODGE;
+        if (town == 3 || town == 16) return ART_DRY_INN;
+        return plan->beds <= 3 ? ART_ROAD_INN : 2;
+    case JAIL:
+        return plan->custody == 0 ? ART_WATCH_CAGE : plan->custody == 2 ? ART_STOCKADE : 3;
+    default:
+        return base[b->type];
+    }
+}
+PaintedDoor painted_door(int sprite) {
+    static const PaintedDoor original[] = {
+        {.39f,.87f,0}, {.45f,.89f,0}, {.38f,.90f,0}, {.80f,.85f,1},
+        {.42f,.88f,0}, {.48f,.90f,0}, {.53f,.91f,0}, {.75f,.87f,1}
+    };
+    static const PaintedDoor generated[] = {
+        {.71f,.89f,1}, {.78f,.88f,1}, {.81f,.84f,1}, {.73f,.88f,1},
+        {.81f,.84f,1}, {.67f,.89f,1}, {.78f,.88f,1}, {.81f,.87f,1},
+        {.82f,.84f,1}, {.77f,.91f,1}, {.73f,.87f,1}, {.66f,.89f,1}
+    };
+    if (sprite < 8) return original[sprite];
+    if (sprite == ART_WATCH_CAGE) return (PaintedDoor){.81f,.88f,1};
+    return generated[sprite - SETTLEMENT_ART_FIRST];
+}
 void building_footprint(int id, float *w, float *d, int *height) {
     const Building *b = &g.buildings[id];
     int t = building_town(id);
@@ -84,13 +131,27 @@ void building_footprint(int id, float *w, float *d, int *height) {
         *w = 1.48f; *d = 1.45f; *height = 39;
     }
 }
-void building_door(int id, float *x, float *y) {
+static void door_offset(int id, float *x, float *y, int *rightWall) {
     float w, d;
     int height;
     building_footprint(id, &w, &d, &height);
-    const Building *b = &g.buildings[id];
-    *x = b->x + w + .34f;
-    *y = b->y;
+    PaintedDoor door = painted_door(building_sprite(id));
+    float projected = (door.x - .5f) * (w + d) * 2.1f;
+    *rightWall = door.rightWall;
+    *x = door.rightWall ? w : fmaxf(-.76f*w, fminf(.76f*w, d + projected));
+    *y = door.rightWall ? fmaxf(-.76f*d, fminf(.76f*d, w - projected)) : d;
+}
+void building_threshold(int id, float *x, float *y) {
+    int rightWall;
+    door_offset(id, x, y, &rightWall);
+    *x += g.buildings[id].x;
+    *y += g.buildings[id].y;
+}
+void building_door(int id, float *x, float *y) {
+    int rightWall;
+    door_offset(id, x, y, &rightWall);
+    *x += g.buildings[id].x + (rightWall ? .34f : 0);
+    *y += g.buildings[id].y + (rightWall ? 0 : .34f);
 }
 float building_door_distance(int id, float x, float y) {
     float bx, by;
@@ -125,7 +186,10 @@ static int structure_site(int id, float x, float y, const unsigned char *pending
     float w = .85f, d = .85f;
     int height = 0, solid = building_has_interior(g.buildings[id].type);
     if (solid) building_footprint(id, &w, &d, &height);
-    if (terrain_water(x, y) || terrain_water(x + w + .34f, y) || trail_blocked(x, y))
+    float dx = 0, dy = 0;
+    int side = 0;
+    if (solid) door_offset(id, &dx, &dy, &side);
+    if (terrain_water(x, y) || terrain_water(x + dx + (side ? .34f : 0), y + dy + (side ? 0 : .34f)) || trail_blocked(x, y))
         return 0;
     for (int j = 0; j < g.buildingCount; j++) {
         const Building *b = &g.buildings[j];
@@ -350,15 +414,92 @@ static void starter_bandits(void) {
         if (a->kind == RAIDER && itemDefs[a->gear[1]].armor > 10) a->gear[1] = RAGS;
     }
 }
+static int clear_loot_site(float x, float y, int node) {
+    if (!can_walk(x, y)) return 0;
+    for (int i = 0; i < g.buildingCount; i++) {
+        const Building *b = &g.buildings[i];
+        if (!building_has_interior(b->type) || fabsf(b->x-x) > 4 || fabsf(b->y-y) > 4)
+            continue;
+        float w, d;
+        int height;
+        building_footprint(i, &w, &d, &height);
+        if (fabsf(b->x-x) < w + .95f && fabsf(b->y-y) < d + .95f)
+            return 0;
+        if (building_door_distance(i, x, y) < 1.3f)
+            return 0;
+    }
+    for (int i = 0; i < g.nodeCount; i++)
+        if (i != node && g.nodes[i].remaining && fabsf(g.nodes[i].x-x) < .85f && fabsf(g.nodes[i].y-y) < .85f)
+            return 0;
+    return 1;
+}
+static void move_overlapping_loot(void) {
+    for (int i = 0; i < g.nodeCount; i++) {
+        Node *n = &g.nodes[i];
+        if (!n->remaining || n->type < NODE_LOOT || town_near(n->x, n->y, 22) < 0 ||
+            clear_loot_site(n->x, n->y, i))
+            continue;
+        int moved = 0;
+        for (int ring = 1; ring <= 12 && !moved; ring++)
+            for (int j = 0; j < 16; j++) {
+                float angle = j * .39269908f;
+                float x = n->x + cosf(angle) * ring * .65f, y = n->y + sinf(angle) * ring * .65f;
+                if (clear_loot_site(x, y, i)) {
+                    n->x = x;
+                    n->y = y;
+                    moved = 1;
+                    break;
+                }
+            }
+    }
+}
+static void place_roadside_ore(void) {
+    for (int t = 0; t < TOWNS; t++) {
+        const Town *town = &towns[t];
+        int node = nearest_ore(town->x,town->y,32,NODE_ORE);
+        if (node < 0) continue;
+        float best = 1e9f, ox = g.nodes[node].x, oy = g.nodes[node].y;
+        for (int i = 0; i < 64; i++) {
+            float angle = i * .09817477f, dx = cosf(angle), dy = sinf(angle);
+            for (int radius = 19; radius <= 25; radius += 2) {
+                float roadX = town->x + dx*radius, roadY = town->y + dy*radius;
+                if (!terrain_road(roadX,roadY) || !can_walk(roadX,roadY))
+                    continue;
+                for (int side = -1; side <= 1; side += 2) {
+                    float x = roadX - dy*side*3.4f, y = roadY + dx*side*3.4f;
+                    float score = distance(x,y,town->x,town->y);
+                    if (score >= best || town_near(x,y,18.5f) >= 0 || terrain_road(x,y) ||
+                        !clear_loot_site(x,y,node) || !can_walk((roadX+x)*.5f,(roadY+y)*.5f))
+                        continue;
+                    best = score;
+                    ox = x;
+                    oy = y;
+                }
+            }
+        }
+        g.nodes[node].x = ox;
+        g.nodes[node].y = oy;
+    }
+}
 void frontier_world_init(void) {
-    if (g.frontier.version) return;
-    g.frontier.version = 1;
-    settlement_rebuild();
-    frontier_resources();
-    lodge_sites();
-    starter_bandits();
-    for (int i = 0; i < CONTRACTS; i++)
-        if (g.contracts[i].active == 2)
-            remember_contract(&g.contracts[i]);
-    restock();
+    if (!g.frontier.version) {
+        settlement_rebuild();
+        frontier_resources();
+        lodge_sites();
+        starter_bandits();
+        for (int i = 0; i < CONTRACTS; i++)
+            if (g.contracts[i].active == 2)
+                remember_contract(&g.contracts[i]);
+        restock();
+    }
+    if (g.frontier.version < 2) {
+        move_overlapping_loot();
+        place_roadside_ore();
+        for (int n = 0; n < g.actorCount; n++) {
+            Actor *a = &g.actors[n];
+            int room = depth_room(a);
+            if (room) building_door(room - 1, &a->x, &a->y);
+        }
+        g.frontier.version = 2;
+    }
 }

@@ -1,4 +1,5 @@
 #include "game.h"
+#include "settlement_art_ids.h"
 #include <math.h>
 #include <string.h>
 extern int conscious(const Actor *);
@@ -157,69 +158,149 @@ static void service_post(int building, int service, float *x, float *y) {
         break;
     }
 }
+typedef struct {
+    float x, y, until;
+    int room, hour;
+} TownStop;
+static TownStop townStops[MAX_ACTORS];
+
+void town_routines_reset(void) {
+    memset(townStops, 0, sizeof(townStops));
+}
+
+static int open_stop(int n, int room, float x, float y, float gap) {
+    for (int j = 0; j < g.actorCount; j++) {
+        const Actor *b = &g.actors[j];
+        if (n == j || !b->active || b->dead || b->carriedBy >= 0)
+            continue;
+        if (depth_room(b) == room && distance(x,y,depth_x(b),depth_y(b)) < gap)
+            return 0;
+        const TownStop *post = &townStops[j];
+        if (post->until > g.time && post->room == room && distance(x,y,post->x,post->y) < gap)
+            return 0;
+    }
+    return 1;
+}
+static int pick_inn_post(int n, int building, unsigned shift, float *x, float *y) {
+    static const float places[][2] = {
+        {1.25f,3.5f},{2.25f,4.4f},{4.85f,3.25f},{5.7f,3.8f},{4.7f,5.8f},
+        {1.8f,5.6f},{2.95f,2.55f},{4.3f,2.55f},{2.45f,1.45f},{5.85f,1.5f},
+        {3.45f,4.65f},{1.3f,2.4f},{4.3f,1.25f},{5.65f,5.85f},{2.65f,5.55f}
+    };
+    float staffX = 3.55f, staffY = 2.3f;
+    service_post(building, ROOM_TRADE, &staffX, &staffY);
+    unsigned count = sizeof(places) / sizeof(places[0]);
+    for (unsigned i = 0; i < count; i++) {
+        unsigned spot = (shift + i) % count;
+        float px = places[spot][0], py = places[spot][1];
+        if (distance(px,py,staffX,staffY) < 1.6f || !interior_walkable(building + 1, px, py) ||
+            !open_stop(n, building + 1, px, py, 1.45f))
+            continue;
+        *x = px;
+        *y = py;
+        return 1;
+    }
+    return 0;
+}
+static void pick_street_post(int n, float cx, float cy, float radius, unsigned shift, float *x, float *y) {
+    for (int k = 0; k < 16; k++) {
+        float angle = ((shift + k * 5) % 16) * .39269908f;
+        float px = cx + cosf(angle) * radius, py = cy + sinf(angle) * radius;
+        if (can_walk(px, py) && open_stop(n, 0, px, py, 1.65f)) {
+            *x = px;
+            *y = py;
+            return;
+        }
+    }
+    *x = cx;
+    *y = cy;
+    civil_clear_position(x,y);
+}
+static TownStop town_stop(int n, int town, int role) {
+    Actor *a = &g.actors[n];
+    int hour = (int)g.dayTime;
+    unsigned shift = (unsigned)(g.time / 35.f + n * .41f) + n * 17u + g.seed;
+    TownStop next = {.hour = hour, .until = g.time + 28 + shift % 21};
+    int type = role == ROLE_MERCHANT ? SHOP : role == ROLE_INNKEEPER ? BAR : role == ROLE_SMITH ? FORGE : -1;
+    if (type >= 0) {
+        int business = town_service_building(a, town, type);
+        if (business >= 0) {
+            int working = hour >= (type == FORGE ? 7 : 6) && hour < (type == FORGE ? 19 : type == BAR ? 24 : 22);
+            if (working && (g.time < 35 || shift % 7 != 0)) {
+                next.room = business + 1;
+                next.x = 3.4f;
+                next.y = 2.6f;
+                service_post(business, type == FORGE ? ROOM_SMITH_TRADE : ROOM_TRADE, &next.x, &next.y);
+                if (open_stop(n,next.room,next.x,next.y,1.15f))
+                    return next;
+            }
+            float x, y;
+            building_door(business,&x,&y);
+            next.room = 0;
+            pick_street_post(n,x,y,1.8f,shift,&next.x,&next.y);
+            return next;
+        }
+    }
+    int mealtime = (hour >= 7 && hour <= 10) || (hour >= 17 && hour <= 22);
+    if (hour >= 7 && hour <= 23 && shift % 10 < (mealtime ? 7u : 3u)) {
+        int inn = town_service_building(a,town,BAR);
+        if (inn >= 0 && pick_inn_post(n,inn,shift,&next.x,&next.y)) {
+            next.room = inn + 1;
+            return next;
+        }
+    }
+    if (role != ROLE_RECRUIT && (hour < 7 || hour >= 19 || shift % 5 == 0)) {
+        int home = home_destination(n,town);
+        if (home >= 0 && pick_inn_post(n,home,shift,&next.x,&next.y)) {
+            next.room = home + 1;
+            return next;
+        }
+    }
+    pick_street_post(n,towns[town].x,towns[town].y,4.5f + (shift % 4)*2.05f,shift,&next.x,&next.y);
+    return next;
+}
 int town_npc_routine(int n, float dt) {
     Actor *a = &g.actors[n];
     int town = a->homeTown, room = depth_room(a);
-    if (a->squad || town < 0 || town >= TOWNS || !conscious(a) || a->target >= 0 || a->attackPhase ||
+    if (a->squad || a->kind == BEAST || town < 0 || town >= TOWNS || !conscious(a) || a->target >= 0 || a->attackPhase ||
         a->carrying >= 0 || a->prisonTime > 0 || g.depth.actors[n].captive || population_owned(n) ||
         a->faction != g.townOwner[town])
         return 0;
-
-    int role = npc_role(a), goal = -1, type = -1;
-    float hour = g.dayTime, postX = 3.4f, postY = 3.15f;
-    if (role == ROLE_MERCHANT && hour >= 6 && hour < 22)
-        type = SHOP;
-    else if (role == ROLE_INNKEEPER && hour >= 6)
-        type = BAR;
-    else if (role == ROLE_SMITH && hour >= 7 && hour < 19)
-        type = FORGE;
-    else if ((role == ROLE_RECRUIT || role == ROLE_BARBER || role == ROLE_CITIZEN) &&
-             ((hour >= 7 && hour < 11) || (hour >= 17 && hour < 22.5f))) {
-        type = BAR;
-        postX = role == ROLE_RECRUIT ? 2.05f : 4.55f;
-        postY = role == ROLE_CITIZEN ? 4.7f : 3.9f;
-    } else if (a->kind == SETTLER && (role == ROLE_CITIZEN || role == ROLE_BARBER || hour < 6)) {
-        goal = home_destination(n, town);
-        postX = 2.7f;
-    }
-    if (role == ROLE_INNKEEPER) {
-        postX = 4;
-        postY = 2.12f;
-    }
-    if (type >= 0)
-        goal = room && g.buildings[room - 1].type == type ? room - 1 : town_service_building(a, town, type);
-    if (room && g.buildings[room - 1].type == JAIL && watch_town(a) == town)
-        for (int i = 0; i < g.actorCount; i++)
-            if (g.actors[i].active && !g.actors[i].dead && g.actors[i].prisonTime > 0 &&
-                depth_room(&g.actors[i]) == room) {
-                goal = room - 1;
-                postX = 4.8f;
-                postY = 5.1f;
-                break;
-            }
-    if (room) {
-        if (goal == room - 1 && (role == ROLE_MERCHANT || role == ROLE_INNKEEPER || role == ROLE_SMITH))
-            service_post(goal, role == ROLE_SMITH ? ROOM_SMITH_TRADE : ROOM_TRADE, &postX, &postY);
-        float x = goal == room - 1 ? postX : 3.5f;
-        float y = goal == room - 1 ? postY : 6.35f;
-        float dx = x - depth_x(a), dy = y - depth_y(a);
-        if (dx * dx + dy * dy > .12f)
-            depth_move_room(a, dx, dy, dt * .65f);
-        else if (goal != room - 1)
-            actor_leave_room(n);
-        else if (type == SHOP)
-            a->facing = depth_x(a) < 3.9f ? 0 : 1;
-        return 1;
-    }
-    if (goal < 0)
+    int role = npc_role(a);
+    if (a->kind == GUARD) {
+        if (room && g.buildings[room - 1].type == JAIL)
+            for (int j = 0; j < g.actorCount; j++)
+                if (g.actors[j].active && !g.actors[j].dead && g.actors[j].prisonTime > 0 &&
+                    depth_room(&g.actors[j]) == room) {
+                    room_route_toward(a,4.8f,5.1f,dt*.65f);
+                    return 1;
+                }
+        if (!room) return 0;
+    } else if (role != ROLE_CITIZEN && role != ROLE_BARBER && role != ROLE_RECRUIT &&
+               role != ROLE_INNKEEPER && role != ROLE_MERCHANT && role != ROLE_SMITH)
         return 0;
-    float x, y;
-    building_door(goal, &x, &y);
-    if (distance(a->x, a->y, x, y) > .8f) {
-        route_toward(a, x, y, dt * .65f);
+    TownStop *post = &townStops[n];
+    if (post->until <= g.time || post->hour != (int)g.dayTime)
+        *post = town_stop(n,town,role);
+    if (room) {
+        float x = post->room == room ? post->x : 3.5f;
+        float y = post->room == room ? post->y : 6.35f;
+        if (distance(depth_x(a),depth_y(a),x,y) > .25f)
+            room_route_toward(a,x,y,dt*.65f);
+        else if (post->room != room)
+            actor_leave_room(n);
         return 1;
     }
-    actor_enter_room(n, goal);
+    if (!post->room) {
+        route_toward(a,post->x,post->y,dt*.56f);
+        return 1;
+    }
+    float x, y;
+    building_door(post->room-1,&x,&y);
+    if (distance(a->x,a->y,x,y) > .9f)
+        route_toward(a,x,y,dt*.72f);
+    else if (open_stop(n,post->room,3.5f,6.1f,.78f))
+        actor_enter_room(n,post->room-1);
     return 1;
 }
 void actor_enter_room(int n, int building) {
@@ -230,6 +311,7 @@ void actor_enter_room(int n, int building) {
     z->ry = 6.1f;
     building_door(building, &a->x, &a->y);
     a->routeLen = a->routePos = 0;
+    a->routeClock = 0;
     if (n == g.selected) {
         g.interiorBuilding = z->room;
         g.interiorActor = n;
@@ -378,13 +460,13 @@ int interior_props(int building, InteriorProp *p) {
     int variant = g.frontier.variant[building], n = 0;
     const TownDesign *plan = town_design(t);
     int layout = (building + (t + 1) * 5) % 3;
-    static const int decor[] = {ROOM_STOVE_ART, ROOM_ARMOR_ART, ROOM_SHRINE_ART,
-                               ROOM_BALES_ART, ROOM_HEARTH_ART, ROOM_BALES_ART};
+    static const int decor[] = {ART_IRON_STOVE, ART_ARMOR_STAND, ART_SIDE_ALTAR,
+                               ART_CARAVAN_BALES, ART_IRON_STOVE, ART_CARAVAN_BALES};
     if (variant == BUILD_LODGE) {
         put_prop(p,&n,1.1f,1.7f,.62f,.82f,16,ROOM_REST);
         put_prop(p,&n,1.1f,4.25f,.62f,.82f,16,ROOM_REST);
         put_prop(p,&n,5.3f,1.4f,1.0f,.45f,17,ROOM_MEMBERSHIP);
-        put_prop(p,&n,5.65f,4.25f,.35f,.35f,24,ROOM_TRAIN);
+        put_prop(p,&n,5.65f,4.25f,.35f,.35f,ART_PRACTICE_POST,ROOM_TRAIN);
         put_prop(p,&n,3.0f,3.0f,1.1f,.7f,23,ROOM_NONE);
         return n;
     }
@@ -406,12 +488,12 @@ int interior_props(int building, InteriorProp *p) {
                      1.28f + plan->marketTier*.15f,.48f,17,ROOM_TRADE);
         if (private_chest(building))
             put_prop(p,&n,sideCounter ? 6.15f : 1.05f,sideCounter ? 1.26f : 3.32f,.43f,.37f,20,ROOM_CHEST);
-        put_prop(p,&n,1.1f,1.06f,.62f,.40f,variant == BUILD_ARMORER ? ROOM_ARMOR_ART : decor[style],ROOM_NONE);
+        put_prop(p,&n,1.1f,1.06f,.62f,.40f,variant == BUILD_ARMORER ? ART_ARMOR_STAND : decor[style],ROOM_NONE);
         if (layout == 2 && t == 3) {
             put_prop(p,&n,1.4f,4.82f,.76f,.55f,18,ROOM_NONE);
             put_prop(p,&n,5.53f,4.91f,.58f,.52f,20,ROOM_NONE);
         } else
-            put_prop(p,&n,sideCounter ? 1.28f : 5.55f,4.8f,.64f,.55f,variant == BUILD_ARMORER ? ROOM_ARMOR_ART : 18,ROOM_NONE);
+            put_prop(p,&n,sideCounter ? 1.28f : 5.55f,4.8f,.64f,.55f,variant == BUILD_ARMORER ? ART_ARMOR_STAND : 18,ROOM_NONE);
         if (plan->marketTier)
             put_prop(p,&n,sideCounter ? 3.65f : 5.97f,sideCounter ? .95f : 3.4f,.43f,.42f,21,ROOM_NONE);
         if (plan->marketTier == 2)
@@ -422,7 +504,7 @@ int interior_props(int building, InteriorProp *p) {
         put_prop(p,&n,1.47f,1.47f,.9f,.7f,19,ROOM_FORGE);
         put_prop(p,&n,4.8f,2.18f,1.12f,.47f,17,b->owner < 0 ? ROOM_SMITH_TRADE : ROOM_NONE);
         put_prop(p,&n,1.02f,4.7f,.47f,.48f,20,ROOM_NONE);
-        put_prop(p,&n,5.6f,4.7f,.58f,.48f,ROOM_ARMOR_ART,ROOM_NONE);
+        put_prop(p,&n,5.6f,4.7f,.58f,.48f,ART_ARMOR_STAND,ROOM_NONE);
         put_prop(p,&n,5.72f,1.0f,.40f,.36f,21,ROOM_NONE);
     } else if (b->type == STORE) {
         for (int j = 0; j < 3 + plan->marketTier; j++) {
@@ -655,18 +737,92 @@ void interior_interact(void) {
         break;
     }
 }
-int interior_walkable(int room, float x, float y) {
-    if (room <= 0 || room > g.buildingCount || x < .4f || y < .4f || x > 6.6f || y > 6.6f)
+static int room_clear(int room, const InteriorProp *p, int count, float x, float y) {
+    if (x < .4f || y < .4f || x > 6.6f || y > 6.6f)
         return 0;
-    if (g.buildings[room - 1].type == JAIL &&
-        fabsf(y - 3.65f) < .2f && fabsf(x - 3.5f) > .85f)
+    if (g.buildings[room - 1].type == JAIL && fabsf(y-3.65f) < .2f && fabsf(x-3.5f) > .85f)
         return 0;
-    InteriorProp p[ROOM_PROPS];
-    int n = interior_props(room - 1, p);
-    for (int i = 0; i < n; i++)
-        if (p[i].art != 23 && fabsf(x - p[i].x) < p[i].w + .18f && fabsf(y - p[i].y) < p[i].d + .18f)
+    for (int i = 0; i < count; i++)
+        if (p[i].art != 23 && fabsf(x-p[i].x) < p[i].w + .18f && fabsf(y-p[i].y) < p[i].d + .18f)
             return 0;
     return 1;
+}
+int interior_walkable(int room, float x, float y) {
+    if (room <= 0 || room > g.buildingCount) return 0;
+    InteriorProp p[ROOM_PROPS];
+    int count = interior_props(room - 1,p);
+    return room_clear(room,p,count,x,y);
+}
+static float room_grid_point(int i) { return .5f + .4f * i; }
+
+void room_route_toward(Actor *a, float tx, float ty, float dt) {
+    int room = depth_room(a);
+    if (!room || !conscious(a)) return;
+    float x = depth_x(a), y = depth_y(a);
+    float gap = distance(x,y,tx,ty);
+    if (gap < .18f) return;
+    InteriorProp p[ROOM_PROPS];
+    int count = interior_props(room-1,p);
+    int clear = 1, steps = (int)ceilf(gap/.25f);
+    for (int j = 1; j <= steps; j++)
+        if (!room_clear(room,p,count,x+(tx-x)*j/steps,y+(ty-y)*j/steps)) {
+            clear = 0;
+            break;
+        }
+    if (clear) {
+        a->routeLen = 0;
+        depth_move_room(a,tx-x,ty-y,dt);
+        return;
+    }
+    a->routeClock -= dt;
+    if (a->routeClock <= 0 || distance(tx,ty,a->routeTargetX,a->routeTargetY) > .6f) {
+        enum { SIDE = 16, CELLS = SIDE * SIDE };
+        short parent[CELLS], queue[CELLS], path[CELLS];
+        int sx = (int)fmaxf(0,fminf(SIDE-1,roundf((x-.5f)/.4f)));
+        int sy = (int)fmaxf(0,fminf(SIDE-1,roundf((y-.5f)/.4f)));
+        int start = sy*SIDE+sx, end = start, used = 1;
+        float best = gap;
+        for (int j = 0; j < CELLS; j++) parent[j] = -2;
+        parent[start] = -1;
+        queue[0] = start;
+        for (int j = 0; j < used; j++) {
+            int cell = queue[j], cx = cell%SIDE, cy = cell/SIDE;
+            float d = distance(room_grid_point(cx),room_grid_point(cy),tx,ty);
+            if (d < best) { best = d; end = cell; }
+            if (d < .31f) break;
+            static const int dx[] = {1,-1,0,0}, dy[] = {0,0,1,-1};
+            for (int k = 0; k < 4; k++) {
+                int nx = cx+dx[k], ny = cy+dy[k], next = ny*SIDE+nx;
+                if (nx < 0 || nx >= SIDE || ny < 0 || ny >= SIDE || parent[next] != -2 ||
+                    !room_clear(room,p,count,room_grid_point(nx),room_grid_point(ny)) ||
+                    !room_clear(room,p,count,room_grid_point(cx)+dx[k]*.2f,room_grid_point(cy)+dy[k]*.2f))
+                    continue;
+                parent[next] = cell;
+                queue[used++] = next;
+            }
+        }
+        int length = 0;
+        for (int c = end; c != start; c = parent[c]) path[length++] = c;
+        a->routeLen = length > 24 ? 24 : length;
+        a->routePos = 0;
+        a->routeTargetX = tx;
+        a->routeTargetY = ty;
+        a->routeClock = .85f;
+        for (int j = 0; j < a->routeLen; j++) {
+            int c = path[length-j-1];
+            a->routeX[j] = c%SIDE;
+            a->routeY[j] = c/SIDE;
+        }
+    }
+    while (a->routePos < a->routeLen) {
+        int j = a->routePos;
+        float nx = room_grid_point(a->routeX[j]), ny = room_grid_point(a->routeY[j]);
+        if (distance(x,y,nx,ny) >= .14f) {
+            depth_move_room(a,nx-x,ny-y,dt);
+            return;
+        }
+        a->routePos++;
+    }
 }
 void interior_move(float dx, float dy, float dt) {
     Actor *a = &g.actors[g.selected];

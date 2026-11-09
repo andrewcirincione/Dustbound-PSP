@@ -1,4 +1,5 @@
 #include "game.h"
+#include "settlement_art_ids.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -641,6 +642,9 @@ int nearest_ore(float x, float y, float reach, int type) {
     }
     return best;
 }
+int town_ore(int town) {
+    return town >= 0 && town < TOWNS ? nearest_ore(towns[town].x,towns[town].y,34,NODE_ORE) : -1;
+}
 void town_life_init(void) {
     if (g.townLife.layout)
         return;
@@ -1213,7 +1217,7 @@ int contract_use_items(int item, int qty, int town) {
 }
 int contract_turn_in(int slot) {
     const Contract *c = &g.contracts[slot];
-    return c->type == CONTRACT_FREIGHT ? c->target : c->town;
+    return c->type == CONTRACT_FREIGHT || c->type == CONTRACT_ESCORT ? c->target : c->town;
 }
 int contract_ready(int slot) {
     const Contract *c = &g.contracts[slot];
@@ -1269,7 +1273,15 @@ int contract_location(int slot, float *x, float *y) {
         return -1;
     int town = contract_turn_in(slot);
     if (!contract_ready(slot)) {
-        if (c->type == CONTRACT_DISPATCH || c->type == CONTRACT_ESCORT)
+        if (c->type == CONTRACT_ESCORT) {
+            int who = escort_contact(slot);
+            if (who >= 0) {
+                *x = g.actors[who].x;
+                *y = g.actors[who].y;
+                return c->town;
+            }
+        }
+        if (c->type == CONTRACT_DISPATCH)
             town = c->target;
         if (c->type == CONTRACT_HUNT && g.townLife.huntX[slot] > 0) {
             *x = g.townLife.huntX[slot];
@@ -1350,7 +1362,7 @@ void contract_description(int n, char *out, int size) {
         return;
     }
     if (c->active == 2) {
-        snprintf(out, size, "%s paid the contract.", towns[c->type == CONTRACT_FREIGHT ? c->target : c->town].name);
+        snprintf(out, size, "%s paid the contract.", towns[c->type == CONTRACT_FREIGHT || c->type == CONTRACT_ESCORT ? c->target : c->town].name);
         return;
     }
     if (c->type >= CONTRACT_FREIGHT) {
@@ -1474,7 +1486,18 @@ const char *dialogue_line(int n, int page) {
         return "The road is quiet.";
     Actor *a = &g.actors[n];
     if (a->prisonTime > 0)
-        return "Pay bail, wait out the sentence, or pick the lock. The watch can lock it again.";
+        return "How are you getting out?";
+    if (page == DIALOG_IRON) {
+        int town = town_near(g.actors[g.selected].x,g.actors[g.selected].y,16), node = town_ore(town);
+        if (node < 0) return "The nearest seam is worked out.";
+        static const char *directions[] = {"east","southeast","south","southwest","west","northwest","north","northeast"};
+        const Node *ore = &g.nodes[node];
+        float dx = ore->x-towns[town].x, dy = ore->y-towns[town].y;
+        int direction = (int)roundf(atan2f(dy,dx)*1.273239545f);
+        static char hint[110];
+        snprintf(hint,sizeof(hint),"There's an iron seam %s of town. Look for the red stone.",directions[(direction+8)%8]);
+        return hint;
+    }
     if (page == DIALOG_WORK_HINT)
         return work_hint(town_near(g.actors[g.selected].x, g.actors[g.selected].y, 14), n);
     if (page == DIALOG_WORK) {
@@ -1936,24 +1959,24 @@ int jail_pick_start(int n) {
 static void jail_medical(Actor *a, float dt) {
     if (fatal_injury(a))
         return;
+    int n = a - g.actors;
     if (a->taskKind != TASK_JAIL_CARE && (wound_needs_dressing(a) || depth_needs_repair(a))) {
         a->taskKind = TASK_JAIL_CARE;
-        a->action = g.frontier.taskTotal[a - g.actors] = 2.8f + treatment_burden(a) * .80f;
-        if (a->squad) {
-            int guard = jail_guard(a, 22);
-            log_warn("%s begins treating %s in custody.", guard >= 0 ? g.actors[guard].name : "Jail staff", a->name);
-        }
+        g.frontier.treatmentPhase[n] = a->bleed > .01f ? 1 : 0;
+        a->action = g.frontier.taskTotal[n] = g.frontier.treatmentPhase[n] ? 1.6f :
+                    2.8f + treatment_burden(a) * .8f;
     }
-    if (a->taskKind != TASK_JAIL_CARE)
+    if (a->taskKind != TASK_JAIL_CARE || (a->action -= dt) > 0)
         return;
-    a->action -= dt;
-    if (a->action > 0)
+    if (g.frontier.treatmentPhase[n] == 1) {
+        a->bleed = 0;
+        g.frontier.treatmentPhase[n] = 0;
+        a->action = g.frontier.taskTotal[n] = 2.8f + treatment_burden(a) * .8f;
         return;
+    }
     dress_wounds(a);
-    injury_repair(a, &g.depth.actors[a - g.actors]);
+    injury_repair(a, &g.depth.actors[n]);
     a->taskKind = 0;
-    if (a->squad)
-        log_msg("%s is under care. Wounds recover while serving the sentence.", a->name);
 }
 static void jail_tick(Actor *a, float dt) {
     if (fatal_injury(a))
@@ -2143,7 +2166,10 @@ static int nearby_slave_camp(const Actor *guard, const Actor *patient) {
     }
     return -1;
 }
+static unsigned char collecting[MAX_ACTORS];
+int watch_collecting(int actor) { return collecting[actor]; }
 void custody_tick(float dt) {
+    memset(collecting, 0, sizeof(collecting));
     for (int n = 0; n < g.actorCount; n++) {
         Actor *a = &g.actors[n];
         if (!a->active || !a->squad)
@@ -2166,7 +2192,7 @@ void custody_tick(float dt) {
             if (actor_inside(carrier)) {
                 float dx = 3.5f - depth_x(carrier), dy = 6.3f - depth_y(carrier);
                 if (dx * dx + dy * dy > .32f) {
-                    depth_move_room(carrier, dx, dy, dt);
+                    room_route_toward(carrier, 3.5f, 6.3f, dt);
                     continue;
                 }
                 actor_leave_room(guard);
@@ -2200,22 +2226,37 @@ void custody_tick(float dt) {
         if (a->unconscious <= 0 || a->carriedBy >= 0 || a->prisonTime > 0 ||
             g.depth.actors[n].captive)
             continue;
+        int pickup = -1, jail = -1;
+        float closest = 13;
         for (int j = 0; j < g.actorCount; j++) {
             Actor *guard = &g.actors[j];
-            if (guard->squad || !conscious(guard) || guard->carrying >= 0 ||
-                fabsf(guard->x - a->x) > 2.3f || fabsf(guard->y - a->y) > 2.3f ||
-                depth_distance(a, guard) > 2.3f)
+            if (guard->squad || !conscious(guard) || guard->carrying >= 0 || collecting[j] ||
+                depth_room(guard) != depth_room(a))
                 continue;
+            float gap = depth_distance(a,guard);
             int town = watch_town(guard);
-            int jail = town >= 0 && town < TOWNS ? g.field.jail[town] - 1 : -1;
-            if (jail >= 0 && wanted_amount(a, guard->faction) >= SERIOUS_BOUNTY) {
-                begin_intake(n, j, jail);
+            if (town >= 0 && gap < closest &&
+                (wanted_amount(a,guard->faction) >= SERIOUS_BOUNTY ||
+                 (a->squad && town_near(a->x,a->y,18) == town && hostile(guard,a)))) {
+                closest = gap;
+                pickup = j;
+                jail = g.field.jail[town] - 1;
+            }
+            if (pickup >= 0 || gap > 2.3f || actor_inside(a)) continue;
+            int camp = nearby_slave_camp(guard,a);
+            if (camp >= 0 && hostile(guard,a)) {
+                begin_intake(n,j,camp);
                 break;
             }
-            int camp = actor_inside(a) ? -1 : nearby_slave_camp(guard, a);
-            if (camp >= 0 && hostile(guard, a)) {
-                begin_intake(n, j, camp);
-                break;
+        }
+        if (pickup >= 0 && a->carriedBy < 0) {
+            Actor *guard = &g.actors[pickup];
+            if (closest <= 2.3f)
+                begin_intake(n,pickup,jail);
+            else {
+                collecting[pickup] = 1;
+                if (depth_room(guard)) room_route_toward(guard,depth_x(a),depth_y(a),dt);
+                else route_toward(guard,a->x,a->y,dt);
             }
         }
     }

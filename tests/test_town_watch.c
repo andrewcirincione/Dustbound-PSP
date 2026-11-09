@@ -114,6 +114,38 @@ static void charges_and_payment(void) {
     assert(a->carriedBy == 1 && g.field.intake[0] == jail + 1);
 }
 
+static void clothing_and_trespass(void) {
+    Actor *a = isolated();
+    int town = 3, jail = g.field.jail[town] - 1, faction = g.townOwner[town];
+    at_door(a, jail);
+    officer(1, town, a->x + .6f, a->y);
+    starting_gear(a, 0);
+    assert(disguise_faction(a) == faction);
+    g.society.suspicion[0] = 99.99f;
+    step(.2f);
+    assert(!wanted_amount(a, faction) && ui.screen == SCREEN_WORLD);
+
+    a = isolated();
+    town = 11;
+    jail = g.field.jail[town] - 1;
+    faction = g.townOwner[town];
+    at_door(a, jail);
+    officer(1, town, a->x + .65f, a->y);
+    Actor *watch = &g.actors[1];
+    watch->gear[0] = SABRE;
+    starting_gear(a, 1);
+    assert(!hostile(watch, a));
+    a->gear[2] = NONE;
+    a->health[HEAD] = a->health[CHEST] = 3;
+    a->health[LARM] = a->health[RARM] = 5;
+    a->health[LLEG] = a->health[RLEG] = 5;
+    assert(!wanted_amount(a, faction) && hostile(watch, a));
+    step(18);
+    assert(!a->dead && a->bleed == 0 && a->prisonTime > 0 && actor_inside(a) == jail + 1);
+    assert(g.charges[0][faction] & CRIME_TRESPASS);
+    assert(a->treatedMask & ((1 << HEAD) | (1 << CHEST)));
+}
+
 static void shop_and_inn(void) {
     Actor *a = isolated();
     int town = 3, shop = town_building(town, SHOP), inn = town_building(town, BAR);
@@ -126,6 +158,8 @@ static void shop_and_inn(void) {
     at_door(&g.actors[1], shop);
     assert(interior_enter(shop));
     assert(!actor_inside(&g.actors[1]));
+    assert(town_npc_routine(1, .1f) && !actor_inside(&g.actors[1]));
+    g.interiorY = 4.5f;
     assert(town_npc_routine(1, .1f) && actor_inside(&g.actors[1]) == shop + 1);
     for (int i = 0; i < 220; i++) town_npc_routine(1, .05f);
     fixture_service(ROOM_CHEST);
@@ -218,6 +252,7 @@ static void stock_and_recovery(void) {
 
 int main(void) {
     charges_and_payment();
+    clothing_and_trespass();
     shop_and_inn();
     stock_and_recovery();
     puts("PASS: charges, review without payment, the watch, theft detection and sale odds, inn and smithy, carried bodies and prone recovery.");

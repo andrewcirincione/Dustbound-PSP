@@ -543,6 +543,18 @@ static uint32_t actor_hair(const Actor *a) {
     static const uint32_t hairs[] = {0x211e1b, 0x433026, 0x776047, 0xa4835c, 0xc1b5a0, 0x713e32};
     return hairs[a->hairColor % 6];
 }
+static int bed_head_direction(const Actor *a) {
+    int room = depth_room(a);
+    if (room) {
+        InteriorProp props[ROOM_PROPS];
+        int count = interior_props(room - 1, props);
+        for (int i = 0; i < count; i++)
+            if (props[i].action == ROOM_REST &&
+                distance(depth_x(a),depth_y(a),props[i].x,props[i].y) < .4f)
+                return props[i].d > props[i].w ? 1 : -1;
+    }
+    return -1;
+}
 static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float stance, int variant, int laid_out) {
     uint32_t skin = actor_skin(a);
     int race = species_index(a);
@@ -614,54 +626,61 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     part(id, RX(xx, yy), RY(yy), RX(xx1, yy1), RY(yy1), (w) * sc, tint, li, q, face < 0, 0, 1)
     uint32_t cloth = torso ? itemDefs[torso].color : 0x9b8670, lc = legs ? itemDefs[legs].color : 0x786d5e;
     if (a->dead || a->unconscious > 0 || a->taskKind == 3 || playing_dead(a)) {
-        /* Rotate the complete dressed rig: hats, boots and packs stay attached. */
-        static uint32_t prone[128*120];
-        Actor standing=*a;standing.dead=0;standing.unconscious=0;standing.taskKind=0;
-        standing.attackPhase=0;standing.movedTimer=0;standing.hitFlash=0;standing.sneaking=0;
-        standing.gear[0] = 0;
-        standing.carrying = -1;
-        int in_bed = actor_in_bed(a);
-        if (in_bed) {
-            standing.gear[2] = standing.gear[5] = 0;
-            standing.facing = 1;
-            standing.health[LLEG] = standing.health[RLEG] = species_health(a);
-        }
-        uint32_t *oldfb=fb;int oldpitch=pitch,l=clipLeft,t=clipTop,r=clipRight,b=clipBottom;
-        PaintBounds *oldPaint = trackedPaint, pronePaint = {128, 120, 0, 0};
-        memset(prone,0,sizeof(prone));fb=prone;pitch=128;clipLeft=clipTop=0;clipRight=128;clipBottom=120;
-        trackedPaint = &pronePaint;
-        actor_painted_stance(&standing,64,104,1,li,0,0,1);
-        trackedPaint = oldPaint;
-        fb=oldfb;pitch=oldpitch;clipLeft=l;clipTop=t;clipRight=r;clipBottom=b;
-        if (pronePaint.left >= pronePaint.right || pronePaint.top >= pronePaint.bottom)
+        int bed = actor_in_bed(a), dir = bed ? bed_head_direction(a) : face;
+        if (a->kind == BEAST) {
+            part(96 + (a->skin % 4) * 2, x-8*sc, y-5*sc, x+9*sc, y-3*sc, 19*sc,
+                 0xb4a38e, li, 0, dir < 0, 0, 1);
             return;
-        /* Project the relaxed figure onto the ground. Sample backward so
-           adjacent shoulders and limbs stay distinct at the gameplay scale. */
-        float ax = in_bed ? -.84f : .91f * face, ay = in_bed ? -.42f : -.31f;
-        float bx = in_bed ? .29f : .25f * face, by = in_bed ? -.60f : .74f;
-        float det = ax * by - ay * bx;
-        float minX = 1e9f, minY = 1e9f, maxX = -1e9f, maxY = -1e9f;
-        for (int corner = 0; corner < 4; corner++) {
-            float along = 84 - (corner & 1 ? pronePaint.top : pronePaint.bottom);
-            float across = (corner & 2 ? pronePaint.left : pronePaint.right) - 64;
-            float px = x + sc * (ax * along + bx * across);
-            float py = y - 3 * sc + sc * (ay * along + by * across);
-            minX = fminf(minX, px); maxX = fmaxf(maxX, px);
-            minY = fminf(minY, py); maxY = fmaxf(maxY, py);
         }
-        PaintBounds ground = clip_paint((PaintBounds){floorf(minX), floorf(minY), ceilf(maxX), ceilf(maxY)},
-                                        clipLeft, clipTop, clipRight, clipBottom);
-        track_paint(ground);
-        for (int py = ground.top; py < ground.bottom; py++)
-            for (int px = ground.left; px < ground.right; px++) {
-                float dx = (px + .5f - x) / sc, dy = (py + .5f - y) / sc + 3;
-                int sx = (int)floorf(64 + (ax * dy - ay * dx) / det);
-                int sy = (int)floorf(84 - (by * dx - bx * dy) / det);
-                if (sx < pronePaint.left || sx >= pronePaint.right || sy < pronePaint.top || sy >= pronePaint.bottom)
-                    continue;
-                uint32_t pixel = prone[sy * 128 + sx];
-                if (pixel) fb[py * pitch + px] = pixel;
-            }
+        float alongX = dir * .86f, alongY = bed ? -.43f : .38f;
+        float crossX = -dir * .45f, crossY = .72f;
+#define LX(along, across) (x + sc * (alongX*(along) + crossX*(across)))
+#define LY(along, across, lift) (y + sc * (alongY*(along) + crossY*(across) - (lift)))
+#define LA(id, u, v, z, u2, v2, z2, wid, tint, q, lo, hi) \
+    part(id, LX(u,v), LY(u,v,z), LX(u2,v2), LY(u2,v2,z2), (wid)*sc, tint, li, q, dir<0, lo, hi)
+        for (int i = 0; i < 2; i++) {
+            int limb = LLEG + i;
+            if (limb_missing(a,limb)) continue;
+            int grade = limb_item_grade(limb_installed(a,limb)), mech = race == 2 || grade >= 0;
+            int artId = mech ? 76 : 64 + lf - 68;
+            float hip = i ? 2.1f : -2.05f, knee = hip + (bed ? 0 : i ? 2.1f : -.6f);
+            float foot = bed ? -15.2f : i ? -12.9f : -15.4f;
+            uint32_t tint = grade >= 0 ? limbGrades[grade].color : lc;
+            LA(artId,-3,hip,2.6f,-9,knee,1.2f,4.65f,tint,itemDefs[legs].quality,0,mech?1:.54f);
+            LA(mech?77:artId,-8.5f,knee,1.3f,foot,hip,.6f,4,tint,itemDefs[legs].quality,mech?0:.48f,1);
+            LA(mech?87:80+ff-60,foot+1.5f,hip,.8f,foot-2,hip,.6f,5,boots?itemDefs[boots].color:skin,
+               itemDefs[boots].quality,0,1);
+        }
+        if (!bed && back) {
+            int id = bf >= 76 && bf <= 83 ? 88 + bf - 76 : 88;
+            LA(id,7,-3.8f,2.3f,-4,-3.8f,1.1f,10,itemDefs[back].color,itemDefs[back].quality,0,1);
+        }
+        if (!limb_missing(a,LARM)) {
+            int grade = limb_item_grade(limb_installed(a,LARM)), mech = race == 2 || grade >= 0;
+            uint32_t tint = grade >= 0 ? limbGrades[grade].color : cloth;
+            LA(mech?76:72,6.3f,-3.2f,2.7f,2,-5.5f,1.1f,3.8f,tint,0,0,1);
+            LA(mech?77:75,2.6f,-5.5f,1.1f,-3,-5.0f,.8f,3.4f,mech?tint:skin,0,0,1);
+        }
+        LA(72,10.6f,0,2.5f,6.0f,0,2.5f,3.6f,skin,0,0,1);
+        LA(tf,8.2f,0,2.7f,-5.1f,0,1.7f,bw*(torso?2.52f:1.8f),torso?cloth:skin,
+           itemDefs[torso].quality,0,1);
+        LA(61,15.4f,0,2.2f,8.4f,0,2.5f,race==4?6.7f:5.9f,skin,0,0,1);
+        if (!bed && head && hf >= 48) {
+            float wide, top, bottom;
+            head_attachment(hf,&wide,&top,&bottom);
+            LA(hf,-top-18.5f,-.15f,2.45f,-bottom-18.5f,-.15f,2.45f,wide,itemDefs[head].color,
+               itemDefs[head].quality,0,1);
+        }
+        if (!limb_missing(a,RARM)) {
+            int grade = limb_item_grade(limb_installed(a,RARM)), mech = race == 2 || grade >= 0;
+            uint32_t tint = grade >= 0 ? limbGrades[grade].color : cloth;
+            float elbow = bed ? 4.2f : 6.1f, hand = bed ? 1.1f : 3.6f;
+            LA(mech?76:72,6.5f,3.35f,2.3f,2.1f,elbow,1.1f,4.3f,tint,0,0,1);
+            LA(mech?77:75,2.6f,elbow,1.1f,-3.3f,hand,1.0f,3.7f,mech?tint:skin,0,0,1);
+        }
+#undef LA
+#undef LX
+#undef LY
         return;
     }
     if (a->kind == BEAST) {
@@ -794,19 +813,19 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     if (relaxed || (weapon && !twoHands))
         painted_arm(a, 1 - primary, shoulders[1 - primary], wrists[1 - primary], sc, face, race, skin, cloth, li, 0, 1);
     int coat = tf == 32 || tf == 33 || tf == 39 || tf == 40 || tf == 42 || tf == 44 || tf == 47;
-    // Join the chin to the collar; transparent face/collar edges otherwise
-    // leave a floating head, most visible with the smaller fitted hats.
-    PART(72, 0, -27.5f, 0, -24, 2.8f, skin, 0);
-    PART(tf, 0, -26, coat ? -rig.shift * .35f * forward : 0, coat ? -5 : -12, bw * (torso?2.8f:1.8f), torso?cloth:skin,
-         itemDefs[torso].quality);
-    painted_head(a, RX(0, -33), RY(-33), RX(0, -25), RY(-25),
+    const float headDrop = 1.7f;
+    PART(72, 0, -27 + headDrop, 0, -21.8f, 3.6f, skin, 0);
+    PART(tf, 0, -26, coat ? -rig.shift * .35f * forward : 0, coat ? -5 : -12, bw * (torso ? 2.8f : 1.8f),
+         torso ? cloth : skin, itemDefs[torso].quality);
+    painted_head(a, RX(0, -33 + headDrop), RY(-33 + headDrop), RX(0, -25 + headDrop), RY(-25 + headDrop),
                  (race == 4 ? 6.7f : race == 3 ? 5.1f : 5.8f) * sc, skin, li, face);
     if (a->scar)
-        painted_line(RX(face, -29), RY(-29), RX(face * 1.5f, -27), RY(-27), shade(0x874b38, li));
+        painted_line(RX(face, -29 + headDrop), RY(-29 + headDrop), RX(face * 1.5f, -27 + headDrop),
+                     RY(-27 + headDrop), shade(0x874b38, li));
     if (head && hf >= 48) {
         float wide, top, bottom;
         head_attachment(hf, &wide, &top, &bottom);
-        PART(hf, 0, top, 0, bottom, wide, itemDefs[head].color, itemDefs[head].quality);
+        PART(hf, 0, top + headDrop, 0, bottom + headDrop, wide, itemDefs[head].color, itemDefs[head].quality);
     }
     if (!relaxed && (!weapon || twoHands))
         painted_arm(a, 1 - primary, shoulders[1 - primary], wrists[1 - primary], sc, face, race, skin, cloth, li, !weapon, 0);
@@ -934,6 +953,7 @@ static uint64_t actor_key(const Actor *a, int lum, float stance, int variant) {
     HASHV(a->body);
     HASHV(a->skin);
     HASHV(a->hair);
+    if (a->taskKind == 3) HASHV(bed_head_direction(a));
     HASHV(a->hairColor);
     HASHV(a->beard);
     HASHV(a->scar);

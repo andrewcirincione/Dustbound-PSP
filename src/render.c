@@ -1,6 +1,10 @@
 #include "game.h"
 #include "combat_pose.h"
 #include "art_data.h"
+#include "settlement_art_ids.h"
+#include "settlement_art.h"
+
+_Static_assert(ART_COUNT == SETTLEMENT_ART_FIRST, "Settlement sprite IDs must follow the base atlas");
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
@@ -32,10 +36,12 @@ static uint32_t blend(uint32_t a, uint32_t b, float f) {
 }
 /* Indexed row spans skip transparent margins. Only edge texels need blending.
    A lighting change updates 256 palette entries, not every sprite pixel. */
-static uint32_t artPalette[ART_COUNT][256];
-static int artLight[ART_COUNT];
-static void art(int id, int x, int y, float brightness, int fade) {
-    const ArtSprite *s = &artSprites[id];
+static uint32_t artPalette[SETTLEMENT_ART_END][256];
+static int artLight[SETTLEMENT_ART_END];
+static const ArtSprite *scene_sprite(int id) {
+    return id < ART_COUNT ? &artSprites[id] : &settlementSprites[id - SETTLEMENT_ART_FIRST];
+}
+static uint32_t *sprite_palette(int id, const ArtSprite *s, float brightness) {
     int lum = (int)(brightness * 128) + 1;
     if (artLight[id] != lum) {
         for (int i = 0; i < 256; i++) {
@@ -47,6 +53,11 @@ static void art(int id, int x, int y, float brightness, int fade) {
         }
         artLight[id] = lum;
     }
+    return artPalette[id];
+}
+static void art(int id, int x, int y, float brightness, int fade) {
+    const ArtSprite *s = scene_sprite(id);
+    const uint32_t *palette = sprite_palette(id, s, brightness);
     x -= s->ax;
     y -= s->ay;
     int top = y < clipTop ? clipTop - y : 0, bottom = y + s->h > clipBottom ? clipBottom - y : s->h;
@@ -61,12 +72,44 @@ static void art(int id, int x, int y, float brightness, int fade) {
         const uint8_t *p = s->pixels + s->rows[yy * 3] + start - s->rows[yy * 3 + 1];
         uint32_t *dst = fb + (y + yy) * pitch + x + start;
         for (int xx = start; xx < end; xx++, dst++) {
-            uint32_t c = artPalette[id][*p++];
+            uint32_t c = palette[*p++];
             unsigned a = c >> 24;
             if (fade && ((xx + yy) & 1))
                 continue;
             if (a == 255)
                 *dst = c;
+            else if (a) {
+                uint32_t d = *dst;
+                uint32_t rb = (((c & 0xff00ff) * a + (d & 0xff00ff) * (256 - a)) >> 8) & 0xff00ff;
+                uint32_t gg = (((c & 0xff00) * a + (d & 0xff00) * (256 - a)) >> 8) & 0xff00;
+                *dst = 0xff000000 | rb | gg;
+            }
+        }
+    }
+}
+static void scaled_art(int id, int left, int top, int width, int height, float brightness, int flip, int fade) {
+    const ArtSprite *s = scene_sprite(id);
+    const uint32_t *palette = sprite_palette(id, s, brightness);
+    int stepX = (s->w << 16) / width, stepY = (s->h << 16) / height;
+    int firstY = top < clipTop ? clipTop - top : 0;
+    int lastY = top + height > clipBottom ? clipBottom - top : height;
+    for (int y = firstY; y < lastY; y++) {
+        const uint16_t *row = &s->rows[(y * stepY >> 16) * 3];
+        if (row[1] == row[2]) continue;
+        int start = flip ? s->w - row[2] : row[1], end = flip ? s->w - row[1] : row[2];
+        int x0 = (start * width + s->w - 1) / s->w, x1 = (end * width + s->w - 1) / s->w;
+        if (left + x0 < clipLeft) x0 = clipLeft - left;
+        if (left + x1 > clipRight) x1 = clipRight - left;
+        if (x0 >= x1) continue;
+        uint32_t *dst = fb + (top + y) * pitch + left + x0;
+        int sample = x0 * stepX;
+        for (int x = x0; x < x1; x++, dst++, sample += stepX) {
+            int col = sample >> 16;
+            if (flip) col = s->w - 1 - col;
+            if (col < row[1] || col >= row[2] || (fade && ((x+y)&1))) continue;
+            uint32_t c = palette[s->pixels[row[0] + col - row[1]]];
+            unsigned a = c >> 24;
+            if (a == 255) *dst = c;
             else if (a) {
                 uint32_t d = *dst;
                 uint32_t rb = (((c & 0xff00ff) * a + (d & 0xff00ff) * (256 - a)) >> 8) & 0xff00ff;
@@ -496,12 +539,6 @@ static void terrain(void) {
     for (int y = 0; y < 272; y++)
         memcpy(fb + y * pitch, groundCache + (y + 32 - dy) * 544 + 32 - dx, 480 * 4);
 }
-static int building_sprite(int id) {
-    Building *b = &g.buildings[id];
-    static const int ids[] = {0, 1, 2, 3, 24, 25, 27, 26, 28, 6, 29, 30, 7, 3, 31};
-    int base = b->type == HOUSE ? (b->faction == HOSTILE ? 5 : b->faction == SHOGUN ? 4 : id % 3 == 0 ? 7 : 0) : ids[b->type];
-    return civil_building_sprite(id,base);
-}
 static void art_shadow(int id, int x, int y) {
     if (id < 0 || id >= 32)
         return;
@@ -525,207 +562,55 @@ static void art_shadow(int id, int x, int y) {
     }
 }
 typedef struct { int x, y; } ScreenPoint;
-static ScreenPoint facade_point(int x, int y, float dx, float dy, int height) {
-    return (ScreenPoint){x + (int)roundf((dx - dy) * 22), y + (int)roundf((dx + dy) * 11) - height};
-}
-static void facade_face(ScreenPoint a, ScreenPoint b, ScreenPoint c, ScreenPoint d, uint32_t color) {
-    quad(a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y, color);
-}
-static void facade_edge(ScreenPoint a, ScreenPoint b, uint32_t color) {
-    line(a.x, a.y, b.x, b.y, color);
-}
-static void facade_panel(ScreenPoint a, ScreenPoint b, int high, uint32_t color) {
-    facade_face(a, b, (ScreenPoint){b.x,b.y-high}, (ScreenPoint){a.x,a.y-high}, color);
-}
-static void facade_window(int x, int y, float dx, float dy, int alongX, float width, int z, int high, uint32_t trim) {
-    float wx = alongX ? width : 0, wy = alongX ? 0 : width;
-    ScreenPoint a = facade_point(x, y, dx - wx, dy - wy, z);
-    ScreenPoint b = facade_point(x, y, dx + wx, dy + wy, z);
-    facade_panel(a, b, high, trim);
-    a = facade_point(x, y, dx - wx * .68f, dy - wy * .68f, z + 2);
-    b = facade_point(x, y, dx + wx * .68f, dy + wy * .68f, z + 2);
-    facade_panel(a, b, high - 4, 0x2b2721);
-    if (high > 7) {
-        facade_edge((ScreenPoint){a.x,a.y-high/2}, (ScreenPoint){b.x,b.y-high/2}, trim);
-        ScreenPoint middle = facade_point(x, y, dx, dy, z + 1);
-        facade_edge(middle, (ScreenPoint){middle.x,middle.y-high+2}, trim);
-    }
-}
-static void painted_structure(int id, int x, int y, float li, int faded) {
-    Building *b = &g.buildings[id];
-    int town = building_town(id), style = town < 0 ? 0 : civil_style(town);
-    int variant = g.frontier.variant[id], type = b->type;
-    float w, d;
-    int h;
-    building_footprint(id, &w, &d, &h);
-    static const uint32_t plaster[6] = {0x826c4d,0xa79875,0xb1a188,0x7a6955,0x726c5c,0x877657};
-    static const uint32_t roofs[6] = {0x5e503a,0x794334,0x6e6550,0x735845,0x534b42,0x67533a};
-    static const uint32_t trimColors[6] = {0xb18d59,0x965343,0xbcb07e,0xa88757,0xaa865d,0xb19863};
-    float l = li * (faded ? .60f : 1);
-    uint32_t wall = shade(plaster[style], l), side = shade(plaster[style], l * .77f);
-    uint32_t roof = shade(roofs[style], l), trim = shade(trimColors[style], l), dark = shade(0x3c3027, l);
-    ScreenPoint back = facade_point(x,y,-w,-d,0), left = facade_point(x,y,-w,d,0);
-    ScreenPoint right = facade_point(x,y,w,-d,0), front = facade_point(x,y,w,d,0);
-    facade_face(back,left,front,right,shade(0x4a4034, l));
-    if (type == JAIL && town >= 0 && !town_design(town)->custody) {
-        for (int i = 0; i <= 10; i++) {
-            float f = i * .1f;
-            ScreenPoint a = facade_point(x,y,-w + f * w * 2,d,0);
-            ScreenPoint c = facade_point(x,y,w,-d + f * d * 2,0);
-            facade_edge(a, (ScreenPoint){a.x,a.y-h}, trim);
-            facade_edge(c, (ScreenPoint){c.x,c.y-h}, trim);
-        }
-        for (int k = 7; k < h; k += 12) {
-            facade_edge(facade_point(x,y,-w,d,k), facade_point(x,y,w,d,k), dark);
-            facade_edge(facade_point(x,y,w,-d,k), facade_point(x,y,w,d,k), dark);
-        }
-        facade_window(x,y,w + .04f,0,0,.42f,0,22,trim);
-        return;
-    }
-    facade_panel(left, front, h, side);
-    facade_panel(right, front, h, wall);
-    if (style == 3 || style == 4) {
-        for (float j = -d + .13f; j < d; j += .19f)
-            facade_edge(facade_point(x,y,w,j,3), facade_point(x,y,w,j,h-2), shade(wall, .91f));
-    } else {
-        for (int z = 7; z < h; z += style == 1 ? 12 : 7) {
-            facade_edge(facade_point(x,y,-w,d,z), facade_point(x,y,w,d,z), shade(side,.90f));
-            facade_edge(facade_point(x,y,w,-d,z), facade_point(x,y,w,d,z), shade(wall,.90f));
-        }
-    }
-    facade_edge(facade_point(x,y,w,d,0), facade_point(x,y,w,d,h), dark);
-    facade_panel(facade_point(x,y,-w,d,2), facade_point(x,y,w,d,2), 4, dark);
-    facade_panel(facade_point(x,y,w,-d,2), facade_point(x,y,w,d,2), 4, dark);
-    int eave = style == 1 ? 5 : 2;
-    int rise = type == STORE || style == 4 ? 5 : style == 2 ? 9 : 13 + id % 3 * 2;
-    float ew = w + .18f, ed = d + .20f + (style == 1 ? .12f : 0);
-    ScreenPoint a = facade_point(x,y,-ew,-ed,h-eave), f = facade_point(x,y,ew,-ed,h-eave);
-    ScreenPoint c = facade_point(x,y,ew,ed,h-eave), m = facade_point(x,y,-ew,ed,h-eave);
-    ScreenPoint r = facade_point(x,y,-ew,0,h+rise), s = facade_point(x,y,ew,0,h+rise);
-    if (style != 2 && style != 3 && style != 4) {
-        facade_face(a, f, s, r, shade(roof, .86f));
-        facade_face(r, s, c, m, roof);
-        triangle(f.x,f.y,s.x,s.y,c.x,c.y,shade(wall,.82f));
-        facade_edge(r,s,trim);
-        facade_edge(m,c,dark);
-        facade_edge(f,s,trim);
-        facade_edge(s,c,trim);
-        for (float beam = -ew + .22f; beam < ew; beam += style == 3 ? .20f : .34f)
-            facade_edge(facade_point(x,y,beam,0,h+rise-1), facade_point(x,y,beam,ed,h-eave-1), shade(roof,.85f));
-
-    }
-    if (style == 2) {
-        /* Cloister roofs are hipped stone terraces. */
-        int z = h + 2;
-        ScreenPoint l = facade_point(x,y,-ew,ed,z), f2 = facade_point(x,y,ew,ed,z);
-        ScreenPoint r2 = facade_point(x,y,ew,-ed,z), b2 = facade_point(x,y,-ew,-ed,z);
-        ScreenPoint tl = facade_point(x,y,-w*.55f,d*.57f,z+rise+1), tf = facade_point(x,y,w*.55f,d*.57f,z+rise+1);
-        ScreenPoint tr = facade_point(x,y,w*.55f,-d*.57f,z+rise+1), tb = facade_point(x,y,-w*.55f,-d*.57f,z+rise+1);
-        facade_face(b2,r2,tr,tb,shade(roof,.9f));
-        facade_face(b2,l,tl,tb,shade(roof,.83f));
-        facade_face(l,f2,tf,tl,shade(roof,1.15f));
-        facade_face(r2,f2,tf,tr,roof);
-        facade_face(tl,tf,tr,tb,shade(plaster[style],li*.82f));
-        facade_edge(tl,tf,trim);facade_edge(tf,tr,trim);
-        for (int q = -1; q <= 1; q += 2) {
-            ScreenPoint f3 = facade_point(x,y,q*w*.48f,0,z+rise);
-            facade_edge(f3,(ScreenPoint){f3.x,f3.y-6},trim);
-            diamond(f3.x,f3.y-8,3,2,trim);
-        }
-    } else if (style == 3 || style == 4) {
-        /* Salvagers and foundries build single-slope roofs from metal panels. */
-        int low = h - 3, high = h + rise + 6;
-        ScreenPoint al=facade_point(x,y,-ew,-ed,high), ar=facade_point(x,y,ew,-ed,high);
-        ScreenPoint bl=facade_point(x,y,-ew,ed,low), br=facade_point(x,y,ew,ed,low);
-        facade_face(al,ar,br,bl,shade(roof,town == 3 ? 1.29f : 1.03f));
-        facade_face(facade_point(x,y,w,-d,h-4), facade_point(x,y,w,d,h-4),
-                    facade_point(x,y,w,d,low), facade_point(x,y,w,-d,high), side);
-        facade_edge(ar,br,trim);facade_edge(bl,br,dark);
-        for (float beam = -ew+.15f; beam < ew; beam += .24f)
-            facade_edge(facade_point(x,y,beam,-ed,high),facade_point(x,y,beam,ed,low),shade(roof,.76f));
-    }
-    if (style == 1 && (type == BAR || type == TOWER || type == JAIL)) {
-        ScreenPoint p = facade_point(x,y,0,0,h+rise+9);
-        triangle(r.x,r.y,s.x,s.y,p.x,p.y,shade(roof,.81f));
-        facade_edge(r,p,trim);
-        facade_edge(p,s,trim);
-    }
-    if (type == FORGE || style == 4) {
-        ScreenPoint stack = facade_point(x,y,-w*.46f,-d*.32f,h+rise/2);
-        rect(stack.x-5,stack.y-24,11,25,shade(0x554c3e,l));
-        rect(stack.x-6,stack.y-25,13,4,trim);
-        if (type == FORGE) {
-            px(stack.x+1,stack.y-32-(int)(g.time*4)%4,shade(0xc19469,l));
-            px(stack.x-2,stack.y-37-(int)(g.time*3)%4,shade(0xa69a7c,l));
-        }
-    }
-    facade_window(x,y,w + .025f,0,0,type == STORE ? .45f : .34f,0,21,trim);
-    facade_window(x,y,-w*.5f,d+.025f,1,.26f,12,11,trim);
-    if (w >= 1.35f || type == BAR) facade_window(x,y,w*.46f,d+.025f,1,.25f,12,11,trim);
-    if (d >= 1.23f) facade_window(x,y,w+.025f,-d*.61f,0,.20f,13,9,trim);
-    if (type == TOWER || (type == BAR && h >= 44))
-        facade_window(x,y,0,d+.025f,1,.35f,h-16,10,trim);
-    if (type == SHOP || type == BAR || variant == BUILD_LODGE) {
-        uint32_t canvas = shade(variant == BUILD_LODGE ? 0x6d806b : type == BAR ? 0xa08458 :
-                               style == 1 ? 0x974b3f : style == 2 ? 0xb2a580 : 0x866b4c,l);
-        float span = type == BAR ? .66f : .73f;
-        ScreenPoint aw1 = facade_point(x,y,w,-span,25), aw2 = facade_point(x,y,w,span,25);
-        ScreenPoint aw3 = facade_point(x,y,w+.52f,span,18), aw4 = facade_point(x,y,w+.52f,-span,18);
-        facade_face(aw1,aw2,aw3,aw4,canvas);
-        facade_edge(aw3,aw4,trim);
-        for (float k = -span+.12f; k < span; k += .23f)
-            facade_edge(facade_point(x,y,w,k,25),facade_point(x,y,w+.52f,k,18),shade(canvas,.85f));
-    }
-    ScreenPoint t1 = facade_point(x,y,w+.03f,-.37f,0), t2 = facade_point(x,y,w+.03f,.37f,0);
-    ScreenPoint t3 = facade_point(x,y,w+.65f,.37f,0), t4 = facade_point(x,y,w+.65f,-.37f,0);
-    facade_face(t1,t2,t3,t4,shade(0x8c785b,l));
-}
 static void building(int id) {
     Building *b = &g.buildings[id];
     int x, y;
     project(b->x, b->y, &x, &y);
     if (x < -120 || x > 600 || y < -80 || y > 310)
         return;
-    int sprite = building_sprite(id), ax, ay;
-    project(g.actors[g.selected].x, g.actors[g.selected].y, &ax, &ay);
-    int fade = building_has_interior(b->type) && abs(ax - x) < artSprites[sprite].w / 2 && ay < y + 16 &&
-               ay > y - artSprites[sprite].ay;
-    if (building_has_interior(b->type))
-        painted_structure(id, x, y, light(), fade || g.depth.buildings[id].labor > 0);
-    else
-        art(sprite, x, y, light(), g.depth.buildings[id].labor > 0);
-    if(g.depth.buildings[id].labor>0){bar(x-20,y-8,40,3,100-g.depth.buildings[id].labor/35*100,GOLD);text(x-24,y+5,"BUILDING",GOLD,1);}
-    if (b->type == CAMPFIRE) {
-        int flicker = (int)(g.time * 10) % 3;
-        px(x - 2 + flicker, y - 13 - flicker, 0xe5b66a);
+    int sprite = building_sprite(id), top;
+    float l = light();
+    if (building_has_interior(b->type)) {
+        const ArtSprite *s = scene_sprite(sprite);
+        float w, d, wx, wy;
+        int height, sx, sy, ax, ay;
+        building_footprint(id, &w, &d, &height);
+        building_threshold(id, &wx, &wy);
+        project(wx, wy, &sx, &sy);
+        int width = (int)roundf((w + d) * 46);
+        height = (width * s->h + s->w / 2) / s->w;
+        PaintedDoor door = painted_door(sprite);
+        int left = sx - (int)roundf(width * door.x);
+        top = sy - (int)roundf(height * door.y);
+        project(g.actors[g.selected].x, g.actors[g.selected].y, &ax, &ay);
+        int fade = ax > left && ax < left + width && ay < y && ay > top + 4;
+        scaled_art(sprite, left, top, width, height, l, 0, fade || g.depth.buildings[id].labor > 0);
+    } else {
+        top = y - scene_sprite(sprite)->ay;
+        art(sprite, x, y, l, g.depth.buildings[id].labor > 0);
+    }
+    if (g.depth.buildings[id].labor > 0) {
+        bar(x-20,y-8,40,3,100-g.depth.buildings[id].labor/35*100,GOLD);
+        text(x-24,y+5,"BUILDING",GOLD,1);
     }
     if (b->type == SLAVE_YARD) {
-        float li = light();
-        art(26, x - 16, y + 9, li, 0);
-        art(27, x + 22, y + 9, li, 0);
-        for (int j = -3; j <= 3; j++) {
-            int px = x + j * 9, py = y - 10 + abs(j) * 2;
-            line(px, py - 17, px, py, shade(0x5f4d3d, li));
-            if (j < 3)
-                line(px, py - 12, px + 9, y - 22 + abs(j + 1) * 2, shade(0x8d7557, li));
-        }
+        art(30, x-26, y-4, l, 0);
+        art(26, x-12, y+6, l, 0);
+        art(27, x+23, y+9, l, 0);
     }
     if ((building_has_interior(b->type) || b->type == SLAVE_YARD) &&
         distance(b->x,b->y,g.actors[g.selected].x,g.actors[g.selected].y) < 7) {
-        float w, d;
-        int h;
-        building_footprint(id, &w, &d, &h);
         const char *label = building_name(id);
-        int bw = text_width(label) + 8, top = y - h - (int)((w+d)*11) - 17;
-        rect(x - bw/2, top, bw, 11, INK);
-        center(x, top + 2, label, GOLD, 1);
+        int bw = text_width(label) + 8;
+        rect(x - bw/2, top - 12, bw, 11, INK);
+        center(x, top - 10, label, GOLD, 1);
     }
-
 }
 #include "painted_actor.h"
 static int resource_sprite(int n) {
     int t = g.nodes[n].type;
-    return t <= NODE_COPPER ? 9 : t == NODE_WOOD ? 8 : t == NODE_RUIN ? 15 : 31;
+    return t == NODE_ORE ? ART_IRON_SEAM : t == NODE_COPPER ? ART_COPPER_SEAM :
+           t == NODE_WOOD ? ART_CUT_TIMBER : t == NODE_RUIN ? 15 : 31;
 }
 static void resource(int n) {
     Node *b = &g.nodes[n];
@@ -741,26 +626,7 @@ static void resource(int n) {
         return;
     }
     int id = resource_sprite(n);
-    art(id, x, y + (id < 24 ? 5 : 0), light(), 0);
-    if (b->type <= NODE_COPPER) {
-        uint32_t vein = shade(b->type == NODE_ORE ? 0xc0b5a2 : 0x7bb5a1, light());
-        uint32_t ore = shade(b->type == NODE_ORE ? 0x775344 : 0xc58857, light());
-        diamond(x-3,y,11,5,ore);
-        line(x - 13, y + 1, x - 5, y - 4, vein);
-        line(x - 5, y - 4, x + 7, y - 1, vein);
-        line(x - 11, y + 3, x - 1, y + 2, vein);
-        px(x + 4, y - 3, vein);
-        px(x + 8, y, vein);
-    } else if (b->type == NODE_WOOD) {
-        uint32_t cut = shade(0xceaa70,light()), bark=shade(0x74583e,light());
-        line(x-14,y+3,x+9,y-4,bark);
-        line(x-14,y+4,x+10,y-3,bark);
-        diamond(x-12,y+3,4,3,cut);
-        line(x-8,y+2,x+3,y-1,cut);
-    }
-    if (b->locked) {
-        frame(x - 2, y - 5, 4, 4, GOLD);
-    }
+    art(id, x, y, light(), 0);
 }
 typedef struct {
     float depth;
@@ -903,9 +769,11 @@ static void objects_draw(void) {
             wx = g.nodes[id].x;
             wy = g.nodes[id].y;
         } else if(ui.contextKind==4) {wx=g.depth.siteX[id];wy=g.depth.siteY[id];
+        } else if (ui.contextKind == 3) {
+            building_door(id, &wx, &wy);
         } else {
-            wx = g.buildings[id].x + (ui.contextKind == 3 ? 1.45f : 0);
-            wy = g.buildings[id].y + (ui.contextKind == 3 ? .65f : 0);
+            wx = g.buildings[id].x;
+            wy = g.buildings[id].y;
         }
         project(wx, wy, &x, &y);
         uint32_t color = context_distance() <= context_reach() ? TEAL : MUTED;
@@ -924,13 +792,11 @@ static void objects_draw(void) {
             person(a, o->x, o->y, 1, o->index == g.selected);
 
         } else if(o->kind==5){art(11,o->x,o->y,light(),0);art(9,o->x+10,o->y+4,light(),0);
-        } else if(o->kind==4){
-            float wx,wy;int t=population_object(o->index/POP_PROPS,o->index%POP_PROPS,&wx,&wy),id=population_prop_art(o->index/POP_PROPS,o->index%POP_PROPS),style=population_prop_style(o->index/POP_PROPS,o->index%POP_PROPS);int x=o->x,y=o->y;
-            if(style==1){uint32_t cloth=shade(0x81725a,light());triangle(x-14,y-4,x+1,y-12,x+13,y-6,cloth);triangle(x-14,y-4,x+13,y-6,x-2,y+2,cloth);line(x-12,y-5,x-1,y+1,shade(0xb6aa87,light()));line(x-10,y-6,x+1,y,shade(0xb6aa87,light()));}
-            else if(style==2){line(x,y,x,y-29,shade(0x6d5037,light()));triangle(x+1,y-28,x+14,y-24,x+1,y-17,shade(0x9c403a,light()));}
-            else if(style==3){art(31,x,y,light()*.78f,0);art(20,x+9,y+2,light()*.7f,0);}
-            else art(id,x,y,light(),0);
-            if(t==1){int flicker=(int)(g.time*8)%3;diamond(o->x,o->y-6,2+flicker,4+flicker,0xe0a24b);}
+        } else if (o->kind == 4) {
+            int group = o->index / POP_PROPS, prop = o->index % POP_PROPS;
+            int style = population_prop_style(group, prop);
+            int id = style == 1 ? 26 : style == 2 ? 30 : population_prop_art(group, prop);
+            art(id, o->x, o->y, light(), 0);
         } else {
             art(o->index, o->x, o->y + 4, light(), 0);
         }
@@ -998,7 +864,7 @@ static void nearby_labels(int indoors){
  int fighting=0;for(int i=0;i<count;i++)if(squad_combatant(ids[i]))fighting=1;
  if(fighting)for(int i=1;i<count;i++)if(ids[i]==p->target){int swap=ids[0];ids[0]=ids[i];ids[i]=swap;break;}
  for(int i=0;i<count&&used<(fighting?1:8);i++){Actor*a=&g.actors[ids[i]];if(depth_distance(p,a)>4)continue;int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);
-  char label[48];snprintf(label,sizeof(label),"%.19s%s%s",a->bountyReward ? a->name : npc_role_name(a),
+  char label[48];snprintf(label,sizeof(label),"%.19s%s%s",a->bountyReward ? a->name : escorting_actor(ids[i]) ? "Escort caravan" : npc_role_name(a),
     a->bountyReward ? " $" : "",a->dead?" / DEAD":a->unconscious>0?" / DOWN":actor_relation(ids[i])<0?" !":"");int w=text_width(label)+8,l=x-w/2,t=fighting?y+17:y-(a->dead||a->unconscious>0?24:56);if(l<4)l=4;if(l+w>476)l=476-w;if(t<39)t=39;
   for(int attempt=0;attempt<5;attempt++){int hit=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])hit=1;if(!hit)break;t-=13;}
   int overlaps=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])overlaps=1;
@@ -1107,180 +973,55 @@ static void room_project(float x, float y, int *sx, int *sy) {
     *sx = 240 + (int)((x - y) * roomScale);
     *sy = (int)(roomBase + (x + y) * roomScale * .5f);
 }
-static ScreenPoint room_point(float x, float y, int z) {
-    ScreenPoint p;
-    room_project(x, y, &p.x, &p.y);
-    p.y -= z;
-    return p;
-}
-static void room_top(float x, float y, float w, float d, int z, uint32_t color) {
-    facade_face(room_point(x-w,y-d,z),room_point(x+w,y-d,z),room_point(x+w,y+d,z),room_point(x-w,y+d,z),color);
-}
-static void room_box(float x, float y, float w, float d, int z, int h, uint32_t top, uint32_t wood) {
-    ScreenPoint l = room_point(x-w,y+d,z), f = room_point(x+w,y+d,z), r = room_point(x+w,y-d,z);
-    facade_panel(l,f,h,shade(wood,.82f));
-    facade_panel(r,f,h,wood);
-    room_top(x,y,w,d,z+h,top);
-    facade_edge(room_point(x-w,y+d,z+h),room_point(x+w,y+d,z+h),shade(top,1.17f));
-    facade_edge(room_point(x+w,y-d,z+h),room_point(x+w,y+d,z+h),shade(top,1.10f));
-}
-typedef struct { uint32_t wood, floor, fabric, metal; } RoomColors;
-static const RoomColors roomColors[6] = {
-    {0x796046,0x867354,0x7b684e,0xa18b64}, {0x614137,0xa28f62,0x874637,0xa7916b},
-    {0x786f5b,0xa09177,0x647669,0xb7a181}, {0x6b5844,0x816f57,0x7f6952,0x8b836d},
-    {0x696257,0x675f52,0x8b704e,0xa2865f}, {0x6e5b45,0x817055,0x826c53,0xa18d70}
-};
-static void room_furniture(const InteriorProp *p, int style, int variation) {
-    RoomColors c = roomColors[style];
-    float x=p->x, y=p->y, w=p->w, d=p->d;
-    if (p->art == 23) {
-        room_top(x,y,w,d,0,shade(c.fabric,.77f));
-        room_top(x,y,w-.09f,d-.09f,0,c.fabric);
-        room_top(x,y,w-.22f,d-.20f,0,shade(c.fabric,.86f));
-        return;
+static void room_furniture(const InteriorProp *p, int style) {
+    int id = p->art, flip = 0, x, y;
+    room_project(p->x, p->y, &x, &y);
+    if (id == 16) {
+        if (style == 1 || style == 2) id = ART_LOW_COT;
+        flip = p->d > p->w;
+    } else if (id == 17 && p->d > p->w) {
+        id = ART_SIDE_COUNTER;
     }
-    room_top(x+.10f,y+.09f,w,d,0,shade(c.floor,.59f));
-    if (p->art == 16) {
-        int h = style == 1 || style == 2 ? 5 : 9;
-        room_box(x,y,w,d,0,h,c.wood,shade(c.wood,.76f));
-        room_box(x,y,w-.05f,d-.05f,h,3,shade(c.fabric,1.22f),c.fabric);
-        room_top(x,y+d*.21f,w-.07f,d*.55f,h+3,c.fabric);
-        room_box(x,y-d*.64f,w*.69f,d*.20f,h+3,2,0xc2b39a,0xa0937a);
-        facade_edge(room_point(x-w*.88f,y+d*.22f,h+3),room_point(x+w*.88f,y+d*.22f,h+3),shade(c.fabric,1.24f));
-    } else if (p->art == 17 || p->art == 18) {
-        int h = p->art == 17 ? 16 : 12;
-        room_box(x,y,w*.88f,d*.82f,0,h-3,shade(c.wood,.75f),c.wood);
-        room_box(x,y,w,d,h-3,3,shade(c.wood,1.28f),c.wood);
-        if (p->art == 17 || variation) {
-            room_box(x+w*.42f,y-d*.23f,w*.22f,d*.40f,h,3,shade(c.metal,1.1f),c.wood);
-            room_box(x-w*.51f,y,d*.27f,d*.36f,h,4,c.fabric,c.wood);
-        }
-    } else if (p->art == 19) {
-        room_box(x,y,w,d,0,12,0x87705a,0x645849);
-        room_box(x,y+d*.12f,w*.64f,d*.53f,12,3,0x7a4d31,0x5b4739);
-        room_top(x+.10f,y+d*.2f,w*.32f,d*.30f,16,0xb96c39);
-        room_box(x-w*.53f,y-d*.59f,w*.41f,d*.35f,12,16,0x927763,0x64594d);
-    } else if (p->art == 20) {
-        room_box(x,y,w,d,0,12,shade(c.wood,1.13f),c.wood);
-        room_box(x,y,w*1.02f,d*1.04f,12,3,shade(c.wood,1.32f),c.wood);
-        ScreenPoint lock = room_point(x+w,y,8);
-        rect(lock.x-2,lock.y-1,4,4,c.metal);
-    } else if (p->art == 21) {
-        for (int z = 3; z <= 25; z += 11) {
-            room_box(x,y,w,d,z,2,shade(c.wood,1.25f),c.wood);
-            room_box(x-w*.42f,y,w*.23f,d*.6f,z+2,5,c.fabric,shade(c.fabric,.76f));
-            room_box(x+w*.38f,y,w*.26f,d*.6f,z+2,6,c.metal,c.wood);
-        }
-        for (int side = -1; side <= 1; side += 2) {
-            ScreenPoint peg = room_point(x+side*w,y+d,0);
-            facade_edge(peg,(ScreenPoint){peg.x,peg.y-30},shade(c.wood,.77f));
-        }
-    } else if (p->art == ROOM_SHRINE_ART) {
-        room_box(x,y,w,d,0,5,0xb6a88a,0x786f5b);
-        room_box(x,y,w*.72f,d*.8f,5,9,0x9f947a,0x786f5b);
-        room_box(x,y,w*.43f,d*.50f,14,8,0x739082,0x526259);
-        for (int side = -1; side <= 1; side += 2) {
-            ScreenPoint flame = room_point(x+side*w*.67f,y+d*.27f,15);
-            rect(flame.x,flame.y-3,2,4,0xe5b467);
-        }
-    } else if (p->art == ROOM_ARMOR_ART) {
-        room_box(x,y,w,d,0,5,c.wood,shade(c.wood,.8f));
-        for (int side = -1; side <= 1; side += 2) {
-            ScreenPoint peg = room_point(x+side*w*.73f,y,5);
-            line(peg.x,peg.y,peg.x,peg.y-29,c.wood);
-            ScreenPoint pauldron = room_point(x+side*w*.50f,y,24);
-            rect(pauldron.x-3,pauldron.y-1,7,5,c.metal);
-        }
-        room_box(x,y,w*.41f,d*.38f,10,15,shade(c.metal,1.18f),c.fabric);
-        room_box(x,y,w*.26f,d*.25f,26,6,c.metal,shade(c.metal,.73f));
-    } else if (p->art == ROOM_BALES_ART) {
-        room_box(x,y,w,d,0,9,c.fabric,c.wood);
-        room_box(x+w*.12f,y-d*.13f,w*.75f,d*.72f,9,8,shade(c.fabric,1.34f),c.fabric);
-        for (int j = -1; j <= 1; j += 2)
-            facade_edge(room_point(x+w*j*.31f,y-d*.82f,17),room_point(x+w*j*.31f,y+d*.55f,17),c.metal);
-    } else if (p->art == ROOM_STOVE_ART || p->art == ROOM_HEARTH_ART) {
-        room_box(x,y,w,d,0,12,0x645f56,0x3f3d39);
-        room_box(x+w*.45f,y-d*.47f,w*.25f,d*.24f,12,p->art == ROOM_HEARTH_ART ? 25 : 17,0x80725e,0x4c473f);
-        ScreenPoint vent = room_point(x-w*.25f,y+d,6);
-        rect(vent.x-4,vent.y-2,7,4,0x382a25);
-        rect(vent.x-2,vent.y-1,3,2,0xb27037);
-    } else if (p->art == 24) {
-        ScreenPoint a = room_point(x,y,0);
-        room_box(x,y,w,d,0,5,c.wood,shade(c.wood,.8f));
-        rect(a.x-2,a.y-33,4,29,c.wood);
-        rect(a.x-8,a.y-28,16,9,c.fabric);
-        rect(a.x-4,a.y-38,8,8,shade(c.fabric,1.24f));
-        line(a.x-14,a.y-25,a.x+14,a.y-25,c.metal);
-    } else {
-        ScreenPoint a = room_point(x,y,0);
-        room_box(x,y,w,d,0,11,c.wood,shade(c.wood,.78f));
-        rect(a.x-3,a.y-17,7,6,shade(c.metal,1.25f));
-        px(a.x,a.y-15,0xe4a759);
-    }
+    const ArtSprite *sprite = scene_sprite(id);
+    int width = (int)roundf(roomScale * (p->w + p->d) * 2);
+    int height = (width * sprite->h + sprite->w / 2) / sprite->w;
+    int base = (id >= SETTLEMENT_ART_FIRST || id == 23) ? sprite->ay :
+               sprite->h - (int)roundf(sprite->w * (id == 16 ? .23f : .19f));
+    scaled_art(id, x - width / 2, y - height * base / sprite->h, width, height, .94f, flip, 0);
 }
 static void interior_draw(void) {
     int id = g.interiorBuilding - 1;
     Building *b = &g.buildings[id];
     int town = building_town(id), style = town < 0 ? 0 : civil_style(town);
     const TownDesign *plan = town_design(town);
-    RoomColors colors = roomColors[style];
-    roomScale = b->type == BAR ? 17.5f + plan->beds * 1.45f :
-                b->type == JAIL ? 18 + plan->custody * 3 :
-                b->type == HOUSE ? 18.5f + (id % 3) * 1.1f : 22.5f + plan->marketTier;
+    roomScale = b->type == BAR ? 17.6f + plan->beds * 1.16f :
+                b->type == JAIL ? 18.5f + plan->custody * 2.3f :
+                b->type == HOUSE ? 19.8f + (id % 3) * .9f : 21.0f + plan->marketTier;
     if (g.frontier.variant[id] == BUILD_LODGE) roomScale = 22;
-    roomBase = 63 - (roomScale - 20) * 2;
-    rect(0, 0, 480, 272, shade(colors.wood,.32f));
-    ScreenPoint origin = room_point(0,0,0), west = room_point(0,7,0), east = room_point(7,0,0);
-    int wallHeight = b->type == JAIL && plan->custody == 0 ? 22 : 41;
+    roomBase = 69 - (roomScale - 20) * 2.3f;
+    rect(0, 0, 480, 272, 0x211d18);
+    int cx, cy, eastX, eastY, westX, westY;
+    room_project(0, 0, &cx, &cy);
+    room_project(7, 0, &eastX, &eastY);
+    room_project(0, 7, &westX, &westY);
+    float wall = style == 1 ? 38 : style == 2 ? 41 : 37;
+    int wallArt = style == 3 || style == 5 ? 106 : style == 4 ? 107 : 105;
+    int floorArt = style == 2 ? 105 : 104;
+    texture_plane(wallArt, westX, westY, cx-westX, cy-westY, 0, -wall, 3, 1.2f, .83f);
+    texture_plane(wallArt, cx, cy, eastX-cx, eastY-cy, 0, -wall, 3, 1.2f, .67f);
+    texture_plane(floorArt, cx, cy, eastX-cx, eastY-cy, westX-cx, westY-cy, 2.6f, 2.6f, .91f);
+    if (wallArt == 105)
+        for (int j = 0; j <= 5; j++) {
+            int x, y;
+            room_project(j * 1.4f, 0, &x, &y);
+            texture_plane(106, x, y, 0, -wall, 3, 1.5f, 1, 1, .67f);
+            room_project(0, j * 1.4f, &x, &y);
+            texture_plane(106, x, y, 0, -wall, 3, -1.5f, 1, 1, .78f);
+        }
     int x, y;
-    facade_panel(origin, west, wallHeight, shade(colors.wood,.75f));
-    facade_panel(origin, east, wallHeight, shade(colors.wood,.88f));
-    if (style == 0 || style == 4)
-        texture_plane(104, origin.x, origin.y, east.x-origin.x, east.y-origin.y,
-                      west.x-origin.x, west.y-origin.y, 2.4f, 2.4f, style == 4 ? .76f : .93f);
-    else
-        room_top(3.5f,3.5f,3.5f,3.5f,0,colors.floor);
-    for (int j = 1; j < 14; j++) {
-        float at = j * .5f;
-        if (style == 1 || style == 2) {
-            if (j % 2)
-                facade_edge(room_point(at,0,0),room_point(at,7,0),shade(colors.floor,.83f));
-            if (j % 4 == 0)
-                facade_edge(room_point(0,at,0),room_point(7,at,0),shade(colors.floor,.89f));
-        } else {
-            facade_edge(room_point(0,at,0),room_point(7,at,0),shade(colors.floor,.88f));
-            float end = (j % 4) + 1.f;
-            facade_edge(room_point(end,at,0),room_point(end,at+.5f,0),shade(colors.floor,.86f));
-        }
-    }
-    for (int j = 0; j < 5; j++) {
-        float at = j * 1.4f;
-        facade_edge(room_point(0,at,1),room_point(0,at,wallHeight),shade(colors.wood,.65f));
-        facade_edge(room_point(at,0,1),room_point(at,0,wallHeight),shade(colors.wood,.78f));
-    }
-    if (style == 1) {
-        for (int j = 1; j <= 4; j++) {
-            float at = j * 1.38f;
-            facade_face(room_point(at-.50f,0,wallHeight-6),room_point(at+.50f,0,wallHeight-6),
-                        room_point(at+.50f,0,10),room_point(at-.50f,0,10),shade(colors.fabric,.87f));
-            facade_edge(room_point(at,0,11),room_point(at,0,wallHeight-7),shade(colors.fabric,1.35f));
-        }
-    } else if (style == 2) {
-        for (int j = 1; j < 7; j += 2) {
-            facade_edge(room_point(0,j-.35f,15),room_point(0,j+.35f,15),shade(colors.metal,.8f));
-            facade_edge(room_point(0,j,16),room_point(0,j,29),colors.metal);
-            ScreenPoint lamp = room_point(0,j,19);
-            rect(lamp.x-2,lamp.y-4,4,5,0xc6ab69);
-        }
-    } else if (style == 3 || style == 5) {
-        for (int j = 1; j < 7; j += 2)
-            facade_edge(room_point(0,j-.5f,11),room_point(0,j+.5f,wallHeight-7),shade(colors.wood,1.32f));
-    }
-    facade_edge(room_point(0,0,wallHeight),room_point(7,0,wallHeight),shade(colors.wood,1.15f));
-    facade_edge(room_point(0,0,wallHeight),room_point(0,7,wallHeight),shade(colors.wood,1.09f));
-    room_top(3.5f,6.78f,.63f,.43f,0,shade(colors.wood,1.35f));
-    room_project(3.5f,6.82f,&x,&y);
-    text(x-11,y+7,"EXIT",GOLD,1);
+    room_project(3.5f, 6.86f, &x, &y);
+    texture_plane(104, x, y - 8, 15, 8, -15, 8, .8f, .8f, 1.11f);
+    text(x - 12, y + 9, "EXIT", GOLD, 1);
     InteriorProp props[ROOM_PROPS];
     enum { ROOM_OBJECTS = MAX_ACTORS + ROOM_PROPS };
     int count = interior_props(id, props), order[ROOM_OBJECTS];
@@ -1332,26 +1073,16 @@ static void interior_draw(void) {
             person(resident, x, y, 1, roomActor[i] == g.selected && !sleeping);
             if (resident->squad) squad_health_bar(resident, x, y);
         } else {
-            room_furniture(&props[i], style, (id + i) % 3);
+            room_furniture(&props[i], style);
         }
     }
     if (b->type == JAIL) {
-        const Actor *a = &g.actors[g.selected];
-        int open = a->prisonTime <= 0 || jail_cell_open(a);
-        int lastX = 0, lastY = 0;
-        for (int i = 0; i <= 16; i++) {
-            float bx = .52f + i * .37f;
-            room_project(bx, 3.65f, &x, &y);
-            if (!open || i < 6 || i > 10) {
-                line(x, y, x, y - 28, 0x444d4c);
-                line(x + 1, y, x + 1, y - 28, 0x87918a);
-            }
-            if (i && (!open || i <= 6 || i > 11)) {
-                line(lastX, lastY - 26, x, y - 26, 0x676c62);
-                line(lastX, lastY - 7, x, y - 7, 0x676c62);
-            }
-            lastX = x;
-            lastY = y;
+        int open = g.actors[g.selected].prisonTime <= 0 || jail_cell_open(&g.actors[g.selected]);
+        for (int panel = 0; panel < 5; panel++) {
+            if (open && panel == 2) continue;
+            InteriorProp bars = {.x = 6.2f - panel * 1.35f, .y = 3.65f, .w = .68f,
+                                 .d = .10f, .art = ART_CELL_PANEL};
+            room_furniture(&bars, style);
         }
     }
     const char *name = building_name(id);
@@ -1429,6 +1160,20 @@ static void map_pin(MapView view, const Actor *a, int left, int top, int right, 
     clipBottom = oldB;
 }
 
+static void map_escorts(MapView view, int left, int top, int right, int bottom, int showName) {
+    for (int i = 0; i < CONTRACTS; i++) {
+        int n = escort_contact(i);
+        if (n < 0) continue;
+        const Actor *a = &g.actors[n];
+        int x = map_x(view, a->x, a->y), y = map_y(view, a->x, a->y);
+        if (x < left + 4 || x >= right - 4 || y < top + 4 || y >= bottom - 4)
+            continue;
+        frame(x-3,y-3,7,7,INK);
+        diamond(x,y,3,3,GOLD);
+        if (showName && distance(ui.mapX,ui.mapY,a->x,a->y) < 35)
+            text(x+7,y-3,"ESCORT",GOLD,1);
+    }
+}
 static void mini_map(void) {
     int ox = 402, oy = 40;
     MapView view = {ui.camX, ui.camY, ox + 33, oy + 30, 2.5f, 1.25f};
@@ -1456,6 +1201,7 @@ static void mini_map(void) {
         if (x >= ox && x < ox + 65 && y >= oy && y < oy + 59 && !population_hidden(i))
             rect(x, y, 2, 2, a->squad ? TEAL : a->faction == HOSTILE ? RED : GOLD);
     }
+    map_escorts(view, ox, oy, ox + 66, oy + 60, 0);
     map_pin(view, &g.actors[g.selected], ox, oy, ox + 66, oy + 60, 1);
     frame(ox - 3, oy - 3, 72, 66, EDGE);
     text(ox + 55, oy + 3, "N", TEXT, 1);
@@ -1716,7 +1462,18 @@ static void compare_stat(int cell, int y, const char *label, float old, float ne
 static void equipment_comparison(int it, int y) {
     if(!it){text(31,y,"NO ITEMS",MUTED,1);return;}
     Actor *a=&g.actors[g.selected];ItemDef *d=&itemDefs[it];char b[100];
-    if(d->slot<0){snprintf(b,sizeof(b),"%s / WEIGHT %d",d->name,d->weight);clipped(31,y,b,68,TEXT);wrap(31,y+14,67,d->desc,MUTED);return;}
+    if (d->slot < 0) {
+        snprintf(b, sizeof(b), "%s / WEIGHT %d", d->name, d->weight);
+        clipped(31, y, b, 68, TEXT);
+        if (portion_base(it) == MEDKIT)
+            snprintf(b, sizeof(b), "CHARGE %d%%", portion_percent(it));
+        else if (food_capacity(it))
+            snprintf(b, sizeof(b), "FOOD +%d", (food_capacity(it) * portion_percent(it) + 99) / 100);
+        else
+            snprintf(b, sizeof(b), "%s", d->desc);
+        wrap(31, y + 14, 67, b, MUTED);
+        return;
+    }
     int worn=a->gear[d->slot];ItemDef *old=&itemDefs[worn];
     clipped(31,y,d->name,68,TEXT);
     if(it>=CATALOG_ITEMS&&it<OLD_ITEMS)text(374,y,it>=CATALOG_ITEMS+16?"SIGNATURE":"SPECIAL",GOLD,1);
@@ -1757,23 +1514,20 @@ static void equipment_comparison(int it, int y) {
         clipped(31+(cell%2)*211,y+26+(cell/2)*12,b,33,GOLD);
     }
 }
-static const char *item_function(int it){
-    ItemDef*d=&itemDefs[it];int f=gear_family(it);
+static const char *item_function(int it) {
+    static char detail[64];
+    const ItemDef *d = &itemDefs[it];
     if (d->slot == 0) {
-        static char training[52];
         int c = weapon_class(it);
-        snprintf(training, sizeof(training), "Trains %s", c >= 0 ? weaponClassNames[c] : "Melee");
-        return training;
+        snprintf(detail, sizeof(detail), "Trains %s", c >= 0 ? weaponClassNames[c] : "Melee");
+    } else if (portion_base(it) == MEDKIT) {
+        snprintf(detail, sizeof(detail), "Charge %d%%", portion_percent(it));
+    } else if (food_capacity(it)) {
+        snprintf(detail, sizeof(detail), "Food +%d", (food_capacity(it) * portion_percent(it) + 99) / 100);
+    } else {
+        return d->slot >= 0 ? "" : d->desc;
     }
-    if(it>=CIV_ARMOR_ITEMS)return d->desc;
-    if(d->slot<0)return d->desc;
-    if(it>=RAPIER_ITEMS&&it<RAPIER_ITEMS+24)return "Fast, precise thrusts that pierce armor.";
-    if(it>=SCIMITAR_ITEMS&&it<SCIMITAR_ITEMS+24)return "Curved cutting blade; serration causes bleeding.";
-    if(d->slot==0){if(weapon_ranged(it))return f>=29?"Ranged weapon. Consumes cartridges; needs a clear shot.":"Ranged weapon. Consumes bolts; keep enemies at a distance.";if(f==84)return "Heavy two-handed blade. Extra reach; needs strong arms.";if(f==85)return "Heavy impact weapon. Pierces armor and staggers enemies.";return d->effect==0?"Melee weapon. Serrated strikes cause bleeding.":d->effect==1?"Melee weapon. Piercing strikes bypass some armor.":d->effect==3?"Melee weapon. Heavy impacts can stagger enemies.":"Melee weapon. Reach, handling and strength affect combat.";}
-    if(d->slot==5)return "Carries supplies or grants outfit bonuses; compare load and penalties.";
-    if(d->slot==2)return "Protects your head; matching headwear helps complete a disguise.";
-    if(d->slot==1)return "Protects your torso; faction clothing can form a disguise.";
-    return d->slot==3?"Footwear affects protection and movement.":"Legwear protects your legs; weight affects travel.";
+    return detail;
 }
 static void pack_screen(void) {
     Actor *a=&g.actors[g.selected];char b[120];int count=item_view_count(),it=count?a->pack[ui.selection].item:0;
@@ -2108,6 +1862,7 @@ static void world_atlas(void) {
         else{rect(x-3,y-3,7,7,INK);frame(x-2,y-2,5,5,label_color(g.townOwner[t]));}
     }
     int px=AX(a->x, a->y),py=AY(a->x, a->y);
+    map_escorts(view, ox, oy, ox + size, oy + size, 1);
     map_pin(view, a, ox, oy, ox + size, oy + size, 0);
     triangle(px,py-6,px-5,py+4,px+5,py+4,TEXT);triangle(px,py-4,px-3,py+3,px+3,py+3,0x72cfd2);
     int sx=AX(ui.mapX, ui.mapY),sy=AY(ui.mapX, ui.mapY);
@@ -2250,6 +2005,7 @@ static void map_screen(void) {
     }
     line(x - 5, y, x + 5, y, TEXT);
     line(x, y - 5, x, y + 5, TEXT);
+    map_escorts(view, ox, oy, ox + mw, oy + mh, 1);
     map_pin(view, leader, ox, oy, ox + mw, oy + mh, 0);
     clipLeft=oldL;clipRight=oldR;clipTop=oldT;clipBottom=oldB;
     frame(ox - 1, oy - 1, mw + 2, mh + 2, EDGE);
@@ -2436,9 +2192,8 @@ static void scenarios_screen(void) {
     wrap(31, 172, 67, start->description, TEXT);
     text(31, 224, "Every scenario plays in the same frontier.", MUTED, 1);
 }
-static void creator_screen(void) {
-    overlay_header(ui.titleChoice ? "THE BARBER" : "CREATE CHARACTER", "\014 CHANGE   \001 CHOOSE   \002 BACK");
-    Actor a = preview_actor();
+static Actor creator_preview(void) {
+    Actor a = ui.titleChoice ? preview_actor() : (Actor){.active = 1, .squad = 1, .facing = 1, .carrying = -1, .carriedBy = -1};
     a.body = ui.createBody;
     a.skin = ui.createSkin;
     a.hair = ui.createHair;
@@ -2447,25 +2202,17 @@ static void creator_screen(void) {
     a.scar = 0;
     a.race = ui.createRace;
     if (!ui.titleChoice) {
-        const int w[] = {8, 0, 12, 9, 24}, t[] = {32, 34, 35, 46, 45}, h[] = {49, 48, 56, 51, 54};
-        int origin = ui.createOrigin;
-        a.gear[0] = gear_id(w[origin], origin == 1 ? 1 : 0, 1);
-        a.gear[1] = gear_id(t[origin], origin == 1 ? 1 : 0, 0);
-        a.gear[2] = gear_id(h[origin], 0, 1);
-        a.gear[3] = gear_id(origin == 1 ? 63 : 60, 0, 0);
-        a.gear[4] = gear_id(origin == 1 ? 68 : 69, 0, 0);
-        a.gear[5] = gear_id(origin == 2 ? 79 : 76, 0, 0);
-        species_start(&a, origin, ui.createRace);
-    } else {
-        const Actor *current = &g.actors[g.selected];
-        memcpy(a.gear, current->gear, sizeof(a.gear));
-        memcpy(a.xp, current->xp, sizeof(a.xp));
+        starting_gear(&a, ui.createOrigin);
+        species_start(&a, ui.createOrigin, ui.createRace);
     }
-    rect(27, 78, 163, 123, 0x6f6250);
-    rect(27, 178, 163, 23, 0x635544);
-    diamond(109, 190, 30, 5, 0x514635);
     if (ui.selection >= 3 && ui.selection <= 6)
-        a.gear[2] = 0;
+        a.gear[2] = NONE;
+    return a;
+}
+static void creator_screen(void) {
+    overlay_header(ui.titleChoice ? "THE BARBER" : "CREATE CHARACTER", "\014 CHANGE   \001 CHOOSE   \002 BACK");
+    Actor a = creator_preview();
+    rect(27, 78, 163, 123, 0x6f6250);
     portrait_scale(&a, 160, 109, 28, 81, 1.8f);
     const SpeciesDef *species = &speciesDefs[species_index(&a)];
     static const char *labels[] = {"NAME", "SPECIES", "BUILD", "SKIN", "HAIR", "HAIR TONE", "BEARD"};
@@ -2589,7 +2336,7 @@ static void dialogue_screen(void) {
     int town = town_near(g.actors[g.selected].x, g.actors[g.selected].y, 14);
     int count = jailed ? 3 : ui.dialogPage == DIALOG_WORK ? work_dialogue_count(town)
         : ui.dialogPage == DIALOG_BOUNTY ? 3 : (ui.dialogPage == DIALOG_INSPECTION || ui.dialogPage == DIALOG_SUMMONS) ? 2
-        : (ui.dialogPage == DIALOG_DISMISS || ui.dialogPage == DIALOG_WORK_HINT) ? 1 : dialogue_count(n);
+        : (ui.dialogPage == DIALOG_DISMISS || ui.dialogPage == DIALOG_WORK_HINT || ui.dialogPage == DIALOG_IRON) ? 1 : dialogue_count(n);
     int first = start_row(ui.selection, count, 5);
     for (int j = 0; j < 5 && first + j < count; j++) {
         int k = first + j, y = 153 + j * 15;
@@ -2615,6 +2362,7 @@ static void dialogue_screen(void) {
         else if (ui.dialogPage == DIALOG_BOUNTY) option = review[k];
         else if (ui.dialogPage == DIALOG_DISMISS) option = "Leave";
         else if (ui.dialogPage == DIALOG_WORK_HINT) option = "Back";
+        else if (ui.dialogPage == DIALOG_IRON) option = town_ore(town) >= 0 ? "Mark it on my map." : "Back";
         else option = dialogue_option(n, k);
         clipped(137, y, option, 50, k == ui.selection ? GOLD : MUTED);
     }
@@ -2674,6 +2422,9 @@ static void journal_screen(void) {
         else if (contract_ready(k)) snprintf(v, sizeof(v), "READY TO TURN IN");
         else if (c->type == CONTRACT_PATROL)
             snprintf(v, sizeof(v), "%d/180S", (int)fminf(180, g.society.jobNear[k]));
+        else if (c->type == CONTRACT_ESCORT)
+            snprintf(v, sizeof(v), "%s", !g.society.jobStage[k] ? "RENDEZVOUS" :
+                     g.society.jobWarned[k] ? "WAITING" : "EN ROUTE");
         else snprintf(v, sizeof(v), "%d/%d", c->progress, c->needed);
         row(85 + j * 14, first + j == ui.selection, b, v);
     }

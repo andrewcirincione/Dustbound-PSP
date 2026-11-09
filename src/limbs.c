@@ -30,7 +30,7 @@ void limb_set(Actor*a,int l,int it,int owner){
 float limb_max_health(const Actor*a,int l){int grade=limb_item_grade(limb_installed(a,l));return grade<0?species_health(a):limbGrades[grade].hp;}
 int limb_arms(const Actor*a){return !limb_missing(a,LARM)+!limb_missing(a,RARM);}
 int limb_crawling(const Actor *a) {
-    return a->kind != BEAST && (limb_missing(a, LLEG) || limb_missing(a, RLEG) ||
+    return a->kind != BEAST && ((a->woundFlags & WOUND_CRITICAL_AWAKE) || limb_missing(a, LLEG) || limb_missing(a, RLEG) ||
            (a->health[LLEG] <= limb_max_health(a, LLEG) * .10f &&
             a->health[RLEG] <= limb_max_health(a, RLEG) * .10f));
 }

@@ -24,7 +24,7 @@ void open_help(int topic) {
 }
 const StartScenario startScenarios[START_SCENARIOS] = {
     {3, "Standard", "Start alone in the Dry Market, a Scavenger trading town. You have field dressings and enough silver to buy supplies or hire help."},
-    {11, "Hard", "Start at Shogun's Rest with a soldier's blade, armor, and combat training. There is little silver to spare, and the Iron Throne's war runs through this region."},
+    {11, "Hard", "Start in Shogun's Rest with a blade and a Shogunate uniform. The garrison watches outsiders."},
     {16, "Standard", "Start at Brass Junction with metal, coal, and a heavy pack. Labour and smithing give you a head start. Work the nearby deposits or trade your stock."},
     {8, "Hardest", "Start outside Black Mesa with 180 silver and a Union theft bounty. You know how to sneak and steal. Union patrols will look for you beyond the enclave."},
     {10, "Easy", "Start at Cinder Port with Reed and Vale. You have more silver, a travel pack, a crossbow and dressings. Three people need food and care."}
@@ -90,6 +90,16 @@ void character_begin(int origin) {
     snprintf(ui.createName, sizeof(ui.createName), "%s", origin < 0 ? a->name : "ASH");
     open_view(SCREEN_CREATE);
 }
+void starting_gear(Actor *a, int origin) {
+    static const int weapons[] = {8, 0, 12, 9, 24}, torsos[] = {32, 34, 35, 46, 45},
+                     heads[] = {49, 50, 56, 51, 54};
+    a->gear[0] = gear_id(weapons[origin], origin == 1 ? 1 : 0, 1);
+    a->gear[1] = gear_id(torsos[origin], origin == 1 ? 1 : 0, 0);
+    a->gear[2] = gear_id(heads[origin], 0, 1);
+    a->gear[3] = gear_id(origin == 1 ? 63 : 60, 0, 0);
+    a->gear[4] = gear_id(origin == 1 ? 68 : 69, 0, 0);
+    a->gear[5] = origin == 2 ? gear_id(79, 0, 0) : origin == 4 ? gear_id(76, 0, 0) : NONE;
+}
 void character_finish(void) {
     int origin = ui.createOrigin, body = ui.createBody, skin = ui.createSkin, hair = ui.createHair,
         color = ui.createHairColor, beard = ui.createBeard, race = ui.createRace,
@@ -108,16 +118,11 @@ void character_finish(void) {
     a->race = race;
     a->origin = origin;
     if (!editing) {
-        const int weapons[5] = {8, 0, 12, 9, 24}, torsos[5] = {32, 34, 35, 46, 45},
-                  heads[5] = {49, 48, 56, 51, 54};
-        a->gear[0] = gear_id(weapons[origin], origin == 1 ? 1 : 0, 1);
-        a->gear[1] = gear_id(torsos[origin], origin == 1 ? 1 : 0, 0);
-        a->gear[2] = gear_id(heads[origin], 0, 1);
-        a->gear[3] = gear_id(origin == 1 ? 63 : 60, 0, 0);
-        a->gear[4] = gear_id(origin == 1 ? 68 : 69, 0, 0);
-        a->gear[5] = origin == 2 ? gear_id(79, 0, 0) : origin == 4 ? gear_id(76, 0, 0) : NONE;
+        starting_gear(a, origin);
+        a->autoattack = 0;
         if (origin == 1) {
             g.money = 420;
+            inventory_remove(a, WOOD, inventory_count(a, WOOD));
         }
         if (origin == 2) {
             g.money = 800;
@@ -589,7 +594,6 @@ int expansion_input(float dt, Input in) {
                 ui.mapX = x;
                 ui.mapY = y;
                 ui.mapZoom = 1;
-                log_msg("Contract location marked on the map.");
             } else
                 log_msg("Select an active contract to locate its destination.");
         }
@@ -694,7 +698,7 @@ int expansion_input(float dt, Input in) {
             count = prison ? 3 : ui.dialogPage == DIALOG_WORK ? work_dialogue_count(town)
                     : ui.dialogPage == DIALOG_BOUNTY ? 3
                     : (ui.dialogPage == DIALOG_INSPECTION || ui.dialogPage == DIALOG_SUMMONS) ? 2
-                    : (ui.dialogPage == DIALOG_DISMISS || ui.dialogPage == DIALOG_WORK_HINT) ? 1 : dialogue_count(n);
+                    : (ui.dialogPage == DIALOG_DISMISS || ui.dialogPage == DIALOG_WORK_HINT || ui.dialogPage == DIALOG_IRON) ? 1 : dialogue_count(n);
         if (p & (KEY_CIRCLE | KEY_START)) {
             if (ui.dialogPage == DIALOG_SUMMONS) return 1;
             if (ui.dialogPage == DIALOG_INSPECTION)
@@ -716,6 +720,19 @@ int expansion_input(float dt, Input in) {
                     open_view(SCREEN_WORLD);
                 if (choice > 0) {
                     ui.dialogPage = choice == 1 ? 5 : 0;
+                    ui.selection = 0;
+                }
+            } else if (ui.dialogPage == DIALOG_IRON) {
+                int node = town_ore(town);
+                if (node >= 0) {
+                    open_view(SCREEN_MAP);
+                    ui.mapTown = town;
+                    ui.mapZoom = 1;
+                    ui.mapX = ui.travelX = g.nodes[node].x;
+                    ui.mapY = ui.travelY = g.nodes[node].y;
+                    ui.waypoint = 1;
+                } else {
+                    ui.dialogPage = 0;
                     ui.selection = 0;
                 }
             } else if (ui.dialogPage == DIALOG_WORK_HINT) {
@@ -795,8 +812,9 @@ int expansion_input(float dt, Input in) {
                         ui.selection = 0;
                     }
                     break;
-                case 7:
-                    log_msg("Use the forge inside the smithy.");
+                case 19:
+                    ui.dialogPage = DIALOG_IRON;
+                    ui.selection = 0;
                     break;
                 case 9:
                     merc_hire(n, 0);

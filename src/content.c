@@ -280,25 +280,25 @@ const char *guideBodies[GUIDE_PAGES] = {
     "fight/passive. Hold L + Square: choose someone to attack (also Start > Squad). \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
     "pause menu: \005/\006 change Pause, Squad and World tabs. D-pad navigates menus.\nMenus pause time. \010 opens help. \005/\006 switch members or guide pages. Cross opens nearby actions. Pause with R, choose an action to queue it, then R resumes. Four actions can wait; moving cancels them. Analog movement cancels work. Map pins never move you.",
     "New expedition opens character creation. Choose a name, origin, species, body, skin, hairstyle, hair "
-    "color, beard and scars. \014 adjusts each choice; \001 edits your name or begins.\nOrigins change "
+    "color and beard. \014 adjusts each choice. \001 edits your name or begins.\nOrigins change "
     "equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts as a group of three. Species "
     "changes health, carry, speed, appetite and starting skills. The preview shows your starting values. Clockworks need spare parts, not food or bandages. A town barber can change your appearance later.",
-    "The 1536 by 1536 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. "
+    "The 1536 by 1536 borderlands contain nineteen settlements and nine terrain regions. Roads connect towns. "
     "Rivers have fords near roads; hills rise into mesas and snowfields.\n\010 opens the atlas. "
     "D-pad selects a known town; \005/\006 changes pages. The blue triangle is you; "
     "white squares are towns. World activity records last-seen sightings, not live tracking. "
-    "\001 places a reference pin. Walk with the analog stick. \004 opens local view: move its cursor freely; \005/\006 selects known towns. \003 "
+    "\001 places a reference pin. \004 opens the local view. \005/\006 selects known towns. \003 "
     "reveals surveyed geography after buying a "
     "chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits "
-    "persist.",
-    "\003 toggles fighting. L + Square opens opponents; Cross orders an attack, including neutrals (assault adds bounty). Small feet marks: teal line friendly, gold dot neutral, red chevron hostile. Red corners mark your opponent. Move into weapon reach to attack automatically; followers engage nearby "
+    "persist. Ask a merchant or smith to mark a nearby iron seam.",
+    "\003 toggles fighting. L + Square opens opponents; Cross orders an attack, including neutrals (assault adds bounty). Small feet marks: teal line friendly, gold dot neutral, red chevron hostile. Red corners mark your opponent. Fight stance closes to weapon reach and attacks at cooldown. The analog stick overrides pursuit. Followers engage nearby "
     "threats. \006 pauses combat for orders. Heavy steel handles best with strength equal to twice its weight. Weak or "
     "injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords "
     "hit hard; anchor cleavers bleed. Guns use cartridges; "
     "bows use bolts.\nArmor protects specific body locations. Piercing weapons ignore some armor; serrated "
     "blades bleed; staggering hits interrupt. Skills improve through use. Retreat from stronger opponents "
     "and use terrain. Gold windup marks show incoming strikes. Enemy combat bars show remaining knockout reserve from head, chest and blood. Square to passive cancels your attack; move away to disengage.",
-    "Head or chest injuries and blood loss can knock a survivor out. Below your Toughness threshold, a recovery coma lasts until your vitals recover. Dressed vital wounds recover a little faster in a coma. A waking survivor stays down and can treat their own injuries. Move to get up. Severe head trauma or bleeding out can kill.\n"
+    "Head or chest injuries and blood loss can knock a survivor out. Severe injuries can cause a recovery coma. After stabilizing, a survivor wakes prone and can give themselves first aid. Critical injuries may leave them crawling. Severe head trauma or blood loss can kill.\n"
     "Dress an injured body part before it can heal. Clotting stops blood loss. It still takes a dressing to start healing. Severe wounds take longer to bandage and recover. Beds and clinic care speed up recovery. Health shows healthy tissue in teal, untreated damage in red and dressed damage in gold. Nearby Actions offers first aid and emergency dressings. First aid stops bleeding before treating each wound. Check the remaining charge on a field dressing. An ally can treat someone who is down or carry them to an unoccupied bed. A rare passerby may help or carry you to a safe bed. Lost limbs never regrow. A bad leg injury makes you limp; a missing leg or two disabled legs makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Prosthetics are uncommon on ordinary travelers; high-grade parts are rarer. Actual fitted limbs on fallen wanderers can be looted. Death is "
     "permanent; dismiss the body from Squad to free its slot.",
     "Food is eaten below forty hunger. You eat what you need and save the remainder. Supplies come from your pack, then a nearby companion or owned depot within "
@@ -346,7 +346,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Contracts raise standing; theft lowers it. The Factions ledger shows each faction’s outstanding amount and charges. Ash Monastery, Shogun Rest and Vulture Nest require matching body armor and headwear; close inspections can expose a disguise. "
     "Hired guards cost 240 silver for escort or 180 for camp duty: one simulated day. They fight and "
     "bandage independently, keep their gear, wait outside interiors and return home on expiry.",
-    "Ask merchants or marshals for work. Freight needs a refundable deposit and four real goods. Bring the cargo to the receiving contact. Escort caravans or patrol beside a guard for 12 silver per 30 seconds of nearby movement, plus a completion bonus. Stay within 8m; the employer warns you when wages pause. A wanted target has a silver mark beside their name. Their loot screen lists the paying factions. Carry them to one of those factions' jailkeepers for payment. A live target pays twice as much.\nJournal shows your objective, payment and contact. Completed contracts have their own tab. Incidents renew naturally; nearby actions reveal them only when encountered. Armies can change town control. Strong leaders carry signature loot.",
+    "Ask merchants or marshals for work. Freight needs a refundable deposit and four goods. Bring the cargo to the receiving contact. Caravans wait for you outside town. Square on the Journal entry locates the caravan. Escort or patrol work pays 12 silver per 30 seconds of nearby movement, plus a completion bonus. Stay within 8m. A wanted target has a silver mark beside their name. Their loot screen lists the paying factions. Carry them to a paying jailkeeper. A live target pays twice as much.\nJournal shows your objective, payment and contact. Completed contracts have their own tab.",
     "Six manual slots plus autosave. \007, Save or Load opens a ledger with name, day, party size and "
     "silver. Choose a slot; \001 asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.\nSaves "
     "use version, size and checksum validation and preserve a previous .bak file. Invalid files never "

@@ -46,14 +46,14 @@ const char *npc_role_name(const Actor *a) {
     return names[npc_role(a)];
 }
 static const int services[][7] = {
- {6,12,8,-1}, {0,14,1,6,12,8,-1}, {6,12,18,8,-1}, {1,4,15,6,8,-1}, {0,2,1,6,12,8,-1},
- {3,6,12,8,-1}, {0,7,1,6,12,8,-1}, {5,6,12,8,-1}, {1,14,6,12,8,-1}, {9,10,6,12,8,-1}};
+ {6,12,8,-1}, {0,14,1,6,12,19,8}, {6,12,18,8,-1}, {1,4,15,6,8,-1}, {0,2,1,6,12,8,-1},
+ {3,6,12,8,-1}, {0,19,1,6,12,8,-1}, {5,6,12,8,-1}, {1,14,6,12,8,-1}, {9,10,6,12,8,-1}};
 int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
         return 0;
     if(limb_surgeon(actor))return 5;
     int n = 0;
-    while (n < 6 && services[npc_role(&g.actors[actor])][n] >= 0)
+    while (n < 7 && services[npc_role(&g.actors[actor])][n] >= 0)
         n++;
     return n;
 }
@@ -83,6 +83,7 @@ const char *dialogue_option(int actor, int row) {
     if(action==16)return "Removal surgery. 400 silver";
     if(action==17)return "Show me mechanical limbs.";
     if(action==18)return "What have you heard?";
+    if(action==19)return "Where can I find iron?";
     if(action==0 && npc_role(&g.actors[actor])==ROLE_INNKEEPER)return "What food and drink do you have?";
     if(action==2 && !regional_bed_cost(town_near(g.actors[actor].x,g.actors[actor].y,14)))return "Rest at the sanctuary. Free";
     if (action == 6 && npc_role(&g.actors[actor]) == ROLE_RECRUIT)
