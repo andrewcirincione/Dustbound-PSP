@@ -642,9 +642,6 @@ int nearest_ore(float x, float y, float reach, int type) {
     }
     return best;
 }
-int town_ore(int town) {
-    return town >= 0 && town < TOWNS ? nearest_ore(towns[town].x,towns[town].y,34,NODE_ORE) : -1;
-}
 void town_life_init(void) {
     if (g.townLife.layout)
         return;
@@ -1487,17 +1484,6 @@ const char *dialogue_line(int n, int page) {
     Actor *a = &g.actors[n];
     if (a->prisonTime > 0)
         return "How are you getting out?";
-    if (page == DIALOG_IRON) {
-        int town = town_near(g.actors[g.selected].x,g.actors[g.selected].y,16), node = town_ore(town);
-        if (node < 0) return "The nearest seam is worked out.";
-        static const char *directions[] = {"east","southeast","south","southwest","west","northwest","north","northeast"};
-        const Node *ore = &g.nodes[node];
-        float dx = ore->x-towns[town].x, dy = ore->y-towns[town].y;
-        int direction = (int)roundf(atan2f(dy,dx)*1.273239545f);
-        static char hint[110];
-        snprintf(hint,sizeof(hint),"There's an iron seam %s of town. Look for the red stone.",directions[(direction+8)%8]);
-        return hint;
-    }
     if (page == DIALOG_WORK_HINT)
         return work_hint(town_near(g.actors[g.selected].x, g.actors[g.selected].y, 14), n);
     if (page == DIALOG_WORK) {

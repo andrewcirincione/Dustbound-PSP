@@ -1,6 +1,6 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.18.1 — Painted frontier
+## 0.18.2 — Frontier refinements
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
@@ -24,7 +24,7 @@ New expeditions start in one of five settlements with different equipment, compa
 
 The thin control strip shows common menu shortcuts. Squad management separates direct assignments from job priorities. Follow tracks the controlled member, and the active character's assigned work waits for five idle seconds in Passive stance. The scrolling news bar keeps urgent injury alerts and gives the last message more time on screen.
 
-The world activity ledger records where and when you saw a group. The Journal tracks the caravan on an accepted escort. It waits for you to meet it and stops if separated. Merchants and smiths can mark a local iron seam. Councils show named claimants and the price policy each would implement. Successful autosaves are silent.
+The world activity ledger records where and when you saw a group. The Journal tracks the caravan on an accepted escort. It waits for you to meet it and stops if separated. Councils show named claimants and the price policy each would implement. Successful autosaves are silent.
 
 Fighting now has clearer windups, outlined knockout bars and staggered AI melee attacks. Passive stance cancels your attack so you can retreat. Six roadside rock passes offer cover and alternate routes; free wayfarer beds provide finite supplies and recovery stops. Emergency dressings can consume cloth or worn rags, and friendly medics can approach and stabilize you when safe. Government changes reposition surviving guards, civilians and relief medics.
 
@@ -45,7 +45,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dustbound-0.18.1-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v24 reads earlier expeditions. Existing equipment, training and town control carry over.
+Extract `Dustbound-0.18.2-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v24 reads earlier expeditions. Existing equipment, training and town control carry over.
 
 ## Controls
 

@@ -648,6 +648,19 @@ static void squad_health_bar(const Actor *a, int x, int y) {
     if (a->bleed > .01f)
         rect(x - 10, y - 43, 21, 1, RED);
 }
+typedef struct { float x, y, w, d; } BuildingYard;
+static int scenery_clear_of_buildings(float x, float y, const BuildingYard *yards, int count) {
+    for (int i = 0; i < count; i++) {
+        const BuildingYard *yard = &yards[i];
+        float dx = x - yard->x, dy = y - yard->y;
+        if (fabsf(dx) < yard->w + .65f && fabsf(dy) < yard->d + .65f)
+            return 0;
+        float depth = view_vertical(dx, dy), span = yard->w + yard->d;
+        if (depth <= 0 && depth > -span - 2.6f && fabsf(view_horizontal(dx, dy)) < span + .85f)
+            return 0;
+    }
+    return 1;
+}
 static void objects_draw(void) {
     static const unsigned char decor[9][8] = {
         {12,12,12,9,9,8,12,8},     /* cinder scrub */
@@ -667,10 +680,20 @@ static void objects_draw(void) {
         if (b->remaining && fabsf(b->x - ui.camX) < 20 && fabsf(b->y - ui.camY) < 20)
             objects[n++] = (Object){b->x + b->y, 0, i, 0, 0};
     }
+    BuildingYard yards[MAX_BUILDINGS];
+    int yardCount = 0;
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
-        if (portable_bedroll(i) >= 0 && fabsf(b->x - ui.camX) < 20 && fabsf(b->y - ui.camY) < 20)
-            objects[n++] = (Object){b->x + b->y, 1, i, 0, 0};
+        if (portable_bedroll(i) < 0 || fabsf(b->x - ui.camX) >= 20 || fabsf(b->y - ui.camY) >= 20)
+            continue;
+        objects[n++] = (Object){b->x + b->y, 1, i, 0, 0};
+        if (building_has_interior(b->type) || b->type == WINDMILL || b->type == WELL ||
+            b->type == WALL || b->type == SLAVE_YARD) {
+            int height;
+            BuildingYard *yard = &yards[yardCount++];
+            *yard = (BuildingYard){.x = b->x, .y = b->y};
+            building_footprint(i, &yard->w, &yard->d, &height);
+        }
     }
     for (int i = 0; i < g.actorCount; i++) {
         Actor *a = &g.actors[i];
@@ -737,6 +760,8 @@ static void objects_draw(void) {
             const ArtSprite *s = &artSprites[id];
             if (sx - s->ax > 480 || sx - s->ax + s->w < 0 || sy + 4 - s->ay > 252 ||
                 sy + 4 - s->ay + s->h < 0)
+                continue;
+            if (!scenery_clear_of_buildings(wx, wy, yards, yardCount))
                 continue;
             objects[n++] = (Object){wx + wy, 3, id, sx, sy};
         }
@@ -984,7 +1009,13 @@ static void room_furniture(const InteriorProp *p, int style) {
     }
     const ArtSprite *sprite = scene_sprite(id);
     int width = (int)roundf(roomScale * (p->w + p->d) * 2);
-    int height = (width * sprite->h + sprite->w / 2) / sprite->w;
+    float heightScale = 1;
+    switch (id) {
+    case 17: case ART_SIDE_COUNTER: heightScale = .80f; break;
+    case 19: heightScale = .83f; break;
+    case 21: case ART_ARMOR_STAND: heightScale = .78f; break;
+    }
+    int height = (int)roundf(width * sprite->h * heightScale / sprite->w);
     int base = (id >= SETTLEMENT_ART_FIRST || id == 23) ? sprite->ay :
                sprite->h - (int)roundf(sprite->w * (id == 16 ? .23f : .19f));
     scaled_art(id, x - width / 2, y - height * base / sprite->h, width, height, .94f, flip, 0);
@@ -1347,13 +1378,12 @@ static void hud(void) {
         line(381, 268, 389, 258, GOLD);
     }
 
-    if (a->taskKind == TASK_CELL_LOCK)
+    int treating = a->taskKind == TASK_TREAT || a->taskKind == TASK_JAIL_CARE;
+    if (treating)
+        b[0] = 0;
+    else if (a->taskKind == TASK_CELL_LOCK)
         snprintf(b, sizeof(b), "PICKING %s %.0fs   \002 CANCEL",
                  slave_in_camp(a) ? "SHACKLES" : "CELL LOCK", ceilf(a->action));
-    else if (a->taskKind == TASK_TREAT)
-        snprintf(b, sizeof(b), "TREATMENT IN PROGRESS %.0fs", ceilf(a->action));
-    else if (a->taskKind == TASK_JAIL_CARE)
-        snprintf(b, sizeof(b), "JAIL STAFF TREATING YOU %.0fs", ceilf(a->action));
     else if (jail_cell_open(a))
         snprintf(b, sizeof(b), "%s", interior_context() == -1 ? "\001 LEAVE JAIL" : "MOVE TO THE EXIT");
     else if (a->prisonTime > 0)
@@ -1370,7 +1400,7 @@ static void hud(void) {
         rect(4, 223, text_width(b) + 16, 13, PANEL);
         text(12, 226, b, TEXT, 1);
     }
-    if (a->taskKind == TASK_TREAT || a->taskKind == TASK_JAIL_CARE)
+    if (treating)
         bar(180, 236, 120, 2, treatment_progress(a), 0xdc9d54);
     else if (a->taskKind)
         bar(180, 236, 120, 2,
@@ -2336,7 +2366,7 @@ static void dialogue_screen(void) {
     int town = town_near(g.actors[g.selected].x, g.actors[g.selected].y, 14);
     int count = jailed ? 3 : ui.dialogPage == DIALOG_WORK ? work_dialogue_count(town)
         : ui.dialogPage == DIALOG_BOUNTY ? 3 : (ui.dialogPage == DIALOG_INSPECTION || ui.dialogPage == DIALOG_SUMMONS) ? 2
-        : (ui.dialogPage == DIALOG_DISMISS || ui.dialogPage == DIALOG_WORK_HINT || ui.dialogPage == DIALOG_IRON) ? 1 : dialogue_count(n);
+        : (ui.dialogPage == DIALOG_DISMISS || ui.dialogPage == DIALOG_WORK_HINT) ? 1 : dialogue_count(n);
     int first = start_row(ui.selection, count, 5);
     for (int j = 0; j < 5 && first + j < count; j++) {
         int k = first + j, y = 153 + j * 15;
@@ -2362,7 +2392,6 @@ static void dialogue_screen(void) {
         else if (ui.dialogPage == DIALOG_BOUNTY) option = review[k];
         else if (ui.dialogPage == DIALOG_DISMISS) option = "Leave";
         else if (ui.dialogPage == DIALOG_WORK_HINT) option = "Back";
-        else if (ui.dialogPage == DIALOG_IRON) option = town_ore(town) >= 0 ? "Mark it on my map." : "Back";
         else option = dialogue_option(n, k);
         clipped(137, y, option, 50, k == ui.selection ? GOLD : MUTED);
     }

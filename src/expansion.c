@@ -698,7 +698,7 @@ int expansion_input(float dt, Input in) {
             count = prison ? 3 : ui.dialogPage == DIALOG_WORK ? work_dialogue_count(town)
                     : ui.dialogPage == DIALOG_BOUNTY ? 3
                     : (ui.dialogPage == DIALOG_INSPECTION || ui.dialogPage == DIALOG_SUMMONS) ? 2
-                    : (ui.dialogPage == DIALOG_DISMISS || ui.dialogPage == DIALOG_WORK_HINT || ui.dialogPage == DIALOG_IRON) ? 1 : dialogue_count(n);
+                    : (ui.dialogPage == DIALOG_DISMISS || ui.dialogPage == DIALOG_WORK_HINT) ? 1 : dialogue_count(n);
         if (p & (KEY_CIRCLE | KEY_START)) {
             if (ui.dialogPage == DIALOG_SUMMONS) return 1;
             if (ui.dialogPage == DIALOG_INSPECTION)
@@ -720,19 +720,6 @@ int expansion_input(float dt, Input in) {
                     open_view(SCREEN_WORLD);
                 if (choice > 0) {
                     ui.dialogPage = choice == 1 ? 5 : 0;
-                    ui.selection = 0;
-                }
-            } else if (ui.dialogPage == DIALOG_IRON) {
-                int node = town_ore(town);
-                if (node >= 0) {
-                    open_view(SCREEN_MAP);
-                    ui.mapTown = town;
-                    ui.mapZoom = 1;
-                    ui.mapX = ui.travelX = g.nodes[node].x;
-                    ui.mapY = ui.travelY = g.nodes[node].y;
-                    ui.waypoint = 1;
-                } else {
-                    ui.dialogPage = 0;
                     ui.selection = 0;
                 }
             } else if (ui.dialogPage == DIALOG_WORK_HINT) {
@@ -811,10 +798,6 @@ int expansion_input(float dt, Input in) {
                         ui.dialogPage = 5;
                         ui.selection = 0;
                     }
-                    break;
-                case 19:
-                    ui.dialogPage = DIALOG_IRON;
-                    ui.selection = 0;
                     break;
                 case 9:
                     merc_hire(n, 0);

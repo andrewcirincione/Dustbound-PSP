@@ -95,8 +95,8 @@ int main(void) {
             continue;
         int r = npc_role(n);
         roles[r]++;
-        CHECK(dialogue_count(i) >= 2 && dialogue_count(i) <= 7);
-        CHECK(has_action(i, 19) == (r == ROLE_MERCHANT || r == ROLE_SMITH));
+        CHECK(dialogue_count(i) >= 2 && dialogue_count(i) <= 6);
+        CHECK(!has_action(i, 19));
         CHECK(has_action(i, 0) == (r == ROLE_MERCHANT || r == ROLE_SMITH || r == ROLE_INNKEEPER));
         CHECK(has_action(i, 2) == (r == ROLE_INNKEEPER));
         CHECK(has_action(i, 3) == (r == ROLE_MEDIC));

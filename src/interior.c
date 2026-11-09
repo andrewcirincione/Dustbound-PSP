@@ -465,7 +465,7 @@ int interior_props(int building, InteriorProp *p) {
     if (variant == BUILD_LODGE) {
         put_prop(p,&n,1.1f,1.7f,.62f,.82f,16,ROOM_REST);
         put_prop(p,&n,1.1f,4.25f,.62f,.82f,16,ROOM_REST);
-        put_prop(p,&n,5.3f,1.4f,1.0f,.45f,17,ROOM_MEMBERSHIP);
+        put_prop(p,&n,5.3f,1.4f,.86f,.37f,17,ROOM_MEMBERSHIP);
         put_prop(p,&n,5.65f,4.25f,.35f,.35f,ART_PRACTICE_POST,ROOM_TRAIN);
         put_prop(p,&n,3.0f,3.0f,1.1f,.7f,23,ROOM_NONE);
         return n;
@@ -477,23 +477,25 @@ int interior_props(int building, InteriorProp *p) {
             float y = j >= 2 ? 2.65f : 1.02f;
             put_prop(p,&n,x,y,.57f,.64f,16,ROOM_NONE);
         }
-        if (plan->custody) put_prop(p,&n,5.72f,5.4f,.72f,.38f,17,ROOM_NONE);
+        if (plan->custody) put_prop(p,&n,5.72f,5.4f,.65f,.33f,17,ROOM_NONE);
         if (plan->custody == 2) put_prop(p,&n,1.1f,5.2f,.5f,.5f,21,ROOM_NONE);
     } else if (b->type == SHOP) {
         int sideCounter = layout == 1 || style == 2;
         if (sideCounter)
-            put_prop(p,&n,5.23f,2.67f,.46f,1.24f + plan->marketTier*.11f,17,ROOM_TRADE);
+            put_prop(p,&n,5.23f,2.67f,.36f,.86f + plan->marketTier*.09f,17,ROOM_TRADE);
         else
             put_prop(p,&n,layout == 2 ? 4.1f : 3.35f,1.62f,
-                     1.28f + plan->marketTier*.15f,.48f,17,ROOM_TRADE);
+                     .94f + plan->marketTier*.10f,.36f,17,ROOM_TRADE);
         if (private_chest(building))
             put_prop(p,&n,sideCounter ? 6.15f : 1.05f,sideCounter ? 1.26f : 3.32f,.43f,.37f,20,ROOM_CHEST);
-        put_prop(p,&n,1.1f,1.06f,.62f,.40f,variant == BUILD_ARMORER ? ART_ARMOR_STAND : decor[style],ROOM_NONE);
+        put_prop(p,&n,1.1f,1.06f,.50f,.35f,variant == BUILD_ARMORER ? ART_ARMOR_STAND : decor[style],ROOM_NONE);
         if (layout == 2 && t == 3) {
             put_prop(p,&n,1.4f,4.82f,.76f,.55f,18,ROOM_NONE);
             put_prop(p,&n,5.53f,4.91f,.58f,.52f,20,ROOM_NONE);
         } else
-            put_prop(p,&n,sideCounter ? 1.28f : 5.55f,4.8f,.64f,.55f,variant == BUILD_ARMORER ? ART_ARMOR_STAND : 18,ROOM_NONE);
+            put_prop(p,&n,sideCounter ? 1.28f : 5.55f,4.8f,
+                     variant == BUILD_ARMORER ? .50f : .64f, variant == BUILD_ARMORER ? .38f : .55f,
+                     variant == BUILD_ARMORER ? ART_ARMOR_STAND : 18,ROOM_NONE);
         if (plan->marketTier)
             put_prop(p,&n,sideCounter ? 3.65f : 5.97f,sideCounter ? .95f : 3.4f,.43f,.42f,21,ROOM_NONE);
         if (plan->marketTier == 2)
@@ -501,10 +503,10 @@ int interior_props(int building, InteriorProp *p) {
         if (style == 1 || style == 2)
             put_prop(p,&n,3.5f,5.25f,1.08f,.58f,23,ROOM_NONE);
     } else if (b->type == FORGE) {
-        put_prop(p,&n,1.47f,1.47f,.9f,.7f,19,ROOM_FORGE);
-        put_prop(p,&n,4.8f,2.18f,1.12f,.47f,17,b->owner < 0 ? ROOM_SMITH_TRADE : ROOM_NONE);
+        put_prop(p,&n,1.47f,1.47f,.74f,.57f,19,ROOM_FORGE);
+        put_prop(p,&n,4.8f,2.18f,.94f,.36f,17,b->owner < 0 ? ROOM_SMITH_TRADE : ROOM_NONE);
         put_prop(p,&n,1.02f,4.7f,.47f,.48f,20,ROOM_NONE);
-        put_prop(p,&n,5.6f,4.7f,.58f,.48f,ART_ARMOR_STAND,ROOM_NONE);
+        put_prop(p,&n,5.6f,4.7f,.50f,.36f,ART_ARMOR_STAND,ROOM_NONE);
         put_prop(p,&n,5.72f,1.0f,.40f,.36f,21,ROOM_NONE);
     } else if (b->type == STORE) {
         for (int j = 0; j < 3 + plan->marketTier; j++) {
@@ -512,7 +514,7 @@ int interior_props(int building, InteriorProp *p) {
             float y = 1.30f + (j / 2) * 1.7f;
             put_prop(p,&n,x,y,.48f+(j%3)*.10f,.44f,20,ROOM_STORAGE);
         }
-        put_prop(p,&n,3.8f,1.1f,.95f,.45f,21,ROOM_NONE);
+        put_prop(p,&n,3.8f,1.1f,.62f,.38f,21,ROOM_NONE);
     } else if (b->type == BAR) {
         int beds = t < 0 ? 3 : plan->beds;
         int alcove = beds >= 4 && (layout == 1 || style == 2);
@@ -530,11 +532,11 @@ int interior_props(int building, InteriorProp *p) {
             put_prop(p,&n,x,y,w,d,16,ROOM_REST);
         }
         if (sideBar) {
-            put_prop(p,&n,5.65f,5.15f,.47f,1.05f,17,ROOM_TRADE);
+            put_prop(p,&n,5.65f,5.15f,.36f,.86f,17,ROOM_TRADE);
             put_prop(p,&n,1.35f,5.2f,.63f,.49f,decor[style],ROOM_NONE);
             put_prop(p,&n,3.59f,5.34f,.76f,.57f,23,ROOM_NONE);
         } else {
-            put_prop(p,&n,3.55f,1.05f,1.11f,.43f,17,ROOM_TRADE);
+            put_prop(p,&n,3.55f,1.05f,.94f,.36f,17,ROOM_TRADE);
             if (beds > 2)
                 put_prop(p,&n,layout == 1 ? 2.75f : 4.25f,3.7f,.60f,.55f,18,ROOM_NONE);
             if (style == 2 || beds >= 4)

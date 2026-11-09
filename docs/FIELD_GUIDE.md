@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.18.1
+# Dustbound field guide — 0.18.2
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -20,7 +20,7 @@ Origins change equipment, supplies and skills. Outlaws begin with a bounty. Cara
 
 The 1536 by 1536 borderlands contain nineteen settlements and nine terrain regions. Roads connect towns. Rivers have fords near roads; hills rise into mesas and snowfields.
 
-![select](../assets/ui/select.svg) opens the atlas. D-pad selects a known town; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) changes pages. The blue triangle is you; white squares are towns. World activity records last-seen sightings, not live tracking. ![cross](../assets/ui/cross.svg) places a reference pin. ![triangle](../assets/ui/triangle.svg) opens the local view. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist. Ask a merchant or smith to mark a nearby iron seam.
+![select](../assets/ui/select.svg) opens the atlas. D-pad selects a known town; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) changes pages. The blue triangle is you; white squares are towns. World activity records last-seen sightings, not live tracking. ![cross](../assets/ui/cross.svg) places a reference pin. ![triangle](../assets/ui/triangle.svg) opens the local view. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist.
 
 ## 4. Combat
 

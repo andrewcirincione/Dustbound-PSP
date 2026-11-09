@@ -1,3 +1,10 @@
+# 0.18.2 — Frontier refinements
+
+- Reduced head and headwear size across standing, crawling and prone poses.
+- Cleared ambient vegetation and rocks from the ground around and behind buildings.
+- Scaled down counters, forge furniture, shelves and armor displays. Counter collision and service positions follow the smaller furniture.
+- Removed the iron dialogue option and treatment countdown text. Healing shows an icon and progress bar.
+
 # 0.18.1 — Painted frontier
 
 - Restored painted building and furniture art, with new generated models for inns, trade posts, homes, temples, stockades, cages and lodges. All nineteen settlements retain their layouts and services. Loose chests clear buildings and doors, including in existing saves.

@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.18.1"
+#define VERSION "0.18.2"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -233,7 +233,7 @@ typedef struct {
 enum { CONTRACT_DISPATCH, CONTRACT_ORE, CONTRACT_HUNT, CONTRACT_RELIC, CONTRACT_FREIGHT,
        CONTRACT_ESCORT, CONTRACT_PATROL, CONTRACT_BOUNTY, CONTRACT_TYPES };
 enum { DIALOG_WORK = 1, DIALOG_INSPECTION = 6, DIALOG_DISMISS = 7, DIALOG_WORK_HINT = 8,
-       DIALOG_BOUNTY = 9, DIALOG_SUMMONS = 10, DIALOG_IRON = 11 };
+       DIALOG_BOUNTY = 9, DIALOG_SUMMONS = 10 };
 typedef struct {
     int layout;
     int chestRefresh[MAX_BUILDINGS];
@@ -511,7 +511,6 @@ int town_npc_routine(int actor, float dt);
 void actor_leave_room(int actor);
 void put_down(Actor *carrier);
 int nearest_ore(float x, float y, float reach, int type);
-int town_ore(int town);
 enum { CORE_SKILL_ROWS = SKILLS - 1 };
 float context_distance(void);
 float context_reach(void);

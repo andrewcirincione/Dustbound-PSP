@@ -387,15 +387,22 @@ static BackAttachment back_attachment(int item) {
     int f = gear_family(item);
     return mounts[f >= 76 && f <= 83 ? f - 76 : 0];
 }
+static const float headScale = .78f, headChin = -23.3f;
+static float head_y(float y) {
+    return headChin + (y + 25.f) * headScale;
+}
+static float head_width(int race) {
+    return headScale * (race == 4 ? 6.7f : race == 3 ? 5.1f : 5.8f);
+}
 static void head_attachment(int family, float *width, float *top, float *bottom) {
     // Calibrated brow/brim rows in each cropped sprite. Chin straps, cheek
     // guards and crests must not be treated as the hat's contact with the head.
     static const float widths[12] = {11, 10.4f, 9.6f, 7.4f, 7.4f, 8.4f, 7.8f, 7.8f, 10.2f, 7.8f, 11, 9.2f};
     static const float brow[12] = {.61f, .86f, .54f, .40f, .55f, .46f, .32f, .42f, .82f, .36f, .43f, .53f};
     const ArtSprite *s = &artSprites[family];
-    *width = widths[family - 48];
+    *width = widths[family - 48] * headScale;
     float height = *width * s->h / s->w;
-    *top = -30.2f - brow[family - 48] * height;
+    *top = head_y(-30.2f) - brow[family - 48] * height;
     *bottom = *top + height;
 }
 static void painted_arm(const Actor *a, int i, const float shoulder[2], const float wrist[2],
@@ -664,11 +671,12 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         LA(72,10.6f,0,2.5f,6.0f,0,2.5f,3.6f,skin,0,0,1);
         LA(tf,8.2f,0,2.7f,-5.1f,0,1.7f,bw*(torso?2.52f:1.8f),torso?cloth:skin,
            itemDefs[torso].quality,0,1);
-        LA(61,15.4f,0,2.2f,8.4f,0,2.5f,race==4?6.7f:5.9f,skin,0,0,1);
+        const float chin = 8.4f;
+        LA(61,chin+7*headScale,0,2.2f,chin,0,2.5f,head_width(race),skin,0,0,1);
         if (!bed && head && hf >= 48) {
             float wide, top, bottom;
-            head_attachment(hf,&wide,&top,&bottom);
-            LA(hf,-top-18.5f,-.15f,2.45f,-bottom-18.5f,-.15f,2.45f,wide,itemDefs[head].color,
+            head_attachment(hf, &wide, &top, &bottom);
+            LA(hf,chin+(headChin-top)*.875f,-.15f,2.45f,chin+(headChin-bottom)*.875f,-.15f,2.45f,wide,itemDefs[head].color,
                itemDefs[head].quality,0,1);
         }
         if (!limb_missing(a,RARM)) {
@@ -710,9 +718,15 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
             part(mech?77:75,x+face*7*sc,y-4*sc,xx,yy,3*sc,mech?tint:skin,li,0,i^(face<0),0,1);
             if(i==primary){handx=xx;handy=yy;}
         }
-        painted_head(a, x + face * 9 * sc, y - 17 * sc, x + face * 8 * sc, y - 9 * sc,
-                     (race == 4 ? 6.7f : 5.8f) * sc, skin, li, face);
-        if(head&&hf>=48){float wide,top,bottom;head_attachment(hf,&wide,&top,&bottom);part(hf,x+face*9*sc,y+(top+16)*sc,x+face*9*sc,y+(bottom+16)*sc,wide*sc,itemDefs[head].color,li,itemDefs[head].quality,face<0,0,1);}
+        float chinX = x + face * 8 * sc, chinY = y - 9 * sc;
+        float browX = chinX + face * headScale * sc;
+        painted_head(a, browX, chinY - 8 * headScale * sc, chinX, chinY, head_width(race) * sc, skin, li, face);
+        if (head && hf >= 48) {
+            float wide, top, bottom;
+            head_attachment(hf, &wide, &top, &bottom);
+            part(hf, browX, chinY + (top - headChin) * sc, browX, chinY + (bottom - headChin) * sc,
+                 wide * sc, itemDefs[head].color, li, itemDefs[head].quality, face < 0, 0, 1);
+        }
         if(limb_arms(a)&&weapon)weapon_sprite(weapon,handx,handy,sc,face>0?-.18f:3.32f,face,li);
         return;
     }
@@ -813,19 +827,18 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     if (relaxed || (weapon && !twoHands))
         painted_arm(a, 1 - primary, shoulders[1 - primary], wrists[1 - primary], sc, face, race, skin, cloth, li, 0, 1);
     int coat = tf == 32 || tf == 33 || tf == 39 || tf == 40 || tf == 42 || tf == 44 || tf == 47;
-    const float headDrop = 1.7f;
-    PART(72, 0, -27 + headDrop, 0, -21.8f, 3.6f, skin, 0);
+    PART(72, 0, headChin - 2, 0, -21.8f, 3.3f, skin, 0);
     PART(tf, 0, -26, coat ? -rig.shift * .35f * forward : 0, coat ? -5 : -12, bw * (torso ? 2.8f : 1.8f),
          torso ? cloth : skin, itemDefs[torso].quality);
-    painted_head(a, RX(0, -33 + headDrop), RY(-33 + headDrop), RX(0, -25 + headDrop), RY(-25 + headDrop),
-                 (race == 4 ? 6.7f : race == 3 ? 5.1f : 5.8f) * sc, skin, li, face);
+    float scalp = head_y(-33.f);
+    painted_head(a, RX(0, scalp), RY(scalp), RX(0, headChin), RY(headChin), head_width(race) * sc, skin, li, face);
     if (a->scar)
-        painted_line(RX(face, -29 + headDrop), RY(-29 + headDrop), RX(face * 1.5f, -27 + headDrop),
-                     RY(-27 + headDrop), shade(0x874b38, li));
+        painted_line(RX(face * headScale, head_y(-29)), RY(head_y(-29)),
+                     RX(face * 1.5f * headScale, head_y(-27)), RY(head_y(-27)), shade(0x874b38, li));
     if (head && hf >= 48) {
         float wide, top, bottom;
         head_attachment(hf, &wide, &top, &bottom);
-        PART(hf, 0, top + headDrop, 0, bottom + headDrop, wide, itemDefs[head].color, itemDefs[head].quality);
+        PART(hf, 0, top, 0, bottom, wide, itemDefs[head].color, itemDefs[head].quality);
     }
     if (!relaxed && (!weapon || twoHands))
         painted_arm(a, 1 - primary, shoulders[1 - primary], wrists[1 - primary], sc, face, race, skin, cloth, li, !weapon, 0);

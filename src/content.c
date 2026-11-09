@@ -290,7 +290,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "\001 places a reference pin. \004 opens the local view. \005/\006 selects known towns. \003 "
     "reveals surveyed geography after buying a "
     "chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits "
-    "persist. Ask a merchant or smith to mark a nearby iron seam.",
+    "persist.",
     "\003 toggles fighting. L + Square opens opponents; Cross orders an attack, including neutrals (assault adds bounty). Small feet marks: teal line friendly, gold dot neutral, red chevron hostile. Red corners mark your opponent. Fight stance closes to weapon reach and attacks at cooldown. The analog stick overrides pursuit. Followers engage nearby "
     "threats. \006 pauses combat for orders. Heavy steel handles best with strength equal to twice its weight. Weak or "
     "injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords "
