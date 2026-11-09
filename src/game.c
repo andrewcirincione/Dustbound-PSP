@@ -3294,6 +3294,9 @@ void debug_snapshot(const char *path) {
         fputc('"', f);                                                                                       \
     } while (0)
     VALUE("screen", &ui.screen, 4);
+    unsigned music[3];
+    audio_debug(music);
+    VALUE("music", music, sizeof(music));
     VALUE("skillpage", &ui.skillPage, 4);
     VALUE("menutab", &ui.menuTab, 4);
     VALUE("creator_species", &ui.createRace, 4);

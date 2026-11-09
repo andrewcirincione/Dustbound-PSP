@@ -59,8 +59,6 @@ static int buttons(unsigned b) {
     return k;
 }
 int main(int argc, char *argv[]) {
-    (void)argc;
-    (void)argv;
     int th = sceKernelCreateThread("Callbacks", callback_thread, 0x11, 0x1000, 0, 0);
     if (th >= 0)
         sceKernelStartThread(th, 0, 0);
@@ -75,7 +73,7 @@ int main(int argc, char *argv[]) {
                           PSP_DISPLAY_SETBUF_IMMEDIATE);
     int draw = 1, old = 0, frames = 0;
     float repeat = 0, activityTick = 0;
-    audio_init();
+    audio_init(argc > 0 ? argv[0] : NULL);
     game_new(73819, 0);
     ui.screen = SCREEN_TITLE;
     FILE *q = fopen("DUST_QA", "r");

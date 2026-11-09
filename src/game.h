@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.17.6"
+#define VERSION "0.17.7"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -577,8 +577,9 @@ extern const char *originNames[5], *raceNames[SPECIES], *effectNames[12], *mater
 extern const char *familyNames[FAMILIES], *guideTitles[GUIDE_PAGES], *guideBodies[GUIDE_PAGES];
 extern const uint32_t factionColors[FACTIONS];
 void audio_event(int kind);
-void audio_init(void);
+void audio_init(const char *eboot);
 void audio_shutdown(void);
+void audio_debug(unsigned stats[3]);
 void content_init(void);
 int gear_id(int family, int material, int quality);
 int gear_family(int item);

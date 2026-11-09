@@ -96,7 +96,6 @@ for filename,nrows,sizes in SPECS:
   stats.append(dict(source=filename,cell=i,width=im.width,height=im.height,pivot=[ax,ay],bytes=size,calibration=cal,foundation=pts));im.convert('RGBA').save(ART/f'sprite-{idx:02d}.png')
 lines+=['#define ART_COUNT '+str(len(entries))+'\n#define WEAPON_ART_FIRST 108\nstatic const ArtSprite artSprites[ART_COUNT]={\n'+',\n'.join(entries)+'\n};\nstatic const ArtShadow artShadows[32]={\n'+',\n'.join(shadows)+'\n};\ntypedef struct {float gripX,gripY,scale; int edgeSide;} WeaponArt;\nstatic const WeaponArt weaponArt[36]={\n'+',\n'.join('{%.5ff,%.5ff,%.6ff,%d}'%p for p in weapons)+'\n};\n#endif\n']
 (ROOT/'src/art_data.h').write_text(''.join(lines));(ART/'budget.json').write_text(json.dumps(dict(rom_bytes=total+shadowbytes,shadow_bytes=shadowbytes,palette_cache_bytes=len(entries)*256*4,sprites=stats,weapon_grips=weapons),indent=2)+'\n');print('Packed',len(entries),'sprites;',total+shadowbytes,'bytes ROM;',len(entries)*256*4,'bytes palette RAM')
-# Launcher images are offline derivatives; they add no in-game texture RAM.
+# ICON0 is derived from the original launcher art. PIC1 is a separate wallpaper.
 launcher=Image.open(ART/'launcher-v041.png').convert('RGB')
 launcher.resize((144,80),Image.Resampling.LANCZOS).save(ROOT/'assets/ICON0.png')
-launcher.resize((480,272),Image.Resampling.LANCZOS).save(ROOT/'assets/PIC1.png')

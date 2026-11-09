@@ -1,8 +1,10 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.17.6 — The town watch
+## 0.17.7 — Dust soundtrack
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
+
+Dust.mp3 loops across the title screen, gameplay and menus. The full soundtrack is built into the EBOOT.
 
 [Three Banners design](docs/FRONTIER_WAR.md) · [Field guide](docs/FIELD_GUIDE.md)
 
@@ -43,7 +45,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dustbound-0.17.6-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v23 reads earlier expeditions and remembers each faction’s charges alongside custody and confiscated belongings. Existing equipment, training and town control carry over.
+Extract `Dustbound-0.17.7-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v23 reads earlier expeditions and remembers each faction’s charges alongside custody and confiscated belongings. Existing equipment, training and town control carry over.
 
 ## Controls
 
@@ -65,7 +67,7 @@ The pause menu has Pause, Squad and World tabs. Factions and World activity are 
 
 ## Build and verify
 
-With PSPDEV available, run `make -j2`, then `python3 scripts/validate_pbp.py EBOOT.PBP`. The PSP build uses PSPDEV v20261101.
+With PSPDEV available, run `make -j2`, then `python3 scripts/validate_pbp.py EBOOT.PBP --assets assets`. The PSP build uses PSPDEV v20261101.
 
 Run the regression gates from `scripts/validate_v080.sh` through `scripts/validate_v160.sh` listed in `.github/workflows/build.yml`. Run `bash scripts/validate_v170.sh path/to/v16.sav` to verify war behavior and older saves. Pass that same old save to `python3 scripts/emulator_v170.py /path/to/PPSSPPHeadless path/to/v16.sav` to check the compiled EBOOT using controller input (Python dependencies: Pillow and websockets).
 

@@ -1,10 +1,10 @@
 # Original painted frontier artwork
 
-The runtime uses thirteen original painted source atlases: buildings-v2, wilderness, furniture, props, torsos, heads, limbs, boots-backs, beasts, materials, weapons-blades, weapons-frontier and weapons-heavy. Their western/samurai briefs were created for Dustbound; no Kenshi game assets are included. The separate launcher-v041 illustration supplies the PSP launcher icon and background.
+The runtime uses thirteen original painted source atlases: buildings-v2, wilderness, furniture, props, torsos, heads, limbs, boots-backs, beasts, materials, weapons-blades, weapons-frontier and weapons-heavy. Their western/samurai briefs were created for Dustbound; no Kenshi game assets are included. The launcher-v041 illustration supplies the PSP launcher icon. A separate dust-storm illustration is used for the PSP wallpaper.
 
 Version 0.4.1 replaces all 32 geometric weapon families with painted sprites. Legacy items use the matching family art. Six material treatments and four quality grades preserve wood, leather, wrapping and rust while changing exposed metal. Warm source colours remain muted. Painted sprites, articulated body parts and rigid weapon pivots share the existing attack poses.
 
-Run `python3 scripts/pack_art.py` with Pillow installed. It crops cells using alpha, calibrates building foundations, resizes and palette-quantizes the runtime sprites, and emits `src/art_data.h`. Weapon cells have explicit source-space handle anchors and scale metadata; do not replace these with the alpha bounding-box centre. Source atlases remain unchanged. The same compiler produces `assets/ICON0.png` and `assets/PIC1.png` from the launcher illustration.
+Run `python3 scripts/pack_art.py` with Pillow installed. It crops cells using alpha, calibrates building foundations, resizes and palette-quantizes the runtime sprites, and emits `src/art_data.h`. Weapon cells have explicit source-space handle anchors and scale metadata; do not replace these with the alpha bounding-box centre. Source atlases remain unchanged. The same compiler produces `assets/ICON0.png` from the launcher illustration. The finished wallpaper is checked in as `assets/PIC1.png`.
 
 The 144 indexed sprites and 32 projected shadow masks occupy 554,886 bytes, plus small sprite/pivot descriptors. Lighting palettes occupy 147,456 bytes. No PNG decoder, network request or external art file is needed on PSP. Actor and menu caches have fixed capacities; see `docs/VALIDATION.md` for the complete memory budget.
 

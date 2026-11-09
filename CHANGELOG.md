@@ -1,3 +1,8 @@
+# 0.17.7 — Dust soundtrack
+
+- The full Dust.mp3 loops from the title screen through gameplay, menus and pauses. The EBOOT streams it from disk alongside the game’s sound effects.
+- The PSP home screen uses a new 480×272 wallpaper. The game tile uses the original icon.
+
 # 0.17.6 — The town watch
 
 - Passive and unarmed walks use relaxed arms. One-handed weapon grips leave both arms readable. Fallen and resting survivors have a revised ground pose and stay down after waking until they act. Self-treatment can be done while down.
