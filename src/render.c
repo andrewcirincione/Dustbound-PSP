@@ -351,10 +351,15 @@ static uint32_t ground(int b) {
     return p[b];
 }
 static float light(void) {
-    return g.dayTime >= 7 && g.dayTime < 18    ? 1
-           : g.dayTime >= 5 && g.dayTime < 7   ? .83f
-           : g.dayTime >= 18 && g.dayTime < 20 ? .8f
-                                               : .55f;
+    float dawn = (g.dayTime - 5) / 3, dusk = (21 - g.dayTime) / 4;
+    float daylight = fmaxf(0, fminf(1, fminf(dawn, dusk)));
+    /* Cache terrain through each small step of the lighting transition. */
+    return .54f + (int)(daylight * 12) * (.46f / 12);
+}
+static const char *bearing(float dx, float dy) {
+    if (fabsf(dx) < fabsf(dy) * .4f) return dy < 0 ? "N" : "S";
+    if (fabsf(dy) < fabsf(dx) * .4f) return dx < 0 ? "W" : "E";
+    return dy < 0 ? (dx < 0 ? "NW" : "NE") : (dx < 0 ? "SW" : "SE");
 }
 static int road(float x, float y) { return terrain_road(x, y); }
 static void texture_ground(void) {
@@ -392,6 +397,13 @@ static void terrain_raw(void) {
     float li = light();
     rect(0, 0, clipRight, clipBottom, shade(ground(biome(ui.camX, ui.camY)), li));
     int cx = (int)ui.camX, cy = (int)ui.camY;
+    enum { BLEND_CELL = 12, BLEND_GRID = 5 };
+    int left = (int)floorf((cx - 18) / (float)BLEND_CELL) * BLEND_CELL;
+    int top = (int)floorf((cy - 18) / (float)BLEND_CELL) * BLEND_CELL;
+    uint32_t palette[BLEND_GRID][BLEND_GRID];
+    for (int j = 0; j < BLEND_GRID; j++)
+        for (int i = 0; i < BLEND_GRID; i++)
+            palette[j][i] = ground(biome(left + i * BLEND_CELL, top + j * BLEND_CELL));
     for (int y = cy - 18; y <= cy + 18; y++)
         for (int x = cx - 18; x <= cx + 18; x++) {
             int sx = project_x(x + .5f, y + .5f);
@@ -402,16 +414,22 @@ static void terrain_raw(void) {
                 continue;
             unsigned h = hash(x, y);
             int t = town_near(x, y, 7);
-            uint32_t c = ground(biome(x, y));
-            if (g.weather == 2 || g.weather == 3)
-                c = shade(c, .85f);
-            c = shade(c, (.985f + (h % 5) * .005f) * li);
+            int col = (x - left) / BLEND_CELL, row = (y - top) / BLEND_CELL;
+            float u = ((x - left) % BLEND_CELL) / (float)BLEND_CELL;
+            float v = ((y - top) % BLEND_CELL) / (float)BLEND_CELL;
+            uint32_t c0 = palette[row][col], c1 = palette[row][col + 1];
+            uint32_t c2 = palette[row + 1][col], c3 = palette[row + 1][col + 1];
+            uint32_t c = c0 == c1 && c0 == c2 && c0 == c3 ? c0
+                : blend(blend(c0, c1, u), blend(c2, c3, u), v);
+            float brightness = (.985f + (h % 5) * .005f) * li *
+                               ((g.weather == 2 || g.weather == 3) ? .85f : 1);
             if (x < 1 || y < 1 || x > WORLD - 2 || y > WORLD - 2)
-                c = shade(0x5c6867, li);
+                c = 0x5c6867;
             else if (t >= 0)
-                c = shade(blend(c, 0xd0bb90, .18f), li);
+                c = blend(c, 0xd0bb90, .18f);
             else if (road(x, y))
-                c = shade(blend(c, 0xd4bd8e, .23f), li);
+                c = blend(c, 0xd4bd8e, .23f);
+            c = shade(c, brightness);
             if (terrain_water(x, y)) {
                 c = shade(0x485f5b, li);
                 ground_tile(sx, sy, c);
@@ -553,7 +571,13 @@ static void resource(int n) {
         return;
     }
     int id = resource_sprite(n);
-    art(id, x, y + (id < 24 ? 5 : 0), light() * (b->type == NODE_ORE ? .82f : 1), 0);
+    art(id, x, y + (id < 24 ? 5 : 0), light(), 0);
+    if (b->type <= NODE_COPPER) {
+        uint32_t vein = shade(b->type == NODE_ORE ? 0xb6bdc4 : 0xe29b66, light());
+        line(x - 7, y + 1, x - 1, y - 3, vein);
+        line(x - 1, y - 3, x + 5, y - 1, vein);
+        px(x + 6, y - 3, vein);
+    }
     if (b->locked) {
         frame(x - 2, y - 5, 4, 4, GOLD);
     }
@@ -606,8 +630,9 @@ static void objects_draw(void) {
         if (x <= -30 || x >= 510)
             continue;
         int y = project_y(a->x, a->y);
+        int bed = actor_in_bed(a);
         if (y > -20 && y < 296)
-            objects[n++] = (Object){a->x + a->y, 2, i, x, y};
+            objects[n++] = (Object){a->x + a->y + (bed ? .05f : 0), 2, i, x, y - (bed ? 8 : 0)};
     }
     int cx = ui.camX, cy = ui.camY;
     int campSites[POP_GROUPS], campCount = 0;
@@ -643,7 +668,7 @@ static void objects_draw(void) {
             sy = project_y(wx, wy);
             if (sy < -30 || sy > 360)
                 continue;
-            int region = biome(x, y);
+            int region = biome(x + (int)((h >> 6) % 15) - 7, y + (int)((h >> 15) % 15) - 7);
             if ((h >> 8) % spacing[region] >= 8 || town_near(x, y, 8) >= 0 ||
                 road(x, y) || terrain_water(x, y))
                 continue;
@@ -910,7 +935,7 @@ static void interior_draw(void) {
     order[count] = count;
     depth[count++] = g.interiorX + g.interiorY;
     int sleepProp = -1;
-    if (g.actors[g.selected].taskKind == 3)
+    if (actor_in_bed(&g.actors[g.selected]))
         for (int i = 0; i < player; i++)
             if (props[i].action == ROOM_REST) {
                 sleepProp = i;
@@ -940,7 +965,7 @@ static void interior_draw(void) {
         else if (i == player) {
             if (sleepProp >= 0) {
                 room_project(props[sleepProp].x, props[sleepProp].y, &x, &y);
-                y -= 12;
+                y -= 22;
             } else
                 room_project(g.interiorX, g.interiorY, &x, &y);
             person(&g.actors[g.selected], x, y, 1, sleepProp < 0);
@@ -1077,7 +1102,9 @@ static void hud(void) {
     line(0, 22, 480, 22, EDGE);
     int t = town_near(a->x, a->y, 10);
     text(9, 8, t >= 0 ? towns[t].name : regionNames[biome(a->x, a->y)], GOLD, 1);
-    snprintf(b, sizeof(b), "DAY %d  %02d:%02d", g.day, (int)g.dayTime, (int)(g.dayTime * 60) % 60);
+    const char *phase = g.dayTime < 5 || g.dayTime >= 21 ? "NIGHT" : g.dayTime < 8 ? "DAWN"
+        : g.dayTime < 17 ? "DAYLIGHT" : "DUSK";
+    snprintf(b, sizeof(b), "DAY %d  %02d:%02d  %s", g.day, (int)g.dayTime, (int)(g.dayTime * 60) % 60, phase);
     text(220, 8, b, MUTED, 1);
     snprintf(b, sizeof(b), "%d SILVER", g.money);
     text(472 - (int)strlen(b) * 6, 8, b, TEXT, 1);
@@ -1085,7 +1112,26 @@ static void hud(void) {
         return;
     if (!g.interiorBuilding)
         mini_map();
-    if(ui.waypoint&&!g.interiorBuilding){float dx=ui.travelX-a->x,dy=ui.travelY-a->y;const char*d=fabsf(dx)>fabsf(dy)?(dx<0?"W":"E"):(dy<0?"N":"S");snprintf(b,sizeof(b),"PIN %.0fm %s",distance(a->x,a->y,ui.travelX,ui.travelY),d);text(350,107,b,GOLD,1);}
+    if (ui.waypoint && !g.interiorBuilding) {
+        float dx = ui.travelX - a->x, dy = ui.travelY - a->y;
+        snprintf(b, sizeof(b), "PIN %.0fm %s", distance(a->x, a->y, ui.travelX, ui.travelY), bearing(dx, dy));
+        rect(346, 103, text_width(b) + 8, 13, INK);
+        text(350, 106, b, GOLD, 1);
+    }
+    if (!g.interiorBuilding) {
+        int ore = nearest_ore(a->x, a->y, 5.5f, -1);
+        if (ore >= 0) {
+            const Node *node = &g.nodes[ore];
+            int x, y;
+            project(node->x, node->y, &x, &y);
+            if (x > 56 && x < 389 && y > 54 && y < 223) {
+                const char *label = node->type == NODE_ORE ? "IRON ORE" : "COPPER ORE";
+                int w = text_width(label) + 8;
+                rect(x - w / 2, y - 21, w, 12, INK);
+                center(x, y - 19, label, GOLD, 1);
+            }
+        }
+    }
     recovery_hint(b,sizeof(b));if(b[0]){rect(4,211,472,12,INK);b[77]=0;text(8,213,b,TEAL,1);}
     if (ui.paused) {
         panel(192, 43, 94, 18);
@@ -1130,8 +1176,17 @@ static void hud(void) {
     text(320, 259, b, a->hunger < 25 ? GOLD : MUTED, 1);
     const char *status = a->dead ? "DEAD" : recovery_coma(a) ? "COMA" :
         a->unconscious > 0 ? "DOWN" : a->bleed > .01f ? "BLEEDING" : a->prisonTime > 0 ? "JAILED" :
-        a->sneaking ? "SNEAK" : a->autoattack ? "FIGHT" : "PASSIVE";
+        limb_crawling(a) ? "CRAWLING" : limb_limping(a) ? "LIMPING" :
+        a->autoattack ? "FIGHT" : "PASSIVE";
     text(472 - (int)strlen(status) * 6, 259, status, a->bleed > .01f || a->dead || a->unconscious > 0 ? RED : TEAL, 1);
+
+    if (a->sneaking && !a->dead) {
+        line(379, 263, 385, 259, GOLD);
+        line(385, 259, 391, 263, GOLD);
+        line(379, 263, 385, 267, GOLD);
+        line(385, 267, 391, 263, GOLD);
+        line(381, 268, 389, 258, GOLD);
+    }
 
     if (a->taskKind == TASK_CELL_LOCK)
         snprintf(b, sizeof(b), "PICKING CELL LOCK %.0fs   \002 CANCEL", ceilf(a->action));
@@ -1144,7 +1199,7 @@ static void hud(void) {
     else if(a->carrying>=0)snprintf(b,sizeof(b),"\001 PUT DOWN %.24s",g.actors[a->carrying].name);
     else if (ui.contextKind == 1 && ui.contextIndex >= 0 && g.nodes[ui.contextIndex].owner)
         snprintf(b, sizeof(b), "\001 %s %s", context_action(), context_name());
-    else if(nearby_actions())snprintf(b,sizeof(b),"\001 NEARBY ACTIONS%s",a->sneaking?" / SNEAKING":"");
+    else if(nearby_actions())snprintf(b,sizeof(b),"\001 NEARBY ACTIONS");
     else b[0]=0;
     if (b[0]) {
         rect(4, 223, text_width(b) + 16, 13, PANEL);
@@ -1153,7 +1208,7 @@ static void hud(void) {
     if (a->taskKind && a->taskKind != TASK_TREAT)
         bar(180, 236, 120, 2,
             (1 - fminf(1, a->action / (a->taskKind == TASK_CELL_LOCK ? jail_pick_duration(a, a->taskIndex) :
-                 a->taskKind == 3 ? 180 : a->taskKind == TASK_JAIL_CARE ? 3 : a->taskKind == 2 ? 4.5f : 2.8f))) * 100, GOLD);
+                 a->taskKind == 3 ? REST_DURATION : a->taskKind == TASK_JAIL_CARE ? 3 : a->taskKind == 2 ? 4.5f : 2.8f))) * 100, GOLD);
     if (ui.statusPanel)
         detailed_status();
 }
@@ -1228,6 +1283,7 @@ static Actor preview_actor(void) {
     a.taskKind = 0;
     a.movedTimer = 0;
     a.carrying = -1;
+    a.autoattack = 1;
     a.facing = 1;
     return a;
 }
@@ -1296,20 +1352,27 @@ static void pack_screen(void) {
     if(wearable)preview.gear[itemDefs[it].slot]=it;
     portrait_scale(&preview,103,69,28,81,1);
     center(79,150,wearable?"PREVIEW":"WORN",wearable?GOLD:MUTED,1);
-    int first=start_row(item_view_row(ui.selection),count,5);
-    for(int j=0;j<5&&first+j<count;j++) {
-        int k=item_view_slot(first+j),y=84+j*13,id=a->pack[k].item;
-        if(k==ui.selection){rect(139,y-3,310,13,0x4a4030);rect(139,y-3,2,13,TEAL);}
+    int first=start_row(item_view_row(ui.selection),count,10);
+    for(int j=0;j<10&&first+j<count;j++) {
+        int k=item_view_slot(first+j),y=82+j*10,id=a->pack[k].item;
+        if(k==ui.selection){rect(139,y-1,310,10,0x4a4030);rect(139,y-1,2,10,TEAL);}
         clipped(146,y,itemDefs[id].name,46,k==ui.selection?TEXT:MUTED);
         snprintf(b,sizeof(b),"%d",a->pack[k].qty);text(442-strlen(b)*6,y,b,GOLD,1);
     }
-    snprintf(b,sizeof(b),"%d/%d SLOTS  LOAD %.0f/%d%s",count,PACK,encumbrance(a),actor_capacity(a),count&&a->stolen[ui.selection]?"  STOLEN":"");text(146,150,b,MUTED,1);
+    snprintf(b,sizeof(b),"%d/%d SLOTS  LOAD %.0f/%d%s",count,PACK,encumbrance(a),actor_capacity(a),count&&a->stolen[ui.selection]?"  STOLEN":"");text(146,183,b,MUTED,1);
     int wornDisguise=disguise_faction(a),nextDisguise=disguise_faction(&preview);
-    snprintf(b,sizeof(b),"WORN DISGUISE: %s%s",wornDisguise?factionNames[wornDisguise]:"NONE",wornDisguise&&g.society.recognized[g.selected][wornDisguise]>0?" / EXPOSED":"");clipped(31,163,b,69,TEAL);
-    if(wearable){snprintf(b,sizeof(b),"PREVIEW: %s%s",nextDisguise?factionNames[nextDisguise]:"NO DISGUISE",nextDisguise&&g.society.recognized[g.selected][nextDisguise]>0?" / RECOGNIZED":"");clipped(31,175,b,69,GOLD);}
+    if (count > 10) {
+        snprintf(b, sizeof(b), "%d-%d OF %d", first + 1, first + 10, count);
+        text(441 - text_width(b), 183, b, TEAL, 1);
+    }
+    text(31, 161, "DISGUISE", MUTED, 1);
+    int disguise = wearable ? nextDisguise : wornDisguise;
+    clipped(31, 171, disguise ? factionNames[disguise] : "NONE", 17, disguise ? TEAL : MUTED);
+    if (disguise && g.society.recognized[g.selected][disguise] > 0)
+        text(31, 181, "EXPOSED", RED, 1);
     if(!it){text(31,198,"Your pack is empty.",MUTED,1);return;}
     ItemDef*d=&itemDefs[it];
-    if(!wearable){snprintf(b,sizeof(b),"%s / WEIGHT %d",d->name,d->weight);clipped(31,190,b,68,TEXT);wrap(31,204,68,item_function(it),MUTED);return;}
+    if(!wearable){snprintf(b,sizeof(b),"%s / WEIGHT %d",d->name,d->weight);clipped(31,197,b,68,TEXT);wrap(31,209,68,item_function(it),MUTED);return;}
     int before=a->gear[d->slot];ItemDef*old=&itemDefs[before];
     compare_stat(0,190,d->slot==0?"DAMAGE":d->slot==5?"CAPACITY":"ARMOR",d->slot==0?old->power:d->slot==5?old->capacity:old->armor,d->slot==0?d->power:d->slot==5?d->capacity:d->armor,0,0);
     compare_stat(1,190,"WEIGHT",old->weight,d->weight,0,1);
@@ -1317,44 +1380,79 @@ static void pack_screen(void) {
     else {compare_stat(2,190,"STEALTH",old->stealth,d->stealth,0,0);compare_stat(3,190,d->slot==5?"LOADED WT":"MOVE %",d->slot==5?encumbrance(a):old->speed*.5f,d->slot==5?backpack_load_preview(a,it):d->speed*.5f,1,d->slot==5);compare_stat(4,190,"WEATHER",old->protection,d->protection,0,0);compare_stat(5,190,"CAPACITY",old->capacity,d->capacity,0,0);}
     clipped(31,226,limb_arms(a)==1&&combat_two_hands(it)?"ONE ARM: -40% DAMAGE / -25 AIM / +65% DELAY":item_function(it),69,TEXT);
 }
+static float skill_progress(float xp, int level) {
+    float low = 12.f * (level - 1) * (level - 1), high = 12.f * level * level;
+    return level >= 100 ? 100 : fminf(100, fmaxf(0, 100 * (xp - low) / (high - low)));
+}
 static void skills_screen(void) {
-    Actor *a = &g.actors[g.selected];
-    char b[80];
-    overlay_header(ui.skillPage?"SKILLS / WEAPON CLASSES":"SKILLS & TRAINING", "\014 CORE / WEAPONS   \015 SELECT   BARS SHOW NEXT LEVEL");
-    if(ui.skillPage){
-        if(ui.selection>=WEAPON_CLASSES)ui.selection=0;
+    const Actor *a = &g.actors[g.selected];
+    char b[106];
+    overlay_header(ui.skillPage ? "SKILLS / WEAPONS" : "SKILLS / CORE",
+                   "\014 CORE / WEAPONS   \015 SELECT   PROGRESS TO NEXT LEVEL");
+    if (ui.skillPage) {
+        int selection = ui.selection < WEAPON_CLASSES + 1 ? ui.selection : 0;
         int equipped = weapon_class(a->gear[0]);
-        for (int i = 0; i < WEAPON_CLASSES; i++) {
-            int y = 84 + i * 15, lv = weapon_class_level(a, i);
-            if (i == ui.selection) rect(28, y - 2, 416, 13, 0x4a4030);
-            text(31, y, weaponClassNames[i], i == ui.selection ? TEXT : MUTED, 1);
+        for (int i = 0; i <= WEAPON_CLASSES; i++) {
+            int y = 83 + i * 14, aim = i == WEAPON_CLASSES;
+            int lv = aim ? level(a, CROSSBOWS) : weapon_class_level(a, i);
+            float xp = aim ? a->xp[CROSSBOWS] : g.society.weaponXP[g.selected][i];
+            if (i == selection) rect(28, y - 2, 416, 12, 0x4a4030);
+            text(31, y, aim ? "Ranged accuracy" : weaponClassNames[i], i == selection ? TEXT : MUTED, 1);
             if (i == equipped) text(212, y, "EQUIPPED", TEAL, 1);
+            else if (aim) text(212, y, "ALL RANGED", MUTED, 1);
             snprintf(b, sizeof(b), "%02d", lv);
             text(319, y, b, GOLD, 1);
-            float low = 12.f * (lv - 1) * (lv - 1), high = 12.f * lv * lv;
-            bar(348, y + 2, 88, 3, lv >= 100 ? 100 : 100 * (g.society.weaponXP[g.selected][i] - low) / (high - low), TEAL);
+            bar(348, y + 2, 88, 3, skill_progress(xp, lv), TEAL);
         }
-        int lv=weapon_class_level(a,ui.selection);snprintf(b,sizeof(b),"%s LEVEL %d / DAMAGE +%.1f%% / DELAY -%.1f%%",weaponClassNames[ui.selection],lv,(lv-1)*.25f,(lv-1)*.15f);clipped(31,187,b,68,GOLD);
-        wrap(31,203,68,"Use this weapon class. Strong opponents teach faster; blocked attacks teach less. Progress persists when switching weapons.",TEXT);return;
+        int aim = selection == WEAPON_CLASSES;
+        int lv = aim ? level(a, CROSSBOWS) : weapon_class_level(a, selection);
+        float xp = aim ? a->xp[CROSSBOWS] : g.society.weaponXP[g.selected][selection];
+        snprintf(b, sizeof(b), "%s   LV %d   %.1f%% %s", aim ? "Ranged accuracy" : weaponClassNames[selection],
+                 lv, skill_progress(xp, lv), lv == 100 ? "MAXED" : "TO NEXT");
+        clipped(31, 187, b, 68, GOLD);
+        if (aim) {
+            skill_benefit(CROSSBOWS, b, sizeof(b));
+            clipped(31, 201, b, 68, TEAL);
+            clipped(31, 217, "Land shots with bows, crossbows or firearms to train accuracy.", 68, TEXT);
+        } else {
+            snprintf(b, sizeof(b), "DAMAGE +%.1f%% / DELAY -%.1f%%", (lv - 1) * .25f, (lv - 1) * .15f);
+            text(31, 201, b, TEAL, 1);
+            clipped(31, 217, selection == WC_ARCHERY ? "Bows and crossbows train the same weapon skill."
+                    : "Use this weapon class. Tougher opponents teach faster.", 68, TEXT);
+        }
+        return;
     }
-    for (int i = 0; i < SKILLS; i++) {
-        int x = 31 + (i / 10) * 214, y = 82 + (i % 10) * 10;
-        if (i == ui.selection)
-            rect(x - 3, y - 2, 199, 10, 0x4a4030);
-        text(x, y, skillNames[i], i == ui.selection ? TEXT : MUTED, 1);
-        int lv = level(a, i);
-        snprintf(b, sizeof(b), limb_bonus(a,i)?"%02d%+d":"%02d", lv,limb_bonus(a,i));
-        text(x + 137, y, b, GOLD, 1);
-        float low = 12.f * (lv - 1) * (lv - 1), high = 12.f * lv * lv;
-        bar(x + 177, y + 2, 14, 3, lv >= 100 ? 100 : 100 * (a->xp[i] - low) / (high - low), TEAL);
+    static const int skills[CORE_SKILL_ROWS] = {
+        ATHLETICS, STRENGTH, DEXTERITY, TOUGHNESS, DODGE, MELEE, DEFENCE, MARTIAL, PERCEPTION,
+        STEALTH, THEFT, LOCKPICK, MEDICINE, LABOUR, FARMING, COOKING, SMITHING, ENGINEERING, SCIENCE
+    };
+    static const struct { const char *name; int start, count, x, y; } groups[] = {
+        {"BODY & MOVEMENT", 0, 5, 31, 80}, {"COMBAT", 5, 4, 31, 134},
+        {"FIELDCRAFT", 9, 4, 245, 80}, {"TRADES", 13, 6, 245, 134}
+    };
+    for (unsigned k = 0; k < sizeof(groups) / sizeof(*groups); k++) {
+        int x = groups[k].x;
+        text(x, groups[k].y, groups[k].name, TEAL, 1);
+        for (int j = 0; j < groups[k].count; j++) {
+            int row = groups[k].start + j, y = groups[k].y + 11 + j * 9, skill = skills[row];
+            if (row == ui.selection) rect(x - 3, y - 1, 199, 9, 0x4a4030);
+            text(x, y, skillNames[skill], row == ui.selection ? TEXT : MUTED, 1);
+            int lv = level(a, skill);
+            snprintf(b, sizeof(b), limb_bonus(a, skill) ? "%02d%+d" : "%02d", lv, limb_bonus(a, skill));
+            text(x + 137, y, b, GOLD, 1);
+            bar(x + 173, y + 2, 18, 3, skill_progress(a->xp[skill], lv), TEAL);
+        }
     }
-    int lv = level(a, ui.selection);
-    snprintf(b, sizeof(b), "%s  LEVEL %d  %s", skillNames[ui.selection], lv,
-             lv == 100 ? "MASTERED" : "LEARN BY DOING");
-    text(31, 187, b, GOLD, 1);
-    skill_benefit(ui.selection,b,sizeof(b));
-    clipped(31,201,b,68,TEAL);
-    wrap(31,215,68,skill_training(ui.selection),TEXT);
+    int skill = skills[ui.selection < CORE_SKILL_ROWS ? ui.selection : 0], lv = level(a, skill);
+    snprintf(b, sizeof(b), "%s   LV %d   %.1f%% %s", skillNames[skill], lv,
+             skill_progress(a->xp[skill], lv), lv == 100 ? "MAXED" : "TO NEXT");
+    text(31, 197, b, GOLD, 1);
+    skill_benefit(skill, b, sizeof(b));
+    clipped(31, 207, b, 68, TEAL);
+    int previous_clip = clipBottom;
+    clipBottom = 236;
+    wrap(31, 218, 68, skill_training(skill), TEXT);
+    clipBottom = previous_clip;
 }
 static void health_screen(void) {
     Actor *a=&g.actors[g.selected];DepthActor *z=&g.depth.actors[g.selected];char b[110];
@@ -1606,7 +1704,7 @@ static void world_atlas(void) {
         if(selected<TOWNS)snprintf(info,sizeof(info),"HELD BY %s",factionNames[g.townOwner[selected]]);
         else {WorldEvent*e=&g.living.events[selected-TOWNS];snprintf(info,sizeof(info),"%s",e->type==1||e->type>=5?"COMBAT":e->type==2?"SUPPLY DELIVERY":e->type==4?"RESCUE":e->type==3?"SEARCH":"ESCORT");}
         clipped(235,180,info,38,GOLD);
-        float dx=ui.mapX-a->x,dy=ui.mapY-a->y;const char*dir=fabsf(dx)<fabsf(dy)*.4f?(dy<0?"N":"S"):fabsf(dy)<fabsf(dx)*.4f?(dx<0?"W":"E"):dy<0?(dx<0?"NW":"NE"):(dx<0?"SW":"SE");
+        const char *dir = bearing(ui.mapX - a->x, ui.mapY - a->y);
         snprintf(info,sizeof(info),"%.0fm %s / DIRECT DISTANCE",distance(a->x,a->y,ui.mapX,ui.mapY),dir);text(235,195,info,MUTED,1);
     }
     triangle(239,214,235,221,243,221,0x72cfd2);text(250,215,"YOU",0x72cfd2,1);
@@ -1682,8 +1780,6 @@ static void map_screen(void) {
         if(distance(ui.mapX,ui.mapY,g.depth.siteX[i],g.depth.siteY[i])<12)
             clipped(x>ox+120?x-110:x+6,y+5,landmarkNames[i],18,GOLD);
     }
-    for(int i=0;i<3;i++) {int t=regional_town(i);if(g.discovered[t] && INMAP(towns[t].x,towns[t].y))
-        text(MAPX(towns[t].x, towns[t].y)+5,MAPY(towns[t].x, towns[t].y)-8,g.regions.outcome[i]?"+":"!",g.regions.outcome[i]?TEAL:RED,1); }
     if(INMAP(g.regions.campX,g.regions.campY) && (ui.mapTown==8 || g.discovered[8])) {
         int cx=MAPX(g.regions.campX, g.regions.campY),cy=MAPY(g.regions.campX, g.regions.campY);diamond(cx,cy,4,3,g.regions.outcome[1]?TEAL:RED);
         clipped(cx+6,cy-9,g.regions.outcome[1]?"TOLL AGREEMENT":"TOLL CAMP",18,TEXT);
@@ -1845,7 +1941,7 @@ static void menu_screen(void) {
     for (int i = 0; i < count; i++) {
         char value[24] = "";
         if (ui.menuTab == 0 && i == 3) snprintf(value, sizeof(value), "%dX", ui.speed);
-        row(106 + i * 16, ui.selection == i, pause_menu_label(i), value);
+        row(103 + i * 14, ui.selection == i, pause_menu_label(i), value);
     }
 }
 static void theft_screen(void) {
@@ -1915,17 +2011,12 @@ static void creator_screen(void) {
         memcpy(a.gear, current->gear, sizeof(a.gear));
         memcpy(a.xp, current->xp, sizeof(a.xp));
     }
-    int bareHead = ui.selection == 1 || (ui.selection >= 3 && ui.selection <= 6);
-    rect(27, 78, 163, 123, 0x222b28);
-    if (bareHead) {
+    rect(27, 78, 163, 123, 0x6f6250);
+    rect(27, 178, 163, 23, 0x635544);
+    diamond(109, 190, 30, 5, 0x514635);
+    if (ui.selection >= 3 && ui.selection <= 6)
         a.gear[2] = 0;
-        portrait_scale(&a, 95, 115, 28, 82, 1.8f);
-        panel(126, 88, 61, 79);
-        paintHair = actor_hair(&a);
-        painted_head(&a, 157, 109, 157, 147, a.race == 3 ? 27 : 31, actor_skin(&a), 1, 1);
-        center(156, 156, "BARE HEAD", MUTED, 1);
-    } else
-        portrait_scale(&a, 158, 118, 29, 80, 1.9f);
+    portrait_scale(&a, 160, 109, 28, 81, 1.8f);
     const SpeciesDef *species = &speciesDefs[species_index(&a)];
     static const char *labels[] = {"NAME", "SPECIES", "BUILD", "SKIN", "HAIR", "HAIR TONE", "BEARD"};
     static const char *builds[] = {"Regular", "Broad", "Lean"};
@@ -1982,7 +2073,8 @@ static void name_screen(void) {
 static void equipped_screen(void) {
     Actor *a = &g.actors[g.selected];
     overlay_header("WORN EQUIPMENT", "\001 UNEQUIP   \004 PACK   \010 GUIDE");
-    portrait_scale(a, 150, 110, 30, 84, 1);
+    Actor preview = preview_actor();
+    portrait_scale(&preview, 160, 128, 29, 78, 1.9f);
     for (int i = 0; i < GEARS; i++) {
         int y = 86 + i * 18;
         if (i == ui.selection)
@@ -2028,25 +2120,31 @@ static void dialogue_screen(void) {
     clipped(30, 204, npc_role_name(a), 16, TEAL);
     clipped(30, 218, factionNames[a->faction], 16, factionColors[a->faction]);
     wrap(134, 85, 50, dialogue_line(n, ui.dialogPage), TEXT);
-    const char *work[] = {"Carry a dispatch - 220 silver", "Bring eight ore - 240 silver",
-                          "Defeat three foes - 420 silver", "Recover a relic - 550 silver", "Freight delivery - deposit required", "Caravan escort - wages + bonus", "Mercenary patrol - wages + bonus", "Named bounty - bring the prisoner", "Back"};
+    static const char *work[] = {"Dispatch for the watch", "Iron to repair the smithy",
+        "Clear predators or raiders from the road", "Salvage for the town pump", "Freight delivery",
+        "Escort a supply caravan", "Patrol with the watch", "Bring in a wanted raider"};
     char bail[48];
     snprintf(bail, sizeof(bail), "Pay %d silver bail", jail_bail_cost(a));
-    const char *prison[] = {bail, inventory_count(a, TOOLS) ? "Pick cell lock with tools" : "Pick cell lock with improvised wire",
-                             "Wait out the sentence"};
-    int count = jailed               ? 3
-                : ui.dialogPage == 1 ? 9
-                                     : dialogue_count(n),
-        first = start_row(ui.selection, count, 5);
+    const char *prison[] = {bail, "Pick the cell lock", "Wait out the sentence"};
+    const char *inspection[] = {"Let the guard search", "Refuse and leave"};
+    int town = town_near(g.actors[g.selected].x, g.actors[g.selected].y, 14);
+    int count = jailed ? 3 : ui.dialogPage == DIALOG_WORK ? work_dialogue_count(town)
+        : ui.dialogPage == DIALOG_INSPECTION ? 2 : (ui.dialogPage == DIALOG_DISMISS || ui.dialogPage == DIALOG_WORK_HINT) ? 1 : dialogue_count(n);
+    int first = start_row(ui.selection, count, 5);
     for (int j = 0; j < 5 && first + j < count; j++) {
         int k = first + j, y = 153 + j * 15;
         if (k == ui.selection)
             rect(129, y - 3, 318, 14, 0x3c4034);
-        text(137, y,
-             jailed               ? prison[k]
-             : ui.dialogPage == 1 ? work[k]
-                                  : dialogue_option(n, k),
-             k == ui.selection ? GOLD : MUTED, 1);
+        const char *option;
+        if (jailed) option = prison[k];
+        else if (ui.dialogPage == DIALOG_WORK) {
+            int kind = contract_offer(town, k);
+            option = kind >= 0 ? work[kind] : "Back";
+        } else if (ui.dialogPage == DIALOG_INSPECTION) option = inspection[k];
+        else if (ui.dialogPage == DIALOG_DISMISS) option = "Leave";
+        else if (ui.dialogPage == DIALOG_WORK_HINT) option = "Back";
+        else option = dialogue_option(n, k);
+        clipped(137, y, option, 50, k == ui.selection ? GOLD : MUTED);
     }
 }
 static void save_screen(void) {
@@ -2061,17 +2159,6 @@ static void save_screen(void) {
         row(89 + i * 18, ui.selection == i, b, z->valid ? v : "");
     }
     text(31, 221, "AUTOSAVE IS SEPARATE FROM YOUR MANUAL SLOTS.", TEAL, 1);
-}
-static void regional_screen(void) {
-    char b[160];int r=ui.selection,c=g.regions.outcome[r]?g.regions.outcome[r]-1:ui.regionChoice;
-    overlay_header("JOURNAL / LOCAL CONFLICTS", "\005/\006 CONTRACTS   \015 REGION   \003 LOCATE");
-    for(int i=0;i<3;i++)row(83+i*14,i==r,regional_names[i],g.regions.outcome[i]?"RESOLVED":"OPEN");
-    wrap(31,129,68,regional_story(r),TEXT);
-    snprintf(b,sizeof(b),"%s%s",g.regions.outcome[r]?"AGREEMENT: ":"\014 ",regional_choice(r,c));text(31,166,b,GOLD,1);
-    if(!g.regions.outcome[r]){regional_requirements(r,c,b,sizeof(b));text(31,181,b,MUTED,1);}
-    wrap(31,g.regions.outcome[r]?185:198,68,regional_result(r,c),TEAL);
-    rect(25,233,425,15,PANEL);
-    snprintf(b,sizeof(b),"\002 BACK   %s",g.regions.outcome[r]?"THIS AGREEMENT IS PERMANENT":"\001 COMMIT AT TOWN (PERMANENT)");text(31,237,b,GOLD,1);
 }
 static void actions_screen(void) {
     int count = nearby_actions(), first = start_row(ui.selection, count, 6);
@@ -2102,29 +2189,45 @@ static void engage_screen(void){
     else text(31,211,"Close to weapon reach to strike. Square stops attacking.",MUTED,1);
 }
 static void journal_screen(void) {
-    if(ui.journalTab==1){regional_screen();return;}
-    if(ui.journalTab>1)ui.journalTab=0;
-    overlay_header("THE ROAD JOURNAL", "\005/\006 CONFLICTS   \001 CLAIM   \003 LOCATE");
-    char b[180], v[40];
-    int first = start_row(ui.selection, CONTRACTS, 6);
-    for (int j = 0; j < 6; j++) {
-        int k = first + j;
-        Contract *c = &g.contracts[k];
-        if (c->active) {
-            snprintf(b, sizeof(b), "%02d %s", k + 1, towns[c->town].name);
-            snprintf(v, 40, c->active==3 ? "FAILED" : c->completed ? "COMPLETE" : "%d / %d  +%d",
-                     c->item ? inventory_count(&g.actors[g.selected], c->item) : c->progress, c->needed,
-                     c->reward);
-        } else {
-            snprintf(b, sizeof(b), "%02d NO CONTRACT", k + 1);
-            v[0] = 0;
-        }
-        row(85 + j * 16, k == ui.selection, b, v);
+    overlay_header("THE ROAD JOURNAL", "\015 CONTRACT   \001 CLAIM   \003 LOCATE");
+    char b[214], v[42];
+    int count = journal_count(), first = start_row(ui.selection, count, 6);
+    for (int j = 0; j < 6 && first + j < count; j++) {
+        int k = journal_slot(first + j);
+        const Contract *c = &g.contracts[k];
+        snprintf(b, sizeof(b), "%.23s / %.14s", contract_title(c->type), towns[c->town].name);
+        if (c->active == 3) snprintf(v, sizeof(v), "FAILED");
+        else if (c->completed) snprintf(v, sizeof(v), "PAID");
+        else if (contract_ready(k)) snprintf(v, sizeof(v), "READY TO CLAIM");
+        else if (c->type == CONTRACT_PATROL)
+            snprintf(v, sizeof(v), "%d/180S", (int)fminf(180, g.society.jobNear[k]));
+        else snprintf(v, sizeof(v), "%d/%d", c->progress, c->needed);
+        row(85 + j * 14, first + j == ui.selection, b, v);
     }
-    contract_description(ui.selection, b, sizeof(b));
-    wrap(31, 187, 68, b, TEXT);
-    snprintf(b, sizeof(b), "FRONTIER LEGACY %d/4   COMPLETED %d", g.storyStage, g.contractsDone);
-    text(31, 221, b, TEAL, 1);
+    contract_description(journal_slot(ui.selection), b, sizeof(b));
+    wrap(31, 171, 68, b, TEXT);
+    snprintf(b, sizeof(b), "CONTRACTS COMPLETED %d", g.contractsDone);
+    text(31, 222, b, TEAL, 1);
+}
+static void chest_screen(void) {
+    const Building *b = &g.buildings[ui.storageIndex];
+    char buf[105], qty[16];
+    overlay_header(b->type == SHOP ? "SHOP STOCK CHEST" : "HOUSEHOLD CHEST",
+                   "\001 TAKE ONE   \015 SELECT ITEM   \002 LEAVE");
+    snprintf(buf, sizeof(buf), "OWNED BY %s. TAKING ITEMS IS THEFT.", factionNames[b->faction]);
+    clipped(31, 85, buf, 68, GOLD);
+    int count = interior_chest_count();
+    if (!count) {
+        text(31, 114, "The chest is empty.", MUTED, 1);
+        return;
+    }
+    int first = start_row(ui.selection, count, 6);
+    for (int i = 0; i < 6 && first + i < count; i++) {
+        const Stack *item = interior_chest_item(first + i);
+        snprintf(qty, sizeof(qty), "x%d", item->qty);
+        row(109 + i * 16, ui.selection == first + i, itemDefs[item->item].name, qty);
+    }
+    text(31, 219, "Witnesses can warn you or report you to the watch.", MUTED, 1);
 }
 static void factions_screen(void) {
     overlay_header("FLAGS OF THE FRONTIER", "FACTION COLORS / ! HOSTILE TO YOU / YOUR STANDING");
@@ -2264,7 +2367,7 @@ void render_game(uint32_t *pixels, int stride) {
     if(ui.screen==SCREEN_WORLD && !g.interiorBuilding && g.actors[g.selected].target<0 && g.actors[g.selected].unconscious<=0 && !g.actors[g.selected].dead) speech_bubbles();
     hud();
     switch (ui.screen) {
-    case SCREEN_EXPEDITION:case SCREEN_ORDERS:case SCREEN_CAMP:case SCREEN_CARE:case SCREEN_ENCOUNTER:case SCREEN_LAYERS:
+    case SCREEN_ORDERS:case SCREEN_CAMP:case SCREEN_CARE:case SCREEN_LAYERS:
         depth_screen();break;
     case SCREEN_SCENARIOS:
         scenarios_screen();
@@ -2298,6 +2401,9 @@ void render_game(uint32_t *pixels, int stride) {
         break;
     case SCREEN_FACTIONS:
         factions_screen();
+        break;
+    case SCREEN_CHEST:
+        chest_screen();
         break;
     case SCREEN_STORAGE:
         storage_screen();

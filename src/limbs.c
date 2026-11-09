@@ -29,7 +29,15 @@ void limb_set(Actor*a,int l,int it,int owner){
 }
 float limb_max_health(const Actor*a,int l){int grade=limb_item_grade(limb_installed(a,l));return grade<0?species_health(a):limbGrades[grade].hp;}
 int limb_arms(const Actor*a){return !limb_missing(a,LARM)+!limb_missing(a,RARM);}
-int limb_crawling(const Actor*a){return a->kind!=BEAST&&(limb_missing(a,LLEG)||limb_missing(a,RLEG));}
+int limb_crawling(const Actor *a) {
+    return a->kind != BEAST && (limb_missing(a, LLEG) || limb_missing(a, RLEG) ||
+           (a->health[LLEG] <= limb_max_health(a, LLEG) * .10f &&
+            a->health[RLEG] <= limb_max_health(a, RLEG) * .10f));
+}
+int limb_limping(const Actor *a) {
+    return !limb_crawling(a) && (a->health[LLEG] < limb_max_health(a, LLEG) * .32f ||
+           a->health[RLEG] < limb_max_health(a, RLEG) * .32f);
+}
 int limb_bonus(const Actor*a,int skill){int n=0;if(skill!=STRENGTH&&skill!=DEXTERITY)return 0;for(int l=LARM;l<=RARM;l++){int grade=limb_item_grade(limb_installed(a,l));if(grade>=0&&a->health[l]>0)n+=skill==STRENGTH?limbGrades[grade].strength:limbGrades[grade].dexterity;}return n;}
 int effective_level(const Actor*a,int skill){return (int)fmaxf(1,level(a,skill)+limb_bonus(a,skill));}
 int limb_capacity_bonus(const Actor*a){int n=0;for(int l=LLEG;l<=RLEG;l++){int grade=limb_item_grade(limb_installed(a,l));if(grade>=0&&a->health[l]>0)n+=limbGrades[grade].carry;}return n;}

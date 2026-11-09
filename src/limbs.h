@@ -13,6 +13,7 @@ void limb_set(Actor *a,int limb,int item,int owner);
 float limb_max_health(const Actor *a,int limb);
 int limb_arms(const Actor *a);
 int limb_crawling(const Actor *a);
+int limb_limping(const Actor *a);
 int limb_bonus(const Actor *a,int skill);
 int limb_capacity_bonus(const Actor *a);
 float limb_move_bonus(const Actor *a);

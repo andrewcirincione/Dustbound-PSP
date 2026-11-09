@@ -67,7 +67,7 @@ static void injuries(void) {
     injury_knockout(a, 160);
     step(19);
     assert(!a->dead && recovery_coma(a));
-    step(39);
+    step(65);
     assert(conscious(a));
     a = fresh();
     a->health[HEAD] = -90;
@@ -95,7 +95,7 @@ static void timed_treatments(void) {
     Actor *a = fresh();
     a->health[LARM] = 40;
     bleeding_cut(a, 45, 70, 1.5f);
-    assert(save_game("build/v173/field-cut.sav"));
+    assert(save_game("build/v174/field-cut.sav"));
     step(3);
     assert(a->health[LARM] > 41 && a->health[CHEST] < 45 && a->blood < 70);
     float hp = a->health[CHEST], blood = a->blood;
@@ -104,14 +104,14 @@ static void timed_treatments(void) {
     assert(a->taskKind == TASK_TREAT && a->health[CHEST] == hp && a->blood == blood);
     step(1);
     assert(inventory_count(a, MEDKIT) == kits && a->bleed > 0);
-    assert(save_game("build/v173/treating.sav") && load_game("build/v173/treating.sav"));
+    assert(save_game("build/v174/treating.sav") && load_game("build/v174/treating.sav"));
     a = &g.actors[0];
-    step(3);
+    step(a->action + .15f);
     assert(a->bleed == 0 && !(a->woundFlags & WOUND_CUTS) && inventory_count(a, MEDKIT) == kits - 1);
     assert(a->health[CHEST] < 48);
     hp = a->health[CHEST];
     step(8);
-    assert(a->health[CHEST] > hp + 5);
+    assert(a->health[CHEST] > hp + 2.5f && a->health[CHEST] < hp + 5);
     a = fresh();
     bleeding_cut(a, 48, 75, 1.5f);
     kits = inventory_count(a, MEDKIT);
@@ -143,7 +143,7 @@ static void timed_treatments(void) {
     assert(depth_repair(0, 0) && a->health[LARM] == 45);
     step(6);
     assert(a->health[LARM] > 45 && a->health[LARM] < 50 && a->woundFlags & WOUND_REPAIRS);
-    step(12);
+    step(22);
     assert(a->health[LARM] > 65);
 
     a = fresh();
@@ -152,9 +152,9 @@ static void timed_treatments(void) {
     bleeding_cut(a, 38, 76, .8f);
     int money = g.money;
     assert(doctor_heal(0) && a->health[CHEST] == 38 && g.money == money);
-    step(5);
+    step(a->action + .2f);
     assert(a->bleed == 0 && a->health[CHEST] < 43 && g.money == money - 80);
-    step(24);
+    step(36);
     assert(a->health[CHEST] >= 95);
     puts("PASS: cuts worsen and bruises heal; field dressings, repairs and clinic care are timed; movement cancels treatment and saves retain it.");
 }
@@ -171,22 +171,22 @@ static void custody(void) {
     simulate(.05f);
     assert(a->prisonTown == 0 && a->taskKind == TASK_JAIL_CARE && a->health[CHEST] < 0 && a->bleed > 0);
     assert(!hostile(&g.actors[1], a));
-    assert(save_game("build/v173/jail-bleeding.sav"));
+    assert(save_game("build/v174/jail-bleeding.sav"));
     g.actors[1].active = 0;
     assert(!jail_pick_start(0));
-    step(4);
+    step(a->action + .2f);
     assert(a->bleed == 0 && a->prisonTime > 0 && a->health[CHEST] < 0 && !a->dead);
-    step(16);
+    step(28);
     assert(conscious(a) && a->prisonTime > 0 && a->blood > 25);
 
     a->xp[LOCKPICK] = 117612;
-    assert(save_game("build/v173/jail-awake.sav"));
+    assert(save_game("build/v174/jail-awake.sav"));
     press(KEY_CROSS);
     assert(ui.screen == SCREEN_DIALOG);
     press(KEY_DOWN);
     press(KEY_CROSS);
     assert(ui.screen == SCREEN_WORLD && a->taskKind == TASK_CELL_LOCK && a->prisonTime > 0);
-    assert(save_game("build/v173/jail-picking.sav") && load_game("build/v173/jail-picking.sav"));
+    assert(save_game("build/v174/jail-picking.sav") && load_game("build/v174/jail-picking.sav"));
     a = &g.actors[0];
     step(1);
     assert(a->taskKind == TASK_CELL_LOCK && a->prisonTime > 0);
@@ -247,12 +247,12 @@ static void strangers(void) {
         }
         int m = g.roadsideAid.actor - 1;
         assert(distance(a->x, a->y, g.actors[m].x, g.actors[m].y) > 14);
-        if (!treated) assert(save_game("build/v173/roadside.sav"));
+        if (!treated) assert(save_game("build/v174/roadside.sav"));
         for (int i = 0; i < 620 && !a->dead && a->taskKind != 3; i++) {
             step(.05f);
             if (a->carriedBy == m && !carried) {
                 carried = 1;
-                assert(save_game("build/v173/roadside-carry.sav"));
+                assert(save_game("build/v174/roadside-carry.sav"));
             }
         }
         treated += a->bleed == 0 && !a->dead;

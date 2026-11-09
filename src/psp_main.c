@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     sceDisplaySetFrameBuf((void *)0x04000000, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
                           PSP_DISPLAY_SETBUF_IMMEDIATE);
     int draw = 1, old = 0, frames = 0;
-    float repeat = 0;
+    float repeat = 0, activityTick = 0;
     audio_init();
     game_new(73819, 0);
     ui.screen = SCREEN_TITLE;
@@ -118,6 +118,11 @@ int main(int argc, char *argv[]) {
             ax = 0;
         if (fabsf(ay) < .22f)
             ay = 0;
+        activityTick = fmaxf(0, activityTick - dt);
+        if (activityTick == 0 && (held || ax != 0 || ay != 0)) {
+            scePowerTick(PSP_POWER_TICK_ALL);
+            activityTick = 1;
+        }
         if (record)
             dt = 1.0f / 30; /* Deterministic QA pacing despite capture I/O. */
         game_tick(dt, (Input){held, press, ax, ay});

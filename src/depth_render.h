@@ -1,18 +1,5 @@
 /* Included by render.c: shares the bounded PSP software-renderer primitives. */
 static void depth_world_draw(void) {
-    for (int i = 0; !g.interiorBuilding && i < LANDMARKS; i++) {
-        int x, y;
-        project(g.depth.siteX[i], g.depth.siteY[i], &x, &y);
-        if (x < 10 || x > 470 || y < 48 || y > 232)
-            continue;
-        int nearby = distance(g.actors[g.selected].x, g.actors[g.selected].y, g.depth.siteX[i],
-                              g.depth.siteY[i]) < 5;
-        if (nearby) {
-            diamond(x, y, 8, 4, GOLD);
-            if (ui.screen == SCREEN_WORLD && ui.contextKind == 4 && ui.contextIndex == i)
-                center(x, y - 59, landmarkNames[i], GOLD, 1);
-        }
-    }
     for (int i = 0; i < PROJECTILES; i++) {
         Projectile *p = &g.depth.shots[i];
         if (!p->active || p->room != g.interiorBuilding)
@@ -37,18 +24,7 @@ static void depth_screen(void) {
     Actor *a = &g.actors[g.selected];
     DepthActor *z = &g.depth.actors[g.selected];
     char buf[140];
-    if (ui.screen == SCREEN_EXPEDITION) {
-        depth_header("THE COPPER ROAD", "\015 LEAD  \001 LOCATE  \003 DETAILS  \010 GUIDE");
-        clipped(31, 84, depth_objective(), 68, TEXT);
-        int first = start_row(ui.selection, LANDMARKS, 8);
-        for (int j = 0; j < 8; j++) {
-            int i = first + j;
-            snprintf(buf, sizeof(buf), "%s / %.0fm", g.depth.visited & (1 << i) ? "SEEN" : "RUMOR",
-                     distance(a->x, a->y, g.depth.siteX[i], g.depth.siteY[i]));
-            row(107 + j * 14, ui.selection == i, landmarkNames[i], buf);
-        }
-        clipped(31, 226, depth_outcome(), 68, TEAL);
-    } else if (ui.screen == SCREEN_ORDERS) {
+    if (ui.screen == SCREEN_ORDERS) {
         depth_header("SQUAD ORDERS", "\015 ROW  \014 CHANGE  \001 SET  \010 GUIDE");
         const char *names[] = {"Combat role",      "Expedition group", "Make this survivor leader",
                                "Job queue status", "Priority 1",       "Priority 2",
@@ -138,36 +114,5 @@ static void depth_screen(void) {
         text(31, 195, "CLOTH ONLY: BODY SLOT, WEIGHT 5 OR LESS.", MUTED, 1);
         text(31, 210, "COVERAGE: BODY 95%, ARMS 65%, HEAD 85%.", MUTED, 1);
         text(31, 225, "BLUNT IMPACT REDUCES OUTER ARMOR TO 72%.", MUTED, 1);
-    } else {
-        int site = ui.depthSite;
-        if (site < 0 || site >= LANDMARKS)
-            site = 0;
-        depth_header(landmarkNames[site], "\015 CHOOSE  \001 ACT  \002 LEAVE  \010 GUIDE");
-        const char *stories[] = {"A split wagon, drag marks and a trail toward the chain yard. Sora is "
-                                 "stranded here. Stop the bleeding before asking her to move.",
-                                 "The old drainage way bypasses Rell's road. Bring Sora home, then "
-                                 "brace the crossing with 3 timber, 1 iron bar and reusable tools.",
-                                 "Rell controls this stretch. Talk, pay for a truce, or challenge his "
-                                 "scouts. Bringing him alive to Nell earns more than killing him.",
-                                 "Orin and Tamsin wait in shackles. Approach each captive to unlock "
-                                 "them. A guard within four meters interrupts lock work.",
-                                 "A quiet refuge beside the road. Old medical supplies are wrapped "
-                                 "under the shrine. The bed offers shelter for injured travelers.",
-                                 "A dead workshop still holds repair parts. Its forge can service an "
-                                 "expedition, but the surrounding wastes are dangerous.",
-                                 "From the ridge, distant routes become clear. Salvage the old signal "
-                                 "relics and use the atlas to choose your next destination.",
-                                 "Copper stores depend on the road. Nell buys a lasting solution. Sora "
-                                 "will remember the escort; the shelves reflect your choice."};
-        wrap(31, 88, 68, stories[site], TEXT);
-        char info[90];
-        snprintf(info, sizeof(info), "%.1fm AWAY / NEED 1.7m / %s",
-                 distance(a->x, a->y, g.depth.siteX[site], g.depth.siteY[site]),
-                 g.depth.salvage & (1 << site) ? "CACHE EMPTY" : "CACHE AVAILABLE");
-        text(31, 169, info, GOLD, 1);
-        row(194, ui.selection == 0,
-            site == SITE_CULVERT ? "Repair the alternate crossing" : "Search the landmark", "");
-        row(213, ui.selection == 1, "Locate the chain yard", "");
-        clipped(31, 225, depth_outcome(), 68, TEAL);
     }
 }

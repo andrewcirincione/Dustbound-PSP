@@ -10,7 +10,7 @@ extern int hostile(const Actor*,const Actor*);
 static float bound(float v,float a,float b){return fminf(b,fmaxf(a,v));}
 static int actor_no(const Actor*a){return (uintptr_t)a>=(uintptr_t)g.actors&&(uintptr_t)a<(uintptr_t)(g.actors+g.actorCount)?(int)(a-g.actors):-1;}
 const char *weaponClassNames[WEAPON_CLASSES] = {
-    "Slashing Blades", "Light Blades", "Heavy Weapons", "Polearms", "Archery", "Firearms"
+    "Slashing Blades", "Light Blades", "Heavy Weapons", "Polearms", "Bows & Crossbows", "Firearms"
 };
 static const unsigned char styleSkill[WEAPON_STYLES] = {
     [WS_KATANA] = WC_SLASHING, [WS_SABRE] = WC_SLASHING,
@@ -250,21 +250,51 @@ void society_init(void){
  seed_prisoners();
 }
 int bounty_contract_active(int actor){for(int i=0;i<CONTRACTS;i++)if(g.contracts[i].active==1&&g.contracts[i].type==7&&S.jobActor[i]==actor+1)return 1;return 0;}
+static int service_actor(int town, int kind) {
+    for (int n = 0; n < g.actorCount; n++) {
+        Actor *a = &g.actors[n];
+        if (!conscious(a) || a->squad || living_owned(n) || civil_elite_index(n) >= 0 ||
+            a->prisonTime > 0 || g.depth.actors[n].captive)
+            continue;
+        int match = kind == CONTRACT_BOUNTY ? a->kind == RAIDER && a->bountyReward > 0 :
+            a->homeTown == town && a->kind == (kind == CONTRACT_ESCORT ? CARAVAN : GUARD) &&
+            a->faction == g.townOwner[town];
+        if (!match)
+            continue;
+        int used = 0;
+        for (int i = 0; i < CONTRACTS; i++)
+            if (g.contracts[i].active == 1 && S.jobActor[i] == n + 1)
+                used = 1;
+        if (!used)
+            return n;
+    }
+    return -1;
+}
+static int can_spawn_convoy(void) {
+    int count = 0;
+    for (int n = 0; n < g.actorCount; n++)
+        if (g.actors[n].active && !g.actors[n].dead && g.actors[n].kind == CARAVAN &&
+            !living_owned(n) && !population_owned(n))
+            count++;
+    return count < 4 && g.actorCount < MAX_ACTORS;
+}
+int society_job_available(int town, int kind) {
+    return service_actor(town, kind) >= 0 || (kind == CONTRACT_ESCORT && can_spawn_convoy());
+}
 int society_contract(int town,int kind){
  if(town<0||town>=TOWNS||kind<4||kind>7)return 0;
  int slot=-1,live=0;for(int i=0;i<CONTRACTS;i++){if(g.contracts[i].active==1){if(g.contracts[i].town==town&&g.contracts[i].type==kind){log_msg("That job is already active.");return 0;}if(g.contracts[i].type==5||g.contracts[i].type==6)live++;}else if(slot<0)slot=i;}
  if(slot<0){log_msg("Finish an active contract first.");return 0;}if((kind==5||kind==6)&&live>=4){log_msg("Four service jobs already active.");return 0;}
  int actor=-1;Actor*p=&g.actors[g.selected];
- if(kind>=5){for(int n=0;n<g.actorCount;n++){Actor*a=&g.actors[n];int used=0;for(int i=0;i<CONTRACTS;i++)if(g.contracts[i].active==1&&S.jobActor[i]==n+1)used=1;
-  if(used||a->squad||a->dead||a->unconscious>0||living_owned(n)||civil_elite_index(n)>=0||depth_named(n)>=0)continue;
-  if(kind==7?(a->kind==RAIDER&&a->bountyReward>0):(a->homeTown==town&&a->kind==(kind==5?CARAVAN:GUARD))){actor=n;break;}}
-  if(actor<0&&kind==5){int count=0;for(int n=0;n<g.actorCount;n++)if(g.actors[n].kind==CARAVAN&&!living_owned(n)&&depth_named(n)<0)count++;
-   if(count<4&&g.actorCount<MAX_ACTORS){float x=towns[town].x,y=towns[town].y+12;for(int j=0;j<12&&!can_walk(x,y);j++)x+=1;
+ if(kind >= CONTRACT_ESCORT) {
+  actor = service_actor(town, kind);
+  if(actor<0&&kind==CONTRACT_ESCORT){
+   if(can_spawn_convoy()){float x=towns[town].x,y=towns[town].y+12;for(int j=0;j<12&&!can_walk(x,y);j++)x+=1;
     if(can_walk(x,y)){actor=add_actor("Freight caravan",CARAVAN,g.townOwner[town],x,y,14);if(actor>=0){g.actors[actor].homeTown=town;g.actors[actor].gear[0]=RAPIER_ITEMS+5;inventory_add(&g.actors[actor],exports[town],4);}}}
   }
   if(actor<0){log_msg(kind==7?"No unclaimed named bounty today.":"No free employer here; finish current work.");return 0;}
  }
- Contract c={0};c.active=1;c.type=kind;c.town=town;c.target=(town+1+g.day%3)%TOWNS;c.reward=kind==4?260:kind==5?280:kind==6?180:600;c.needed=kind==4?4:1;
+ Contract c={0};c.active=1;c.type=kind;c.town=town;c.target=contract_destination(town, g.townOwner[town]);c.reward=kind==4?260:kind==5?280:kind==6?180:600;c.needed=kind==4?4:1;
  if(kind==4){c.item=exports[town];int bond=item_price(town,c.item,0)*c.needed;if(g.money<bond){log_msg("Freight deposit: %d silver, refunded on delivery.",bond);return 0;}
   if(!inventory_add(p,c.item,c.needed)){log_msg("Make room for four units of freight.");return 0;}g.money-=bond;S.jobBond[slot]=bond;
  }else S.jobBond[slot]=0;
@@ -274,18 +304,37 @@ int society_contract(int town,int kind){
  if(kind==5||kind==6){log_msg("Follow %s. Stay within 8m while moving to earn wages.",g.actors[actor].name);return 1;}
  log_msg(kind==4?"Freight loaded. Deliver through your journal at the destination.":kind==7?"Named bounty accepted. Carry the wanted person to this town.":"Service accepted. Stay within 8m of your employer to earn wages.");return 1;
 }
-void society_contract_text(int n,char*out,int size){Contract*c=&g.contracts[n];int who=S.jobActor[n]-1;
- if(c->active==3){snprintf(out,size,"Service failed. No completion bonus. Wages already earned are retained. Ask for new work at a settlement.");return;}
- if(c->type==4)snprintf(out,size,"Deliver %d %s to %s. %d silver plus %d deposit refund. Bring the cargo; no return trip.",c->needed,itemDefs[c->item].name,towns[c->target].name,c->reward,S.jobBond[n]);
- else if(c->type==7)snprintf(out,size,"Bring %s to %s. %d alive; %d dead. Last reported in %s. Carry the body; claim here.",who>=0?g.actors[who].name:"wanted raider",towns[c->town].name,c->reward,c->reward/2,who>=0?regionNames[biome(g.actors[who].homeX,g.actors[who].homeY)]:"the wastes");
- else snprintf(out,size,"%s %s. Stay within 8m while they move: 12 silver / 30s. %d completion bonus. Served %.0fs. %s",c->type==5?"Escort":"Patrol with",who>=0?g.actors[who].name:"employer",c->reward,S.jobNear[n],c->progress?"Report to the hiring town for bonus.":c->type==5?towns[c->target].name:"Three minutes of patrol duty required.");
+void society_contract_text(int n, char *out, int size) {
+    const Contract *c = &g.contracts[n];
+    int who = S.jobActor[n] - 1, valid = who >= 0 && who < g.actorCount;
+    const Actor *employer = valid ? &g.actors[who] : NULL;
+    const char *name = valid ? employer->name : "the employer";
+    if (c->active == 3)
+        snprintf(out, size, "Job failed. Wages earned so far are yours.");
+    else if (c->type == CONTRACT_FREIGHT)
+        snprintf(out, size, "The merchants need %s in %s. Deliver %d (%d/%d in squad). Claim here on arrival for %d silver and your %d deposit.",
+                 itemDefs[c->item].name, towns[c->target].name, c->needed,
+                 contract_item_count(c->item, -1), c->needed, c->reward, S.jobBond[n]);
+    else if (contract_ready(n))
+        snprintf(out, size, "Job complete. Claim payment here in Journal when you reach %s.",
+                 towns[contract_turn_in(n)].name);
+    else if (c->type == CONTRACT_BOUNTY)
+        snprintf(out, size, "%s is wanted for road raids. %s Bring them to %s. %d alive; %d dead.",
+                 name, valid && (employer->dead || employer->unconscious > 0) ? "Subdued. Pick them up." : "Locate the last report; subdue and carry them.",
+                 towns[c->town].name, c->reward, c->reward / 2);
+    else if (c->type == CONTRACT_ESCORT)
+        snprintf(out, size, "The supply caravan needs protection. Follow %s to %s (%.0fm left). Stay within 8m to earn wages.",
+                 name, towns[c->target].name, valid ? distance(employer->x, employer->y, towns[c->target].x, towns[c->target].y) : 0);
+    else
+        snprintf(out, size, "The watch is short on hands. Patrol within 8m of %s (%d/180s, %d/35m).",
+                 name, (int)fminf(180, S.jobNear[n]), (int)fminf(35, S.jobDistance[n]));
 }
 int society_complete(int n){if(n<0||n>=CONTRACTS||g.contracts[n].active!=1)return 0;Contract*c=&g.contracts[n];Actor*a=&g.actors[g.selected];int town=c->type==4?c->target:c->town;if(town_near(a->x,a->y,14)!=town){log_msg("Claim at %s.",towns[town].name);return 0;}
  int reward=c->reward+S.jobBond[n];
- if(c->type==4){if(!inventory_remove(a,c->item,c->needed)){log_msg("Bring the full freight shipment.");return 0;}g.stock[town][c->item]+=c->needed;}
+ if(c->type==4){if(!contract_use_items(c->item,c->needed,town)){log_msg("Bring the full shipment and its carriers.");return 0;}g.stock[town][c->item]+=c->needed;}
  else if(c->type==7){int who=S.jobActor[n]-1;if(who<0||who>=g.actorCount||a->carrying!=who||g.actors[who].bountyReward<=0){log_msg("Carry the named bounty; previously claimed proofs cannot pay twice.");return 0;}Actor*b=&g.actors[who];if(!b->dead&&b->unconscious<=0){log_msg("The prisoner must be subdued.");return 0;}if(b->dead)reward/=2;b->bountyReward=0;b->active=0;b->carriedBy=-1;a->carrying=-1;}
  else if(!c->progress){log_msg("Complete the escort or patrol first.");return 0;}
- c->active=2;c->completed=1;g.money+=reward;g.contractsDone++;g.rep[g.townOwner[town]]+=5;S.jobBond[n]=0;log_msg("Job paid: %d silver.",reward);return 1;
+ c->active=2;c->completed=1;g.money+=reward;g.contractsDone++;g.rep[g.townOwner[town]]+=5;S.jobBond[n]=0;log_level("%s paid %d silver for %s.", towns[town].name, reward, contract_title(c->type));return 1;
 }
 int society_npc_job(int n,float dt){
  Actor*freed=&g.actors[n];if(S.freed[n]&&!freed->squad){
@@ -304,7 +353,7 @@ int society_npc_job(int n,float dt){
 }
 static void tick_jobs(float dt){
  Actor*p=&g.actors[g.selected];for(int i=0;i<CONTRACTS;i++){Contract*c=&g.contracts[i];if(c->active!=1||(c->type!=5&&c->type!=6)||c->progress)continue;
- int n=S.jobActor[i]-1;if(n<0||n>=g.actorCount)continue;Actor*a=&g.actors[n];
+ int n=S.jobActor[i]-1;if(n<0||n>=g.actorCount){c->active=3;log_warn("Service failed: employer missing.");continue;}Actor*a=&g.actors[n];
  if(a->dead||!a->active){c->active=3;log_warn("Service failed: employer died.");continue;}
  if(distance(a->x,a->y,p->x,p->y)>45)society_npc_job(n,dt);
  int near=conscious(p)&&depth_room(p)==depth_room(a)&&depth_distance(p,a)<=8;
@@ -314,12 +363,67 @@ static void tick_jobs(float dt){
  S.jobElapsed[i]+=dt;float moved=distance(a->x,a->y,S.jobX[i],S.jobY[i]);S.jobX[i]=a->x;S.jobY[i]=a->y;
  if(near&&conscious(a)&&moved>.001f){S.jobNear[i]+=dt;S.jobDistance[i]+=moved;if(S.jobNear[i]-S.jobPaid[i]>=30){g.money+=12;S.jobPaid[i]+=30;log_msg("Service wage: +12 silver.");}}
  if((c->type==5&&distance(a->x,a->y,towns[c->target].x,towns[c->target].y)<4)||(c->type==6&&S.jobNear[i]>=180&&S.jobDistance[i]>=35)){
-   if(c->type==6||S.jobNear[i]>=S.jobElapsed[i]*.55f){c->progress=1;log_msg("Service complete. Claim your bonus at %s.",towns[c->town].name);}else{c->active=3;log_warn("Escort arrived without enough service; bonus forfeited.");}
+   if(c->type==6||S.jobNear[i]>=S.jobElapsed[i]*.55f){c->progress=1;log_level("%s complete. Claim at %s.",contract_title(c->type),towns[c->town].name);}else{c->active=3;log_warn("Escort arrived without enough service; bonus forfeited.");}
  }
- if(S.jobElapsed[i]>3600){c->active=3;log_warn("Service contract expired.");}
+ if(!c->progress && S.jobElapsed[i]>3600){c->active=3;log_warn("Service contract expired.");}
  }
 }
 static int near_guard(const Actor*a,int town,float reach){for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(!b->squad&&b->kind==GUARD&&b->faction==g.townOwner[town]&&b->homeTown==town&&conscious(b)&&depth_distance(a,b)<reach)return n;}return -1;}
+void town_theft(int town) {
+    if (town < 0 || town >= TOWNS || g.townOwner[town] == HOSTILE)
+        return;
+    TownLife *life = &g.townLife;
+    float now = settlement_time();
+    if (now >= life->theftUntil[town])
+        life->theftCount[town] = 0;
+    life->theftUntil[town] = now + DAY_SECONDS * 2;
+    if (life->theftCount[town] < 3 && ++life->theftCount[town] == 3) {
+        life->searchAfter[town] = now + 10;
+        log_warn("%s is checking pockets after repeated thefts.", towns[town].name);
+    }
+}
+void pocket_inspection(int guard, int allow) {
+    Actor *a = &g.actors[g.selected];
+    if (guard < 0 || guard >= g.actorCount)
+        return;
+    int f = g.actors[guard].faction, found = 0;
+    if (!allow) {
+        log_msg("You refused the search. The watch keeps an eye on you.");
+        return;
+    }
+    for (int i = 0; i < PACK; i++)
+        if (a->pack[i].item && a->stolen[i] == f) {
+            found += a->pack[i].qty;
+            inventory_remove_slot(a, i, a->pack[i].qty);
+        }
+    for (int i = 0; i < GEARS; i++)
+        if (a->gear[i] && a->gearStolen[i] == f) {
+            found++;
+            a->gear[i] = a->gearStolen[i] = 0;
+        }
+    if (found) {
+        crime_add(a, f, 40);
+        log_warn("%s confiscated %d stolen goods. Bounty +40.", g.actors[guard].name, found);
+    } else
+        log_msg("%s searched your pockets and let you go.", g.actors[guard].name);
+}
+static void tick_pocket_inspection(void) {
+    Actor *a = &g.actors[g.selected];
+    if (ui.screen != SCREEN_WORLD || ui.paused || !conscious(a) || actor_inside(a) ||
+        a->attackPhase || a->target >= 0 || a->prisonTime > 0 || a->carrying >= 0 || a->sneaking)
+        return;
+    int town = town_near(a->x, a->y, 15);
+    float now = settlement_time();
+    if (town < 0 || g.townLife.theftCount[town] < 3 || now >= g.townLife.theftUntil[town] ||
+        now < g.townLife.searchAfter[town])
+        return;
+    int guard = near_guard(a, town, 2.7f);
+    if (guard < 0 || g.actors[guard].target >= 0 || hostile(a, &g.actors[guard]))
+        return;
+    g.townLife.searchAfter[town] = now + DAY_SECONDS * .45f;
+    dialogue_open(guard);
+    ui.dialogPage = DIALOG_INSPECTION;
+}
 static void tick_cannibals(float dt){
  for(int n=0;n<g.actorCount;n++){Actor*a=&g.actors[n];if(a->dead)continue;
  if(S.cannibal[n]==1){int captor=a->carriedBy;if(captor<0||!conscious(&g.actors[captor])){S.cannibal[n]=0;g.depth.actors[n].captive=0;continue;}
@@ -335,6 +439,7 @@ static void tick_cannibals(float dt){
 void society_tick(float dt){
  tick_rescues(dt);
  tick_jobs(dt);tick_cannibals(dt);
+ tick_pocket_inspection();
  for(int n=0;n<g.actorCount;n++)if(g.actors[n].squad){Actor*a=&g.actors[n];S.gateMessage[n]=fmaxf(0,S.gateMessage[n]-dt);for(int f=0;f<FACTIONS;f++)S.recognized[n][f]=fmaxf(0,S.recognized[n][f]-dt);
   int t=town_near(a->x,a->y,18),f=t>=0?g.townOwner[t]:FREE;
   if(t>=0&&f>0&&conscious(a)&&near_guard(a,t,3)>=0&&disguise_faction(a)==f){int score=disguise_score(a,f);S.suspicion[n]+=dt*((100-score)/30.f+(wanted_amount(a,f)>=300?8:0));if(S.recognized[n][f]<=0&&(S.suspicion[n]>=100||!score)){S.suspicion[n]=0;crime_add(a,f,80);log_warn("Your %s disguise was exposed.",factionNames[f]);}}
@@ -368,7 +473,6 @@ int nearby_actions(void){
  if(room){if(interior_context()!=-2)add_action(ACTION_CONTEXT,5,room-1);return actionCount;}
  for(int n=0;n<g.nodeCount;n++)if(g.nodes[n].remaining&&distance(a->x,a->y,g.nodes[n].x,g.nodes[n].y)<=WORK_REACH){if(g.nodes[n].locked){add_action(ACTION_UNLOCK,1,n);add_action(ACTION_OPEN,1,n);}else add_action(ACTION_CONTEXT,1,n);}
  for(int b=0;b<g.buildingCount;b++){Building*v=&g.buildings[b];if(building_has_interior(v->type)&&distance(a->x,a->y,v->x+1.45f,v->y+.65f)<=1.7f)add_action(ACTION_CONTEXT,3,b);if(v->type>=WELL&&v->type!=WALL&&v->type!=WINDMILL&&distance(a->x,a->y,v->x,v->y)<=1.7f)add_action(ACTION_CONTEXT,2,b);}
- for(int k=0;k<LANDMARKS;k++)if(distance(a->x,a->y,g.depth.siteX[k],g.depth.siteY[k])<=1.7f)add_action(ACTION_CONTEXT,4,k);
  for(int i=0;i<living_local_count();i++)add_action(ACTION_EVENT,6,living_local_slot(i));
  for(int k=0;k<POP_GROUPS;k++)if(g.population.version&&distance(a->x,a->y,g.population.groups[k].x,g.population.groups[k].y)<55){
   if(distance(a->x,a->y,g.population.groups[k].x,g.population.groups[k].y)<8)add_action(ACTION_POPULATION,0,k);
@@ -414,7 +518,7 @@ static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!
  if(x->type==ACTION_EVENT)return n>=0&&n<EVENTS&&!g.living.events[n].status&&distance(a->x,a->y,g.living.events[n].x,g.living.events[n].y)<=8;
  if(x->kind==0)return n>=0&&n<g.actorCount&&g.actors[n].active&&depth_room(&g.actors[n])==x->room&&depth_distance(a,&g.actors[n])<=TALK_REACH;
  if(x->kind==1)return n>=0&&n<g.nodeCount&&g.nodes[n].remaining&&distance(a->x,a->y,g.nodes[n].x,g.nodes[n].y)<=WORK_REACH;
- if(x->kind==4)return n>=0&&n<LANDMARKS&&distance(a->x,a->y,g.depth.siteX[n],g.depth.siteY[n])<=1.7f;
+ if(x->kind==4)return 0;
  if(x->kind==5)return g.interiorBuilding==n+1;
  return n>=0&&n<g.buildingCount&&distance(a->x,a->y,g.buildings[n].x+(x->kind==3?1.45f:0),g.buildings[n].y+(x->kind==3?.65f:0))<=1.7f;
 }
@@ -447,8 +551,6 @@ static const char *action_reason(const NearbyAction *x, int queueing) {
         }
         if (x->type == ACTION_UNLOCK && !node->locked)
             return "Already unlocked";
-        if (node->locked && !inventory_count(a, TOOLS))
-            return "Need lock tools";
         if (!node->locked && node->type >= NODE_LOOT) {
             Actor test = *a;
             if (!inventory_add_owned(&test, node->item, node->qty, node->owner))

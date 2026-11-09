@@ -41,7 +41,10 @@ static int life_casualties(int k,float dt){
  if(!alive){m->phase=POP_RUINS;e->presence+=dt;return 1;}e->presence=0;
  if(dead>z->losses){z->losses=dead;z->clock=12;z->goal=LIFE_RECOVER;life_announce(k,"regrouping after casualties");}
  for(int i=0;i<e->count;i++)if(z->carry[i]>=0){Actor*a=member(k,i),*b=member(k,z->carry[i]);if(!a||!b||a->dead||a->unconscious>0||b->dead||(b->unconscious<=0&&b->health[CHEST]>15&&b->health[HEAD]>15))life_drop(k,i);}
- int threat=life_threat(k,24),outnumbered=threat>=0&&standing(threat)>standing(k)*1.4f;
+ int threat = life_threat(k, 24), able = standing(k);
+ int routed = threat >= 0 && (able * 3 < z->baseline || (dead + down > 0 && standing(threat) > able * 3));
+ if (e->type == POP_REFUGEES || e->type == POP_MERCHANTS || e->type == POP_PILGRIMS)
+    routed = threat >= 0 && standing(threat) > able * 1.4f;
  if((down||hurt)&&standing(k)>0){
   for(int j=0;j<e->count;j++){Actor*b=member(k,j);if(!b||b->dead||(b->bleed<=.01f&&b->unconscious<=0))continue;
    int carried=0;for(int i=0;i<e->count;i++)carried|=z->carry[i]==j;if(carried)continue;
@@ -53,10 +56,10 @@ static int life_casualties(int k,float dt){
    }
   }
  }
- if(outnumbered||(alive*2<z->baseline&&z->goal!=LIFE_RETREAT&&z->goal!=LIFE_RECOVER)){
+ if(routed && able && z->goal != LIFE_RECOVER){
   if(z->goal!=LIFE_RETREAT){int t=life_town(k,e->faction!=HOSTILE&&e->faction!=OUTLAWS,-1);if(t>=0){life_target(k,LIFE_RETREAT,t);z->camp=CAMP_AWAY;life_announce(k,"withdrawing with survivors");}}
  }
- if(z->goal==LIFE_RESCUE){if(down==0){z->goal=LIFE_RECOVER;z->clock=35;}else if(threat>=0){int t=life_town(k,e->faction!=HOSTILE&&e->faction!=OUTLAWS,-1);if(t>=0)life_target(k,LIFE_RETREAT,t);}else{m->phase=POP_REST;return 1;}}
+ if(z->goal==LIFE_RESCUE){if(down==0){z->goal=LIFE_RECOVER;z->clock=35;}else if(threat<0){m->phase=POP_REST;return 1;}}
  if(z->goal==LIFE_RECOVER){m->phase=POP_REST;z->clock-=dt;if(z->clock>0)return 1;z->goal=LIFE_ROAM;}
  if(!standing(k)){m->phase=POP_REST;return 1;}return 0;
 }

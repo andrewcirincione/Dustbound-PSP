@@ -416,11 +416,10 @@ int population_action(int k, int action) {
         log_msg("%s: %d standing / %s / %d beds.", names[e->type], standing(k),
                 g.life.version ? life_goal_name(g.life.groups[k].goal) : phases[m->phase], m->beds);
     } else if (action >= 11 && action <= 13) {
-        a->taskKind = 3;
-        a->taskIndex = -1000 - k * 4 - (action - 11);
-        a->action = 180;
-        a->autoattack = 0;
-        log_msg("Resting in a camp bed. Move to wake.");
+        float x, y;
+        if (population_object(k, action - 10, &x, &y) != 2)
+            return 0;
+        return rest_at(a, -1000 - k * 4 - (action - 11), x, y, 0, 0);
     } else if (action == 1) {
         int owner = inventory_input_owner(a, MEAT, 2);
         inventory_remove(a, MEAT, 2);

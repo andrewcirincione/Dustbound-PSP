@@ -88,20 +88,21 @@ int main(void) {
     step(6);
     CHECK(g.nodes[0].locked && !a->taskKind);
     fresh();
-    int roles[10] = {0};
+    int roles[ROLE_SEATED_LEADER + 1] = {0};
     for (int i = 1; i < g.actorCount; i++) {
         Actor *n = &g.actors[i];
         if (n->faction == HOSTILE || n->kind == BEAST || depth_named(i)>=0)
             continue;
         int r = npc_role(n);
         roles[r]++;
-        CHECK(dialogue_count(i) >= 2 && dialogue_count(i) <= 5);
+        CHECK(dialogue_count(i) >= 2 && dialogue_count(i) <= 6);
         CHECK(has_action(i, 0) == (r == ROLE_MERCHANT));
         CHECK(has_action(i, 2) == (r == ROLE_INNKEEPER));
         CHECK(has_action(i, 3) == (r == ROLE_MEDIC));
         CHECK(has_action(i, 7) == (r == ROLE_SMITH));
         CHECK(has_action(i, 5) == (r == ROLE_BARBER));
-        CHECK(has_action(i, 1) == (r == ROLE_MARSHAL));
+        CHECK(has_action(i, 1) == (r == ROLE_MARSHAL || r == ROLE_MERCHANT || r == ROLE_INNKEEPER ||
+                                  r == ROLE_SMITH || r == ROLE_SCOUT));
     }
     CHECK(roles[ROLE_MERCHANT] && roles[ROLE_MEDIC] && roles[ROLE_RECRUIT] && roles[ROLE_SMITH] &&
           roles[ROLE_INNKEEPER]);
@@ -134,8 +135,9 @@ int main(void) {
     b->x = a->x + 1;
     b->gear[5] = 0;
     step(.1f);
-    CHECK(a->hunger < 40 && inventory_count(b, RATION) == 1);
-    b->gear[5] = gear_id(76, 0, 0);
+    CHECK(a->hunger > 70 && inventory_count(b, RATION) == 0);
+    inventory_add(b, RATION, 1);
+    a->hunger = 30;
     g.interiorBuilding = 1;
     g.interiorActor = 0;
     step(.1f);
@@ -153,10 +155,11 @@ int main(void) {
     a->taskKind = 3;
     a->action = 100;
     step(1);
-    CHECK(a->health[LARM] == 40);
+    float hungry_gain = a->health[LARM] - 40;
     a->hunger = 50;
+    a->health[LARM] = 40;
     step(1);
-    CHECK(a->health[LARM] > 40);
+    CHECK(hungry_gain > 0 && a->health[LARM] - 40 > hungry_gain);
     b->active = 1;
     inventory_add(a, ORE, 1);
     int slot = 0;
@@ -166,6 +169,8 @@ int main(void) {
     ui.screen = SCREEN_PACK;
     ui.selection = slot;
     game_tick(.033f, (Input){KEY_SQUARE, KEY_SQUARE, 0, 0});
+    CHECK(ui.screen == SCREEN_PASS);
+    game_tick(.033f, (Input){KEY_CROSS, KEY_CROSS, 0, 0});
     slot = 0;
     while (slot < PACK && b->pack[slot].item != ORE)
         slot++;
@@ -191,32 +196,25 @@ int main(void) {
             wilderness++;
     CHECK(wilderness >= 25);
     printf("Closest towns %.1fm; wilderness enemies %d.\n", closest, wilderness);
-    /* Route traverses the real terrain, with combat disabled to isolate routing. */
+    /* Reference pins persist and leave movement to the player. */
     a = &g.actors[0];
     a->x = 34;
     a->y = 31;
     ui.waypoint = 1;
-    ui.mapX = towns[1].x + 2;
-    ui.mapY = towns[1].y + 7;
-    ui.travelX = ui.mapX;
-    ui.travelY = ui.mapY;
+    ui.travelX = towns[1].x + 2;
+    ui.travelY = towns[1].y + 7;
     game_tick(.033f, (Input){KEY_SELECT, KEY_SELECT, 0, 0});
-    CHECK(ui.screen == SCREEN_MAP && ui.mapX == a->x && ui.travelX == towns[1].x + 2);
-    game_tick(.033f, (Input){KEY_R, KEY_R, 0, 0});
+    CHECK(ui.screen == SCREEN_MAP && ui.mapX == a->x);
     game_tick(.033f, (Input){KEY_CIRCLE, KEY_CIRCLE, 0, 0});
-    CHECK(ui.waypoint && ui.travelX == towns[1].x + 2 && ui.travelY == towns[1].y + 7);
-    int frames = 0;
-    for (; frames < 30 * 240 && ui.waypoint; frames++)
+    for (int i = 0; i < 60; i++)
         game_tick(1.f / 30, (Input){0});
-    printf("Dusk to Copper: %.1fs, remaining %.2fm.\n", frames / 30.f,
-           distance(a->x, a->y, ui.travelX, ui.travelY));
-    CHECK(!ui.waypoint && frames > 30 * 40);
-    CHECK(g.discovered[1]);
-    ui.screen = SCREEN_WORLD;
+    CHECK(ui.waypoint && a->x == 34 && a->y == 31 && ui.travelX == towns[1].x + 2);
+    game_tick(.1f, (Input){.ax = .8f});
+    CHECK(a->x > 34);
     game_tick(.033f, (Input){KEY_SELECT, KEY_SELECT, 0, 0});
-    CHECK(ui.mapZoom == 1 && ui.screen == SCREEN_MAP);
+    CHECK(ui.screen == SCREEN_MAP && !ui.mapZoom);
     game_tick(.033f, (Input){KEY_TRIANGLE, KEY_TRIANGLE, 0, 0});
-    CHECK(!ui.mapZoom);
+    CHECK(ui.mapZoom);
     /* Real pre-change v3 fixture: coordinates, fog, gear and specialists migrate. */
     FILE *f = fopen("build/v030-frontier.sav", "rb");
     CHECK(f != NULL);

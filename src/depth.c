@@ -8,7 +8,7 @@ extern int add_actor(const char *, int, int, float, float, int);
 extern int add_build(float, float, int, int, int);
 extern int hostile(const Actor *, const Actor *);
 #define D (g.depth)
-const char *landmarkNames[LANDMARKS] = {"SALT ROAD WRECK", "DRY CULVERT",  "RELL'S TOLL CAMP",
+const char *landmarkNames[LANDMARKS] = {"SALT ROAD WRECK", "DRY CULVERT",  "OLD TOLL CAMP",
                                         "CHAIN YARD",      "ASH SHRINE",   "OLD FOUNDRY",
                                         "WATCH BEACON",    "COPPER STORES"};
 const char *orderNames[4] = {"Balanced", "Defensive", "Keep range", "Hold fire"};
@@ -16,21 +16,6 @@ static int member(const Actor *a) {
     return (uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + MAX_ACTORS)
                ? (int)(a - g.actors)
                : -1;
-}
-static int alive(int n) { return n >= 0 && n < g.actorCount && g.actors[n].active && !g.actors[n].dead; }
-/* Distance feedback must not conceal the actual reason an action is blocked. */
-static int ready_to_act(const Actor *a) {
-    if (conscious(a))
-        return 1;
-    if (!a->active || a->dead)
-        log_msg("This survivor cannot act. Select a living ally.");
-    else if (a->carriedBy >= 0)
-        log_msg("Set this survivor down before acting.");
-    else if (a->unconscious > 0)
-        log_msg("Unconscious: recover or send an ally to help.");
-    else
-        log_msg("Stunned: resume time to recover before acting.");
-    return 0;
 }
 int depth_named(int actor) {
     for (int i = 0; i < DEPTH_NPCS; i++)
@@ -92,48 +77,7 @@ void depth_init(void) {
                                           i == SITE_CAMP || i == SITE_CAGES ? OUTLAWS : FREE, -1);
         }
     }
-    /* Never recycle somebody's corpse or overwrite an old save's full actor pool.
-     */
-    if (g.actorCount + DEPTH_NPCS > MAX_ACTORS) {
-        log_msg("Older expedition is full: landmark salvage is available.");
-        return;
-    }
-    const char *names[DEPTH_NPCS] = {"SORA",   "NELL",        "RELL",       "ORIN",
-                                     "TAMSIN", "ROAD WARDEN", "ROAD SCOUT", "COPPER CONVOY"};
-    const int sites[DEPTH_NPCS] = {0, 7, 2, 3, 3, 2, 2, 7};
-    for (int i = 0; i < DEPTH_NPCS; i++) {
-        int site = sites[i];
-        float x = D.siteX[site] + (i == NPC_TAMSIN ? 1.2f : 0), y = D.siteY[site];
-        clear_spot(&x, &y);
-        int n = add_actor(names[i],
-                          i == NPC_RELL                            ? RAIDER
-                          : i == NPC_PATROL_A || i == NPC_PATROL_B ? GUARD
-                                                                   : SETTLER,
-                          i == NPC_RELL || i == NPC_PATROL_A || i == NPC_PATROL_B ? OUTLAWS : FREE, x, y,
-                          i == NPC_RELL ? 18 : 8);
-        D.npc[i] = n;
-        Actor *a = &g.actors[n];
-        a->voice = i == NPC_NELL ? ROLE_SCOUT : ROLE_CITIZEN;
-        a->gear[1] = gear_id(i == NPC_RELL ? 34 : 45, 0, 1);
-        a->gear[2] = gear_id(i == NPC_RELL ? 56 : 49, 0, 0);
-        a->gear[0] = i == NPC_RELL ? gear_id(84, 0, 1) : STAFF;
-        if (i == NPC_SORA) {
-            a->health[LLEG] = 12;
-            a->health[CHEST] = 42;
-            a->bleed = .8f;
-            D.actors[n].trauma[LLEG] = 30;
-        }
-        if (i == NPC_ORIN || i == NPC_TAMSIN) {
-            D.actors[n].captive = 1;
-            D.actors[n].confiscated = a->gear[0];
-            a->gear[0] = 0;
-        }
-        if (i == NPC_PATROL_A || i == NPC_PATROL_B) {
-            a->x += 4 + (i - NPC_PATROL_A) * 3;
-            a->homeX = a->x;
-            a->tx = a->x;
-        }
-    }
+
 }
 int depth_validate(const Game *s) {
     const FrontierDepth *d = &s->depth;
@@ -186,309 +130,6 @@ int depth_validate(const Game *s) {
              !isfinite(p->vx) || !isfinite(p->vy) || !isfinite(p->left) || p->left < 0 || p->left > 100))
             return 0;
     }
-    return 1;
-}
-int depth_near_site(const Actor *a, float reach) {
-    if (actor_inside(a))
-        return -1;
-    int best = -1;
-    for (int i = 0; i < LANDMARKS; i++) {
-        float d = distance(a->x, a->y, D.siteX[i], D.siteY[i]);
-        if (d < reach) {
-            reach = d;
-            best = i;
-        }
-    }
-    return best;
-}
-const char *depth_outcome(void) {
-    static const char *s[] = {"BLOCKADE / Copper short of supplies",
-                              "BYPASS / Independent trade restored",
-                              "TRUCE / Supplies under Rell's toll", "CAPTURE / Road under town patrol",
-                              "FREED / Leader dead; reprisals likely"};
-    return s[D.route];
-}
-const char *depth_objective(void) {
-    if (D.reported)
-        return "Return to Copper: see how your choice changed trade.";
-    if (D.route)
-        return "Report the open road to Nell at Copper stores.";
-    if (D.rescued == 1)
-        return "Escort Sora to Copper; keep her alive.";
-    if (D.rescued == 2)
-        return "Repair the culvert, bargain with Rell, or capture him.";
-    return "Find Sora at the Salt Road wreck. Bring dressings.";
-}
-void depth_locate(int site) {
-    if (site < 0 || site >= LANDMARKS)
-        return;
-    ui.mapX = D.siteX[site];
-    ui.mapY = D.siteY[site];
-    ui.mapZoom = 0;
-    depth_open(SCREEN_MAP);
-    log_msg("%s marked. \001 places a manual map pin.", landmarkNames[site]);
-}
-static void route_state(int state) {
-    if (D.route)
-        return;
-    D.route = state;
-    D.retaliation = 360;
-    g.townOwner[1] = state == ROUTE_TRUCE ? OUTLAWS : towns[1].faction;
-    g.prosperity[1] = state == ROUTE_TRUCE ? 48 : 68;
-    for (int i = 0; i < g.actorCount; i++)
-        if (!g.actors[i].squad && g.actors[i].homeTown == 1)
-            g.actors[i].faction = g.townOwner[1];
-    for (int i = 0; i < g.buildingCount; i++)
-        if (g.buildings[i].owner < 0 && town_near(g.buildings[i].x, g.buildings[i].y, 12) == 1)
-            g.buildings[i].faction = g.townOwner[1];
-    for (int i = NPC_PATROL_A; i <= NPC_PATROL_B; i++)
-        if (alive(D.npc[i]))
-            g.actors[D.npc[i]].faction = state == ROUTE_TRUCE ? OUTLAWS : FREE;
-    g.stock[1][RATION] += 8;
-    g.stock[1][MEDKIT] += 3;
-    g.stock[1][IRONBAR] += 4;
-    snprintf(g.worldNews, sizeof(g.worldNews), "Copper Cross: %s", depth_outcome());
-    log_msg("%s", g.worldNews);
-}
-const char *depth_line(int actor) {
-    switch (depth_named(actor)) {
-    case NPC_SORA:
-        return D.rescued == 2 ? "The dry culvert can carry wagons. Three timber, one iron bar "
-                                "and tools will brace it. I left the route on your atlas."
-               : D.rescued    ? "Stay close. I cannot fight on this leg. Carry me if needed. "
-                                "Get me to the stores at Copper Cross."
-                              : "Rell's men broke the wagon. My leg is bleeding. A "
-                                "dressing, then an escort to Copper. There is another "
-                                "way around his toll.";
-    case NPC_NELL:
-        return D.reported
-                   ? (D.route == ROUTE_TRUCE ? "The food is back, but every wagon pays Rell. The toll "
-                                               "is in our prices. You chose the cost."
-                                             : "The road is open. Our shelves and patrols remember "
-                                               "what you did. Sora is rebuilding the wagon line.")
-                   : "Copper is running short. Sora went missing on the Salt Road. "
-                     "Open a supply route and I can pay you. Bring her home if you "
-                     "can.";
-    case NPC_RELL:
-        return D.route == ROUTE_TRUCE ? "You paid for peace. My road, my toll. Copper will eat."
-                                      : "Four hundred and fifty silver buys a truce. Or try your "
-                                        "steel. My scouts watch the road; the chain yard holds those "
-                                        "who fail.";
-    case NPC_ORIN:
-    case NPC_TAMSIN:
-        return D.actors[actor].captive ? "Wait until the guards move away. Tools make the lock faster. "
-                                         "Don't leave me in this yard."
-                                       : "I remember who opened the lock. If there is room, I'll carry "
-                                         "my share.";
-    default:
-        return NULL;
-    }
-}
-const char *depth_option(int actor, int row) {
-    static const char *sora[] = {"Treat the wound and escort her.", "Show Copper stores on the atlas.",
-                                 "Carry Sora to safety.", "Leave."};
-    static const char *nell[] = {"Mark the missing wagon.", "Report the route. Claim payment.",
-                                 "Buy relief cargo. 150 silver", "Mark Rell's toll camp.", "Leave."};
-    static const char *rell[] = {"Pay 450 silver for a toll truce.", "Challenge Rell and his scouts.",
-                                 "Bind and carry fallen Rell.", "Leave."};
-    static const char *captive[] = {"Unlock shackles / recruit.", "Recover confiscated weapon.",
-                                    "Leave."};
-    int n = depth_named(actor);
-    if (n == NPC_SORA) {
-        if (row == 0 && D.rescued == 1)
-            return "Treat her wounds again. One dressing.";
-        return sora[row % 4];
-    }
-    if (n == NPC_NELL)
-        return nell[row % 5];
-    if (n == NPC_RELL)
-        return rell[row % 4];
-    if (n == NPC_ORIN || n == NPC_TAMSIN)
-        return captive[row % 3];
-    return "Leave.";
-}
-int depth_dialog(int actor, int row) {
-    if (actor < 0 || actor >= g.actorCount)
-        return 0;
-    Actor *a = &g.actors[g.selected], *b = &g.actors[actor];
-    if (!ready_to_act(a))
-        return 0;
-    if (depth_distance(a, b) > TALK_REACH) {
-        log_msg("Move within talking reach.");
-        return 0;
-    }
-    int n = depth_named(actor);
-    if (n == NPC_SORA) {
-        if (row == 0 && D.rescued < 2) {
-            if (conscious(b) && !wound_needs_dressing(b)) {
-                D.rescued = 1;
-                log_msg("Sora can walk again. Stay within 18m as you escort her.");
-            } else if (!heal_actor(g.selected, actor)) {
-                log_msg("Bring a dressing and treat Sora.");
-                return 0;
-            }
-            depth_open(SCREEN_WORLD);
-        } else if (row == 1)
-            depth_locate(SITE_STORES);
-        else if (row == 2) {
-            if (D.rescued != 1 || b->dead || b->carriedBy >= 0 || a->carrying >= 0) {
-                log_msg("Treat Sora first. Carry needs free arms and a living escort.");
-                return 0;
-            }
-            a->carrying = actor;
-            b->carriedBy = g.selected;
-            a->taskKind = 0;
-            ui.waypoint = 0;
-            depth_open(SCREEN_WORLD);
-            log_msg("Carrying Sora. Travel is slower; \001 puts her down.");
-        } else if (row == 3)
-            depth_open(SCREEN_WORLD);
-    } else if (n == NPC_NELL) {
-        if (row == 0)
-            depth_locate(SITE_WRECK);
-        if (row == 1) {
-            int rell = D.npc[NPC_RELL];
-            if (!D.route && rell >= 0 && a->carrying == rell) {
-                g.actors[rell].carriedBy = -1;
-                a->carrying = -1;
-                D.actors[rell].captive = 1;
-                g.actors[rell].x = D.siteX[7];
-                g.actors[rell].y = D.siteY[7] + 2;
-                route_state(ROUTE_CAPTURED);
-            }
-            if (!D.route)
-                log_msg("Open a route first: culvert, truce, or Rell.");
-            else if (D.reported)
-                log_msg("You have already claimed this reward.");
-            else {
-                int reward = D.route == ROUTE_TRUCE ? 120 : D.route == ROUTE_CAPTURED ? 550 : 350;
-                g.money += reward;
-                D.reported = 1;
-                g.rep[g.townOwner[1]] += 8;
-                log_msg("Route payment: %d silver. Trade will remember.", reward);
-            }
-        }
-        if (row == 2) {
-            Actor old = *a;
-            if (g.money < 150)
-                log_msg("Relief cargo costs 150 silver.");
-            else if (!inventory_add(a, RATION, 6) || !inventory_add(a, MEDKIT, 2)) {
-                *a = old;
-                log_msg("Make room for rations and dressings.");
-            } else {
-                g.money -= 150;
-                D.supplied++;
-                log_msg("Six rations and two dressings packed.");
-            }
-        }
-        if (row == 3)
-            depth_locate(SITE_CAMP);
-        if (row == 4)
-            depth_open(SCREEN_WORLD);
-    } else if (n == NPC_RELL) {
-        if (row == 0) {
-            if (D.route)
-                log_msg("The road already has an outcome.");
-            else if (!conscious(b))
-                log_msg("Rell cannot negotiate while unconscious.");
-            else if (g.money < 450)
-                log_msg("Rell demands 450 silver.");
-            else {
-                g.money -= 450;
-                route_state(ROUTE_TRUCE);
-                depth_open(SCREEN_WORLD);
-            }
-        }
-        if (row == 1) {
-            if (D.route)
-                log_msg("The road outcome is already settled.");
-            else {
-                b->faction = HOSTILE;
-                for (int j = NPC_PATROL_A; j <= NPC_PATROL_B; j++)
-                    if (alive(D.npc[j]))
-                        g.actors[D.npc[j]].faction = HOSTILE;
-                depth_open(SCREEN_WORLD);
-                a->autoattack = 1;
-                log_msg("Rell's scouts draw steel.");
-            }
-        }
-        if (row == 2) {
-            if (b->dead || b->unconscious <= 0 || a->carrying >= 0 || b->carriedBy >= 0)
-                log_msg("Rell must be alive and unconscious. Free your arms.");
-            else {
-                a->carrying = actor;
-                b->carriedBy = g.selected;
-                depth_open(SCREEN_WORLD);
-                log_msg("Carry Rell to Nell at Copper stores.");
-            }
-        }
-        if (row == 3)
-            depth_open(SCREEN_WORLD);
-    } else if (n == NPC_ORIN || n == NPC_TAMSIN) {
-        if (row == 0)
-            depth_capture_action(actor);
-        if (row == 1) {
-            DepthActor *z = &D.actors[actor];
-            if (z->captive)
-                log_msg("Unlock the captive first.");
-            else if (z->confiscated && inventory_add_owned(b, z->confiscated, 1, z->confiscatedOwner)) {
-                z->confiscated = 0;
-                log_msg("Confiscated weapon recovered.");
-            }
-        }
-        if (row == 2)
-            depth_open(SCREEN_WORLD);
-    }
-    return 1;
-}
-int depth_action(int site, int option) {
-    Actor *a = &g.actors[g.selected];
-    if (!ready_to_act(a))
-        return 0;
-    if (site < 0 || site >= LANDMARKS || depth_near_site(a, 1.7f) != site) {
-        log_msg("Walk within 1.7m of the landmark.");
-        return 0;
-    }
-    if (site == SITE_CULVERT) {
-        if (D.route) {
-            log_msg("The supply road is already open.");
-            return 0;
-        }
-        if (D.rescued < 2) {
-            log_msg("Sora must reach Copper before the repair is safe.");
-            return 0;
-        }
-        if (inventory_count(a, WOOD) < 3 || inventory_count(a, IRONBAR) < 1 ||
-            !inventory_count(a, TOOLS)) {
-            log_msg("Need 3 timber, 1 iron bar and reusable tools.");
-            return 0;
-        }
-        inventory_remove(a, WOOD, 3);
-        inventory_remove(a, IRONBAR, 1);
-        gain(a, ENGINEERING, 80);
-        route_state(ROUTE_BYPASS);
-        return 1;
-    }
-    if (option == 1) {
-        depth_locate(SITE_CAGES);
-        return 1;
-    }
-    if (D.salvage & (1 << site)) {
-        log_msg("This cache is empty. Its story remains.");
-        return 0;
-    }
-    int item = site == SITE_FOUNDRY  ? PARTS
-               : site == SITE_BEACON ? RELIC
-               : site == SITE_SHRINE ? MEDKIT
-                                     : IRONBAR;
-    int qty = site == SITE_FOUNDRY ? 5 : site == SITE_BEACON ? 2 : 3;
-    if (!inventory_add(a, item, qty)) {
-        log_msg("Pack full.");
-        return 0;
-    }
-    D.salvage |= 1 << site;
-    gain(a, PERCEPTION, 40);
-    log_msg("Recovered %d %s. Check expedition leads.", qty, itemDefs[item].name);
     return 1;
 }
 int depth_trade_open(int town) {
@@ -667,21 +308,7 @@ int depth_capture_action(int n) {
     DepthActor *z = &D.actors[n];
     if (!conscious(a) || b->dead || depth_distance(a, b) > TALK_REACH)
         return 0;
-    if (z->captive || b->prisonTime > 0)
-        return society_rescue_start(n);
-    if (!b->squad && g.squadCount < SQUAD) {
-        b->squad = 1;
-        b->kind = PLAYER;
-        b->faction = FREE;
-        b->job = JOB_FOLLOW;
-        b->autoattack = 1;
-        g.squadCount++;
-        D.actors[n].group = D.actors[g.selected].group;
-        log_msg("%s joins your expedition.", b->name);
-        return 1;
-    }
-    log_msg("No room in the squad, or already recruited.");
-    return 0;
+    return (z->captive || b->prisonTime > 0) && society_rescue_start(n);
 }
 static void captivity(float dt) {
     for (int i = 0; i < g.actorCount; i++) {
@@ -836,80 +463,9 @@ int depth_group_job(Actor *a, float dt) {
     }
     return 1;
 }
-static void world_consequences(float dt) {
-    int sora = D.npc[NPC_SORA], rell = D.npc[NPC_RELL];
-    Actor *p = &g.actors[g.selected];
-    if (D.rescued == 1 && alive(sora)) {
-        Actor *a = &g.actors[sora];
-        if (conscious(a) && !actor_inside(p) && distance(a->x, a->y, p->x, p->y) < 18 &&
-            distance(a->x, a->y, p->x, p->y) > 2.1f)
-            route_toward(a, p->x, p->y, dt);
-        if (distance(a->x, a->y, D.siteX[7], D.siteY[7]) < 5) {
-            if (a->carriedBy >= 0 && a->carriedBy < g.actorCount) {
-                Actor *carrier = &g.actors[a->carriedBy];
-                if (carrier->carrying == sora)
-                    carrier->carrying = -1;
-                a->carriedBy = -1;
-            }
-            D.rescued = 2;
-            g.money += 100;
-            log_msg("Sora is home. +100 silver. The culvert route is now known.");
-        }
-    }
-    if (rell >= 0 && g.actors[rell].dead && !D.route)
-        route_state(ROUTE_FREED);
-    for (int i = 0; i < LANDMARKS; i++)
-        if (distance(p->x, p->y, D.siteX[i], D.siteY[i]) < 12 && !(D.visited & (1 << i))) {
-            D.visited |= 1 << i;
-            gain(p, PERCEPTION, 20);
-            log_msg("Discovered %s. Expedition ledger updated.", landmarkNames[i]);
-        }
-    if (D.lastDay != g.day) {
-        D.lastDay = g.day;
-        if (!D.route) {
-            g.stock[1][RATION] = g.stock[1][RATION] > 4 ? 4 : g.stock[1][RATION];
-            g.prosperity[1] = 30;
-        } else {
-            g.stock[1][RATION] = g.stock[1][RATION] > 999 ? 999 : g.stock[1][RATION] + 6;
-            g.stock[1][MEDKIT] = g.stock[1][MEDKIT] > 995 ? 999 : g.stock[1][MEDKIT] + 4;
-            g.prosperity[1] = D.route == ROUTE_TRUCE ? 48 : 68;
-        }
-    }
-    if (D.route && alive(D.npc[NPC_CONVOY])) {
-        Actor *a = &g.actors[D.npc[NPC_CONVOY]];
-        int dest = D.convoyTrips % 2 ? SITE_STORES : SITE_CULVERT;
-        route_toward(a, D.siteX[dest], D.siteY[dest], dt);
-        if (distance(a->x, a->y, D.siteX[dest], D.siteY[dest]) < 2) {
-            D.convoyTrips++;
-            if (dest == SITE_STORES) {
-                g.stock[1][RATION] = g.stock[1][RATION] > 995 ? 999 : g.stock[1][RATION] + 4;
-                g.prosperity[1] = (int)fminf(85, g.prosperity[1] + 1);
-            }
-        }
-    }
-    if (D.route == ROUTE_CAPTURED || D.route == ROUTE_FREED) {
-        D.retaliation -= dt;
-        if (D.retaliation <= 0 && !D.retal) {
-            D.retal = 1;
-            for (int j = NPC_PATROL_A; j <= NPC_PATROL_B; j++)
-                if (alive(D.npc[j])) {
-                    Actor *a = &g.actors[D.npc[j]];
-                    a->faction = HOSTILE;
-                    a->homeX = D.siteX[7] - 14;
-                    a->homeY = D.siteY[7];
-                    a->tx = a->homeX;
-                    a->ty = a->homeY;
-                }
-            snprintf(g.worldNews, sizeof(g.worldNews),
-                     "Rell's remaining scouts are moving on Copper stores.");
-            log_msg("%s", g.worldNews);
-        }
-    }
-}
 void depth_tick(float dt) {
     if (!D.version)
         return;
-    world_consequences(dt);
     captivity(dt);
     for (int i = 0; i < g.actorCount; i++) {
         Actor *a = &g.actors[i];
@@ -951,15 +507,7 @@ void depth_after_tick(float dt) {
             continue;
         for (int j = 0; j < LIMBS; j++)
             a->health[j] = fminf(a->health[j], limb_max_health(a,j) - z->trauma[j]);
-        /* Named NPCs retain authored positions; escorts and convoy move in
-         * depth_tick. */
         int n = depth_named(i);
-        if (n >= 0 && n <= NPC_TAMSIN && !a->squad && a->carriedBy < 0 && a->target < 0) {
-            if (n == NPC_NELL || (n == NPC_SORA && D.rescued == 2)) {
-                a->x = D.siteX[7] + (n == NPC_SORA ? 2 : 0);
-                a->y = D.siteY[7];
-            }
-        }
         if (z->captive == 1 && n != NPC_RELL && !g.war.prisonTown[i]) {
             a->x = D.siteX[3] + (n == NPC_TAMSIN ? 1.2f : 0);
             a->y = D.siteY[3];
@@ -971,10 +519,9 @@ int depth_input(float dt, Input in) {
     int p = in.pressed;
     Actor *a = &g.actors[g.selected];
     DepthActor *z = &D.actors[g.selected];
-    if (ui.screen >= SCREEN_EXPEDITION && ui.screen <= SCREEN_LAYERS) {
+    if (ui.screen >= SCREEN_ORDERS && ui.screen <= SCREEN_LAYERS && ui.screen != SCREEN_ENCOUNTER) {
         if (p & KEY_SELECT) {
-            open_help(ui.screen == SCREEN_EXPEDITION || ui.screen == SCREEN_ENCOUNTER ? 20
-                      : ui.screen == SCREEN_ORDERS                                    ? 21
+            open_help(ui.screen == SCREEN_ORDERS                                    ? 21
                       : ui.screen == SCREEN_CAMP                                      ? 22
                       : ui.screen == SCREEN_CARE                                      ? 23
                                                                                       : 24);
@@ -984,8 +531,7 @@ int depth_input(float dt, Input in) {
             depth_open(SCREEN_WORLD);
             return 1;
         }
-        int count = ui.screen == SCREEN_EXPEDITION ? LANDMARKS
-                    : ui.screen == SCREEN_ORDERS   ? 9
+        int count = ui.screen == SCREEN_ORDERS   ? 9
                     : ui.screen == SCREEN_CAMP     ? depth_camp_count()
                     : ui.screen == SCREEN_LAYERS   ? PACK
                     : ui.screen == SCREEN_CARE     ? LIMBS
@@ -996,14 +542,7 @@ int depth_input(float dt, Input in) {
             ui.selection = (ui.selection + 1) % count;
         if (p & KEY_UP)
             ui.selection = (ui.selection + count - 1) % count;
-        if (ui.screen == SCREEN_EXPEDITION) {
-            if (p & KEY_CROSS)
-                depth_locate(ui.selection);
-            if (p & KEY_SQUARE) {
-                ui.depthSite = ui.selection;
-                depth_open(SCREEN_ENCOUNTER);
-            }
-        } else if (ui.screen == SCREEN_ORDERS) {
+        if (ui.screen == SCREEN_ORDERS) {
             int delta = p & KEY_LEFT ? -1 : 1;
             if (p & (KEY_CROSS | KEY_LEFT | KEY_RIGHT))
                 switch (ui.selection) {
@@ -1063,27 +602,7 @@ int depth_input(float dt, Input in) {
                 } else
                     log_msg("Pack full. Cannot remove layer.");
             }
-        } else if (p & KEY_CROSS)
-            depth_action(ui.depthSite, ui.selection);
-        return 1;
-    }
-    if (ui.screen == SCREEN_DIALOG && depth_named(ui.dialogActor) >= 0 &&
-        depth_named(ui.dialogActor) <= NPC_TAMSIN) {
-        int count = dialogue_count(ui.dialogActor);
-        if (p & KEY_SELECT) {
-            open_help(20);
-            return 1;
         }
-        if (p & (KEY_CIRCLE | KEY_START)) {
-            depth_open(SCREEN_WORLD);
-            return 1;
-        }
-        if (p & KEY_DOWN)
-            ui.selection = (ui.selection + 1) % count;
-        if (p & KEY_UP)
-            ui.selection = (ui.selection + count - 1) % count;
-        if (p & KEY_CROSS)
-            depth_dialog(ui.dialogActor, ui.selection);
         return 1;
     }
     if (ui.screen == SCREEN_WORLD && z->captive) {

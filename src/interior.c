@@ -1,6 +1,144 @@
 #include "game.h"
 #include <math.h>
+#include <string.h>
 extern int conscious(const Actor *);
+static int private_chest(int building) {
+    const Building *b = &g.buildings[building];
+    return b->owner < 0 && b->faction > FREE &&
+           (b->type == SHOP || (b->type == HOUSE && (g.seed + building * 17u) % 3 != 0));
+}
+static void restock_chest(int building) {
+    if (!private_chest(building) || g.day < g.townLife.chestRefresh[building])
+        return;
+    Building *b = &g.buildings[building];
+    unsigned mix = (g.seed ^ (unsigned)building * 2654435761u) + g.day * 97u;
+    static const int home[] = {RATION, CLOTH, WATER, WOOD, GRAIN};
+    static const int store[] = {MEDKIT, IRONBAR, CLOTH, RATION, BOLTS, HIDE};
+    memset(b->storage, 0, sizeof(b->storage));
+    if (b->type == SHOP) {
+        b->storage[0] = (Stack){store[mix % 6], 2};
+        b->storage[1] = (Stack){store[(mix % 6 + 1 + mix % 5) % 6], 1};
+    } else if (mix % 5 != 0) {
+        b->storage[0] = (Stack){home[mix % 5], 1 + mix % 2};
+    }
+    g.townLife.chestRefresh[building] = g.day + 2 + mix % 3;
+}
+static Stack *chest_stack(int row) {
+    if (!g.interiorBuilding || g.interiorBuilding != ui.storageIndex + 1 ||
+        !private_chest(ui.storageIndex))
+        return NULL;
+    Building *b = &g.buildings[ui.storageIndex];
+    for (int i = 0; i < 16; i++)
+        if (b->storage[i].item && row-- == 0)
+            return &b->storage[i];
+    return NULL;
+}
+const Stack *interior_chest_item(int row) { return chest_stack(row); }
+int interior_chest_count(void) {
+    int count = 0;
+    while (chest_stack(count))
+        count++;
+    return count;
+}
+void interior_chest_take(int row) {
+    Stack *s = chest_stack(row);
+    Actor *a = &g.actors[g.selected];
+    if (!s || !conscious(a))
+        return;
+    Building *b = &g.buildings[ui.storageIndex];
+    int item = s->item;
+    if (!inventory_add_owned(a, item, 1, b->faction)) {
+        log_msg("Pack full.");
+        return;
+    }
+    if (!--s->qty)
+        s->item = NONE;
+    log_msg("Took %s from the chest.", itemDefs[item].name);
+    witnessed_theft(a, b->faction, 6, 18);
+}
+/* Match an occupied home to an actual resident. Service NPCs keep their posts. */
+int home_occupant(int building) {
+    const Building *b = &g.buildings[building];
+    int town = town_near(b->x, b->y, 18);
+    if (b->type != HOUSE || b->owner >= 0 || town < 0)
+        return -1;
+    int night = g.dayTime < 7 || g.dayTime >= 19;
+    for (int i = 0; i < g.actorCount; i++) {
+        const Actor *a = &g.actors[i];
+        if (a->squad || !conscious(a) || a->kind != SETTLER || a->homeTown != town ||
+            a->faction != b->faction || depth_room(a) || a->prisonTime > 0 ||
+            g.depth.actors[i].captive || a->target >= 0 || depth_named(i) >= 0 ||
+            regional_named(i) || population_owned(i) || civil_elite_index(i) >= 0 ||
+            distance(a->x, a->y, b->x, b->y) > 16)
+            continue;
+        int role = npc_role(a);
+        if (role != ROLE_CITIZEN && role != ROLE_BARBER && role != ROLE_SMITH)
+            continue;
+        unsigned shift = g.seed + i * 17u + g.day;
+        if (night ? shift % 5 == 0 : (shift + (int)g.dayTime / 3) % 5 != 0)
+            continue;
+        int chosen = -1;
+        unsigned best = 0;
+        for (int j = 0; j < g.buildingCount; j++) {
+            const Building *home = &g.buildings[j];
+            if (home->type != HOUSE || home->owner >= 0 || home->faction != a->faction ||
+                distance(home->x, home->y, towns[town].x, towns[town].y) > 18)
+                continue;
+            unsigned score = (shift ^ (j * 65537u)) * 2654435761u;
+            if (chosen < 0 || score > best) {
+                best = score;
+                chosen = j;
+            }
+        }
+        if (chosen == building)
+            return i;
+    }
+    return -1;
+}
+int actor_in_bed(const Actor *a) {
+    int bed = a->taskIndex;
+    if (a->taskKind != 3)
+        return 0;
+    if (bed <= -1000)
+        return 1;
+    if (bed < 0 || bed >= g.buildingCount)
+        return 0;
+    int type = g.buildings[bed].type;
+    return type == BED || type == BAR || type == HOUSE || type == TOWER;
+}
+int rest_at(Actor *a, int bed, float x, float y, int room, int price) {
+    if (!conscious(a) || a->attackPhase || a->target >= 0 || a->carrying >= 0 || a->prisonTime > 0)
+        return 0;
+    for (int i = 0; i < g.actorCount; i++) {
+        const Actor *other = &g.actors[i];
+        if (other != a && other->active && !other->dead && other->taskKind == 3 &&
+            depth_room(other) == room && distance(x, y, depth_x(other), depth_y(other)) < .9f) {
+            log_msg("That bed is occupied.");
+            return 0;
+        }
+    }
+    if (g.money < price) {
+        log_msg("A bed costs %d silver.", price);
+        return 0;
+    }
+    if (a->taskKind == 3 && a->taskIndex == bed)
+        return 1;
+    g.money -= price;
+    if (room) {
+        g.interiorX = x;
+        g.interiorY = y;
+    } else {
+        a->x = x;
+        a->y = y;
+    }
+    a->taskKind = 3;
+    a->taskIndex = bed;
+    a->action = REST_DURATION;
+    a->autoattack = 0;
+    ui.screen = SCREEN_WORLD;
+    log_msg("Resting in bed. Move to wake; dress any open cuts.");
+    return 1;
+}
 int building_has_interior(int type) {
     return type <= TOWER || type == FORGE || type == BENCH || type == STORE;
 }
@@ -11,7 +149,8 @@ int interior_props(int building, InteriorProp *p) {
     p[n++] = (InteriorProp){6.1f, 5.6f, .25f, .25f, 22, ROOM_NONE};
     if (type == SHOP) {
         p[n++] = (InteriorProp){3.0f, 2.1f, 1.25f, .55f, 17, ROOM_TRADE};
-        p[n++] = (InteriorProp){1.1f, 4.4f, .5f, .4f, 20, ROOM_NONE};
+        p[n++] = (InteriorProp){1.1f, 4.4f, .5f, .4f, 20,
+                                private_chest(building) ? ROOM_CHEST : ROOM_NONE};
         p[n++] = (InteriorProp){5.1f, 4.5f, .8f, .6f, 18, ROOM_NONE};
     } else if (type == FORGE || type == BENCH) {
         p[n++] = (InteriorProp){
@@ -27,8 +166,8 @@ int interior_props(int building, InteriorProp *p) {
         p[n++] = (InteriorProp){4.6f, 4.0f, .8f, .7f, 18, ROOM_NONE};
         if (type == BAR)
             p[n++] = (InteriorProp){4.0f, 1.2f, 1.1f, .5f, 17, ROOM_TRADE};
-        else
-            p[n++] = (InteriorProp){1.0f, 4.5f, .5f, .4f, 20, ROOM_NONE};
+        else if (private_chest(building))
+            p[n++] = (InteriorProp){1.0f, 4.5f, .5f, .4f, 20, ROOM_CHEST};
     }
     return n;
 }
@@ -114,6 +253,8 @@ const char *interior_prompt(void) {
         return "RESEARCH";
     case ROOM_STORAGE:
         return "OPEN DEPOT";
+    case ROOM_CHEST:
+        return "SEARCH OWNED CHEST";
     }
     return "EXPLORE";
 }
@@ -151,17 +292,16 @@ void interior_interact(void) {
         ui.screen = SCREEN_TRADE;
         break;
     case ROOM_REST:
-        if (b->owner < 0 && g.money < 25) {
-            log_msg("A bed costs 25 silver.");
+        if (b->type == HOUSE && b->owner < 0) {
+            log_msg("Private bed. Try the inn.");
             break;
         }
-        if (b->owner < 0)
-            g.money -= 25;
-        a->taskKind = 3;
-        a->taskIndex = id;
-        a->action = 180;
-        a->autoattack = 0;
-        log_msg("Resting indoors. Move to wake; bandage bleeding first.");
+        rest_at(a, id, p[c].x, p[c].y, id + 1, b->owner < 0 && town >= 0 ? regional_bed_cost(town) : 0);
+        break;
+    case ROOM_CHEST:
+        restock_chest(id);
+        ui.storageIndex = id;
+        ui.screen = SCREEN_CHEST;
         break;
     case ROOM_FORGE:
         ui.screen = SCREEN_FORGE;
@@ -193,6 +333,12 @@ void interior_move(float dx, float dy, float dt) {
     float length = sqrtf(dx * dx + dy * dy);
     if (length < .15f)
         return;
+    InteriorProp props[8];
+    int count = interior_props(g.interiorBuilding - 1, props);
+    for (int i = 0; i < count; i++)
+        if (props[i].action == ROOM_REST &&
+            distance(g.interiorX, g.interiorY, props[i].x, props[i].y) < .3f)
+            g.interiorX = props[i].x + props[i].w + .25f;
     float wx = (dx + dy) * .7071f, wy = (dy - dx) * .7071f, speed = movement_speed(a) * dt;
     if (length > 1) {
         wx /= length;
@@ -204,8 +350,5 @@ void interior_move(float dx, float dy, float dt) {
     if (room_clear(g.interiorX, y))
         g.interiorY = y;
     a->taskKind = 0;
-    a->anim += dt * 7;
-    a->movedTimer = .15f;
-    if (dx != 0)
-        a->facing = dx > 0;
+    walk_motion(a, g.interiorX - (x - wx * speed), g.interiorY - (y - wy * speed));
 }

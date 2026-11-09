@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.17.3
+# Dustbound field guide — 0.17.4
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -12,31 +12,31 @@ Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/
 
 ## 2. Your Drifter
 
-New Expedition opens a list of five starting scenarios. Each lists its starting settlement, difficulty, and circumstances. After selecting one, choose a name, species, build, skin tone, hairstyle, hair color, and beard. ![horizontal](../assets/ui/horizontal.svg) adjusts each choice; ![cross](../assets/ui/cross.svg) edits your name or begins.
+New expedition opens character creation. Choose a name, origin, species, body, skin, hairstyle, hair color, beard and scars. ![horizontal](../assets/ui/horizontal.svg) adjusts each choice; ![cross](../assets/ui/cross.svg) edits your name or begins.
 
-Origins change equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts with two companions. Species changes health, carry, speed, appetite and starting skills. The preview shows your starting values. Clockworks use spare parts to repair their bodies and can travel without eating. A town barber can change your appearance later.
+Origins change equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Species changes health, carry, speed, appetite and starting skills. The preview shows your starting values. Clockworks need spare parts, not food or bandages. A town barber can change your appearance later.
 
 ## 3. The Borderlands
 
-The 1536 by 1536 borderlands contain nineteen settlements and nine terrain regions. Roads connect towns. Rivers have fords near roads; hills rise into mesas and snowfields.
+The 1536 by 1536 borderlands contain sixteen settlements and nine terrain regions. Roads connect towns. Rivers have fords near roads; hills rise into mesas and snowfields.
 
-![select](../assets/ui/select.svg) opens the atlas. D-pad selects a known town; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) changes pages. The blue triangle marks your position. Colored squares mark towns. The atlas, local view, and minimap align with the walking camera, with north pointing up-right. World activity records last-seen sightings, not live tracking. ![cross](../assets/ui/cross.svg) places a reference pin. Walk with the analog stick. ![triangle](../assets/ui/triangle.svg) opens local view: move its cursor freely; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist.
+![select](../assets/ui/select.svg) opens the atlas. D-pad selects a known town; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) changes pages. The blue triangle is you; white squares are towns. World activity records last-seen sightings, not live tracking. ![cross](../assets/ui/cross.svg) places a reference pin. Walk with the analog stick. ![triangle](../assets/ui/triangle.svg) opens local view: move its cursor freely; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist.
 
 ## 4. Combat
 
 ![square](../assets/ui/square.svg) toggles fighting. L + Square opens opponents; Cross orders an attack, including neutrals (assault adds bounty). Small feet marks: teal line friendly, gold dot neutral, red chevron hostile. Red corners mark your opponent. Move into weapon reach to attack automatically; followers engage nearby threats. ![r](../assets/ui/r.svg) pauses combat for orders. Heavy steel needs strength equal to twice its weight. Weak or injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords hit hard; anchor cleavers bleed. Guns use cartridges; bows use bolts.
 
-Armor protects specific body locations. Piercing weapons ignore some armor; serrated blades bleed; staggering hits interrupt. Skills improve through use. Travel trains Agility, which raises movement speed. Retreat from stronger opponents and use terrain. Gold windup marks show incoming strikes. Enemy combat bars show remaining knockout reserve from head, chest and blood. Square to passive cancels your attack; move away to disengage.
+Armor protects specific body locations. Piercing weapons ignore some armor; serrated blades bleed; staggering hits interrupt. Skills improve through use. Retreat from stronger opponents and use terrain. Gold windup marks show incoming strikes. Enemy combat bars show remaining knockout reserve from head, chest and blood. Square to passive cancels your attack; move away to disengage.
 
 ## 5. Wounds & Rescue
 
-Head or chest failure and blood loss knock a survivor out. Severe head trauma and bleeding out can be fatal. When a vital part falls below the Toughness threshold, the survivor stays in a recovery coma until both vital parts and blood recover. Start > Squad > Health & recovery, ![cross](../assets/ui/cross.svg) treats the selected survivor; ![cross](../assets/ui/cross.svg) near an injured ally opens First Aid, Carry and Recover Gear choices.
+Head or chest injuries and blood loss can knock a survivor out. Below your Toughness threshold, a recovery coma lasts until your vitals recover. Severe head trauma or bleeding out can kill.
 
-Nearby Actions lets you bandage or repair yourself when you have supplies. Blunt injuries heal on their own. Open cuts deteriorate until they clot or are dressed. A dressing takes a few seconds to apply, then the wound gradually heals. Use two cloth or tear worn rags for a pressure dressing in an emergency. Friendly medics, pilgrims, and some passersby help when safe. A rescuer may carry an unconscious survivor to a nearby bed. Clinic care and beds speed up recovery. Lost limbs never regrow. A missing leg makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Prosthetics are uncommon on ordinary travelers; high-grade parts are rarer. Actual fitted limbs on fallen wanderers can be looted. Death is permanent; dismiss the body from Squad to free its slot.
+Blunt wounds improve by themselves. Open cuts worsen until they clot or are dressed. Dressings take longer to apply for more severe or numerous wounds. Healing follows gradually, faster in a bed or under clinic care. Nearby Actions offers first aid and emergency cloth dressings. An ally can treat or carry someone who is down. A rare passerby may help or carry you to a safe bed. Lost limbs never regrow. A bad leg injury makes you limp; a missing leg or two disabled legs makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Prosthetics are uncommon on ordinary travelers; high-grade parts are rarer. Actual fitted limbs on fallen wanderers can be looted. Death is permanent; dismiss the body from Squad to free its slot.
 
 ## 6. Food & Sleep
 
-Rations are eaten below forty hunger: first your pack, then a companion backpack or owned depot within three meters. Water supports farms; tonics restore blood and treat exposure. Starvation damages the chest.
+Rations are eaten below forty hunger: first your pack, then a nearby companion or owned depot within three meters. Water supports farms; tonics restore blood and treat exposure. Starvation damages the chest.
 
 An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and restores wounds once bleeding stops and hunger is above twenty. Move to wake. The sun completes a day in thirty minutes of simulation; menus and tactical pause stop time.
 
@@ -72,15 +72,15 @@ Shelters heal; farms need water and yield grain; wind pumps irrigate nearby crop
 
 ## 12. Squad Jobs
 
-D-pad Right opens Squad management. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) chooses a member; ![vertical](../assets/ui/vertical.svg) selects a row; ![horizontal](../assets/ui/horizontal.svg) changes its value. Follow trails the controlled member. Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats injured allies.
+D-pad Right opens Squad management. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) chooses a member; ![vertical](../assets/ui/vertical.svg) selects a row; ![horizontal](../assets/ui/horizontal.svg) changes its value. Follow trails the assigned group leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats injured allies.
 
 Smelt and Cook use nearby stations and can collect ingredients from a nearby depot. Workers fetch water and ingredients, walk to stations, and store output; cooks keep two rations. Haul deposits raw cargo. Job status explains delays. Select a worker and move to interrupt their current action. Up to eight living members may join.
 
 ## 13. Crime & Stealth
 
-![circle](../assets/ui/circle.svg) sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and ![cross](../assets/ui/cross.svg) near a civilian to inspect a pickpocket attempt. Select an item with ![vertical](../assets/ui/vertical.svg). Risk reflects weight, value, approach and visible witnesses. Getting behind the target improves odds. ![cross](../assets/ui/cross.svg) steals one; ![circle](../assets/ui/circle.svg) cancels. Owned salvage says STEAL; locked containers require tools and time.
+![circle](../assets/ui/circle.svg) sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and ![cross](../assets/ui/cross.svg) near a civilian to inspect a pickpocket attempt. Select an item with ![vertical](../assets/ui/vertical.svg). Risk reflects weight, value, approach and visible witnesses. Getting behind the target improves odds. ![cross](../assets/ui/cross.svg) steals one; ![circle](../assets/ui/circle.svg) cancels. Owned salvage says STEAL. Locks take time to pick; tools are optional.
 
-Some witnesses warn you the first time. Repeated or serious theft can cost faction standing and add a bounty. A theft can fail, drawing guards. Stolen stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a defeated wanted survivor; jail staff treat injuries during the sentence. Press Cross to pay bail or start picking the lock. Improvised wire works in a pinch. Tools improve your chances. Circle cancels an attempt. Nearby actions free other prisoners or slaves. Work takes time and guards can catch you. Some freed people flee; others follow independently. Only Recruit adds them to your squad. Leave me alone dismisses a follower.
+Shop and house chests are private. Repeated theft can bring pocket checks for two days. Witnesses can warn you or raise a bounty. A theft can fail, drawing guards. Stolen stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a defeated wanted survivor. Jail staff treat injuries while you serve time. Press Cross for bail or a timed lockpick. Tools help, and a failed attempt adds to your sentence and bounty. Nearby Actions frees other prisoners or slaves. Work takes time and guards can catch you. Some freed people flee; others follow independently. Only Recruit adds them to your squad. Leave me alone dismisses a follower.
 
 ## 14. Factions
 
@@ -92,7 +92,7 @@ Contracts raise standing; theft lowers it. The Factions ledger shows separate wa
 
 Ask merchants or marshals for work. Freight needs a refundable deposit and four real goods; deliver through Journal at the destination. Escort caravans or patrol beside a guard for 12 silver per 30 seconds of nearby movement, plus a completion bonus. Stay within 8m; the employer warns you when wages pause. Named bounties pay more alive: subdue, carry and claim.
 
-Journal shows contracts and local agreements. Incidents renew naturally; nearby actions reveal them only when encountered. Armies can change town control. Strong leaders carry signature loot.
+Journal shows your current objective and where to claim pay. Incidents renew naturally; nearby actions reveal them only when encountered. Armies can change town control. Strong leaders carry signature loot.
 
 ## 16. Saves
 
@@ -128,17 +128,15 @@ CARGO: travel 80%, medicine 85%, ore 60%, bedroll 70% of carried weight. Worn ge
 
 FIGHT reduces melee attack/defence: travel -2, medicine 0, ore -7, bedroll -4. Bulky packs hurt stealth. Medicine aids first aid; bedrolls improve rest but are not beds. Unworn packs give no bonus.
 
-## 21. The Copper Road
+## 21. Finding Work
 
-Copper Road is a voluntary expedition. Find the wreck between Dusk Haven and Copper Cross. Treat Sora, then escort her to Nell at the stores. Stay within 18m.
-
-Repair the culvert after bringing Sora home: 3 timber, 1 iron bar and tools. Or pay Rell 450 for a toll truce; challenge him; or carry him alive to Nell. Each route changes trade and patrols. Claim payment once. Raid reprisals can follow capture or death. The ledger locates leads without issuing movement.
+Work is posted intermittently. Ask a merchant, marshal, innkeeper or smith, or ask locals what they have heard. If someone is hiring, the local contact will name the job. A town can have zero, one or two postings. After accepting one, allow time for new work. The Journal shows the current objective and where to claim payment.
 
 ## 22. Orders & Groups
 
 Squad management sets Balanced, Defensive, Keep range or Hold fire. Defensive gives +18 defence but never attacks. Ranged allies retreat if a foe closes within 3.5m. Projectiles travel and hit walls or allies: clear your firing line.
 
-The Assignment tab shows the direct job, combat orders, and spacing. Every follower tracks the controlled member. Use Triangle to switch to Priorities. The first available priority runs, so put Follow or Hold last. Your controlled character can start an assigned job after five idle seconds in Passive stance. Manual input takes control back.
+Assign each survivor to one of three groups and choose its leader. Map pins are bearings only. Walk with the analog stick; group members follow their leader. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume the Priority queue in Squad management.
 
 ## 23. Camp Work & Fuel
 
@@ -150,9 +148,9 @@ Campfires and forges burn one charge per production action. Add clean timber for
 
 ## 24. Trauma & Repair
 
-Bleeding drains blood and can kill. Dressings stop bleeding and treat organic wounds; trauma still limits maximum health. Food and bed rest slowly restore that limit.
+Unbandaged cuts worsen and bleeding can kill. Blunt wounds heal on their own. Dressings take time, then wounds and trauma recover gradually. Beds speed up recovery.
 
-Mechanical characters and prosthetics need spare parts. Medicine and sleep cannot repair metal. Health & recovery shows health, trauma and armor condition. Cloth restores equipment condition.
+Mechanical characters and prosthetics need timed repairs with spare parts. Medicine and sleep cannot repair metal. Health & recovery shows health, trauma and armor condition. Cloth restores equipment condition.
 
 Raiders near the chain yard may carry a fallen survivor away. Escape takes time away from guards. Tools speed it up. Free allies can unlock captives. Escapees are remembered for a day.
 

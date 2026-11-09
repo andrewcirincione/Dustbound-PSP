@@ -78,7 +78,7 @@ static void squad_control(void) {
     idle(6);
     assert(ash->x == moved && ash->autoattack && inventory_count(ash, MEDKIT) == kit);
     press(KEY_SQUARE);
-    idle(11);
+    idle(20);
     assert(reed->bleed == 0 && inventory_count(ash, MEDKIT) < kit);
     puts("PASS: Follow changes lead across formations; priorities tab; selected medic waits for idle and passive stance.");
 }
@@ -113,7 +113,7 @@ static void transfers_and_recovery(void) {
     ui.selection = row;
     press(KEY_CROSS);
     assert(ui.screen == SCREEN_WORLD && ash->taskKind == TASK_TREAT && ash->bleed > 0);
-    idle(4);
+    idle(ash->action + .2f);
     assert(ash->bleed == 0 && ash->treatedMask & (1 << LARM));
     float hp = ash->health[LARM], trauma = g.depth.actors[0].trauma[LARM];
     idle(20);
@@ -180,7 +180,7 @@ static void retreat_and_news(void) {
     snprintf(levelup, sizeof(levelup), "REED reached %s", skillNames[MEDICINE]);
     assert(strstr(ui.feed[1], levelup));
     int priority, offset;
-    log_tick(1.75f);
+    log_tick(.9f);
     log_current(&priority, &offset);
     assert(offset > 0);
     puts("PASS: fleeing scavenger holds a safe position; urgent squad warning queues ahead of ally level-up and scrolls.");

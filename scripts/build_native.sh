@@ -10,9 +10,11 @@ cc -O1 -g -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-fiel
 ./build/test-expansion
 cc -O1 -g -std=gnu99 -Wall -Wextra -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c src/render.c tests/test_render.c -lm -o build/test-render
 ./build/test-render
-mkdir -p build/v173
+mkdir -p build/v174
 cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_recovery.c -lm -o build/test-recovery
 ./build/test-recovery
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_town_play.c -lm -o build/test-town-play
+./build/test-town-play
 python3 scripts/audit_catalog.py
 cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_overhaul.c -lm -o build/test-overhaul
 ./build/test-overhaul

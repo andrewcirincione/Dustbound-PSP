@@ -90,8 +90,9 @@ void depth_enter_room(int building) {
         }
         int role = npc_role(b), type = g.buildings[building].type;
         if (!b->squad && depth_named(i) < 0 &&
+            b->faction == g.buildings[building].faction &&
             ((type == SHOP && role == ROLE_MERCHANT) || (type == BAR && role == ROLE_INNKEEPER) ||
-             (type == TOWER && b->kind == GUARD) || (type == HOUSE && role == ROLE_CITIZEN))) {
+             (type == TOWER && b->kind == GUARD))) {
             float d = distance(a->x, a->y, b->x, b->y);
             if (d < near) {
                 near = d;
@@ -99,10 +100,13 @@ void depth_enter_room(int building) {
             }
         }
     }
+    int home = g.buildings[building].type == HOUSE;
+    if (home)
+        keeper = home_occupant(building);
     if (keeper >= 0) {
         D.actors[keeper].room = room;
-        D.actors[keeper].rx = 3;
-        D.actors[keeper].ry = .9f;
+        D.actors[keeper].rx = home ? 2.6f : 3;
+        D.actors[keeper].ry = home ? 3.3f : .9f;
     }
 }
 void depth_leave_room(int building) {

@@ -23,7 +23,7 @@ void open_help(int topic) {
     ui.scroll=ui.helpTopic=0;
 }
 const StartScenario startScenarios[START_SCENARIOS] = {
-    {3, "Standard", "Start alone in the Dry Market, a Scavenger trading town. You have field dressings, lock tools, and enough silver to buy supplies or hire help."},
+    {3, "Standard", "Start alone in the Dry Market, a Scavenger trading town. You have field dressings and enough silver to buy supplies or hire help."},
     {11, "Hard", "Start at Shogun's Rest with a soldier's blade, armor, and combat training. There is little silver to spare, and the Iron Throne's war runs through this region."},
     {16, "Standard", "Start at Brass Junction with metal, coal, and a heavy pack. Labour and smithing give you a head start. Work the nearby deposits or trade your stock."},
     {8, "Hardest", "Start outside Black Mesa with 180 silver and a Union bounty. You know how to sneak and steal. Union patrols will look for you beyond the enclave."},
@@ -75,7 +75,7 @@ static void place_starting_squad(int origin) {
     g.discovered[town] = 1;
     reveal_area(a);
     find_context();
-    log_msg("%s near %s. Dusk Haven is marked on the atlas.", originNames[origin], start->name);
+    log_msg("%s near %s.", originNames[origin], start->name);
 }
 void character_begin(int origin) {
     Actor *a = &g.actors[g.selected];
@@ -168,6 +168,7 @@ static int guide_for(int s) {
         return 10;
     case SCREEN_SQUAD:
         return 11;
+    case SCREEN_CHEST:
     case SCREEN_THEFT:
         return 12;
     case SCREEN_FACTIONS:
@@ -558,48 +559,47 @@ int expansion_input(float dt, Input in) {
         }
         return 1;
     }
-    if(ui.screen==SCREEN_JOURNAL && (p&(KEY_L|KEY_R))) {
-        ui.journalTab=wrapi(ui.journalTab+(p&KEY_L?-1:1),2);ui.selection=ui.regionChoice=0;return 1;
-    }
-    if(ui.screen==SCREEN_JOURNAL && ui.journalTab==1) {
-        if(p&(KEY_CIRCLE|KEY_START)) {open_view(SCREEN_WORLD);return 1;}
-        if(p&KEY_UP){ui.selection=wrapi(ui.selection-1,3);ui.regionChoice=0;}
-        if(p&KEY_DOWN){ui.selection=wrapi(ui.selection+1,3);ui.regionChoice=0;}
-        if(p&(KEY_LEFT|KEY_RIGHT))ui.regionChoice=1-ui.regionChoice;
-        if(p&KEY_CROSS)regional_resolve(ui.selection,ui.regionChoice);
-        if(p&KEY_SQUARE) {
-            int r=ui.selection,t=regional_town(r);open_view(SCREEN_MAP);ui.mapTown=t;ui.mapZoom=1;
-            ui.mapX=r==1&&!g.regions.outcome[1]?g.regions.campX:towns[t].x;
-            ui.mapY=r==1&&!g.regions.outcome[1]?g.regions.campY:towns[t].y;
-        }
-        return 1;
-    }
     if (ui.screen == SCREEN_JOURNAL || ui.screen == SCREEN_FACTIONS) {
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(SCREEN_WORLD);
             return 1;
         }
-        int n = ui.screen == SCREEN_JOURNAL ? CONTRACTS : FACTIONS;
+        int n = ui.screen == SCREEN_JOURNAL ? journal_count() : FACTIONS;
+        if (!n) return 1;
         if (p & KEY_UP)
             ui.selection = wrapi(ui.selection - 1, n);
         if (p & KEY_DOWN)
             ui.selection = wrapi(ui.selection + 1, n);
         if (ui.screen == SCREEN_JOURNAL && (p & KEY_CROSS))
-            complete_contract(ui.selection);
+            complete_contract(journal_slot(ui.selection));
         if (ui.screen == SCREEN_JOURNAL && (p & KEY_SQUARE)) {
-            Contract *c = &g.contracts[ui.selection];
-            if(c->active==1&&(c->type==5||c->type==6||c->type==7)){log_msg("Find the employer or quarry in the world; no live map tracking.");return 1;}
-            if (c->active == 1) {
-                int town = (c->type == 0 && c->progress < c->needed)||c->type==4 ? c->target : c->town;
+            float x, y;
+            int town = contract_location(journal_slot(ui.selection), &x, &y);
+            if (town >= 0) {
                 open_view(SCREEN_MAP);
                 ui.mapTown = town;
-                ui.mapX = towns[town].x;
-                ui.mapY = towns[town].y;
-                ui.mapZoom = 1; /* A contract may name a town not yet discovered. Keep its exact pin. */
-                log_msg("Contract: %s. Use this bearing and walk there.", towns[town].name);
+                ui.mapX = x;
+                ui.mapY = y;
+                ui.mapZoom = 1;
+                log_msg("Contract location marked on the map.");
             } else
                 log_msg("Select an active contract to locate its destination.");
         }
+        return 1;
+    }
+    if (ui.screen == SCREEN_CHEST) {
+        if (p & (KEY_CIRCLE | KEY_START)) {
+            open_view(SCREEN_WORLD);
+            return 1;
+        }
+        int count = interior_chest_count();
+        if (count) {
+            if (p & KEY_UP) ui.selection = wrapi(ui.selection - 1, count);
+            if (p & KEY_DOWN) ui.selection = wrapi(ui.selection + 1, count);
+            if (p & KEY_CROSS) interior_chest_take(ui.selection);
+        }
+        if (!interior_chest_item(ui.selection))
+            ui.selection = 0;
         return 1;
     }
     if (ui.screen == SCREEN_LOOT) {
@@ -684,10 +684,12 @@ int expansion_input(float dt, Input in) {
         }
         Actor *b = &g.actors[n];
         int town = town_near(a->x, a->y, 14), prison = a->prisonTime > 0 && n == g.selected,
-            count = prison               ? 3
-                    : ui.dialogPage == 1 ? 9
-                                         : dialogue_count(n);
+            count = prison ? 3 : ui.dialogPage == DIALOG_WORK ? work_dialogue_count(town)
+                    : ui.dialogPage == DIALOG_INSPECTION ? 2
+                    : (ui.dialogPage == DIALOG_DISMISS || ui.dialogPage == DIALOG_WORK_HINT) ? 1 : dialogue_count(n);
         if (p & (KEY_CIRCLE | KEY_START)) {
+            if (ui.dialogPage == DIALOG_INSPECTION)
+                pocket_inspection(n, 0);
             open_view(SCREEN_WORLD);
             return 1;
         }
@@ -697,13 +699,22 @@ int expansion_input(float dt, Input in) {
             ui.selection = wrapi(ui.selection + 1, count);
         if (p & KEY_CROSS) {
             int choice = ui.selection;
-            if (prison) {
+            if (ui.dialogPage == DIALOG_WORK_HINT) {
+                ui.dialogPage = 0;
+                ui.selection = 0;
+            } else if (ui.dialogPage == DIALOG_INSPECTION || ui.dialogPage == DIALOG_DISMISS) {
+                if (ui.dialogPage == DIALOG_INSPECTION)
+                    pocket_inspection(n, choice == 0);
+                open_view(SCREEN_WORLD);
+            } else if (prison) {
                 if (choice == 2 || (choice == 0 && jail_bail(n)) || (choice == 1 && jail_pick_start(n)))
                     open_view(SCREEN_WORLD);
-            } else if (ui.dialogPage == 1) {
-                if (choice < 8)
-                    accept_contract(town, choice);
-                else {
+            } else if (ui.dialogPage == DIALOG_WORK) {
+                int kind = contract_offer(town, choice);
+                if (kind >= 0) {
+                    if (accept_contract(town, kind))
+                        ui.selection = 0;
+                } else {
                     ui.dialogPage = 0;
                     ui.selection = 0;
                 }
@@ -723,7 +734,7 @@ int expansion_input(float dt, Input in) {
                         log_msg("No market on this stretch of road.");
                     break;
                 case 1:
-                    ui.dialogPage = 1;
+                    ui.dialogPage = n == work_contact(town) ? DIALOG_WORK : DIALOG_WORK_HINT;
                     ui.selection = 0;
                     break;
                 case 2:
@@ -767,11 +778,6 @@ int expansion_input(float dt, Input in) {
                     break;
                 case 11:
                     merc_dismiss(n);
-                    break;
-                case 13:
-                    ui.journalTab=1;
-                    open_view(SCREEN_JOURNAL);
-                    ui.selection=regional_at(b->x,b->y);ui.regionChoice=0;
                     break;
                 case 12:
                     ui.dialogPage = 3;

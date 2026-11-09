@@ -30,15 +30,7 @@ const char *npc_role_name(const Actor *a) {
         const char *leader=politics_leader_title(ai);if(leader)return leader;
         int elite=civil_elite_index(ai);if(elite>=0)return eliteDefs[elite].title;
         if(g.society.freed[ai])return "FREED SURVIVOR";
-        int n = depth_named(ai);
-        if (n == NPC_SORA)
-            return "ENGINEER";
-        if (n == NPC_NELL)
-            return "QUARTERMASTER";
-        if (n == NPC_RELL)
-            return "TOLL WARLORD";
-        if (n == NPC_ORIN || n == NPC_TAMSIN)
-            return "CHAIN YARD SURVIVOR";
+
     }
     if (a->kind == RAIDER)
         return "RAIDER";
@@ -55,9 +47,6 @@ int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
         return 0;
     if(limb_surgeon(actor))return 5;
-    int named = depth_named(actor);
-    if (named >= 0 && named <= NPC_TAMSIN)
-        return named == NPC_NELL ? 5 : (named == NPC_RELL || named == NPC_SORA) ? 4 : 3;
     int n = 0;
     while (n < 6 && services[npc_role(&g.actors[actor])][n] >= 0)
         n++;
@@ -69,8 +58,7 @@ int dialogue_action(int actor, int row) {
     if(limb_surgeon(actor)){static const int actions[]={16,17,3,6,8};return actions[row];}
     if (npc_role(&g.actors[actor]) == ROLE_MERCENARY && merc_slot(&g.actors[actor]) >= 0 && row == 0)
         return 11;
-    int action=services[npc_role(&g.actors[actor])][row];
-    return action==12 && regional_at(g.actors[actor].x,g.actors[actor].y)>=0 ? 13:action;
+    return services[npc_role(&g.actors[actor])][row];
 }
 const char *dialogue_option(int actor, int row) {
     static const char *labels[] = {"Show me your stock.",
@@ -85,14 +73,11 @@ const char *dialogue_option(int actor, int row) {
                                    "Escort me. 240 silver / day",
                                    "Guard my camp. 180 silver / day",
                                    "End contract. No refund.",
-                                   "Tell me about your faction.","Discuss the local conflict.","Trade routes and prices.","Who wants me?"};
-    if (depth_named(actor) >= 0 && depth_named(actor) <= NPC_TAMSIN)
-        return depth_option(actor, row);
+                                   "Tell me about your faction.","","Trade routes and prices.","Who wants me?"};
     int action = dialogue_action(actor, row);
     if(action==16)return "Removal surgery. 400 silver";
     if(action==17)return "Show me mechanical limbs.";
     if(action==18)return "What have you heard?";
-    if(action==13)return "Discuss the local conflict.";
     if(action==2 && !regional_bed_cost(town_near(g.actors[actor].x,g.actors[actor].y,14)))return "Rest at the sanctuary. Free";
     if (action == 6 && npc_role(&g.actors[actor]) == ROLE_RECRUIT)
         return "Join my expedition. 300 silver";
@@ -151,8 +136,6 @@ const char *context_action(void) {
         return "ENTER";
     if (ui.contextKind == 0) {
         Actor *b = &g.actors[n];
-        if (depth_named(n) >= 0 && depth_named(n) <= NPC_TAMSIN)
-            return "STORY / RESCUE";
         return b->squad                        ? "RESCUE OPTIONS"
                : b->dead || b->unconscious > 0 ? "LOOT"
                : g.actors[g.selected].sneaking ? "PICKPOCKET"
@@ -333,8 +316,6 @@ const char *faction_identity(int f) {
     return l[f >= 0 && f < FACTIONS ? f : 0];
 }
 const char *npc_rumor(const Actor *a) {
-    int r=regional_at(a->x,a->y);
-    if(r>=0) return g.regions.outcome[r]?regional_result(r,g.regions.outcome[r]-1):regional_story(r);
     switch (npc_role(a)) {
     case ROLE_MERCHANT:
         return a->faction == UNION ? "Compact stock includes greatswords and rifles. Copper Cross sells "

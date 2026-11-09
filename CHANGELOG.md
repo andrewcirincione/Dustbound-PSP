@@ -1,3 +1,13 @@
+# 0.17.4 — Town life and combat
+
+- Towns have zero to two work offers from an identifiable local contact. The Journal tracks current objectives, progress, turn-in and payment. Retired the scripted Copper Road and regional quest menus.
+- Shop and home chests hold owned supplies, with replenishment after two to four days. Residents sometimes stay home, and three recent thefts trigger temporary pocket searches for two in-game days.
+- Expanded the pack to ten visible rows, enlarged the worn-gear preview, removed the creator's head inset, grouped skills and showed exact XP progress. Bow and crossbow training is listed under Weapons.
+- Fight stance answers nearby aggressors and attacks at the end of recovery. Passive stows the weapon. Armed townspeople rally with the watch. Enemy formations withdraw under severe losses. Leg injuries cause slow limping or crawling.
+- Put resting survivors on their beds, slowed wound recovery and scaled first-aid time to injury severity. Hungry squad members share rations with nearby allies.
+- Blended region edges and daylight, reset the PSP idle timer during analog input, clarified ore seams, repaired the Dry Market shop overlap and sped up the busy news ticker.
+- Save format v21 retains v20 injuries and migrates earlier expeditions.
+
 # 0.17.3 — Recovery
 
 - Blunt injuries recover on their own. Open cuts worsen and bleed until they clot or are dressed. Severe head trauma and blood loss can kill. Deep vital injuries can cause a Toughness-based recovery coma.

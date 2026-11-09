@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.17.3"
+#define VERSION "0.17.4"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -33,6 +33,7 @@
 #define GEARS 6
 #define FACTIONS 8
 #define CONTRACTS 24
+#define DAY_SECONDS 1800
 #define GUIDE_PAGES 25
 #define SAVE_SLOTS 7
 #define OLD_TOWNS 16
@@ -69,6 +70,7 @@ enum {
     WOUND_FLAGS = (WOUND_TONIC << 1) - 1
 };
 enum { TASK_CELL_LOCK = 5, TASK_TREAT, TASK_JAIL_CARE };
+enum { REST_DURATION = 300 };
 enum { TREAT_DRESS, TREAT_PRESSURE, TREAT_REPAIR, TREAT_CLINIC };
 enum {
     NONE,
@@ -142,7 +144,7 @@ enum {
     SCREEN_ASSIST,
     SCREEN_LOG, SCREEN_EXPEDITION, SCREEN_ORDERS, SCREEN_CAMP, SCREEN_CARE, SCREEN_ENCOUNTER, SCREEN_LAYERS,
     SCREEN_THEFT, SCREEN_ENGAGE, SCREEN_ACTIONS, SCREEN_LIMBS, SCREEN_LIMBFIT, SCREEN_SURGERY, SCREEN_LIMBCONFIRM, SCREEN_LIFE, SCREEN_POLITICS,
-    SCREEN_PASS, SCREEN_SCENARIOS
+    SCREEN_PASS, SCREEN_SCENARIOS, SCREEN_CHEST
 };
 enum {
     KEY_UP = 1,
@@ -211,6 +213,18 @@ typedef struct {
 typedef struct {
     int active, type, town, target, item, needed, progress, reward, completed, baseline;
 } Contract;
+enum { CONTRACT_DISPATCH, CONTRACT_ORE, CONTRACT_HUNT, CONTRACT_RELIC, CONTRACT_FREIGHT,
+       CONTRACT_ESCORT, CONTRACT_PATROL, CONTRACT_BOUNTY, CONTRACT_TYPES };
+enum { DIALOG_WORK = 1, DIALOG_INSPECTION = 6, DIALOG_DISMISS = 7, DIALOG_WORK_HINT = 8 };
+typedef struct {
+    int layout;
+    int chestRefresh[MAX_BUILDINGS];
+    int boardCycle[TOWNS];
+    unsigned char boardTaken[TOWNS], theftCount[TOWNS];
+    float theftUntil[TOWNS], searchAfter[TOWNS], boardAfter[TOWNS];
+    float huntX[CONTRACTS], huntY[CONTRACTS];
+    float squadHitAt[MAX_ACTORS];
+} TownLife;
 typedef struct {
     int exists, valid, version, day, squad, money;
     char name[16];
@@ -267,8 +281,9 @@ typedef struct {
     FrontierWar war;
     unsigned theftWarnings;
     struct { int actor, patient, bed, generated, day; float until; } roadsideAid;
+    TownLife townLife; /* v21 extension */
 } Game;
-enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
+enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE, ROOM_CHEST };
 typedef struct {
     float x, y, w, d;
     int art, action;
@@ -282,6 +297,12 @@ int interior_context(void);
 const char *interior_prompt(void);
 void interior_interact(void);
 void interior_move(float dx, float dy, float dt);
+int interior_chest_count(void);
+const Stack *interior_chest_item(int row);
+void interior_chest_take(int row);
+int home_occupant(int building);
+int rest_at(Actor *a, int bed, float x, float y, int room, int price);
+int actor_in_bed(const Actor *a);
 typedef struct {
     int screen, selection, scroll, tab, paused, speed, contextKind, contextIndex, tradeTown, sell, slot,
         confirmAction, titleChoice, waypoint;
@@ -291,7 +312,7 @@ typedef struct {
     char feed[12][100];
     unsigned char feedPriority[12];
     int feedCount, wantedTown, wantedValue;
-    float feedClock, statusClock;
+    float feedClock, feedScroll, statusClock;
     int helpReturn, helpTopic, dialogActor, dialogPage, forgeSlot, forgeFamily, forgeMaterial, forgeQuality;
     int createRow, createOrigin, createBody, createSkin, createHair, createHairColor, createBeard,
         createRace;
@@ -307,6 +328,8 @@ typedef struct {
     float travelStall, travelLastX, travelLastY;
     float playerIdle;
     int passSlot, squadPage, scenarioReturn;
+    uint32_t chatterSeen;
+    float chatterNext;
     unsigned char jobGather[MAX_ACTORS], danger[MAX_ACTORS], priorityJob[MAX_ACTORS];
     char workNotice[80];
 } UI;
@@ -359,24 +382,16 @@ int combat_candidates(void);
 void command_attack(int n);
 int actor_relation(int n);
 void frontier_restock(int town);
-extern const char *regional_names[3];
 int regional_town(int region);
 int regional_at(float x,float y);
 void regional_init(void);
 int regional_validate(const Game *state);
 int regional_named(int actor);
 int regional_hostile(const Actor *a,const Actor *b);
-int regional_toll_left(void);
 float regional_price(int town,int item);
 void regional_restock(int town);
 int regional_bed_cost(int town);
 int regional_well(Actor *actor,Building *well);
-const char *regional_story(int region);
-const char *regional_choice(int region,int choice);
-void regional_requirements(int region,int choice,char *out,int size);
-const char *regional_result(int region,int choice);
-int regional_resolve(int region,int choice);
-void regional_tick(void);
 void frontier_tick(float dt);
 int merc_slot(const Actor *a);
 int merc_hire(int actor, int mode);
@@ -387,6 +402,18 @@ const char *npc_role_name(const Actor *a);
 int dialogue_count(int actor);
 int dialogue_action(int actor, int row);
 const char *dialogue_option(int actor, int row);
+int dialogue_dismissive(int actor);
+int work_dialogue_count(int town);
+int work_contact(int town);
+const char *work_hint(int town, int speaker);
+int contract_destination(int town, int faction);
+int society_job_available(int town, int kind);
+void town_life_init(void);
+float settlement_time(void);
+void town_theft(int town);
+void pocket_inspection(int guard, int allow);
+int nearest_ore(float x, float y, float reach, int type);
+enum { CORE_SKILL_ROWS = SKILLS - 1 };
 float context_distance(void);
 float context_reach(void);
 const char *context_name(void);
@@ -408,6 +435,7 @@ const char *pass_blocked(int actor);
 int automatic_work(const Actor *a);
 void work_notice(const Actor *a, const char *action, const char *target);
 int wound_needs_dressing(const Actor *a);
+float treatment_burden(const Actor *a);
 int civilian_flees(const Actor *a);
 void dress_wounds(Actor *a);
 void injury_dress(Actor *a, const DepthActor *z);
@@ -515,6 +543,17 @@ const char *ambient_line(int actor);
 int forge_equipment(int item);
 int storage_transfer(int building, int fromStorage, int slot);
 int accept_contract(int town, int kind);
+int contract_offer(int town, int row);
+int journal_count(void);
+int journal_slot(int row);
+const char *contract_title(int kind);
+int contract_turn_in(int slot);
+int contract_item_count(int item, int town);
+int contract_use_items(int item, int qty, int town);
+int contract_ready(int slot);
+void contract_tick(void);
+void contract_defeat(Actor *victim);
+int contract_location(int slot, float *x, float *y);
 int complete_contract(int index);
 void contract_description(int index, char *dst, int size);
 int pickpocket(int actor);

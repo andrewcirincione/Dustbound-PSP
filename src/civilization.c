@@ -84,6 +84,7 @@ static void building_position(int style,int type,int seq,float*x,float*y){
  static const float cult[13][2]={{-5,-7},{7,-2},{6,5},{0,-8},{2,1},{-5,4},{7,-7},{-8,-3},{4,9},{9,5},{-10,-8},{-8,7},{-3,-3}};
  const float(*p)[2]=style==1?court:style==2?temple:style==3?village:style==4?foundry:style==5?cult:standard;
  *x=p[type][0];*y=p[type][1];if(type==HOUSE&&seq){if(style==1||style==2){*x=7;*y=-4+(seq-1)*5;}else{*x+=9-(seq-1)*3;*y+=6+seq;}}
+ if (style == 3 && type == HOUSE && seq == 1) { *x = 10; *y = -1; }
  if(type==WALL){*x=-11+seq*2;*y=-10;}
 }
 static void settlement_layout(void){

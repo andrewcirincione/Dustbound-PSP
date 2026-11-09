@@ -1,10 +1,14 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.17.3 — Recovery
+## 0.17.4 — Town life and combat
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
-[Download 0.17.1](https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v0.17.1) · [Three Banners design](docs/FRONTIER_WAR.md) · [Field guide](docs/FIELD_GUIDE.md)
+[Three Banners design](docs/FRONTIER_WAR.md) · [Field guide](docs/FIELD_GUIDE.md)
+
+Town work appears in small batches. Ask around for the person hiring, and use the Journal for the current objective and turn-in. Shop and household chests contain owned goods. Residents come and go, chests replenish after a few days, and repeated theft prompts temporary pocket searches.
+
+Fight stance automatically answers nearby attacks and repeats at the weapon's cooldown. Passive stance stows the weapon. Leg injuries can cause a limp or a crawl. Bed rest places the survivor on the mattress, and serious wounds take longer to dress and heal.
 
 Nineteen settlements include Brass Junction, Vermilion Keep and Cinder Abbey. The Compact, Shogunate and Ash Monastery send armies against one another. Captured cities can have guarded labor yards, and nearby residents pass on news of actual raids and victories.
 
@@ -37,7 +41,7 @@ Weapon handling now changes the actual strike speed. Relaxed carry and combat gu
 
 ## Install
 
-Extract `Dustbound-0.17.3-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v20 reads prior expeditions and remembers active treatments, recovery comas, and rescues. Existing equipment, training and town control carry over.
+Extract `Dustbound-0.17.4-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v21 reads earlier expeditions and remembers theft alerts, chest contents, postings and active treatments. Existing equipment, training and town control carry over.
 
 ## Controls
 
@@ -45,8 +49,9 @@ Extract `Dustbound-0.17.3-PSP.zip` to the memory-stick root, or replace `PSP/GAM
 |---|---|
 | Analog stick | Walk; interrupt work |
 | Cross | Nearby actions; confirm menu choice |
-| Circle | Back |
+| Circle | Sneak in the world, back in menus |
 | Triangle | Inventory |
+| Square | Fight or Passive stance in the world |
 | Select | Atlas in the world; contextual guide in menus |
 | Start | Pause menu |
 | D-pad | Information shortcuts / menu selection; never walking |

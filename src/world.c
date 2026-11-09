@@ -518,21 +518,9 @@ int start_sleep(int town) {
         log_msg("Enter the inn and choose Sleep in bed beside a bed. 25 silver.");
         return 0;
     }
-    if (g.buildings[bed].owner < 0 && !trail_bed(bed)) {
-        int cost=regional_bed_cost(town);
-        if (town < 0 || g.money < cost) {
-            log_msg("An inn bed costs %d silver.",cost);
-            return 0;
-        }
-        g.money -= cost;
-    }
-    a->taskKind = 3;
-    a->taskIndex = bed;
-    a->action = 180;
-    a->autoattack = 0;
-    ui.screen = SCREEN_WORLD;
-    log_msg("Sleeping. Move to wake; bleeding must be bandaged.");
-    return 1;
+    Building *b = &g.buildings[bed];
+    int price = b->owner < 0 && !trail_bed(bed) && town >= 0 ? regional_bed_cost(town) : 0;
+    return rest_at(a, bed, b->x, b->y, 0, price);
 }
 int doctor_heal(int town) {
     Actor *a = &g.actors[g.selected];
@@ -546,72 +534,437 @@ int doctor_heal(int town) {
     }
     return begin_treatment(g.selected, g.selected, TREAT_CLINIC, -1);
 }
-int accept_contract(int town, int kind) {
-    if(kind>=4)return society_contract(town,kind);
-    if (town < 0 || town >= TOWNS || kind < 0 || kind > 3)
-        return 0;
+float settlement_time(void) {
+    return (g.day - 1.f + g.dayTime / 24.f) * DAY_SECONDS;
+}
+int nearest_ore(float x, float y, float reach, int type) {
+    int best = -1;
+    for (int i = 0; i < g.nodeCount; i++) {
+        const Node *n = &g.nodes[i];
+        if (n->type > NODE_COPPER || (type >= 0 && n->type != type) || !n->remaining ||
+            fabsf(x - n->x) >= reach || fabsf(y - n->y) >= reach)
+            continue;
+        float d = distance(x, y, n->x, n->y);
+        if (d < reach) {
+            reach = d;
+            best = i;
+        }
+    }
+    return best;
+}
+void town_life_init(void) {
+    if (g.townLife.layout)
+        return;
+    g.townLife.layout = 1;
+    /* Old expeditions retain the people and terrain, with ordinary interactions. */
+    for (int i = 0; i < DEPTH_NPCS; i++)
+        g.depth.npc[i] = -1;
+    /* Existing scrap villages had a house at the shop's exact location. */
+    for (int i = 0; i < g.buildingCount; i++) {
+        Building *b = &g.buildings[i];
+        if (b->type != HOUSE || b->owner >= 0)
+            continue;
+        int t = town_near(b->x, b->y, 15);
+        if (t < 0 || civil_style(t) != 3)
+            continue;
+        for (int j = 0; j < g.buildingCount; j++) {
+            const Building *shop = &g.buildings[j];
+            if (shop->type == SHOP && shop->owner < 0 &&
+                distance(b->x, b->y, shop->x, shop->y) < 1) {
+                b->x = towns[t].x + 10;
+                b->y = towns[t].y - 1;
+                break;
+            }
+        }
+    }
+    /* Starter towns have a real seam close enough to find on a first outing. */
+    for (int i = 0; i < START_SCENARIOS; i++) {
+        int t = startScenarios[i].town;
+        float x = towns[t].x, y = towns[t].y;
+        if (nearest_ore(x, y, 17, NODE_ORE) >= 0)
+            continue;
+        for (int j = 0; j < 16; j++) {
+            float angle = j * .392699f + .40f;
+            float ox = x + 13 * cosf(angle), oy = y + 13 * sinf(angle);
+            int nearby = 0;
+            for (int n = 0; n < g.nodeCount; n++)
+                if (distance(ox, oy, g.nodes[n].x, g.nodes[n].y) < 1.3f) {
+                    nearby = 1;
+                    break;
+                }
+            if (!nearby && can_walk(ox, oy) && can_walk(ox + .8f, oy) && can_walk(ox, oy + .8f)) {
+                add_node(ox, oy, NODE_ORE, FREE, NONE, 0);
+                break;
+            }
+        }
+    }
+}
+const char *contract_title(int kind) {
+    static const char *titles[] = {
+        "Town dispatch", "Iron for the smithy", "Clear the roads", "Salvage for repairs",
+        "Freight delivery", "Caravan escort", "Watch patrol", "Named bounty"
+    };
+    return kind >= 0 && kind < CONTRACT_TYPES ? titles[kind] : "Work";
+}
+#define HUNT_REACH 96.f
+static int quarry(const Actor *a) {
+    return !a->squad && (a->kind == BEAST || (a->kind == RAIDER && a->faction == HOSTILE));
+}
+static int hunt_report(int town, float *x, float *y) {
+    float closest = HUNT_REACH;
+    int count = 0;
+    for (int i = 0; i < g.actorCount; i++) {
+        const Actor *a = &g.actors[i];
+        if (!quarry(a) || !conscious(a) || a->defeatCredited || actor_inside(a) ||
+            g.depth.actors[i].captive || population_hidden(i))
+            continue;
+        float d = distance(a->x, a->y, towns[town].x, towns[town].y);
+        if (d >= HUNT_REACH)
+            continue;
+        count++;
+        if (d < closest) {
+            closest = d;
+            *x = a->x;
+            *y = a->y;
+        }
+    }
+    for (int i = 0; i < POP_GROUPS && g.population.version; i++) {
+        const WorldEvent *e = &g.population.groups[i];
+        if (e->spawned || (e->type != POP_RAIDERS && e->type != POP_BEASTS))
+            continue;
+        float d = distance(e->x, e->y, towns[town].x, towns[town].y);
+        if (d >= HUNT_REACH)
+            continue;
+        int standing = 0;
+        for (int j = 0; j < e->count; j++)
+            if (!(g.population.state[i].detached & (1u << j)) && !e->reserve[j].dead &&
+                e->reserve[j].unconscious <= 0 && !e->reserve[j].defeatCredited)
+                standing++;
+        count += standing;
+        if (standing && d < closest) {
+            closest = d;
+            *x = e->x;
+            *y = e->y;
+        }
+    }
+    return count >= 3;
+}
+static int posting_cycle(int town) { return 1 + (g.day + town % 2) / 2; }
+int contract_offer(int town, int row) {
+    if (town < 0 || town >= TOWNS || row < 0)
+        return -1;
+    int cycle = posting_cycle(town);
+    if (g.townLife.boardCycle[town] != cycle && settlement_time() < g.townLife.boardAfter[town])
+        return -1;
+    unsigned mix = (g.seed ^ (town + 1u) * 2654435761u) + cycle * 2246822519u;
+    mix ^= mix >> 16;
+    int count = mix % 3;
+    unsigned taken = g.townLife.boardCycle[town] == cycle ? g.townLife.boardTaken[town] : 0;
+    for (int j = 0; j < count; j++) {
+        int kind = ((mix >> 8) + j * 3) % CONTRACT_TYPES;
+        if (taken & (1u << kind))
+            continue;
+        int already = 0;
+        for (int i = 0; i < CONTRACTS; i++)
+            if (g.contracts[i].active == 1 && g.contracts[i].town == town &&
+                g.contracts[i].type == kind)
+                already = 1;
+        float x, y;
+        if (already || (kind == CONTRACT_HUNT && !hunt_report(town, &x, &y)) ||
+            (kind >= CONTRACT_ESCORT && !society_job_available(town, kind)))
+            continue;
+        if (row-- == 0)
+            return kind;
+    }
+    return -1;
+}
+int journal_slot(int row) {
     for (int i = 0; i < CONTRACTS; i++)
-        if (g.contracts[i].active == 1 && g.contracts[i].town == town && g.contracts[i].type == kind) {
+        if (g.contracts[i].active && row-- == 0)
+            return i;
+    return -1;
+}
+int journal_count(void) {
+    int count = 0;
+    for (int i = 0; i < CONTRACTS; i++)
+        count += g.contracts[i].active != 0;
+    return count;
+}
+int work_dialogue_count(int town) {
+    int rows = 0;
+    while (contract_offer(town, rows) >= 0)
+        rows++;
+    return rows + 1;
+}
+int work_contact(int town) {
+    if (town < 0 || town >= TOWNS)
+        return -1;
+    int best = -1;
+    unsigned best_score = 0;
+    for (int i = 0; i < g.actorCount; i++) {
+        const Actor *a = &g.actors[i];
+        if (a->squad || a->homeTown != town || a->faction != g.townOwner[town] || !conscious(a) ||
+            a->prisonTime > 0 || a->target >= 0 || population_owned(i) || g.depth.actors[i].captive ||
+            distance(a->x, a->y, towns[town].x, towns[town].y) > 16)
+            continue;
+        int role = npc_role(a);
+        if (role != ROLE_MERCHANT && role != ROLE_MARSHAL && role != ROLE_INNKEEPER && role != ROLE_SMITH)
+            continue;
+        unsigned score = (g.seed ^ ((i + 1u) * 2654435761u)) + posting_cycle(town) * 97u;
+        if (best < 0 || score > best_score) {
+            best = i;
+            best_score = score;
+        }
+    }
+    return best;
+}
+const char *work_hint(int town, int speaker) {
+    static char text[120];
+    int contact = work_contact(town);
+    if (contract_offer(town, 0) < 0 || contact < 0)
+        return "I don't know of any paying work here today.";
+    if (contact == speaker)
+        return "I've got work, if you're looking to earn some silver.";
+    const Actor *a = &g.actors[contact];
+    int role = npc_role(a);
+    const char *where = role == ROLE_MERCHANT ? "the trading post" : role == ROLE_INNKEEPER ? "the inn" :
+                        role == ROLE_SMITH ? "the smithy" : "the watch post";
+    snprintf(text, sizeof(text), "Ask %s by %s. They have some work.", a->name, where);
+    return text;
+}
+int contract_destination(int town, int faction) {
+    float best = WORLD * 2.f;
+    int target = -1;
+    for (int t = 0; t < TOWNS; t++) {
+        int owner = g.townOwner[t];
+        if (t == town || t == 7 || t == 11 || t == 14 || owner == HOSTILE ||
+            g.rep[owner] < -25 || war_rivals(faction, owner))
+            continue;
+        float d = distance(towns[town].x, towns[town].y, towns[t].x, towns[t].y);
+        if (d < best) {
+            best = d;
+            target = t;
+        }
+    }
+    return target < 0 ? (town + 1) % TOWNS : target;
+}
+static void take_posting(int town, int kind) {
+    int cycle = posting_cycle(town);
+    if (g.townLife.boardCycle[town] != cycle) {
+        g.townLife.boardCycle[town] = cycle;
+        g.townLife.boardTaken[town] = 0;
+    }
+    g.townLife.boardTaken[town] |= 1u << kind;
+    g.townLife.boardAfter[town] = settlement_time() + DAY_SECONDS * .7f;
+}
+static int contract_carrier(const Actor *a, int town) {
+    return a->active && a->squad && !a->dead &&
+           (town < 0 || town_near(a->x, a->y, 14) == town);
+}
+int contract_item_count(int item, int town) {
+    int count = 0;
+    for (int i = 0; i < g.actorCount; i++)
+        if (contract_carrier(&g.actors[i], town))
+            count += inventory_count(&g.actors[i], item);
+    return count;
+}
+int contract_use_items(int item, int qty, int town) {
+    if (contract_item_count(item, town) < qty)
+        return 0;
+    for (int i = 0; qty && i < g.actorCount; i++) {
+        Actor *a = &g.actors[i];
+        if (contract_carrier(a, town)) {
+            int take = (int)fminf(qty, inventory_count(a, item));
+            if (take && inventory_remove(a, item, take))
+                qty -= take;
+        }
+    }
+    return 1;
+}
+int contract_turn_in(int slot) {
+    const Contract *c = &g.contracts[slot];
+    return c->type == CONTRACT_FREIGHT ? c->target : c->town;
+}
+int contract_ready(int slot) {
+    const Contract *c = &g.contracts[slot];
+    if (c->active != 1)
+        return 0;
+    if (c->type == CONTRACT_BOUNTY) {
+        int who = g.society.jobActor[slot] - 1;
+        return who >= 0 && who < g.actorCount && g.actors[g.selected].carrying == who &&
+            g.actors[who].bountyReward > 0 && (g.actors[who].dead || g.actors[who].unconscious > 0);
+    }
+    return c->item ? contract_item_count(c->item, -1) >= c->needed : c->progress >= c->needed;
+}
+static void contract_update(Contract *c, int progress) {
+    if (c->progress == progress)
+        return;
+    c->progress = progress;
+    if (progress >= c->needed)
+        log_level("%s ready. Claim at %s.", contract_title(c->type),
+                  towns[contract_turn_in((int)(c - g.contracts))].name);
+    else
+        log_level("%s: %d/%d.", contract_title(c->type), progress, c->needed);
+}
+void contract_tick(void) {
+    for (int i = 0; i < CONTRACTS; i++) {
+        Contract *c = &g.contracts[i];
+        if (c->active != 1)
+            continue;
+        if (c->item)
+            contract_update(c, (int)fminf(c->needed, contract_item_count(c->item, -1)));
+        else if (c->type == CONTRACT_DISPATCH && c->progress < c->needed) {
+            const Actor *a = &g.actors[g.selected];
+            if (conscious(a) && town_near(a->x, a->y, 12) == c->target)
+                contract_update(c, c->needed);
+        } else if (c->type == CONTRACT_BOUNTY)
+            contract_update(c, contract_ready(i));
+    }
+}
+void contract_defeat(Actor *victim) {
+    if (!quarry(victim))
+        return;
+    for (int i = 0; i < CONTRACTS; i++) {
+        Contract *c = &g.contracts[i];
+        if (c->active == 1 && c->type == CONTRACT_HUNT && c->progress < c->needed &&
+            (c->baseline >= 0 || distance(victim->x, victim->y, towns[c->town].x, towns[c->town].y) < HUNT_REACH))
+            contract_update(c, c->progress + 1);
+    }
+}
+int contract_location(int slot, float *x, float *y) {
+    if (slot < 0 || slot >= CONTRACTS)
+        return -1;
+    const Contract *c = &g.contracts[slot];
+    if (c->active != 1)
+        return -1;
+    int town = contract_turn_in(slot);
+    if (!contract_ready(slot)) {
+        if (c->type == CONTRACT_DISPATCH || c->type == CONTRACT_ESCORT)
+            town = c->target;
+        if (c->type == CONTRACT_HUNT && g.townLife.huntX[slot] > 0) {
+            *x = g.townLife.huntX[slot];
+            *y = g.townLife.huntY[slot];
+            return town;
+        }
+        if (c->type == CONTRACT_BOUNTY) {
+            int who = g.society.jobActor[slot] - 1;
+            if (who >= 0 && who < g.actorCount && !g.actors[who].dead && g.actors[who].unconscious <= 0) {
+                *x = g.actors[who].homeX;
+                *y = g.actors[who].homeY;
+                return town;
+            }
+        }
+        if (c->type == CONTRACT_ORE) {
+            int node = nearest_ore(towns[town].x, towns[town].y, 40, NODE_ORE);
+            if (node >= 0) {
+                *x = g.nodes[node].x;
+                *y = g.nodes[node].y;
+                return town;
+            }
+        }
+    }
+    *x = towns[town].x;
+    *y = towns[town].y;
+    return town;
+}
+int accept_contract(int town, int kind) {
+    if (town < 0 || town >= TOWNS || kind < 0 || kind >= CONTRACT_TYPES)
+        return 0;
+    if (kind >= CONTRACT_FREIGHT) {
+        if (!society_contract(town, kind))
+            return 0;
+        take_posting(town, kind);
+        return 1;
+    }
+    int n = -1;
+    for (int i = 0; i < CONTRACTS; i++) {
+        const Contract *c = &g.contracts[i];
+        if (c->active == 1 && c->town == town && c->type == kind) {
             log_msg("That contract is already in your journal.");
             return 0;
         }
-    int n = -1;
-    for (int i = 0; i < CONTRACTS; i++)
-        if (g.contracts[i].active != 1) {
+        if (n < 0 && c->active != 1)
             n = i;
-            break;
-        }
+    }
     if (n < 0) {
         log_msg("Journal full. Finish an active contract.");
         return 0;
     }
-    Contract *c = &g.contracts[n];
-    memset(c, 0, sizeof(*c));
-    c->active = 1;
-    c->type = kind;
-    c->town = town;
-    c->target = (town + 1 + g.day % 3) % TOWNS;
-    c->item = kind == 1 ? ORE : kind == 3 ? RELIC : NONE;
-    c->needed = kind == 1 ? 8 : kind == 2 ? 3 : 1;
-    c->reward = kind == 0 ? 220 : kind == 1 ? 240 : kind == 2 ? 420 : 550;
-    c->baseline = g.kills;
-    log_msg("Contract accepted. Journal tracks the objective.");
+    float x = 0, y = 0;
+    if (kind == CONTRACT_HUNT && !hunt_report(town, &x, &y)) {
+        log_msg("The roads are quiet. Check the board later.");
+        return 0;
+    }
+    Contract c = {0};
+    c.active = 1;
+    c.type = kind;
+    c.town = town;
+    c.target = contract_destination(town, g.townOwner[town]);
+    c.item = kind == CONTRACT_ORE ? ORE : kind == CONTRACT_RELIC ? RELIC : NONE;
+    c.needed = kind == CONTRACT_ORE ? 8 : kind == CONTRACT_HUNT ? 3 : 1;
+    c.reward = kind == CONTRACT_DISPATCH ? 220 : kind == CONTRACT_ORE ? 240 : kind == CONTRACT_HUNT ? 420 : 550;
+    c.baseline = -1; /* Earlier hunt postings allowed encounters anywhere. */
+    g.contracts[n] = c;
+    g.townLife.huntX[n] = x;
+    g.townLife.huntY[n] = y;
+    take_posting(town, kind);
+    log_level("Accepted %s at %s. See Journal.", contract_title(kind), towns[town].name);
+    contract_tick();
     return 1;
 }
 void contract_description(int n, char *out, int size) {
     if (n < 0 || n >= CONTRACTS || !g.contracts[n].active) {
-        snprintf(out, size, "No contract. Speak to town residents for work.");
+        snprintf(out, size, "Ask a merchant, innkeeper or marshal for current work.");
         return;
     }
-    Contract *c = &g.contracts[n];
-    if(c->type>=4){society_contract_text(n,out,size);return;}
-    if (c->type == 0)
-        snprintf(out, size, "Carry dispatch to %s; return to %s. %d silver.", towns[c->target].name,
-                 towns[c->town].name, c->reward);
-    else if (c->type == 2)
-        snprintf(out, size, "Defeat %d hostiles (%d/%d). Report to %s. %d silver.", c->needed, c->progress,
-                 c->needed, towns[c->town].name, c->reward);
-    else
-        snprintf(out, size, "Bring %d %s (%d/%d held) to %s. %d silver and standing.", c->needed,
-                 itemDefs[c->item].name, inventory_count(&g.actors[g.selected], c->item), c->needed,
-                 towns[c->town].name, c->reward);
+    const Contract *c = &g.contracts[n];
+    if (c->active == 2) {
+        snprintf(out, size, "Paid and closed at %s.", towns[contract_turn_in(n)].name);
+        return;
+    }
+    if (c->type >= CONTRACT_FREIGHT) {
+        society_contract_text(n, out, size);
+        return;
+    }
+    if (contract_ready(n)) {
+        snprintf(out, size, "%s complete (%d/%d). Return to %s and claim %d silver here in Journal.",
+                 contract_title(c->type), c->needed, c->needed, towns[c->town].name, c->reward);
+        return;
+    }
+    switch (c->type) {
+    case CONTRACT_DISPATCH:
+        snprintf(out, size, "The watch needs to share its road reports. Deliver the dispatch to %s (0/1), then return to %s.",
+                 towns[c->target].name, towns[c->town].name);
+        break;
+    case CONTRACT_HUNT:
+        snprintf(out, size, "Raiding parties and wild packs have stopped traffic. Defeat %d raiders or predators%s (%d/%d).",
+                 c->needed, c->baseline < 0 ? " near town" : "", c->progress, c->needed);
+        break;
+    default:
+        snprintf(out, size, "%s Bring %d %s to %s (%d/%d in squad).",
+                 c->type == CONTRACT_ORE ? "The smith is short of iron for repairs." : "An old relic could help repair the town pump.",
+                 c->needed, itemDefs[c->item].name, towns[c->town].name,
+                 contract_item_count(c->item, -1), c->needed);
+        break;
+    }
 }
 int complete_contract(int n) {
     if (n < 0 || n >= CONTRACTS || g.contracts[n].active != 1)
         return 0;
     Contract *c = &g.contracts[n];
     Actor *a = &g.actors[g.selected];
-    if(c->type>=4)return society_complete(n);
+    if (!conscious(a)) return 0;
+    if (c->type >= CONTRACT_FREIGHT)
+        return society_complete(n);
     if (town_near(a->x, a->y, 14) != c->town) {
         log_msg("Claim at %s.", towns[c->town].name);
         return 0;
     }
     if (c->item) {
-        if (inventory_count(a, c->item) < c->needed) {
-            log_msg("The required supplies are missing.");
+        if (!contract_use_items(c->item, c->needed, c->town)) {
+            log_msg("Bring the required supplies and their carriers to %s.", towns[c->town].name);
             return 0;
         }
-        inventory_remove(a, c->item, c->needed);
     } else if (c->progress < c->needed) {
         log_msg("Contract objective is incomplete.");
         return 0;
@@ -623,26 +976,51 @@ int complete_contract(int n) {
     g.rep[g.townOwner[c->town]] += 8;
     g.prosperity[c->town] = (int)limit(g.prosperity[c->town] + 5, 0, 100);
     gain(a, PERCEPTION, 70);
-    log_warn("Contract paid: %d silver; faction standing +8.", c->reward);
+    log_warn("%s paid %d silver for %s.", towns[c->town].name, c->reward, contract_title(c->type));
     return 1;
 }
+int dialogue_dismissive(int actor) {
+    if (actor < 0 || actor >= g.actorCount)
+        return 0;
+    const Actor *a = &g.actors[actor];
+    if (a->kind != SETTLER || regional_named(actor) || civil_elite_index(actor) >= 0 ||
+        politics_leader_title(actor))
+        return 0;
+    int room = actor_inside(a);
+    if (room && g.buildings[room - 1].type == HOUSE && (g.dayTime >= 19 || g.dayTime < 6))
+        return 1;
+    return npc_role(a) == ROLE_CITIZEN && (g.seed + actor * 17u + g.day) % 5 < 2;
+}
 const char *dialogue_line(int n, int page) {
+    if (page == DIALOG_INSPECTION)
+        return "We've had thefts in town. Mind if I look through your pockets?";
+    if (page == DIALOG_DISMISS) {
+        static const char *lines[] = {"I'm busy. Try someone else.", "Can I have a minute to myself?",
+                                     "Keep walking, stranger.", "I haven't got anything to say."};
+        return lines[(g.seed + (unsigned)n) % 4];
+    }
     if(!page&&population_owned(n))return population_dialogue(n);
-    const char *authored=depth_line(n);if(authored)return authored;
     if (n < 0 || n >= g.actorCount)
         return "The road is quiet.";
     Actor *a = &g.actors[n];
     if (a->prisonTime > 0)
         return "The guards treat injuries in custody. Pay bail, serve the sentence, or pick the lock. "
                "Tools help. A failed escape adds time and bounty.";
-    if (page == 1)
-        return "We need freight runners, caravan escorts, patrol mercenaries and bounty hunters. "
-               "Or bring supplies and salvage. Read each job in your journal.";
+    if (page == DIALOG_WORK_HINT)
+        return work_hint(town_near(g.actors[g.selected].x, g.actors[g.selected].y, 14), n);
+    if (page == DIALOG_WORK)
+        return contract_offer(town_near(g.actors[g.selected].x, g.actors[g.selected].y, 14), 0) < 0
+            ? "Nothing posted today. Check back after the next jobs go up."
+            : "Here's what the town needs. The Journal keeps track after you take a posting.";
     if (page == 4)return trade_tip(town_near(a->x,a->y,14));
     if (page == 5){
         const char *rumor=war_rumor(a);
         int town=town_near(a->x,a->y,14);
-        return rumor?rumor:town>=0?town_custom(town):npc_rumor(a);
+        if (rumor)
+            return rumor;
+        if (town >= 0 && contract_offer(town, 0) >= 0)
+            return work_hint(town, n);
+        return town >= 0 ? town_custom(town) : npc_rumor(a);
     }
     if (page == 2)
         return town_custom(town_near(a->x,a->y,14));
@@ -668,10 +1046,14 @@ const char *dialogue_line(int n, int page) {
                  g.mercMode[s] ? "CAMP WATCH" : "ESCORT", (g.mercUntil[s] - g.time) / 60.f);
         return terms;
     }
+    unsigned voice = (g.seed + n * 17u + g.day / 3) % 3;
     switch (npc_role(a)) {
-    case ROLE_MERCHANT:
-        return "Travel, medicine, ore or bedroll pack? Look under Backpacks. Big loads cost you in a fight. "
-               "Bring salvage to trade, and save silver for food and a bed.";
+    case ROLE_MERCHANT: {
+        static const char *lines[] = {"I've got food, dressings and whatever came in on the last wagon.",
+            "Traveling far? The pack you choose matters once you start carrying iron.",
+            "Lay your salvage here. I'll tell you what I can pay for it."};
+        return lines[voice];
+    }
     case ROLE_INNKEEPER:
         return "A bed costs 25 silver. Step inside the inn to rest. Patch bleeding wounds before you sleep.";
     case ROLE_MEDIC:
@@ -686,9 +1068,12 @@ const char *dialogue_line(int n, int page) {
     case ROLE_RECRUIT:
         return "Three hundred silver buys my supplies and my sword. We share the road, the work and the "
                "danger.";
-    case ROLE_MARSHAL:
-        return "The board has paying work. I also handle bounties. The roads between settlements are long; "
-               "buy food before leaving.";
+    case ROLE_MARSHAL: {
+        static const char *lines[] = {"Something the watch can do for you?",
+            "Keep your quarrels outside the gate. We've got enough to do.",
+            "State your business. I'll hear you out."};
+        return lines[voice];
+    }
     case ROLE_SCOUT:
         return "Mark a destination on your atlas. Watch for raiders between towns, and keep enough food for "
                "the return trip.";
@@ -712,23 +1097,6 @@ const char *ambient_line(int n) {
     if (n >= 0 && n < g.actorCount) {
         const char *rumor=war_ambient(g.actors[n].speech,g.actors[n].faction);
         if(rumor)return rumor;
-        switch (npc_role(&g.actors[n])) {
-        case ROLE_MERCHANT:
-            return "Stock follows our flag. Inspect before buying.";
-        case ROLE_MEDIC:
-            return "Bleeding? Find me before finding a bed.";
-        case ROLE_MARSHAL:
-            return "Contracts here. Guards hold this town.";
-        case ROLE_SMITH:
-            return "Heavy steel needs strong, healthy arms.";
-        case ROLE_MERCENARY:
-            return merc_slot(&g.actors[n]) >= 0 ? "Stay close. My contract is running."
-                                                : "Hired protection. One day, no allegiance.";
-        case ROLE_RECRUIT:
-            return "Looking for a permanent crew.";
-        case ROLE_INNKEEPER:
-            return "Beds inside. Patch your wounds first.";
-        }
     }
     static const char *lines[24] = {"Storm's coming. Cover your eyes.",
                                     "Fresh iron. Fair prices.",
@@ -760,13 +1128,9 @@ const char *ambient_line(int n) {
 }
 void dialogue_open(int n) {
     ui.dialogActor = n;
-    ui.dialogPage = 0;
+    ui.dialogPage = dialogue_dismissive(n) ? DIALOG_DISMISS : 0;
     ui.selection = 0;
     ui.screen = SCREEN_DIALOG;
-    if (n >= 0 && n < g.actorCount) {
-        g.actors[n].speechTime = 5;
-        g.actors[n].speech = (n + g.day) % 24;
-    }
 }
 float pickpocket_chance(const Actor *a) {
     return fmaxf(0, fminf(.9f, .25f + level(a, THEFT) * .007f + level(a, STEALTH) * .003f + gear_bonus(a, 2) * .003f));
@@ -827,11 +1191,13 @@ int pickpocket_slot(int n,int source) {
     float chance=theft_chance(n,source);
     gain(a,THEFT,22);
     if((wrand()%1000)/1000.f>=chance) {
+        town_theft(town_near(a->x, a->y, 17));
         crime_add(a,b->faction,80);g.rep[b->faction]-=18;b->speech=19;b->speechTime=5;
         log_warn("Caught stealing! Bounty +80; faction standing -18.");return 0;
     }
     if(!inventory_add_owned(a,it,1,b->faction)) return 0;
     inventory_remove_slot(b,source,1);
+    town_theft(town_near(a->x, a->y, 17));
     log_msg("Lifted %s. Find a fence before selling it back.",itemDefs[it].name);return 1;
 }
 int pickpocket(int n) {
@@ -1010,7 +1376,7 @@ static void jail_medical(Actor *a, float dt) {
         return;
     if (a->taskKind != TASK_JAIL_CARE && (wound_needs_dressing(a) || depth_needs_repair(a))) {
         a->taskKind = TASK_JAIL_CARE;
-        a->action = 3;
+        a->action = 2.8f + treatment_burden(a) * .65f;
         if (a->squad) {
             int guard = jail_guard(a, 22);
             log_warn("%s begins treating %s in custody.", guard >= 0 ? g.actors[guard].name : "Jail staff", a->name);
@@ -1110,7 +1476,6 @@ void tick_expansion(float dt) {
     if (g.eventTimer <= 0) {
         g.eventTimer = 220;
         int t = wrand() % TOWNS, k = wrand() % 4;
-        if(t==1)t=2; /* Copper follows its named road state, not random conquest. */
         g.townState[t] = k;
         g.prosperity[t] = (int)limit(g.prosperity[t] + (k == 0   ? 12
                                                         : k == 1 ? -12
@@ -1133,13 +1498,28 @@ void tick_expansion(float dt) {
         a->speechTime = fmaxf(0, a->speechTime - dt);
         a->speechCooldown -= dt;
         if (a->speechCooldown <= 0 && !a->squad && a->kind != BEAST) {
-            a->speechCooldown = 18 + wrand() % 35;
-            if (fabsf(a->x-g.actors[g.selected].x)<8 && fabsf(a->y-g.actors[g.selected].y)<8 &&
-                conscious(a) && !g.depth.actors[i].captive && a->prisonTime<=0 && !population_hidden(i) &&
-                distance(a->x, a->y, g.actors[g.selected].x, g.actors[g.selected].y) < 8) {
-                int rumor=war_chatter(i);
-                a->speech = rumor ? rumor : (i + g.day + (int)(g.time / 10)) % 24;
-                a->speechTime = rumor ? 6 : 4;
+            a->speechCooldown = 36 + wrand() % 70;
+            const Actor *listener = &g.actors[g.selected];
+            if (fabsf(a->x - listener->x) < 7 && fabsf(a->y - listener->y) < 7 &&
+                conscious(a) && a->target < 0 && !g.depth.actors[i].captive && a->prisonTime <= 0 &&
+                !population_hidden(i) && depth_distance(a, listener) < 7) {
+                int rumor = war_chatter(i);
+                if (rumor) {
+                    a->speech = rumor;
+                    a->speechTime = 6;
+                    ui.chatterNext = g.time + 10;
+                } else if (g.time >= ui.chatterNext && !hostile(a, listener) &&
+                           !dialogue_dismissive(i) && (wrand() % 4 == 0)) {
+                    int line = (i * 7 + g.day + (int)(g.time / 20)) % 24;
+                    if (!(ui.chatterSeen & (1u << line))) {
+                        a->speech = line;
+                        a->speechTime = 4;
+                        ui.chatterSeen |= 1u << line;
+                        ui.chatterNext = g.time + 18;
+                        if (ui.chatterSeen == (1u << 24) - 1)
+                            ui.chatterSeen = 0;
+                    }
+                }
             }
         }
         if (a->prisonTime > 0) {
@@ -1178,25 +1558,7 @@ void tick_expansion(float dt) {
     for (int i = 0; i < g.buildingCount; i++)
         if (g.buildings[i].type == FARM && g.weather == 2)
             g.buildings[i].stock = 1;
-    for (int i = 0; i < CONTRACTS; i++) {
-        Contract *c = &g.contracts[i];
-        if (c->active != 1)
-            continue;
-        if (c->type == 2)
-            c->progress = g.kills - c->baseline;
-        if (c->type == 0 && town_near(g.actors[g.selected].x, g.actors[g.selected].y, 12) == c->target)
-            c->progress = 1;
-    }
-    int surveyed = 0;
-    for (int t = 0; t < TOWNS; t++)
-        surveyed += g.discovered[t];
-    int stage = (g.contractsDone >= 3) + (g.tech >= 2) + (surveyed >= 8) +
-                (g.contractsDone >= 10 && g.tech == 3 && surveyed >= 12);
-    if (stage > g.storyStage) {
-        g.storyStage = stage;
-        g.money += 150;
-        log_msg("Expedition legacy advanced: %d/4. Patronage +150.", stage);
-    }
+
 }
 
 #include "regional.h"

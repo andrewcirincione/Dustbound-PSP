@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #define D g.depth
+extern void init_actor(int, const char *, int, int, float, float, int);
 static int checks;
 #define C(x)                                                                                            \
     do {                                                                                                \
@@ -55,93 +56,25 @@ static void ppm(const char *path) {
 int main(int argc, char **argv) {
     fresh();
     C(depth_validate(&g));
-    C(D.npc[NPC_SORA] >= 0 && D.npc[NPC_RELL] >= 0);
+    for (int i = 0; i < DEPTH_NPCS; i++)
+        C(D.npc[i] == -1);
     for (int i = 0; i < LANDMARKS; i++) {
         C(can_walk(D.siteX[i], D.siteY[i]));
         C(D.siteBuilding[i] >= 0);
     }
-    int sora = D.npc[NPC_SORA], nell = D.npc[NPC_NELL], rell = D.npc[NPC_RELL];
-    C(!depth_dialog(sora, 0) && !D.rescued);
-    near_actor(sora);
-    int kits = inventory_count(&g.actors[0], MEDKIT);
-    depth_dialog(sora, 0);
-    step(4);
-    C(D.rescued == 1 && g.actors[sora].bleed == 0 && inventory_count(&g.actors[0], MEDKIT) == kits - 1);
-    /* Escort uses actual movement rather than setting a quest flag on
-     * conversation. */
-    float old = g.actors[sora].x;
-    g.actors[0].x += 5;
-    step(1);
-    C(g.actors[sora].x > old);
-    isolate();
-    g.actors[sora].active = 1;
-    g.actors[sora].x = D.siteX[7] - 3;
-    g.actors[sora].y = D.siteY[7];
-    near_site(7);
-    step(.2f);
-    C(D.rescued == 2);
-    near_site(1);
-    int wood = inventory_count(&g.actors[0], WOOD);
-    C(!depth_action(1, 0) && inventory_count(&g.actors[0], WOOD) == wood);
-    inventory_add(&g.actors[0], IRONBAR, 1);
-    C(depth_action(1, 0) && D.route == ROUTE_BYPASS);
-    C(inventory_count(&g.actors[0], WOOD) == wood - 3);
-    C(!depth_action(1, 0));
-    g.actors[nell].active = 1;
-    near_actor(nell);
-    int money = g.money;
-    depth_dialog(nell, 1);
-    C(D.reported && g.money == money + 350);
-    depth_dialog(nell, 1);
-    C(g.money == money + 350);
-    C(save_game("build/depth-roundtrip.sav"));
-    int route = D.route, actors = g.actorCount;
-    C(load_game("build/depth-roundtrip.sav"));
-    C(D.route == route && D.reported && g.actorCount == actors);
-    /* Real v5 prefix migration: a second load must not duplicate residents. */
-    fresh();
     save_prior_fixture("build/depth-v5.sav", 5);
     C(load_game("build/depth-v5.sav"));
-    C(D.version == 1);
-    C(depth_validate(&g));
-    fresh();
-    rell = D.npc[2];
-    near_actor(rell);
-    money = g.money;
-    depth_dialog(rell, 0);
-    C(D.route == ROUTE_TRUCE && g.money == money - 450 && g.townOwner[1] == OUTLAWS);
-    depth_dialog(rell, 0);
-    C(g.money == money - 450);
-    int toll = item_price(1, RATION, 0);
-    D.route = ROUTE_BYPASS;
-    g.townOwner[1] = towns[1].faction;
-    C(item_price(1, RATION, 0) < toll);
-    fresh();
-    rell = D.npc[2];
-    nell = D.npc[1];
-    near_actor(rell);
-    C(!g.actors[rell].dead);
-    g.actors[rell].unconscious = 500;
-    depth_dialog(rell, 2);
-    C(g.actors[0].carrying == rell);
-    near_actor(nell);
-    depth_dialog(nell, 1);
-    C(D.route == ROUTE_CAPTURED && D.reported && g.actors[0].carrying == -1);
-    C(D.actors[rell].captive);
-    fresh();
-    isolate();
-    g.actors[D.npc[2]].dead = 1;
-    step(.2f);
-    C(D.route == ROUTE_FREED);
-    step(361);
-    C(D.retal);
+    C(D.version == 1 && depth_validate(&g));
+    int actors = g.actorCount;
+    C(save_game("build/depth-roundtrip.sav") && load_game("build/depth-roundtrip.sav"));
+    C(g.actorCount == actors && D.npc[NPC_NELL] == -1);
     fresh();
     isolate();
     Actor *a = &g.actors[0];
     a->race = 2;
     a->health[LARM] = 35;
     inventory_add(a, PARTS, 2);
-    kits = inventory_count(a, MEDKIT);
+    int kits = inventory_count(a, MEDKIT);
     C(!heal_actor(0, 0) && inventory_count(a, MEDKIT) == kits);
     a->taskKind = 3;
     a->action = 100;
@@ -155,8 +88,8 @@ int main(int argc, char **argv) {
     a->health[CHEST] = 50;
     depth_wound(a, CHEST, 50);
     C(D.actors[0].trauma[CHEST] > 0);
-    heal_actor(0, 0);
-    step(4);
+    C(heal_actor(0, 0));
+    step(a->action + .15f);
     float trauma = D.actors[0].trauma[CHEST];
     a->taskKind = 3;
     a->action = 100;
@@ -231,25 +164,29 @@ int main(int argc, char **argv) {
     fresh();
     isolate();
     a = &g.actors[0];
-    int captive = D.npc[3];
-    g.actors[captive].active = 1;
+    int captive = 1;
+    init_actor(captive, "Shackled traveler", SETTLER, FREE, D.siteX[3], D.siteY[3], 3);
+    D.actors[captive].captive = 1;
+    a->xp[LOCKPICK] = 117612;
     near_actor(captive);
     C(depth_capture_action(captive));
-    step(12);
+    step(8);
     C(!D.actors[captive].captive && D.actors[captive].recognized > 0 && D.freed == 1);
-    C(depth_capture_action(captive) && g.actors[captive].squad);
+    C(!g.actors[captive].squad);
+    near_actor(captive);
+    society_rescue_order(captive, ACTION_RESCUED_RECRUIT);
+    C(g.actors[captive].squad);
     C(save_game("build/depth-escape.sav") && load_game("build/depth-escape.sav"));
     C(g.actors[captive].squad);
     fresh();
     isolate();
-    captive = D.npc[3];
-    g.actors[captive].active = 1;
+    captive = 1;
+    init_actor(captive, "Shackled traveler", SETTLER, FREE, D.siteX[3], D.siteY[3], 3);
+    D.actors[captive].captive = 1;
     near_actor(captive);
-    int guard = D.npc[5];
-    g.actors[guard].active = 1;
-    g.actors[guard].x = g.actors[0].x + 1;
-    g.actors[guard].y = g.actors[0].y;
-    depth_capture_action(captive);
+    int guard = 2;
+    init_actor(guard, "Yard guard", GUARD, OUTLAWS, D.siteX[3] + 1, D.siteY[3], 12);
+    C(depth_capture_action(captive));
     step(.2f);
     C(D.actors[captive].captive && D.actors[captive].escape == 0);
     /* Swept projectiles strike the intervening ally, and stop at actual
@@ -304,19 +241,27 @@ int main(int argc, char **argv) {
     /* A full pool can reuse ordinary fallen raiders, never named residents. */
     fresh();
     isolate();
+    int ordinary = -1, named = g.civil.eliteActor[0] - 1;
+    C(named >= 0);
+    for (int i = 1; i < g.actorCount; i++)
+        if (g.actors[i].kind == RAIDER && civil_elite_index(i) < 0 &&
+            !politics_protected(i) && !regional_named(i) && !living_owned(i) && g.actors[i].carriedBy < 0) {
+            ordinary = i;
+            break;
+        }
+    C(ordinary >= 0);
     g.actorCount = MAX_ACTORS;
-    rell = D.npc[NPC_RELL];
-    g.actors[rell].dead = 1;
-    g.actors[1].dead = 1;
-    D.actors[1].captive = 1;
-    D.actors[1].layer = shirt;
+    g.actors[named].dead = 1;
+    g.actors[ordinary].dead = 1;
+    D.actors[ordinary].captive = 1;
+    D.actors[ordinary].layer = shirt;
     g.baseExists = 1;
     g.baseX = 42;
     g.baseY = 43;
     g.raidTimer = 0;
     step(.2f);
-    C(g.actors[rell].dead && D.route == ROUTE_FREED);
-    C(g.actors[1].active && !g.actors[1].dead && !D.actors[1].captive && !D.actors[1].layer);
+    C(g.actors[named].dead);
+    C(g.actors[ordinary].active && !g.actors[ordinary].dead && !D.actors[ordinary].captive && !D.actors[ordinary].layer);
     fresh();
     isolate();
     a = &g.actors[0];
@@ -423,18 +368,6 @@ int main(int argc, char **argv) {
         snprintf(path, sizeof(path), "%s/DUST_1.sav", argv[1]);
         C(save_game(path));
         fresh();
-        character_begin(4);
-        character_finish();
-        near_actor(D.npc[0]);
-        g.actors[0].autoattack = 0;
-        snprintf(path, sizeof(path), "%s/DUST_2.sav", argv[1]);
-        C(save_game(path));
-        fresh();
-        near_actor(D.npc[2]);
-        g.actors[0].autoattack = 0;
-        snprintf(path, sizeof(path), "%s/DUST_3.sav", argv[1]);
-        C(save_game(path));
-        fresh();
         isolate();
         near_site(3);
         D.actors[0].captive = 1;
@@ -453,13 +386,6 @@ int main(int argc, char **argv) {
         inventory_add(&g.actors[0], gear_id(45, 0, 0), 1);
         C(build_structure(0));
         snprintf(path, sizeof(path), "%s/DUST_5.sav", argv[1]);
-        C(save_game(path));
-        fresh();
-        isolate();
-        near_site(1);
-        D.rescued = 2;
-        inventory_add(&g.actors[0], IRONBAR, 1);
-        snprintf(path, sizeof(path), "%s/DUST_6.sav", argv[1]);
         C(save_game(path));
         fresh();
         ui.noticeTime = 0;
