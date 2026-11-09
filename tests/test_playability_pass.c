@@ -112,7 +112,9 @@ static void transfers_and_recovery(void) {
     assert(row >= 0 && !nearby_action_reason(row));
     ui.selection = row;
     press(KEY_CROSS);
-    assert(ui.screen == SCREEN_WORLD && ash->bleed == 0 && ash->treatedMask & (1 << LARM));
+    assert(ui.screen == SCREEN_WORLD && ash->taskKind == TASK_TREAT && ash->bleed > 0);
+    idle(4);
+    assert(ash->bleed == 0 && ash->treatedMask & (1 << LARM));
     float hp = ash->health[LARM], trauma = g.depth.actors[0].trauma[LARM];
     idle(20);
     assert(ash->health[LARM] > hp + 1 && g.depth.actors[0].trauma[LARM] < trauma);

@@ -1128,11 +1128,20 @@ static void hud(void) {
     text(250, 259, b, a->blood < 50 || a->bleed > .01f ? RED : MUTED, 1);
     snprintf(b, sizeof(b), "FOOD %d", (int)a->hunger);
     text(320, 259, b, a->hunger < 25 ? GOLD : MUTED, 1);
-    const char *status = a->dead ? "DEAD" : a->unconscious > 0 ? "DOWN" : a->bleed > .01f ? "BLEEDING"
-                         : a->sneaking ? "SNEAK" : a->autoattack ? "FIGHT" : "PASSIVE";
+    const char *status = a->dead ? "DEAD" : recovery_coma(a) ? "COMA" :
+        a->unconscious > 0 ? "DOWN" : a->bleed > .01f ? "BLEEDING" : a->prisonTime > 0 ? "JAILED" :
+        a->sneaking ? "SNEAK" : a->autoattack ? "FIGHT" : "PASSIVE";
     text(472 - (int)strlen(status) * 6, 259, status, a->bleed > .01f || a->dead || a->unconscious > 0 ? RED : TEAL, 1);
 
-    if(a->carrying>=0)snprintf(b,sizeof(b),"\001 PUT DOWN %.24s",g.actors[a->carrying].name);
+    if (a->taskKind == TASK_CELL_LOCK)
+        snprintf(b, sizeof(b), "PICKING CELL LOCK %.0fs   \002 CANCEL", ceilf(a->action));
+    else if (a->taskKind == TASK_TREAT)
+        snprintf(b, sizeof(b), "TREATMENT IN PROGRESS %.0fs", ceilf(a->action));
+    else if (a->taskKind == TASK_JAIL_CARE)
+        snprintf(b, sizeof(b), "JAIL STAFF TREATING YOU %.0fs", ceilf(a->action));
+    else if (a->prisonTime > 0)
+        snprintf(b, sizeof(b), "%s", a->unconscious > 0 ? "RECOVERING IN CUSTODY" : "\001 JAIL ACTIONS");
+    else if(a->carrying>=0)snprintf(b,sizeof(b),"\001 PUT DOWN %.24s",g.actors[a->carrying].name);
     else if (ui.contextKind == 1 && ui.contextIndex >= 0 && g.nodes[ui.contextIndex].owner)
         snprintf(b, sizeof(b), "\001 %s %s", context_action(), context_name());
     else if(nearby_actions())snprintf(b,sizeof(b),"\001 NEARBY ACTIONS%s",a->sneaking?" / SNEAKING":"");
@@ -1141,9 +1150,10 @@ static void hud(void) {
         rect(4, 223, text_width(b) + 16, 13, PANEL);
         text(12, 226, b, TEXT, 1);
     }
-    if (a->taskKind)
+    if (a->taskKind && a->taskKind != TASK_TREAT)
         bar(180, 236, 120, 2,
-            (1 - fminf(1, a->action / (a->taskKind == 3 ? 180 : a->taskKind == 2 ? 4.5f : 2.8f))) * 100, GOLD);
+            (1 - fminf(1, a->action / (a->taskKind == TASK_CELL_LOCK ? jail_pick_duration(a, a->taskIndex) :
+                 a->taskKind == 3 ? 180 : a->taskKind == TASK_JAIL_CARE ? 3 : a->taskKind == 2 ? 4.5f : 2.8f))) * 100, GOLD);
     if (ui.statusPanel)
         detailed_status();
 }
@@ -1349,8 +1359,10 @@ static void skills_screen(void) {
 static void health_screen(void) {
     Actor *a=&g.actors[g.selected];DepthActor *z=&g.depth.actors[g.selected];char b[110];
     overlay_header("HEALTH & RECOVERY",z->captive?"\001 ESCAPE   \003 REPAIR LIMBS   \004 MAINTAIN GEAR":"\001 BANDAGE   \003 REPAIR LIMBS   \004 MAINTAIN GEAR");
-    snprintf(b,sizeof(b),"%.16s / %s",a->name,a->dead?"DEAD":a->unconscious>0?"UNCONSCIOUS":"AWAKE");text(31,83,b,TEAL,1);
-    text(177,98,"HEALTH",MUTED,1);text(334,98,"TRAUMA",MUTED,1);
+    snprintf(b, sizeof(b), "%.16s / %s", a->name, a->dead ? "DEAD" : recovery_coma(a) ? "RECOVERY COMA" :
+             a->unconscious > 0 ? "KNOCKED OUT" : "AWAKE");
+    text(31, 83, b, a->unconscious > 0 ? GOLD : TEAL, 1);
+    text(177,98,"HEALTH",MUTED,1);text(323,98,"WOUND / TRAUMA",MUTED,1);
     for(int i=0;i<LIMBS;i++) {
         int y=111+i*13,missing=(a->lostMask&(1<<i))&&!(a->prostheticMask&(1<<i));
         if(i==ui.selection)rect(25,y-2,425,12,0x4a4030);
@@ -1358,10 +1370,17 @@ static void health_screen(void) {
         bar(157,y+2,91,4,missing?0:a->health[i]*100/limb_max_health(a,i),a->health[i]<30||missing?RED:TEAL);
         if(missing)snprintf(b,sizeof(b),"LOST");else snprintf(b,sizeof(b),"%.0f/%.0f",a->health[i],limb_max_health(a,i)-z->trauma[i]);
         text(261,y,b,missing?RED:TEXT,1);
-        snprintf(b,sizeof(b),"%.0f%s",z->trauma[i],depth_organic(a,i)?"":" / MECH");text(337,y,b,MUTED,1);
+        const char *wound = missing ? "LOST" : a->woundFlags & (1u << i) ? "CUT" :
+            a->woundFlags & (1u << (WOUND_REPAIR_SHIFT + i)) ? "REPAIRING" :
+            a->treatedMask & (1 << i) ? "DRESSED" : !depth_organic(a, i) ? "MECH" :
+            a->health[i] < species_health(a) - 1 ? "BRUISED" : "OK";
+        snprintf(b, sizeof(b), "%s / %.0f", wound, z->trauma[i]);
+        text(323, y, b, a->woundFlags & (1u << i) ? RED : MUTED, 1);
     }
     snprintf(b,sizeof(b),"BLOOD %.0f  BLEED %.1f  FOOD %.0f  FATIGUE %.0f",a->blood,a->bleed,a->hunger,a->fatigue);text(31,194,b,a->bleed>.01f?RED:MUTED,1);
-    snprintf(b,sizeof(b),"DRESSINGS %d  GEAR CONDITION %.0f%%",inventory_count(a,MEDKIT),z->upkeep);text(31,207,b,GOLD,1);
+    snprintf(b, sizeof(b), "DRESSINGS %d  GEAR %.0f%%  COMA THRESHOLD %.0f", inventory_count(a,MEDKIT),
+             z->upkeep, coma_threshold(a));
+    text(31,207,b,GOLD,1);
     text(31,221,z->captive?"Work shackles away from guards.":"\006 LIMBS: fit, compare and detach replacements.",MUTED,1);
 }
 static void limbs_screen(void) {
@@ -1942,7 +1961,7 @@ static void creator_screen(void) {
              species->health, actor_capacity(&a), (int)roundf(species->move * 100),
              (int)roundf(species->food * 100));
     text(30, 207, stats, TEAL, 1);
-    snprintf(stats, sizeof(stats), "STR %d  DEX %d  TOUGH %d  DODGE %d  ATH %d  SNEAK %d  ENG %d",
+    snprintf(stats, sizeof(stats), "STR %d  DEX %d  TOUGH %d  DODGE %d  AGI %d  SNEAK %d  ENG %d",
              level(&a, STRENGTH), level(&a, DEXTERITY), level(&a, TOUGHNESS), level(&a, DODGE),
              level(&a, ATHLETICS), level(&a, STEALTH), level(&a, ENGINEERING));
     text(30, 217, stats, MUTED, 1);
@@ -2003,16 +2022,19 @@ static void dialogue_screen(void) {
     if (n < 0 || n >= g.actorCount)
         return;
     Actor *a = &g.actors[n];
-    overlay_header(a->name, "\001 REPLY   \015 CHOOSE   \002 LEAVE   \010 GUIDE");
+    int jailed = a->prisonTime > 0 && n == g.selected;
+    overlay_header(jailed ? "HOLDING CELL" : a->name, "\001 CONFIRM   \015 CHOOSE   \002 BACK   \010 GUIDE");
     portrait_scale(a, 94, 108, 28, 83, 1);
     clipped(30, 204, npc_role_name(a), 16, TEAL);
     clipped(30, 218, factionNames[a->faction], 16, factionColors[a->faction]);
     wrap(134, 85, 50, dialogue_line(n, ui.dialogPage), TEXT);
     const char *work[] = {"Carry a dispatch - 220 silver", "Bring eight ore - 240 silver",
                           "Defeat three foes - 420 silver", "Recover a relic - 550 silver", "Freight delivery - deposit required", "Caravan escort - wages + bonus", "Mercenary patrol - wages + bonus", "Named bounty - bring the prisoner", "Back"};
-    const char *prison[] = {"Pay my bail.", "Try the lock. Requires tools.", "Wait out the sentence."};
-    int jailed = a->prisonTime > 0 && n == g.selected,
-        count = jailed               ? 3
+    char bail[48];
+    snprintf(bail, sizeof(bail), "Pay %d silver bail", jail_bail_cost(a));
+    const char *prison[] = {bail, inventory_count(a, TOOLS) ? "Pick cell lock with tools" : "Pick cell lock with improvised wire",
+                             "Wait out the sentence"};
+    int count = jailed               ? 3
                 : ui.dialogPage == 1 ? 9
                                      : dialogue_count(n),
         first = start_row(ui.selection, count, 5);

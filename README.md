@@ -1,6 +1,6 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.17.2 — Fieldwork
+## 0.17.3 — Recovery
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
@@ -14,7 +14,7 @@ There is no map or group auto-travel. Cross on the map places a reference pin; w
 
 Starving bandits carry poor weapons and wear incomplete clothing. Soldiers wear coordinated armor and move in three-wide formations. Elite duelists wear complete superior equipment. Nearby labels show a broad role in faction colors, with a red **!** for hostility. Enemy combat bars show knockout reserve from head, chest and blood. Nearby characters do not expose skill values or encounter tiers. Start > World > Factions shows the color key, reputation and wanted standing.
 
-New expeditions start in one of five settlements with different equipment, companions, and difficulty. The atlas and local map share the walking view's orientation. Nearby Actions lists self-treatment and shows why unavailable actions are disabled. Dressed wounds recover on the trail, and beds speed up recovery.
+New expeditions start in one of five settlements with different equipment, companions, and difficulty. The atlas and local map share the walking view's orientation. Nearby Actions lists self-treatment and shows why unavailable actions are disabled. Timed dressings stabilize cuts, blunt damage heals on its own, and beds speed up recovery. Toughness determines the threshold for a recovery coma. Jail staff treat prisoners, and rare travelers can help injured strangers.
 
 The thin control strip shows common menu shortcuts. Squad management separates direct assignments from job priorities. Follow tracks the controlled member, and the active character's assigned work waits for five idle seconds in Passive stance. The scrolling news bar includes squad skill gains and urgent injury alerts.
 
@@ -37,7 +37,7 @@ Weapon handling now changes the actual strike speed. Relaxed carry and combat gu
 
 ## Install
 
-Extract `Dustbound-0.17.2-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v19 reads prior expeditions and remembers treatment and theft warnings. Existing equipment, training and town control carry over.
+Extract `Dustbound-0.17.3-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v20 reads prior expeditions and remembers active treatments, recovery comas, and rescues. Existing equipment, training and town control carry over.
 
 ## Controls
 

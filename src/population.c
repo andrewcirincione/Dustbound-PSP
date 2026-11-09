@@ -115,6 +115,11 @@ static void make_actor(int k,int i){
     if((e->type==POP_RAIDERS||e->type==POP_AMBUSH)&&e->modifier==1){
         a->gear[0]=gear_id(i%2?14:0,0,0);a->gear[1]=i%3?RAGS:0;a->gear[2]=a->gear[3]=a->gear[5]=0;a->gear[4]=gear_id(68,0,0);
     }
+    if ((e->type == POP_PILGRIMS || e->type == POP_MERCHANTS || e->type == POP_REFUGEES) &&
+        (i + e->serial) % 4 == 0) {
+        int supply = a->race == 2 ? PARTS : MEDKIT;
+        if (!inventory_count(a, supply)) inventory_add(a, supply, 1);
+    }
     if(e->modifier==1)a->hunger=28;
     population_roll_limbs(a,random_step(&seed),tier);
     if(e->type==POP_WOUNDED){a->health[CHEST]=species_health(a)*.38f;a->health[LLEG]=24;a->bleed=.08f;inventory_remove(a,MEDKIT,99);}
@@ -194,14 +199,24 @@ static void physiology(int k,float dt){
     for(int i=0;i<e->count;i++){
         Actor*a=member(k,i);if(!a||a->dead)continue;
         if(e->spawned)continue;DepthActor*z=member_depth(k,i);
-        if(a->unconscious<=0&&a->bleed>0&&inventory_count(a,MEDKIT)){inventory_remove(a,MEDKIT,1);a->bleed=0;}
-        if(a->bleed>0){a->blood-=a->bleed*dt*.35f;a->bleed=fmaxf(0,a->bleed-dt*.0015f);}else a->blood=fminf(100,a->blood+dt*.07f);
-        if(a->blood<=0||a->health[HEAD]<-70||a->health[CHEST]<-70){a->dead=1;a->unconscious=0;P.deaths++;continue;}
-        a->unconscious=fmaxf(0,a->unconscious-dt);
+        if (!fatal_injury(a) && a->unconscious <= 0 &&
+            (a->bleed > .01f || (a->woundFlags & WOUND_CUTS)) && inventory_remove(a, MEDKIT, 1))
+            injury_dress(a, z);
+        if (injury_tick(a, z, dt, m->phase == POP_REST)) {
+            a->dead = 1;
+            a->unconscious = 0;
+            a->woundFlags = 0;
+            P.deaths++;
+            continue;
+        }
         if(a->race!=2){a->hunger=fmaxf(0,a->hunger-dt*.006f);if(a->hunger<35&&inventory_count(a,RATION)){inventory_remove(a,RATION,1);a->hunger=fminf(100,a->hunger+48);}}
-        if(a->bleed<=.01f&&a->hunger>=20)for(int l=0;l<LIMBS;l++)if(!limb_missing(a,l)&&depth_organic(a,l))a->health[l]=fminf(limb_max_health(a,l)-z->trauma[l],a->health[l]+dt*(m->phase==POP_REST?.15f:.015f));
-        if(a->health[HEAD]<=0||a->health[CHEST]<=0||a->blood<20)a->unconscious=fmaxf(10,a->unconscious);
-        for(int l=LARM;l<=RLEG;l++)if(limb_installed(a,l)&&a->health[l]<limb_max_health(a,l)*.5f&&inventory_count(a,PARTS)){inventory_remove(a,PARTS,1);a->health[l]=fminf(limb_max_health(a,l)-z->trauma[l],a->health[l]+35);break;}
+        if (!(a->woundFlags & WOUND_REPAIRS))
+            for (int l = 0; l < LIMBS; l++)
+                if (!depth_organic(a, l) && !limb_missing(a, l) &&
+                    a->health[l] < limb_max_health(a, l) * .5f && inventory_remove(a, PARTS, 1)) {
+                    injury_repair(a, z);
+                    break;
+                }
     }
 }
 static int forage_node(int k){

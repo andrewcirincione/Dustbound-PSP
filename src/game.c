@@ -72,7 +72,7 @@ volatile uint32_t display_buffer = 0x04000000;
 volatile uint32_t rendered_frames = 0;
 static char saveRoot[256] = ".";
 const char *skillNames[SKILLS] = {
-    "Athletics",    "Strength", "Dexterity",   "Melee attack", "Melee defence",  "Toughness", "Dodge",
+    "Agility",      "Strength", "Dexterity",   "Melee attack", "Melee defence",  "Toughness", "Dodge",
     "Martial arts", "Stealth",  "Thievery",    "Lockpicking",  "Field medicine", "Labouring", "Farming",
     "Cooking",      "Smithing", "Engineering", "Science",      "Crossbows",      "Perception"};
 const char *limbNames[LIMBS] = {"Head", "Chest", "Left arm", "Right arm", "Left leg", "Right leg"};
@@ -118,7 +118,7 @@ const ItemDef baseDefs[BASE_ITEMS] = {
     {"Cured hide", "Leatherworking and trade material.", 24, 1, -1, 0, 0, 0x78553b},
     {"Coal", "High-grade forging fuel.", 18, 2, -1, 0, 0, 0x34393a},
     {"Machine parts", "Salvage for advanced equipment.", 90, 2, -1, 0, 0, 0x698078},
-    {"Blood tonic", "Restores blood and reduces exposure.", 110, 1, -1, 0, 0, 0x9c5141},
+    {"Blood tonic", "Restores blood and warmth over time.", 110, 1, -1, 0, 0, 0x9c5141},
     {"Survey chart", "Reveals settlement positions and terrain.", 180, 0, -1, 0, 0, 0xbea777}};
 Town towns[TOWNS] = {{"DUSK HAVEN", 26, 27, UNION},       {"COPPER CROSS", 76, 32, SCAVENGERS},
                      {"SALTWATCH", 32, 83, UNION},        {"THE DRY MARKET", 91, 88, SCAVENGERS},
@@ -218,9 +218,12 @@ static void danger_news(void) {
             continue;
         if (a->bleed > .01f) danger[n] |= 1;
         if (a->unconscious > 0) danger[n] |= 2;
+        if (recovery_coma(a)) danger[n] |= 16;
         if (a->blood < 35 || a->health[HEAD] < 15 || a->health[CHEST] < 15) danger[n] |= 8;
         int added = danger[n] & ~ui.danger[n];
-        if (added & 2)
+        if (added & 16)
+            log_warn("%s is in a recovery coma.", a->name);
+        else if (added & 2)
             log_warn("%s is unconscious.", a->name);
         if (added & 1)
             log_warn("%s is bleeding. Nearby Actions has first aid.", a->name);
@@ -395,7 +398,9 @@ float movement_speed(const Actor *a) {
         f *= .7f;
     if (a->fatigue > 85)
         f *= .75f;
-    return (1.9f + level(a, ATHLETICS) * .027f) * f * (a->sneaking ? .55f : 1) *
+    if (a->carrying >= 0)
+        f *= .75f;
+    return (1.92f + (level(a, ATHLETICS) - 1) * .037f) * f * (a->sneaking ? .55f : 1) *
            (1 + gear_bonus(a, 1) * .005f) * speciesDefs[species_index(a)].move * limb_move_bonus(a);
 }
 int town_near(float x, float y, float r) {
@@ -444,7 +449,6 @@ void move_actor(Actor *a, float dx, float dy, float dt) {
     float moved = distance(ox, oy, a->x, a->y);
     if (moved > .001f) {
         walk_motion(a, a->x - ox, a->y - oy);
-        gain(a, ATHLETICS, moved * 2);
         gain(a, STRENGTH, moved * encumbrance(a) * .035f);
         if (a->sneaking)
             gain(a, STEALTH, moved * 1.5f);
@@ -466,6 +470,7 @@ void walk_motion(Actor *a, float dx, float dy) {
     float rate = a->kind == BEAST || limb_crawling(a) ? 2.2f : a->sneaking ? 7.4f : 5.2f;
     a->anim = fmodf(a->anim + moved * rate, 6.2831853f);
     a->movedTimer = .12f;
+    gain(a, ATHLETICS, moved * 2);
 }
 void walk_heading(const Actor *a, float *x, float *y) {
     const CombatVisual *v = combat_visual(a);
@@ -515,6 +520,9 @@ void init_actor(int n, const char *name, int kind, int faction, float x, float y
     inventory_add(a, RATION, 2);
     if (kind == RAIDER)
         inventory_add(a, COPPER, 2);
+    else if ((kind == SETTLER || kind == TRADER || kind == RECRUIT || kind == CARAVAN) &&
+             (g.seed + (unsigned)n * 11) % 5 == 0)
+        inventory_add(a, MEDKIT, 1);
     if (kind == BEAST) {
         memset(a->gear, 0, sizeof(a->gear));
         memset(a->pack, 0, sizeof(a->pack));
@@ -677,6 +685,8 @@ int hostile(const Actor *a, const Actor *b) {
     if (depth_room(a) != depth_room(b))
         return 0;
     if (a->squad && b->squad) return 0;
+    if (jail_authority(a, b) || jail_authority(b, a))
+        return 0;
     if (g.war.version && war_rivals(a->faction,b->faction)) {
         uintptr_t lo=(uintptr_t)g.actors, hi=(uintptr_t)(g.actors+g.actorCount);
         if (((uintptr_t)a>=lo&&(uintptr_t)a<hi&&g.war.prisonTown[a-g.actors]) ||
@@ -764,7 +774,7 @@ static void resolve_strike(int ai, int bi) {
 void combat_impact(int ai, int bi, int w) {
     if(ai<0||bi<0||ai>=g.actorCount||bi>=g.actorCount)return;
     Actor *a=&g.actors[ai], *b=&g.actors[bi];
-    if(b->dead||b->unconscious>0)return;
+    if (b->dead || b->unconscious > 0 || jail_authority(a, b)) return;
     int ranged=weapon_ranged(w);
     int sk = ranged ? CROSSBOWS : w ? MELEE : MARTIAL;
     int evading=combat_evasion(b),defSkill=evading?DODGE:DEFENCE;
@@ -843,15 +853,16 @@ void combat_impact(int ai, int bi, int w) {
     }
 
     gain(b, TOUGHNESS, rawDamage * .65f * combat_learning(level(b,TOUGHNESS),rawDamage));
-    if (depth_organic(b,limb) && w && w != STAFF && !(gear_family(w) >= 14 && gear_family(w) <= 16))
-        b->bleed += damage * (itemDefs[w].effect == 0 ? .04f : .025f);
+    if (depth_organic(b, limb) && w && (cut >= .25f || ranged)) {
+        b->woundFlags |= 1u << limb;
+        b->bleed += damage * (ranged ? .028f : cut * .043f);
+    }
     b->target = ai;
     if (a->squad || b->squad)
         log_msg("%s hits %s: %s -%d", a->name, b->name, limbNames[limb], (int)damage);
     limb_hit(b,limb,cut);
     if (b->health[HEAD] <= 0 || b->health[CHEST] <= 0 || b->blood < 20) {
-        b->unconscious = 25 + damage;
-        b->autoattack = 0;
+        injury_knockout(b, damage);
         if (a->squad && !b->defeatCredited) {
             b->defeatCredited = 1;
             g.kills++;
@@ -859,67 +870,274 @@ void combat_impact(int ai, int bi, int w) {
                 log_msg("Bounty target down. Loot for proof and reward.");
         }
         if (a->squad || b->squad)
-            log_warn("%s is unconscious.", b->name);
+            log_warn("%s %s.", b->name, recovery_coma(b) ? "is in a recovery coma" : "is unconscious");
     }
 }
+float coma_threshold(const Actor *a) {
+    return -species_health(a) * (.10f + .0055f * (level(a, TOUGHNESS) - 1));
+}
+int recovery_coma(const Actor *a) {
+    return !a->dead && a->unconscious > 0 && (a->woundFlags & WOUND_COMA);
+}
+int fatal_injury(const Actor *a) {
+    return (a->race != 2 && a->blood <= 0) || a->health[HEAD] <= -.85f * species_health(a);
+}
+void injury_knockout(Actor *a, float impact) {
+    if (fminf(a->health[HEAD], a->health[CHEST]) <= coma_threshold(a))
+        a->woundFlags |= WOUND_COMA;
+    if (a->unconscious <= 0)
+        a->unconscious = clamp(9 + impact * .12f - level(a, TOUGHNESS) * .075f, 5, 18);
+    a->autoattack = a->attackPhase = 0;
+    if (a->taskKind != TASK_JAIL_CARE && a->taskKind != 3)
+        a->taskKind = 0;
+    a->target = -1;
+}
 int wound_needs_dressing(const Actor *a) {
-    if (a->dead || a->race == 2)
+    if (a->dead || a->race == 2 || fatal_injury(a))
         return 0;
-    if (a->bleed > .01f)
+    if (a->bleed > .01f || (a->woundFlags & WOUND_CUTS))
         return 1;
     const DepthActor *z = &g.depth.actors[a - g.actors];
     for (int l = 0; l < LIMBS; l++)
-        if (depth_can_heal(a, l) && (a->health[l] < species_health(a) - z->trauma[l] - 2 ||
-            (z->trauma[l] > .5f && !(a->treatedMask & (1 << l)))))
+        if (depth_can_heal(a, l) && !(a->treatedMask & (1 << l)) &&
+            (a->health[l] < species_health(a) - z->trauma[l] - 2 || z->trauma[l] > .5f))
             return 1;
     return 0;
 }
-void dress_wounds(Actor *a) {
-    const DepthActor *z = &g.depth.actors[a - g.actors];
+void injury_dress(Actor *a, const DepthActor *z) {
     for (int l = 0; l < LIMBS; l++)
         if (depth_can_heal(a, l) && (a->health[l] < species_health(a) || z->trauma[l] > 0))
             a->treatedMask |= 1 << l;
+    a->woundFlags &= ~WOUND_CUTS;
     a->bleed = 0;
 }
-static void recover_dressed(Actor *a, float dt) {
-    if (!a->treatedMask || a->bleed > .01f || a->hunger < 20)
-        return;
-    DepthActor *z = &g.depth.actors[a - g.actors];
-    float maxHealth = species_health(a);
-    for (int l = 0; l < LIMBS; l++) {
-        if (!(a->treatedMask & (1 << l)) || !depth_can_heal(a, l))
-            continue;
-        z->trauma[l] = fmaxf(0, z->trauma[l] - dt * .038f);
-        a->health[l] = fminf(maxHealth - z->trauma[l], a->health[l] + dt * .10f);
-        if (a->health[l] >= maxHealth)
-            a->treatedMask &= ~(1 << l);
-    }
+void dress_wounds(Actor *a) { injury_dress(a, &g.depth.actors[a - g.actors]); }
+void injury_repair(Actor *a, const DepthActor *z) {
+    for (int l = 0; l < LIMBS; l++)
+        if (!depth_organic(a, l) && !limb_missing(a, l) &&
+            (a->health[l] < limb_max_health(a, l) - 1 || z->trauma[l] > 0))
+            a->woundFlags |= 1u << (WOUND_REPAIR_SHIFT + l);
 }
-static int heal_from(int mi, int pi, int kitSlot) {
+
+/* Both live and stored travelers follow the same injury and wake-up rules.
+   A severe torso wound bottoms out in coma territory. Only head trauma or
+   exhausted blood can turn a combat injury into death. */
+int injury_tick(Actor *a, DepthActor *z, float dt, int resting) {
+    if (fatal_injury(a))
+        return 1;
+    float max = species_health(a);
+    int uprightVitals = a->health[HEAD] > 0 && a->health[CHEST] > 0;
+    a->health[CHEST] = fmaxf(a->health[CHEST], -.70f * max);
+    if (a->race != 2) {
+        if (a->bleed > .01f) {
+            if (a->taskKind != TASK_JAIL_CARE)
+                a->blood -= a->bleed * dt * .35f;
+            float clotting = .028f + .00028f * level(a, TOUGHNESS) + (a->unconscious > 0 ? .016f : 0);
+            a->bleed = fmaxf(0, a->bleed - dt * clotting);
+            /* Earlier saves and authored casualties may have bleeding without a cut mask. */
+            if (!(a->woundFlags & WOUND_CUTS))
+                for (int l = 0; l < LIMBS; l++)
+                    if (depth_can_heal(a, l) && a->health[l] < max - 2 && !(a->treatedMask & (1 << l)))
+                        a->woundFlags |= 1u << l;
+        } else {
+            a->bleed = 0;
+            float rate = resting || (a->woundFlags & WOUND_CLINIC) ? 1.15f : a->unconscious > 0 ? .68f : .38f;
+            if (a->woundFlags & WOUND_TONIC)
+                rate += .9f;
+            a->blood = fminf(100, a->blood + dt * rate);
+        }
+    }
+    if (fatal_injury(a))
+        return 1;
+    if (a->bleed <= .01f && (a->woundFlags & WOUND_CUTS)) {
+        a->treatedMask |= a->woundFlags & WOUND_CUTS;
+        a->woundFlags &= ~WOUND_CUTS;
+    }
+
+    if (fminf(a->health[HEAD], a->health[CHEST]) <= coma_threshold(a) || (a->race != 2 && a->blood < 20))
+        injury_knockout(a, 0);
+    if (a->woundFlags & (WOUND_TONIC | WOUND_CLINIC))
+        a->exposure = fmaxf(0, a->exposure - dt * 2.0f);
+    if (a->blood >= 100 && a->exposure <= 0)
+        a->woundFlags &= ~WOUND_TONIC;
+    float nutrition = a->hunger < 20 ? .65f : 1;
+    int wounds = 0;
+    for (int l = 0; l < LIMBS; l++) {
+        unsigned repair = 1u << (WOUND_REPAIR_SHIFT + l);
+        if (a->woundFlags & repair) {
+            float full = limb_max_health(a, l);
+            z->trauma[l] = fmaxf(0, z->trauma[l] - dt * (resting ? 1.15f : .65f));
+            float rate = resting || (a->unconscious > 0 && l <= CHEST) ? 3.0f : 1.7f;
+            a->health[l] = fminf(full - z->trauma[l], a->health[l] + dt * rate);
+            if (a->health[l] >= full || limb_missing(a, l))
+                a->woundFlags &= ~repair;
+            continue;
+        }
+        if (!depth_can_heal(a, l)) {
+            /* A Clockwork can restart its core. Full repair still needs parts. */
+            if (a->race == 2 && a->unconscious > 0 && l <= CHEST && a->health[l] < 3)
+                a->health[l] = fminf(3, a->health[l] + dt * 1.1f);
+            continue;
+        }
+        if (a->woundFlags & (1u << l)) {
+            float floor = l == HEAD && a->health[l] < -.45f * max ? -max : -.34f * max;
+            if (a->health[l] > floor)
+                a->health[l] = fmaxf(floor, a->health[l] - dt * .16f * (1 - level(a, TOUGHNESS) * .006f));
+            continue;
+        }
+        if (a->health[l] >= max && z->trauma[l] <= 0)
+            continue;
+        int dressed = a->treatedMask & (1 << l);
+        int vital = l == HEAD || l == CHEST;
+        int cared = resting || (a->woundFlags & WOUND_CLINIC);
+        float rate = cared ? 3.1f + gear_bonus(a, 6) * .015f :
+            a->unconscious > 0 && vital ? 1.45f : dressed ? .76f : .85f;
+        z->trauma[l] = fmaxf(0, z->trauma[l] - dt * (cared ? 1.25f : dressed ? .55f : .32f) * nutrition);
+        float cap = max - z->trauma[l];
+        a->health[l] = fminf(cap, a->health[l] + dt * rate * nutrition);
+        if (a->health[l] >= max)
+            a->treatedMask &= ~(1 << l);
+        else
+            wounds = 1;
+    }
+    if (!wounds && a->blood >= 100 && a->exposure <= 0)
+        a->woundFlags &= ~WOUND_CLINIC;
+    if (fatal_injury(a))
+        return 1;
+    if (uprightVitals && (a->health[HEAD] <= 0 || a->health[CHEST] <= 0))
+        injury_knockout(a, 0);
+
+    if (a->unconscious > 0) {
+        float left = a->unconscious - dt;
+        int bloodReady = a->race == 2 || a->blood >= 25;
+        int stabilized = a->health[HEAD] > 0 && a->health[CHEST] > 0 && bloodReady;
+        if (left <= 0 && (!bloodReady || (recovery_coma(a) && !stabilized)))
+            left = .25f;
+        a->unconscious = fmaxf(0, left);
+        if (!a->unconscious)
+            a->woundFlags &= ~WOUND_COMA;
+    }
+    if (a->unconscious <= 0 && a->bleed <= .01f && a->blood >= 35)
+        a->woundFlags &= ~WOUND_AID_CHECKED;
+    return 0;
+}
+static int treatment_ready(const Actor *a, int type) {
+    if (type == TREAT_PRESSURE)
+        return a->bleed > .01f && a->race != 2;
+    if (type == TREAT_REPAIR)
+        return depth_needs_repair(a);
+    if (type == TREAT_CLINIC) {
+        if (a->race == 2 || (a->woundFlags & WOUND_CLINIC))
+            return 0;
+        if (a->bleed > .01f || a->blood < 98 || a->exposure > 1)
+            return 1;
+        for (int l = 0; l < LIMBS; l++)
+            if (depth_can_heal(a, l) && a->health[l] < species_health(a) - 1)
+                return 1;
+        return 0;
+    }
+    return wound_needs_dressing(a);
+}
+static int treatment_supplies(Actor *m, int type, int slot, int consume) {
+    if (type == TREAT_CLINIC) {
+        if (g.money < 80 || town_near(m->x, m->y, 14) < 0)
+            return 0;
+        if (consume) g.money -= 80;
+        return 1;
+    }
+    if (type == TREAT_PRESSURE) {
+        if (inventory_count(m, CLOTH) >= 2)
+            return !consume || inventory_remove(m, CLOTH, 2);
+        if (m->gear[1] != RAGS)
+            return 0;
+        if (consume) m->gear[1] = m->gearStolen[1] = 0;
+        return 1;
+    }
+    int item = type == TREAT_REPAIR ? PARTS : MEDKIT;
+    if (slot >= 0)
+        return slot < PACK && m->pack[slot].item == item &&
+            (!consume || inventory_remove_slot(m, slot, 1));
+    return consume ? inventory_remove(m, item, 1) : inventory_count(m, item) > 0;
+}
+int begin_treatment(int mi, int pi, int type, int slot) {
     if (mi < 0 || pi < 0 || mi >= g.actorCount || pi >= g.actorCount)
         return 0;
-    Actor *m = &g.actors[mi], *p = &g.actors[pi];
-    if (!conscious(m) || p->dead || depth_distance(m,p) > TALK_REACH)
+    Actor *m = &g.actors[mi], *a = &g.actors[pi];
+    if (!conscious(m) || !a->active || a->dead || fatal_injury(a) || depth_distance(m, a) > TALK_REACH ||
+        m->taskKind == TASK_TREAT || m->taskKind == TASK_JAIL_CARE || m->taskKind == TASK_CELL_LOCK)
         return 0;
-    if (!wound_needs_dressing(p))
-        return 0;
-    if (kitSlot < 0
-            ? !inventory_remove(m, MEDKIT, 1)
-            : (kitSlot >= PACK || m->pack[kitSlot].item != MEDKIT || !inventory_remove_slot(m, kitSlot, 1))) {
+    if (!treatment_ready(a, type) || !treatment_supplies(m, type, slot, 0)) {
         if (mi == g.selected)
-            log_msg("No field dressings.");
+            log_msg(type == TREAT_REPAIR ? "Repairs need damaged mechanical parts and a spare part." :
+                    type == TREAT_CLINIC ? "Clinic care needs an injury and 80 silver." :
+                    type == TREAT_PRESSURE ? "Pressure dressing needs bleeding and cloth or rags." :
+                    "First aid needs a wound and a field dressing.");
         return 0;
     }
-    dress_wounds(p);
-    for (int j = 0; j < LIMBS; j++)
-        if (depth_can_heal(p,j))
-            p->health[j] = fminf(species_health(p)-g.depth.actors[pi].trauma[j], p->health[j] + 18 + level(m, MEDICINE) * .65f + gear_bonus(m, 5));
-    p->blood = fminf(100, p->blood + 10);
-    gain(m, MEDICINE, 24);
-    log_msg("%s bandaged %s. Bleeding stopped.", m->name, p->name);
+    m->taskKind = TASK_TREAT;
+    m->taskIndex = (type * MAX_ACTORS + pi) * (PACK + 1) + slot + 1;
+    m->action = type == TREAT_CLINIC ? 4 : type == TREAT_PRESSURE ? 2.5f :
+        fmaxf(1.75f, (type == TREAT_REPAIR ? 5.5f : 3.4f) -
+              .035f * level(m, type == TREAT_REPAIR ? ENGINEERING : MEDICINE) -
+              (type == TREAT_DRESS ? gear_bonus(m, 5) * .05f : 0));
+    if (mi == g.selected) {
+        ui.screen = SCREEN_WORLD;
+        ui.selection = ui.menuReturn = 0;
+    }
+    if (m->squad || a->squad || pi == g.depth.npc[NPC_SORA])
+        log_msg("%s starts %s. Stay within reach.", m->name, type == TREAT_REPAIR ? "repairs" :
+                type == TREAT_CLINIC ? "clinic care" : "first aid");
     return 1;
 }
-int heal_actor(int mi, int pi) { return heal_from(mi, pi, -1); }
+static void treatment_tick(float dt) {
+    for (int mi = 0; mi < g.actorCount; mi++) {
+        Actor *m = &g.actors[mi];
+        if (m->taskKind != TASK_TREAT)
+            continue;
+        int type = m->taskIndex / ((PACK + 1) * MAX_ACTORS);
+        int pi = m->taskIndex / (PACK + 1) % MAX_ACTORS, slot = m->taskIndex % (PACK + 1) - 1;
+        if (m->taskIndex < 0 || type > TREAT_CLINIC || pi >= g.actorCount || !conscious(m)) {
+            m->taskKind = 0;
+            continue;
+        }
+        Actor *a = &g.actors[pi];
+        if (!a->active || a->dead || fatal_injury(a) || depth_distance(m, a) > TALK_REACH) {
+            m->taskKind = 0;
+            if (mi == g.selected) log_msg("Treatment interrupted.");
+            continue;
+        }
+        m->action -= dt;
+        if (m->action > 0)
+            continue;
+        m->taskKind = 0;
+        if (!treatment_ready(a, type) || !treatment_supplies(m, type, slot, 1))
+            continue;
+        if (type == TREAT_REPAIR) {
+            injury_repair(a, &g.depth.actors[pi]);
+            gain(m, ENGINEERING, 25);
+            log_msg("%s repaired %s. Parts are recovering.", m->name, a->name);
+        } else {
+            dress_wounds(a);
+            if (type == TREAT_CLINIC)
+                a->woundFlags |= WOUND_CLINIC;
+            if (type == TREAT_DRESS)
+                gain(m, MEDICINE, 24);
+            if (type == TREAT_CLINIC)
+                log_msg("Clinic care begins. Rest here while you recover.");
+            else if (a->squad && !m->squad)
+                log_warn("%s bandaged %s. The bleeding has stopped.", m->name, a->name);
+            else
+                log_msg("%s dressed %s's wounds. Recovery takes time.", m->name, a->name);
+            if (pi == g.depth.npc[NPC_SORA] && !g.depth.rescued) {
+                g.depth.rescued = 1;
+                log_msg("Sora follows while you stay within 18m.");
+            }
+        }
+        if (!m->squad && a->squad && mi != pi)
+            roadside_aid_finished(mi, pi);
+    }
+}
+int heal_actor(int mi, int pi) { return begin_treatment(mi, pi, TREAT_DRESS, -1); }
 void use_item(int s) {
     Actor *a = &g.actors[g.selected];
     if (s < 0 || s >= PACK || !a->pack[s].item)
@@ -942,10 +1160,13 @@ void use_item(int s) {
         a->hunger = fminf(100, a->hunger + (it == RATION ? 48 : 12));
         log_msg("Used %s.", itemDefs[it].name);
     } else if (it == TONIC) {
-        inventory_remove_slot(a, s, 1);
-        a->blood = fminf(100, a->blood + 35);
-        a->exposure = fmaxf(0, a->exposure - 60);
-        log_msg("Tonic restores blood and warmth.");
+        if (conscious(a) && a->race != 2 && !(a->woundFlags & WOUND_TONIC) &&
+            (a->blood < 100 || a->exposure > 0)) {
+            inventory_remove_slot(a, s, 1);
+            a->woundFlags |= WOUND_TONIC;
+            log_msg("Tonic helps restore blood and warmth over time.");
+        } else
+            log_msg("A tonic cannot help right now.");
     } else if (it == MAPSCROLL) {
         inventory_remove_slot(a, s, 1);
         memset(g.seen, 255, sizeof(g.seen));
@@ -953,9 +1174,9 @@ void use_item(int s) {
             g.discovered[t] = 1;
         log_msg("Survey chart reveals the frontier.");
     } else if (it == MEDKIT)
-        heal_from(g.selected, g.selected, s);
+        begin_treatment(g.selected, g.selected, TREAT_DRESS, s);
     else if (it == PARTS)
-        depth_repair(g.selected,g.selected);
+        begin_treatment(g.selected, g.selected, TREAT_REPAIR, s);
     else if (limb_item_grade(it)>=0) {
         ui.limbReturn=SCREEN_PACK;ui.limbTarget=limb_item_leg(it)?LLEG:LARM;
         if(!limb_missing(a,ui.limbTarget)&&limb_missing(a,ui.limbTarget+1))ui.limbTarget++;
@@ -1488,8 +1709,9 @@ static void die(Actor *a) {
     a->unconscious = 9999;
     a->bleed = 0;
     a->taskKind = 0;
+    a->woundFlags = 0;
     if (a->squad)
-        log_warn("%s has died. Their death is permanent.", a->name);
+        log_warn("%s died from %s.", a->name, a->blood <= 0 ? "blood loss" : "head trauma");
 }
 void reveal_area(Actor *a) {
     int x = (int)a->x, y = (int)a->y;
@@ -1586,8 +1808,8 @@ static void squad_job(Actor *a, float dt) {
                     depth_move_room(a, depth_x(b) - depth_x(a), depth_y(b) - depth_y(a), dt);
                 else
                     route_toward(a, b->x, b->y, dt);
-            } else
-                heal_actor(member, patient);
+            } else if (heal_actor(member, patient))
+                ui.jobGather[member] = 1;
         }
     } else if (job == JOB_FARM) {
         for (int j = 0; j < g.buildingCount; j++) {
@@ -1700,6 +1922,8 @@ void simulate(float dt) {
         g.day++;
         restock();
     }
+    treatment_tick(dt);
+    roadside_aid_tick(dt);
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
         if (!depth_build_ready(i)) continue;
@@ -1758,7 +1982,8 @@ void simulate(float dt) {
                 }
             }
         }
-        if (!a->squad && distance(a->x, a->y, g.actors[g.selected].x, g.actors[g.selected].y) > 45 && !population_owned(i))
+        if (!a->squad && a->prisonTime <= 0 &&
+            distance(a->x, a->y, g.actors[g.selected].x, g.actors[g.selected].y) > 45 && !population_owned(i))
             continue;
         if (a->carriedBy >= 0) {
             Actor *c = &g.actors[a->carriedBy];
@@ -1770,30 +1995,16 @@ void simulate(float dt) {
                 a->y = c->y;
             }
         }
-        if (a->bleed > 0) {
-            a->blood -= a->bleed * dt * .35f;
-            a->bleed = fmaxf(0, a->bleed - dt * .0015f);
-        } else
-            a->blood = fminf(100, a->blood + dt * .07f);
-        recover_dressed(a, dt);
-        if (a->blood <= 0 || a->health[HEAD] < -70 || a->health[CHEST] < -70) {
+        if (a->taskKind == 3 && a->taskIndex <= -1000 && !population_sleep_valid(a))
+            a->taskKind = 0;
+        if ((a->woundFlags & WOUND_CLINIC) && town_near(a->x, a->y, 14) < 0)
+            a->woundFlags &= ~WOUND_CLINIC;
+        if (injury_tick(a, &g.depth.actors[i], dt, a->taskKind == 3 || a->prisonTime > 0)) {
             die(a);
             continue;
         }
-        if (a->blood < 20 && a->unconscious <= 0)
-            a->unconscious = 30;
-        if (a->unconscious > 0) {
-            a->unconscious = fmaxf(0, a->unconscious - dt);
-            if (a->bleed <= .01f) {
-                if (depth_organic(a,HEAD) && a->health[HEAD] < 35)
-                    a->health[HEAD] = fminf(35, a->health[HEAD] + dt * .35f);
-                if (depth_organic(a,CHEST) && a->health[CHEST] < 35)
-                    a->health[CHEST] = fminf(35, a->health[CHEST] + dt * .35f);
-            }
-            if (a->unconscious <= 0 && (a->health[HEAD] <= 0 || a->health[CHEST] <= 0 || a->blood < 25))
-                a->unconscious = 10;
+        if (a->unconscious > 0)
             continue;
-        }
         if(a->squad&&a->race==2)reveal_area(a);
         if (a->squad && a->race!=2) {
             a->hunger = fmaxf(0, a->hunger - dt * .045f * species_food(a));
@@ -1806,7 +2017,7 @@ void simulate(float dt) {
             if (a->hunger <= 0) {
                 a->health[CHEST] -= dt * .12f;
                 if (a->health[CHEST] <= 0)
-                    a->unconscious = 30;
+                    injury_knockout(a, 0);
             }
             reveal_area(a);
         }
@@ -1814,17 +2025,11 @@ void simulate(float dt) {
             (a->taskIndex < 0 || a->taskIndex >= g.nodeCount ||
              distance(a->x, a->y, g.nodes[a->taskIndex].x, g.nodes[a->taskIndex].y) > WORK_REACH))
             a->taskKind = 0;
-        if (a->taskKind == 3 && a->taskIndex <= -1000 && !population_sleep_valid(a)) a->taskKind=0;
-        if (a->taskKind) {
-            if (a->taskKind == 3) {
+        if (a->taskKind > 0 && a->taskKind < TASK_CELL_LOCK) {
+            if (a->taskKind == 3)
                 a->fatigue = fmaxf(0, a->fatigue - dt * 1.8f);
-                if (a->bleed <= 0 && a->hunger >= 20)
-                    for (int l = 0; l < LIMBS; l++)
-                        if (depth_can_heal(a,l))
-                            a->health[l] = fminf(species_health(a)-g.depth.actors[i].trauma[l], a->health[l] + dt * (.6f + gear_bonus(a, 6) * .015f));
-            }
             a->action -= dt;
-            if (a->action <= 0 && a->taskKind!=4)
+            if (a->action <= 0 && a->taskKind != 4)
                 complete_task(a);
         }
         if (!a->taskKind)
@@ -1837,7 +2042,8 @@ void simulate(float dt) {
                 squad_job(a, dt);
             continue;
         }
-        if(field_aid(i,dt))continue;
+        if (a->taskKind == TASK_TREAT || field_aid(i, dt))
+            continue;
         if (retreats[i].time <= 0 && population_tactics(i, dt))
             continue;
         int target = -1;
@@ -1962,7 +2168,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 19 };
+enum { SAVE_VERSION = 20 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -1992,6 +2198,13 @@ static int validate_game(const Game *t) {
         t->buildingCount > MAX_BUILDINGS || t->nodeCount < 0 || t->nodeCount > MAX_NODES || t->selected < 0 ||
         t->selected >= t->actorCount || !t->actors[t->selected].squad || t->tech < 0 || t->tech > 3 ||
         t->squadCount < 1 || t->squadCount > SQUAD)
+        return 0;
+    if (t->roadsideAid.actor < 0 || t->roadsideAid.actor > t->actorCount ||
+        t->roadsideAid.patient < 0 || t->roadsideAid.patient > t->actorCount ||
+        (t->roadsideAid.patient && (!t->roadsideAid.actor || t->roadsideAid.patient == t->roadsideAid.actor)) ||
+        t->roadsideAid.bed > t->buildingCount || t->roadsideAid.bed < -1000 - POP_GROUPS * 4 ||
+        t->roadsideAid.generated < 0 || t->roadsideAid.generated > 1 ||
+        t->roadsideAid.day < 0 || t->roadsideAid.day > t->day || !isfinite(t->roadsideAid.until))
         return 0;
     for (int j = 0; j < 4; j++) {
         if (t->mercActor[j] < 0 || t->mercActor[j] > t->actorCount || !isfinite(t->mercUntil[j]) ||
@@ -2054,7 +2267,9 @@ static int validate_game(const Game *t) {
             a->routePos > 24 || a->attackPhase < 0 || a->attackPhase > 3 || a->attackWeapon < 0 ||
             a->attackWeapon >= ITEMS || a->attackTarget >= t->actorCount || a->prisonTown >= TOWNS ||
             a->homeTown >= TOWNS || !isfinite(a->blood) || !isfinite(a->bleed) || !isfinite(a->hunger) ||
-            !isfinite(a->fatigue))
+            !isfinite(a->fatigue) || !isfinite(a->unconscious) || a->prisonTown < -1 ||
+            (a->woundFlags & ~WOUND_FLAGS) || a->taskKind < 0 || a->taskKind > TASK_JAIL_CARE ||
+            (a->taskKind >= TASK_CELL_LOCK && (!isfinite(a->action) || a->action < 0)))
             return 0;
         for (int j = 0; j < LIMBS; j++)
             if (!isfinite(a->health[j]))
@@ -2132,6 +2347,7 @@ static int migrate_legacy(const LegacyGame *old) {
         memcpy(a->gear, o->gear, sizeof(o->gear));
         memcpy(&a->active, &o->active, sizeof(*o) - ((char *)&o->active - (char *)o));
         a->prisonTown = -1;
+        a->woundFlags = 0;
         a->homeTown = town_near(a->x, a->y, 12);
         a->skin = i % 8;
         a->hair = i % 7;
@@ -2173,6 +2389,7 @@ static int migrate_legacy(const LegacyGame *old) {
 }
 static int save_shape(uint32_t version,uint32_t size) {
     return ((version==17 || version==18) && size==offsetof(Game,theftWarnings)) ||
+      (version==19 && size==offsetof(Game,roadsideAid)) ||
       (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
@@ -2222,6 +2439,16 @@ static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t si
 #undef WIDEN
         read_save_span(&reader, &out->war);
         if (reader.left) return 0;
+    }
+    if (version < SAVE_VERSION) {
+        for (int i = 0; i < MAX_ACTORS; i++)
+            out->actors[i].woundFlags = 0;
+        for (int k = 0; k < POP_GROUPS; k++)
+            for (int i = 0; i < POP_MEMBERS; i++)
+                out->population.groups[k].reserve[i].woundFlags = 0;
+        for (int k = 0; k < EVENTS; k++)
+            for (int i = 0; i < POP_MEMBERS; i++)
+                out->living.events[k].reserve[i].woundFlags = 0;
     }
     if (out->theftWarnings >= (1u << FACTIONS) || !validate_game(out))
         return 0;
@@ -2685,7 +2912,7 @@ void game_tick(float dt, Input in) {
     }
     if (p & KEY_L)
         ui.squadCyclePending = 1;
-    if ((p & (KEY_CROSS | KEY_L)) && (in.held & KEY_L) && (in.held & KEY_CROSS) && !g.interiorBuilding) {
+    if ((p & (KEY_CROSS | KEY_L)) && (in.held & KEY_L) && (in.held & KEY_CROSS) && !g.interiorBuilding && a->prisonTime <= 0) {
         ui.squadCyclePending = 0;
         action_menu_open();
         return;
@@ -2698,6 +2925,21 @@ void game_tick(float dt, Input in) {
     }
     if (p & KEY_R)
         ui.paused = !ui.paused;
+    if (a->prisonTime > 0) {
+        if ((p & KEY_CIRCLE) && a->taskKind == TASK_CELL_LOCK) {
+            a->taskKind = 0;
+            log_msg("Stopped picking the cell lock.");
+        }
+        if (p & KEY_CROSS) {
+            if (conscious(a) && a->taskKind != TASK_CELL_LOCK && a->taskKind != TASK_JAIL_CARE) {
+                dialogue_open(g.selected);
+                return;
+            }
+        }
+        if (!ui.paused)
+            simulate(dt * ui.speed);
+        return;
+    }
     if (p & KEY_CIRCLE) {
         a->sneaking = !a->sneaking;
         log_msg(a->sneaking ? "Sneaking. Detection range reduced." : "Standing. Normal movement.");
@@ -2857,6 +3099,8 @@ void debug_snapshot(const char *path) {
 
     VALUE("attack", &a->attackPhase, 4);
     VALUE("bleed", &a->bleed, 4);
+    VALUE("woundflags", &a->woundFlags, 4);
+    VALUE("roadside", &g.roadsideAid, sizeof(g.roadsideAid));
     VALUE("autoattack", &a->autoattack, 4);
     VALUE("trails", &g.trails, sizeof(g.trails));
     VALUE("time", &g.time, 4);

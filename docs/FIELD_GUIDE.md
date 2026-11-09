@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.17.2
+# Dustbound field guide — 0.17.3
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -26,13 +26,13 @@ The 1536 by 1536 borderlands contain nineteen settlements and nine terrain regio
 
 ![square](../assets/ui/square.svg) toggles fighting. L + Square opens opponents; Cross orders an attack, including neutrals (assault adds bounty). Small feet marks: teal line friendly, gold dot neutral, red chevron hostile. Red corners mark your opponent. Move into weapon reach to attack automatically; followers engage nearby threats. ![r](../assets/ui/r.svg) pauses combat for orders. Heavy steel needs strength equal to twice its weight. Weak or injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords hit hard; anchor cleavers bleed. Guns use cartridges; bows use bolts.
 
-Armor protects specific body locations. Piercing weapons ignore some armor; serrated blades bleed; staggering hits interrupt. Skills improve through use. Retreat from stronger opponents and use terrain. Gold windup marks show incoming strikes. Enemy combat bars show remaining knockout reserve from head, chest and blood. Square to passive cancels your attack; move away to disengage.
+Armor protects specific body locations. Piercing weapons ignore some armor; serrated blades bleed; staggering hits interrupt. Skills improve through use. Travel trains Agility, which raises movement speed. Retreat from stronger opponents and use terrain. Gold windup marks show incoming strikes. Enemy combat bars show remaining knockout reserve from head, chest and blood. Square to passive cancels your attack; move away to disengage.
 
 ## 5. Wounds & Rescue
 
-Six body parts, blood and fatigue are separate. Head or chest failure knocks a survivor out. Bleeding can kill an unconscious character. Start > Squad > Health & recovery, ![cross](../assets/ui/cross.svg) treats the selected survivor; ![cross](../assets/ui/cross.svg) near an injured ally opens First Aid, Carry and Recover Gear choices.
+Head or chest failure and blood loss knock a survivor out. Severe head trauma and bleeding out can be fatal. When a vital part falls below the Toughness threshold, the survivor stays in a recovery coma until both vital parts and blood recover. Start > Squad > Health & recovery, ![cross](../assets/ui/cross.svg) treats the selected survivor; ![cross](../assets/ui/cross.svg) near an injured ally opens First Aid, Carry and Recover Gear choices.
 
-Nearby Actions lets you bandage or repair yourself when you have supplies. Dressings stop bleeding and restore some health. Use two cloth or tear worn rags for a pressure dressing in an emergency. Friendly medics and pilgrims help when safe, using their supplies. Dressed wounds recover slowly on the trail. Sleeping speeds up recovery. A doctor charges for full treatment. Lost limbs never regrow. A missing leg makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Prosthetics are uncommon on ordinary travelers; high-grade parts are rarer. Actual fitted limbs on fallen wanderers can be looted. Death is permanent; dismiss the body from Squad to free its slot.
+Nearby Actions lets you bandage or repair yourself when you have supplies. Blunt injuries heal on their own. Open cuts deteriorate until they clot or are dressed. A dressing takes a few seconds to apply, then the wound gradually heals. Use two cloth or tear worn rags for a pressure dressing in an emergency. Friendly medics, pilgrims, and some passersby help when safe. A rescuer may carry an unconscious survivor to a nearby bed. Clinic care and beds speed up recovery. Lost limbs never regrow. A missing leg makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Prosthetics are uncommon on ordinary travelers; high-grade parts are rarer. Actual fitted limbs on fallen wanderers can be looted. Death is permanent; dismiss the body from Squad to free its slot.
 
 ## 6. Food & Sleep
 
@@ -80,7 +80,7 @@ Smelt and Cook use nearby stations and can collect ingredients from a nearby dep
 
 ![circle](../assets/ui/circle.svg) sneaks. Detection depends on stealth skill, equipment, distance and weather. Sneak and ![cross](../assets/ui/cross.svg) near a civilian to inspect a pickpocket attempt. Select an item with ![vertical](../assets/ui/vertical.svg). Risk reflects weight, value, approach and visible witnesses. Getting behind the target improves odds. ![cross](../assets/ui/cross.svg) steals one; ![circle](../assets/ui/circle.svg) cancels. Owned salvage says STEAL; locked containers require tools and time.
 
-Some witnesses warn you the first time. Repeated or serious theft can cost faction standing and add a bounty. A theft can fail, drawing guards. Stolen stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a defeated wanted survivor; breaking out or paying bail is possible. Nearby actions free other prisoners or slaves. Work takes time and guards can catch you. Some freed people flee; others follow independently. Only Recruit adds them to your squad. Leave me alone dismisses a follower.
+Some witnesses warn you the first time. Repeated or serious theft can cost faction standing and add a bounty. A theft can fail, drawing guards. Stolen stacks retain an owner until fenced. Paying a bounty requires a town official. Guards may imprison a defeated wanted survivor; jail staff treat injuries during the sentence. Press Cross to pay bail or start picking the lock. Improvised wire works in a pinch. Tools improve your chances. Circle cancels an attempt. Nearby actions free other prisoners or slaves. Work takes time and guards can catch you. Some freed people flee; others follow independently. Only Recruit adds them to your squad. Leave me alone dismisses a follower.
 
 ## 14. Factions
 

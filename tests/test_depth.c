@@ -65,6 +65,7 @@ int main(int argc, char **argv) {
     near_actor(sora);
     int kits = inventory_count(&g.actors[0], MEDKIT);
     depth_dialog(sora, 0);
+    step(4);
     C(D.rescued == 1 && g.actors[sora].bleed == 0 && inventory_count(&g.actors[0], MEDKIT) == kits - 1);
     /* Escort uses actual movement rather than setting a quest flag on
      * conversation. */
@@ -146,13 +147,16 @@ int main(int argc, char **argv) {
     a->action = 100;
     step(3);
     C(a->health[LARM] == 35);
-    C(depth_repair(0, 0) && a->health[LARM] > 35);
+    C(depth_repair(0, 0) && a->health[LARM] == 35);
+    step(7);
+    C(a->health[LARM] > 35);
     C(!a->bleed);
     a->race = 0;
     a->health[CHEST] = 50;
     depth_wound(a, CHEST, 50);
     C(D.actors[0].trauma[CHEST] > 0);
     heal_actor(0, 0);
+    step(4);
     float trauma = D.actors[0].trauma[CHEST];
     a->taskKind = 3;
     a->action = 100;

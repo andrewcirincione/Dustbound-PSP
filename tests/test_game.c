@@ -136,9 +136,13 @@ int main(void) {
     a->health[CHEST] = 40;
     a->bleed = 2;
     int kits = inventory_count(a, MEDKIT);
-    CHECK(heal_actor(0, 0) && a->bleed == 0 && a->health[CHEST] > 40 &&
+    e->active = 0;
+    a->autoattack = 0;
+    int aid = heal_actor(0, 0);
+    for (int j = 0; j < 70; j++) simulate(.1f);
+    CHECK(aid && a->bleed == 0 && a->health[CHEST] > 40 && a->health[CHEST] < 50 &&
               inventory_count(a, MEDKIT) == kits - 1,
-          "first aid consumes a dressing, heals, stops bleeding");
+          "first aid takes time, stops bleeding and starts gradual healing");
     a->hunger = 30;
     int food = inventory_count(a, RATION);
     simulate(.1f);

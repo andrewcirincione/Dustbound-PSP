@@ -77,6 +77,7 @@ int limbs_validate(const Game*s){
 void limb_sever(Actor*a,int l,int surgery){
  if(!valid_limb(l)||limb_missing(a,l)||a->kind==BEAST)return;
  int organic=depth_organic(a,l),n=(int)(a-g.actors);limb_set(a,l,0,0);a->lostMask|=1<<l;a->health[l]=0;
+ a->woundFlags &= ~((1u << l) | (1u << (WOUND_REPAIR_SHIFT + l))); a->treatedMask &= ~(1 << l);
  if(n>=0&&n<g.actorCount)g.depth.actors[n].trauma[l]=0;
  a->attackPhase=0;a->taskKind=0;if(organic&&!surgery)a->bleed+=2;
  if(!surgery&&g.nodeCount<MAX_NODES){Node*d=&g.nodes[g.nodeCount++];memset(d,0,sizeof(*d));d->x=a->x+.3f;d->y=a->y+.2f;d->type=NODE_LOOT;d->remaining=1;d->item=organic?(l>=LLEG?SEVERED_LEG:SEVERED_ARM):PARTS;d->qty=1;}
@@ -100,7 +101,7 @@ int limb_surgery(int sn,int pn,int l){
  if(!can_fit(pn)||!conscious(s)||s->target>=0||depth_distance(s,a)>TALK_REACH||s->faction==HOSTILE||g.rep[s->faction]<-25){log_msg("Surgery needs Venn nearby, awake and safe.");return 0;}
  if(a->lostMask&(1<<l)){log_msg("That natural limb is already gone.");return 0;}
  if(g.money<400){log_msg("Removal surgery costs 400 silver.");return 0;}
- g.money-=400;limb_sever(a,l,1);a->bleed=0;a->blood=fmaxf(a->blood,60);log_msg("Venn removed %s and closed the wound. Fit a replacement.",limbNames[l]);return 1;
+ g.money-=400;limb_sever(a,l,1);dress_wounds(a);log_msg("Venn removed %s and closed the wound. Fit a replacement.",limbNames[l]);return 1;
 }
 int limb_loot_item(const Actor*a,int slot){return slot<0?0:slot<PACK?a->pack[slot].item:slot<PACK+GEARS?a->gear[slot-PACK]:slot<PACK+GEARS+4?limb_installed(a,LARM+slot-PACK-GEARS):0;}
 void limb_open(int screen){ui.screen=screen;ui.selection=0;ui.scroll=0;}

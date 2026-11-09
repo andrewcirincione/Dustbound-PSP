@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.17.2"
+#define VERSION "0.17.3"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -62,6 +62,14 @@ enum {
     PERCEPTION
 };
 enum { HEAD, CHEST, LARM, RARM, LLEG, RLEG };
+enum {
+    WOUND_CUTS = (1u << LIMBS) - 1, WOUND_COMA = 1u << LIMBS, WOUND_AID_CHECKED = 1u << (LIMBS + 1),
+    WOUND_REPAIR_SHIFT = LIMBS + 2, WOUND_REPAIRS = WOUND_CUTS << WOUND_REPAIR_SHIFT,
+    WOUND_CLINIC = 1u << (WOUND_REPAIR_SHIFT + LIMBS), WOUND_TONIC = WOUND_CLINIC << 1,
+    WOUND_FLAGS = (WOUND_TONIC << 1) - 1
+};
+enum { TASK_CELL_LOCK = 5, TASK_TREAT, TASK_JAIL_CARE };
+enum { TREAT_DRESS, TREAT_PRESSURE, TREAT_REPAIR, TREAT_CLINIC };
 enum {
     NONE,
     RATION,
@@ -170,7 +178,9 @@ typedef struct {
     Stack pack[PACK];
     int gear[GEARS];
     int active, kind, faction, squad, dead, job, target, taskKind, taskIndex, sneaking, autoattack, carrying,
-        carriedBy, lostMask, prostheticMask, bounty, arrested, lootTaken;
+        carriedBy, lostMask, prostheticMask, bounty;
+    unsigned woundFlags; /* occupies the unused arrested field in older saves */
+    int lootTaken;
     int body, skin, hair, hairColor, beard, scar, origin, race, facing, homeTown;
     int voice, speech, prisonTown, stolen[PACK], bountyReward;
     float speechTime, speechCooldown, prisonTime, stun, exposure;
@@ -256,6 +266,7 @@ typedef struct {
     struct { int version, seen, bed[6], omit; } trails;
     FrontierWar war;
     unsigned theftWarnings;
+    struct { int actor, patient, bed, generated, day; float until; } roadsideAid;
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -399,6 +410,21 @@ void work_notice(const Actor *a, const char *action, const char *target);
 int wound_needs_dressing(const Actor *a);
 int civilian_flees(const Actor *a);
 void dress_wounds(Actor *a);
+void injury_dress(Actor *a, const DepthActor *z);
+void injury_repair(Actor *a, const DepthActor *z);
+int begin_treatment(int medic, int patient, int type, int slot);
+int jail_authority(const Actor *guard, const Actor *patient);
+void injury_knockout(Actor *a, float impact);
+float coma_threshold(const Actor *a);
+int recovery_coma(const Actor *a);
+int fatal_injury(const Actor *a);
+int injury_tick(Actor *a, DepthActor *z, float dt, int resting);
+void roadside_aid_tick(float dt);
+void roadside_aid_finished(int medic, int patient);
+int jail_pick_start(int n);
+int jail_bail(int n);
+int jail_bail_cost(const Actor *a);
+float jail_pick_duration(const Actor *a, int tools);
 void witnessed_theft(Actor *a, int owner, int range, int penalty);
 int loot_take(int slot, int all);
 int nearby_service(int role);

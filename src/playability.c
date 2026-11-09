@@ -623,18 +623,18 @@ int loot_take(int slot, int all) {
 }
 const char *skill_training(int s) {
     static const char *text[SKILLS] = {
-        "Travel on foot. Higher athletics increases walking speed.",
+        "Travel on foot to train Agility. Lighter gear and healthy legs help you outrun pursuers.",
         "Fight, block, carry weight and mine. Strength raises load allowance and handles heavy weapons.",
         "Practice attacks, especially cutting blades. Dexterity improves speed and cutting damage.",
         "Fight with melee weapons. Practice improves your chance to hit.",
         "Face melee attacks. Defence improves blocks; heavy packs penalize it.",
-        "Survive blows. Each toughness level reduces incoming damage by 0.2%, up to 20%.",
+        "Survive blows to build Toughness. Higher levels resist damage, lower the coma threshold and shorten knockouts.",
         "Fight unarmed or dodge while staggered. Hits also train dodge. Excess load reduces evasion and XP.",
         "Fight with an empty weapon slot. Martial arts improves unarmed attacks.",
         "Walk while sneaking. Stealth reduces detection; bulky gear penalizes it.",
         "Pick pockets and steal salvage. Failure can trigger bounties and guards.",
-        "Open locked salvage with tools. Failed attempts still teach you.",
-        "Treat injuries with field dressings. Medicine restores more limb health.",
+        "Pick salvage and jail locks. Tools speed jail escape and reduce the risk. Failed attempts still teach you.",
+        "Apply field dressings to train medicine. Higher levels finish the dressing sooner. Wounds recover over time.",
         "Mine ore and gather supplies. Work completes only within reach.",
         "Water and harvest crops. Every 30 farming levels adds one grain per harvest.",
         "Cook at a campfire. Every 35 cooking levels adds one ration per batch.",
@@ -787,13 +787,13 @@ void skill_benefit(int skill, char *out, int size) {
     case DEXTERITY: snprintf(out,size,"Attack delay reduction %.2f sec before minimum/handling",lv*.003f);break;
     case MELEE: snprintf(out,size,"Melee attack score %d before injuries",lv+gear_bonus(a,0)-backpack_combat_penalty(a->gear[5]));break;
     case DEFENCE: snprintf(out,size,"Armed defence %d before stance and armor bonuses",lv-backpack_combat_penalty(a->gear[5]));break;
-    case TOUGHNESS: snprintf(out,size,"Incoming damage reduced by %.1f%%",lv*.2f);break;
+    case TOUGHNESS: snprintf(out,size,"Damage reduced %.1f%% / Recovery coma below %.0f HP",lv*.2f,coma_threshold(a));break;
     case DODGE: snprintf(out,size,"Evasion %d before load and stance penalties",lv-backpack_combat_penalty(a->gear[5]));break;
     case MARTIAL: snprintf(out,size,"Unarmed base damage %.1f, plus strength and attack",7+lv*.4f);break;
     case STEALTH: snprintf(out,size,"Sneak detection range %.0f%% before weather",100*fmaxf(.12f,.5f-lv*.003f-gear_bonus(a,2)*.003f));break;
     case THEFT: snprintf(out,size,"Base theft %.0f%%; item, approach and witnesses modify it",100*pickpocket_chance(a));break;
     case LOCKPICK: snprintf(out,size,"Salvage lock success %.0f%% per attempt",100*fminf(1,.62f+lv*.008f));break;
-    case MEDICINE: snprintf(out,size,"Dressing heals up to %.1f HP per treatable limb",18+lv*.65f+gear_bonus(a,5));break;
+    case MEDICINE: snprintf(out,size,"Dressing takes %.1f seconds. Healing follows over time.",fmaxf(1.75f,3.4f-.035f*lv-gear_bonus(a,5)*.05f));break;
     case LABOUR: snprintf(out,size,"Gathering cycle %.2f seconds",fmaxf(.8f,2.8f-lv*.035f));break;
     case FARMING: snprintf(out,size,"Harvest %d grain per crop",harvest_yield(a));break;
     case COOKING: snprintf(out,size,"Cooked rations: +%d per batch",lv/35);break;

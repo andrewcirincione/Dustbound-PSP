@@ -20,6 +20,8 @@ static void species_checks(void){
   a=fresh();a->race=r;for(int l=0;l<LIMBS;l++)a->health[l]=species_health(a);a->health[RARM]-=10;
   inventory_add(a,MEDKIT,5);inventory_add(a,PARTS,5);a->bleed=0;
   assert(r==2?depth_repair(g.selected,g.selected):heal_actor(g.selected,g.selected));
+  for(int i=0;i<g.actorCount;i++)if(i!=g.selected)g.actors[i].active=0;
+  for(int i=0;i<150;i++)simulate(.1f);
   assert(a->health[RARM]<=species_health(a)&&a->health[RARM]>=species_health(a)-1);
   if(r!=2)assert(!heal_actor(g.selected,g.selected));
   for(int i=0;i<g.actorCount;i++)if(i!=g.selected)g.actors[i].active=0;

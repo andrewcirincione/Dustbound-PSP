@@ -164,8 +164,12 @@ int main(void) {
     a->bleed = 2;
     a->blood = 40;
     oldmoney = g.money;
-    CHECK(doctor_heal(0) && a->health[CHEST] == 100 && a->bleed == 0 && g.money == oldmoney - 80,
-          "doctor treats wounds for the stated fee");
+    int treatment = doctor_heal(0);
+    CHECK(treatment && a->health[CHEST] == 30 && g.money == oldmoney,
+          "doctor begins care before healing or charging");
+    step(6);
+    CHECK(a->health[CHEST] > 30 && a->health[CHEST] < 45 && a->bleed == 0 && g.money == oldmoney - 80,
+          "doctor treats wounds over time for the stated fee");
     a->health[LARM] = 40;
     a->fatigue = 80;
     for (int j=0;j<g.buildingCount;j++) if (g.buildings[j].type==BED) { a->x=g.buildings[j].x; a->y=g.buildings[j].y; break; }
@@ -206,6 +210,7 @@ int main(void) {
     float x = a->x;
     move_actor(a, 1, 0, 1);
     CHECK(a->x == x, "custody prevents walking out of the holding area");
+    step(32);
     dialogue_open(0);
     oldmoney = g.money;
     press(KEY_CROSS);

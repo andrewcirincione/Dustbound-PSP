@@ -28,9 +28,8 @@ void life_init(void){if(L.version)return;memset(&L,0,sizeof(L));L.version=1;for(
 static void life_announce(int k,const char*line){if(observers(P.groups[k].x,P.groups[k].y)<28)log_msg("%s: %s",population_name(k),line);}
 static int life_threat(int k,float reach){int found=-1;for(int j=0;j<POP_GROUPS;j++){if(j==k||!standing(j)||!enemies(&P.groups[k],&P.groups[j]))continue;float d=distance(P.groups[k].x,P.groups[k].y,P.groups[j].x,P.groups[j].y);if(d<reach){reach=d;found=j;}}return found;}
 static int life_bandage(int k,int patient,int medic){
- Actor*a=member(k,patient),*b=member(k,medic);if(!a||!b||a->dead||b->dead||b->unconscious>0||!inventory_remove(b,MEDKIT,1))return 0;
- a->bleed=0;DepthActor*d=member_depth(k,patient);for(int l=0;l<LIMBS;l++)if(!limb_missing(a,l)&&depth_organic(a,l))a->health[l]=fminf(limb_max_health(a,l)-d->trauma[l],a->health[l]+20+level(b,MEDICINE)*.5f);
- a->blood=fminf(100,a->blood+10);gain(b,MEDICINE,24);L.groups[k].rescues++;L.rescues++;return 1;
+ Actor*a=member(k,patient),*b=member(k,medic);if(!a||!b||a->dead||fatal_injury(a)||b->dead||b->unconscious>0||!inventory_remove(b,MEDKIT,1))return 0;
+ injury_dress(a,member_depth(k,patient));gain(b,MEDICINE,24);L.groups[k].rescues++;L.rescues++;return 1;
 }
 static void life_drop(int k,int i){
  GroupLife*z=&L.groups[k];int j=z->carry[i];if(j<0)return;Actor*a=member(k,i),*b=member(k,j);if(P.groups[k].spawned){if(a)a->carrying=-1;if(b)b->carriedBy=-1;}if(a&&b){b->x=a->x+.6f;b->y=a->y+.4f;clear_position(&b->x,&b->y);}z->carry[i]=-1;

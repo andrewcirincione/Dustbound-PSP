@@ -320,13 +320,13 @@ int depth_dialog(int actor, int row) {
     int n = depth_named(actor);
     if (n == NPC_SORA) {
         if (row == 0 && D.rescued < 2) {
-            if (!heal_actor(g.selected, actor)) {
+            if (conscious(b) && !wound_needs_dressing(b)) {
+                D.rescued = 1;
+                log_msg("Sora can walk again. Stay within 18m as you escort her.");
+            } else if (!heal_actor(g.selected, actor)) {
                 log_msg("Bring a dressing and treat Sora.");
                 return 0;
             }
-            D.rescued = 1;
-            b->bleed = 0;
-            log_msg("Sora follows while you stay within 18m.");
             depth_open(SCREEN_WORLD);
         } else if (row == 1)
             depth_locate(SITE_STORES);
@@ -595,7 +595,9 @@ void depth_wound(Actor *a, int limb, float damage) {
     if (n < 0)
         return;
     a->treatedMask &= ~(1 << limb);
-    D.actors[n].trauma[limb] = fminf(80, D.actors[n].trauma[limb] + damage * .18f);
+    a->woundFlags &= ~(1u << (WOUND_REPAIR_SHIFT + limb));
+    float cap = fminf(80, limb_max_health(a, limb) * .74f);
+    D.actors[n].trauma[limb] = fminf(cap, D.actors[n].trauma[limb] + damage * .18f);
     D.actors[n].upkeep = fmaxf(20, D.actors[n].upkeep - damage * .025f);
 }
 int depth_needs_repair(const Actor *a) {
@@ -604,36 +606,12 @@ int depth_needs_repair(const Actor *a) {
         return 0;
     for (int j = 0; j < LIMBS; j++)
         if (!limb_missing(a, j) && !depth_organic(a, j) &&
+            !(a->woundFlags & (1u << (WOUND_REPAIR_SHIFT + j))) &&
             (a->health[j] < limb_max_health(a, j) - 1 || D.actors[n].trauma[j] > 0))
             return 1;
     return 0;
 }
-int depth_repair(int mi, int pi) {
-    if (mi < 0 || pi < 0 || mi >= g.actorCount || pi >= g.actorCount)
-        return 0;
-    Actor *m = &g.actors[mi], *a = &g.actors[pi];
-    if (!conscious(m) || a->dead || depth_distance(m, a) > TALK_REACH)
-        return 0;
-    if (!depth_needs_repair(a)) {
-        log_msg("No mechanical damage to repair.");
-        return 0;
-    }
-    if (!inventory_remove(m, PARTS, 1)) {
-        log_msg("Mechanical repairs need spare parts.");
-        return 0;
-    }
-    for (int j = 0; j < LIMBS; j++)
-        if (!limb_missing(a,j) && !depth_organic(a, j)) {
-            D.actors[pi].trauma[j] = fmaxf(0, D.actors[pi].trauma[j] - 20);
-            a->health[j] =
-                fminf(limb_max_health(a,j) - D.actors[pi].trauma[j], a->health[j] + 30 + level(m, ENGINEERING) * .5f);
-        }
-    if (a->race == 2)
-        a->bleed = 0;
-    gain(m, ENGINEERING, 25);
-    log_msg("Repaired mechanical limbs with spare parts.");
-    return 1;
-}
+int depth_repair(int mi, int pi) { return begin_treatment(mi, pi, TREAT_REPAIR, -1); }
 int depth_layer(int slot) {
     Actor *a = &g.actors[g.selected];
     DepthActor *z = &D.actors[g.selected];
@@ -709,7 +687,7 @@ static void captivity(float dt) {
     for (int i = 0; i < g.actorCount; i++) {
         Actor *a = &g.actors[i];
         DepthActor *z = &D.actors[i];
-        if (!a->active || a->dead)
+        if (!a->active || a->dead || fatal_injury(a))
             continue;
         if (z->captive == 2) { /* physical capture, no teleport */
             if (a->carriedBy < 0) {
@@ -732,13 +710,11 @@ static void captivity(float dt) {
             a->attackPhase = 0;
             a->target = -1;
             a->taskKind = 0;
-            a->bleed = 0;
-            a->blood = fmaxf(35, a->blood);
+            if (a->bleed > .01f || (a->woundFlags & WOUND_CUTS))
+                dress_wounds(a);
             a->hunger = fmaxf(25, a->hunger);
-            if (a->unconscious > 0) {
-                a->health[HEAD] = fmaxf(5, a->health[HEAD]);
-                a->health[CHEST] = fmaxf(5, a->health[CHEST]);
-            }
+            if (a->race == 2 && a->unconscious > 0)
+                injury_repair(a, z);
         } else if (a->squad && a->unconscious > 0 && a->carriedBy < 0 && !actor_inside(a) &&
                    distance(a->x, a->y, D.siteX[3], D.siteY[3]) < 24) {
             for (int j = 0; j < g.actorCount; j++) {
@@ -964,9 +940,6 @@ void depth_tick(float dt) {
                 log_msg("Construction complete: %s.", context_name());
             }
         }
-        for (int j = 0; j < LIMBS; j++)
-            if (depth_organic(a, j) && a->taskKind == 3 && a->bleed <= 0 && a->hunger >= 20)
-                z->trauma[j] = fmaxf(0, z->trauma[j] - dt * .12f);
     }
     depth_projectiles(dt);
 }

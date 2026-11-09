@@ -387,17 +387,6 @@ int expansion_input(float dt, Input in) {
             open_view(SCREEN_CREATE);
         return 1;
     }
-    if (ui.screen == SCREEN_WORLD && a->prisonTime > 0) {
-        if (p & KEY_CROSS) {
-            dialogue_open(g.selected);
-            return 1;
-        }
-        if (!(p & (KEY_L | KEY_START | KEY_SELECT | KEY_TRIANGLE | KEY_R))) {
-            if (!ui.paused)
-                simulate(dt * ui.speed);
-            return 1;
-        }
-    }
     if (ui.screen == SCREEN_PACK && (p & KEY_TRIANGLE)) {
         open_view(SCREEN_EQUIPPED);
         return 1;
@@ -709,30 +698,7 @@ int expansion_input(float dt, Input in) {
         if (p & KEY_CROSS) {
             int choice = ui.selection;
             if (prison) {
-                if (choice == 0) {
-                    if (g.money >= wanted_amount(a,g.townOwner[a->prisonTown])) {
-                        g.money -= wanted_amount(a,g.townOwner[a->prisonTown]);
-                        crime_clear(a,g.townOwner[a->prisonTown]);
-                        a->prisonTime = 0;
-                        g.rep[g.townOwner[a->prisonTown]] = 0;
-                        open_view(SCREEN_WORLD);
-                    } else
-                        log_msg("Insufficient silver for bail.");
-                } else if (choice == 1) {
-                    gain(a, LOCKPICK, 30);
-                    if (inventory_count(a, TOOLS) && ((g.rng = g.rng * 1664525u + 1013904223u) % 100) <
-                                                         (unsigned)(25 + level(a, LOCKPICK))) {
-                        a->prisonTime = 0;
-                        crime_add(a,g.townOwner[a->prisonTown],100);
-                        g.rep[g.townOwner[a->prisonTown]] -= 18;
-                        open_view(SCREEN_WORLD);
-                        log_msg("Lock opened. Escape before the guards return.");
-                    } else {
-                        a->prisonTime += 20;
-                        crime_add(a,g.townOwner[a->prisonTown],20);
-                        log_warn("Escape failed. Sentence and bounty increased.");
-                    }
-                } else
+                if (choice == 2 || (choice == 0 && jail_bail(n)) || (choice == 1 && jail_pick_start(n)))
                     open_view(SCREEN_WORLD);
             } else if (ui.dialogPage == 1) {
                 if (choice < 8)

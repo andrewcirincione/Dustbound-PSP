@@ -1,3 +1,10 @@
+# 0.17.3 — Recovery
+
+- Blunt injuries recover on their own. Open cuts worsen and bleed until they clot or are dressed. Severe head trauma and blood loss can kill. Deep vital injuries can cause a Toughness-based recovery coma.
+- Dressings, pressure bandages, repairs, clinic care, and blood tonics take time. Beds speed recovery.
+- Jail staff treat injured prisoners. Cell locks take time to pick, with tools or improvised wire. Agility grows with travel and raises movement speed.
+- Rare travelers can render first aid and sometimes carry unconscious survivors to a safe bed.
+
 # 0.17.2 — Fieldwork
 
 - Followers track the controlled squad member, including inside buildings. Separate assignment and priority tabs preserve direct jobs. The controlled member only begins automatic work after five idle seconds in Passive stance.

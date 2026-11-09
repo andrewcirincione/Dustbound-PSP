@@ -192,6 +192,7 @@ static void rescue_finish(int n,int helper){
  Actor*a=&g.actors[n];DepthActor*z=&g.depth.actors[n];int faction=rescue_faction(n);
  z->escape=0;z->captive=0;z->recognized=helper>=0?1800:0;S.cannibal[n]=0;S.eating[n]=0;S.rescueHelper[n]=0;
  g.war.prisonTown[n]=0;
+ if (a->taskKind == TASK_CELL_LOCK || a->taskKind == TASK_JAIL_CARE) a->taskKind = 0;
  a->prisonTime=0;a->prisonTown=-1;a->target=-1;a->attackPhase=0;g.living.command[n]=-1;
  S.captorFaction[n]=faction;
  if(helper>=0){crime_add(a,faction,80);S.recognized[n][faction]=1800;g.depth.freed++;}
@@ -327,7 +328,7 @@ static void tick_cannibals(float dt){
  }else if(S.cannibal[n]==2){
  DepthActor*z=&g.depth.actors[n];a->target=-1;a->attackPhase=0;a->taskKind=0;
 
- if(near_guard(a,14,5)>=0){S.eating[n]+=dt;if(S.eating[n]>=45){S.eating[n]-=10;a->health[CHEST]-=12;a->blood-=15;a->unconscious=fmaxf(a->unconscious,12);if(a->squad)log_warn("Cannibals are eating %s!",a->name);if(a->blood<=0||a->health[CHEST]<-70){a->dead=1;a->unconscious=9999;z->captive=0;S.cannibal[n]=0;}}}
+ if(near_guard(a,14,5)>=0){S.eating[n]+=dt;if(S.eating[n]>=45){S.eating[n]-=10;a->health[CHEST]-=12;a->blood-=15;a->unconscious=fmaxf(a->unconscious,12);if(a->squad)log_warn("Cannibals are eating %s!",a->name);if(fatal_injury(a)){z->captive=0;S.cannibal[n]=0;}}}
  }else if(a->squad&&a->race!=2&&!actor_inside(a)&&a->unconscious>0&&a->carriedBy<0&&!g.depth.actors[n].captive&&g.townOwner[14]==HOSTILE&&distance(a->x,a->y,towns[14].x,towns[14].y)<24){int c=near_guard(a,14,TALK_REACH);if(c>=0&&g.actors[c].carrying<0){g.actors[c].carrying=n;a->carriedBy=c;S.cannibal[n]=1;g.depth.actors[n].captive=3;a->bleed=0;log_warn("Cannibals seized %s and are carrying them to the fire.",a->name);}}
  }
 }
@@ -356,7 +357,7 @@ int nearby_actions(void){
      add_action(ACTION_SELF_REPAIR, 0, g.selected);
  if (a->bleed > .01f && a->race != 2)
      add_action(ACTION_EMERGENCY, 0, g.selected);
- if(g.depth.actors[g.selected].captive||a->prisonTime>0)add_action(ACTION_RESCUE,0,g.selected);
+ if(g.depth.actors[g.selected].captive)add_action(ACTION_RESCUE,0,g.selected);
  for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(n==g.selected||!b->active||population_hidden(n)||depth_room(b)!=room||depth_distance(a,b)>TALK_REACH||b->carriedBy>=0)continue;
   if(!b->dead&&(g.depth.actors[n].captive||b->prisonTime>0))add_action(ACTION_RESCUE,0,n);
   if(S.freed[n]&&!b->squad&&!b->dead){add_action(S.freed[n]==1?ACTION_RESCUED_LEAVE:ACTION_RESCUED_FOLLOW,0,n);add_action(ACTION_RESCUED_RECRUIT,0,n);}
@@ -484,17 +485,7 @@ static void perform_action(const NearbyAction *x) {
  if (reason) { log_msg("%s.", reason); return; }
  if (x->type == ACTION_SELF_AID) { heal_actor(n, n); return; }
  if (x->type == ACTION_SELF_REPAIR) { depth_repair(n, n); return; }
- if (x->type == ACTION_EMERGENCY) {
-     if (inventory_count(a, CLOTH) >= 2)
-         inventory_remove(a, CLOTH, 2);
-     else {
-         a->gear[1] = 0;
-         a->gearStolen[1] = 0;
-     }
-     dress_wounds(a);
-     log_warn("%s stopped bleeding. Dressed wounds will heal slowly.", a->name);
-     return;
- }
+ if (x->type == ACTION_EMERGENCY) { begin_treatment(n, n, TREAT_PRESSURE, -1); return; }
  if(x->type==ACTION_POLITICS){politics_open(n);return;}
  if(x->type==ACTION_POPULATION){population_action(n,x->kind);return;}
  if(x->type==ACTION_EVENT){WorldEvent*e=&g.living.events[n];if(e->type==2||e->type==3||e->type==4)living_action(n);else{char b[160];living_detail(n,b,sizeof(b));log_msg("%s",b);}return;}
