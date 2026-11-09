@@ -27,7 +27,7 @@ const StartScenario startScenarios[START_SCENARIOS] = {
     {11, "Hard", "Start at Shogun's Rest with a soldier's blade, armor, and combat training. There is little silver to spare, and the Iron Throne's war runs through this region."},
     {16, "Standard", "Start at Brass Junction with metal, coal, and a heavy pack. Labour and smithing give you a head start. Work the nearby deposits or trade your stock."},
     {8, "Hardest", "Start outside Black Mesa with 180 silver and a Union bounty. You know how to sneak and steal. Union patrols will look for you beyond the enclave."},
-    {10, "Easy", "Start at Cinder Port with Reed and Vale. You have more silver, a crossbow, and a second set of dressings. Three people need food and care."}
+    {10, "Easy", "Start at Cinder Port with Reed and Vale. You have more silver, a travel pack, a crossbow and dressings. Three people need food and care."}
 };
 void scenario_menu(int origin, int from) {
     ui.scenarioReturn = from;
@@ -115,7 +115,7 @@ void character_finish(void) {
         a->gear[2] = gear_id(heads[origin], 0, 1);
         a->gear[3] = gear_id(origin == 1 ? 63 : 60, 0, 0);
         a->gear[4] = gear_id(origin == 1 ? 68 : 69, 0, 0);
-        a->gear[5] = gear_id(origin == 2 ? 79 : 76, 0, 0);
+        a->gear[5] = origin == 2 ? gear_id(79, 0, 0) : origin == 4 ? gear_id(76, 0, 0) : NONE;
         if (origin == 1) {
             g.money = 420;
         }
@@ -292,6 +292,7 @@ int expansion_input(float dt, Input in) {
         if(p&KEY_L)cycle_squad(-1);
         if(p&KEY_R)cycle_squad(1);
         a=&g.actors[g.selected];DepthActor *z=&g.depth.actors[g.selected];
+        if (slave_in_camp(a)) return 1;
         int rows = ui.squadPage ? 5 : 3;
         if (p & KEY_UP) ui.selection = wrapi(ui.selection - 1, rows);
         if (p & KEY_DOWN) ui.selection = wrapi(ui.selection + 1, rows);
@@ -536,7 +537,7 @@ int expansion_input(float dt, Input in) {
     if (ui.screen == SCREEN_SAVES) {
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(ui.saveReturn);
-            ui.selection = ui.saveReturn == SCREEN_TITLE ? 2 : ui.saveExit ? 5 : ui.saveMode ? 1 : 2;
+            ui.selection = ui.saveReturn == SCREEN_TITLE ? 1 : ui.saveExit ? 5 : ui.saveMode ? 1 : 2;
             ui.saveExit = 0;
             return 1;
         }
@@ -653,7 +654,6 @@ int expansion_input(float dt, Input in) {
                     a->carrying = n;
                     b->carriedBy = g.selected;
                     a->taskKind = 0;
-                    ui.waypoint = 0;
                     open_view(SCREEN_WORLD);
                     log_msg("Carrying %s. \001 puts them down; speed is reduced.", b->name);
                 }
@@ -725,7 +725,12 @@ int expansion_input(float dt, Input in) {
                 case 14:ui.dialogPage=4;ui.selection=0;break;
                 case 15:open_view(SCREEN_FACTIONS);break;
                 case 0:
-                    if (town >= 0 && depth_trade_open(town)) {
+                    if (population_vendor(n) && conscious(b) && depth_distance(a, b) <= TALK_REACH) {
+                        ui.roadTrader = n + 1;
+                        ui.tradeTown = -1;
+                        ui.sell = ui.shopFilter = 0;
+                        open_view(SCREEN_TRADE);
+                    } else if (town >= 0 && depth_trade_open(town)) {
                         ui.tradeTown = town;
                         ui.sell = 0;
                         ui.shopFilter = 0;

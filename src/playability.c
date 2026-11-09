@@ -6,7 +6,9 @@
 int npc_role(const Actor *a) {
     if (a->voice == ROLE_MERCENARY)
         return ROLE_MERCENARY;
-    if (a->kind == TRADER)
+    uintptr_t addr = (uintptr_t)a, start = (uintptr_t)g.actors;
+    if (a->kind == TRADER || (addr >= start && addr < start + sizeof(g.actors) &&
+        population_vendor((addr - start) / sizeof(Actor))))
         return ROLE_MERCHANT;
     if (a->kind == RECRUIT)
         return ROLE_RECRUIT;
@@ -23,6 +25,8 @@ int npc_role(const Actor *a) {
 const char *npc_role_name(const Actor *a) {
     if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + MAX_ACTORS)) {
         int ai=(int)(a-g.actors);
+        if (slave_in_camp(a)) return "SHACKLED WORKER";
+        if (g.field.escaped[ai]) return "ESCAPED SLAVE";
         if(g.war.prisonTown[ai])return "ENSLAVED SOLDIER";
         if(a->prisonTime>0)return "PRISONER";
         if(limb_surgeon(ai))return "LIMB SURGEON";
@@ -121,7 +125,7 @@ const char *context_name(void) {
     }
     static const char *s[] = {"FRONTIER HOME",  "TRADING POST", "INN",     "WATCH HOUSE", "WINDPUMP",
                               "WELL",           "CAMPFIRE",     "BEDROLL", "CROP FIELD",  "SMITHY",
-                              "RESEARCH BENCH", "PALISADE",     "DEPOT"};
+                              "RESEARCH BENCH", "PALISADE",     "DEPOT", "JAIL", "SLAVE CAMP"};
     return s[g.buildings[n].type];
 }
 const char *context_action(void) {
@@ -146,7 +150,7 @@ const char *context_action(void) {
         return b->locked                ? (b->owner ? "PICK OWNED LOCK" : "PICK LOCK")
                : b->type <= NODE_COPPER ? "MINE"
                : b->type == NODE_WOOD   ? "GATHER"
-                                        : b->owner ? "STEAL" : "TAKE";
+                                        : b->owner ? "SEARCH OWNED CHEST" : "SEARCH CACHE";
     }
     int t = g.buildings[n].type;
     return t == WELL                   ? "DRAW WATER"
@@ -316,53 +320,23 @@ const char *faction_identity(int f) {
     return l[f >= 0 && f < FACTIONS ? f : 0];
 }
 const char *npc_rumor(const Actor *a) {
-    switch (npc_role(a)) {
-    case ROLE_MERCHANT:
-        return a->faction == UNION ? "Compact stock includes greatswords and rifles. Copper Cross sells "
-                                     "heavy salvage tools. Save silver for food before steel."
-               : a->faction == SCAVENGERS
-                   ? "Railway mauls punch through armor, but weak arms swing slowly. "
-                     "Look for our field-grade stock; masterwork rotates daily."
-               : a->faction == SHOGUN
-                   ? "Our glaives outrange swords. Heavy armor slows a wounded traveler. "
-                     "Black Mesa trades stranger weapons, if you survive the road."
-               : a->faction == OUTLAWS
-                   ? "Stolen goods move here. Anchor cleavers bleed enemies, but their "
-                     "weight can leave you open. No refunds for dead clients."
-                   : "Stock follows our faction's craft. Your standing affects prices. "
-                     "Inspect weight, reach and strength before buying.";
-    case ROLE_MARSHAL:
-        return "Bring contracts back to the journal for payment. Guards protect this town, not the "
-               "whole "
-               "road. Hire an escort before leaving alone.";
-    case ROLE_MEDIC:
-        return "Surgeon Venn works in Dusk Haven. Copper Cross sells reinforced limbs; Iron Gate sells precision limbs; Black Mesa sells relic limbs. Fit replacements with two machine parts.";
-    case ROLE_SMITH:
-        return "Greatswords need strength; mauls defeat armor; glaives trade impact for reach. Choose a "
-               "weapon your injured arms can still lift.";
-    case ROLE_INNKEEPER:
-        return "Recruits join for good. Contract guards work one day and then return home. They wait "
-               "outside "
-               "when you enter buildings.";
-    case ROLE_RECRUIT:
-        return "I join permanently and take your orders. A hired guard keeps their own gear, fights "
-               "independently and leaves when the contract ends.";
-    case ROLE_MERCENARY:
-        return "One guard, one day: 1800 seconds of moving world time. Escort follows your selected "
-               "survivor; camp duty requires an outpost. No refunds.";
-    case ROLE_SCOUT:
-        return "Copper Cross has mauls. Shogunate markets carry glaives. Survey the atlas before "
-               "choosing a "
-               "long route; towns are islands of safety.";
-    default:
-        return faction_identity(a->faction);
-    }
+    static const char *lines[] = {
+        "Quiet since dawn. I'd like it to stay that way.",
+        "Haven't been far enough down the road to tell you much.",
+        "The last wagon came through light. Nobody said what happened to the rest of it.",
+        "The watch changed shifts early. They didn't tell me why.",
+        "A traveler was asking the same thing yesterday. Never did catch their name.",
+        "I heard boots outside before sunrise. By the time I got up they were gone.",
+        "Nothing I saw myself. Half the talk in here gets better with every telling.",
+        "Someone left a cold campfire out by the trail. Could've been anyone."
+    };
+    return lines[(g.seed + (unsigned)(a - g.actors) * 23 + g.day * 3) % 8];
 }
 void frontier_restock(int t) {
     int f = g.townOwner[t];
     if (f < 0 || f >= FACTIONS)
         f = towns[t].faction;
-    for (int it = BASE_ITEMS; it < ITEMS; it++)
+    for (int it = BASE_ITEMS; it < TOWN_STOCK_ITEMS; it++)
         g.stock[t][it] = 0;
     for (int j = 0; j < 4; j++) {
         g.stock[t][gear_id(doctrine[f][j], 1, 1)] = 2;
@@ -637,6 +611,7 @@ int needs_aid(const Actor *a) {
     return 0;
 }
 const char *job_status(const Actor *a) {
+    if (slave_in_camp(a)) return "FORCED LABOUR";
     int job = assigned_job(a);
     if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + MAX_ACTORS)) {
         int i = a - g.actors;

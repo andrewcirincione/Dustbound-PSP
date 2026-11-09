@@ -72,6 +72,7 @@ int main(void) {
     g.interiorY = 3.2f;
     a->health[LARM] = 40;
     a->bleed = 0;
+    dress_wounds(a);
     money = g.money;
     interior_interact();
     CHECK(a->taskKind == 3 && g.money == money - 25);

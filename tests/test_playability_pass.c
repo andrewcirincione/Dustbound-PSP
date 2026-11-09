@@ -151,12 +151,16 @@ static void camps_and_theft(void) {
     row = action_row(ACTION_CONTEXT, 1);
     char label[100];
     nearby_action_label(row, label, sizeof(label));
-    assert(strstr(label, "STEAL") && strstr(label, factionNames[SCAVENGERS]));
+    assert(strstr(label, "SEARCH") && strstr(label, factionNames[SCAVENGERS]));
     nearby_action_choose(row);
+    assert(ui.screen == SCREEN_CHEST && !(g.theftWarnings & (1 << SCAVENGERS)));
+    press(KEY_CROSS);
     assert(g.theftWarnings & (1 << SCAVENGERS));
     assert(wanted_amount(ash, SCAVENGERS) == 0 && strstr(ui.notice, "Hands off"));
-    g.nodes[0].remaining = 1;
+    press(KEY_CIRCLE);
+    g.nodes[0].qty = 1;
     nearby_action_choose(action_row(ACTION_CONTEXT, 1));
+    press(KEY_CROSS);
     assert(wanted_amount(ash, SCAVENGERS) == 80 && strstr(ui.logs[0], factionNames[SCAVENGERS]));
     puts("PASS: camp cook availability has no side effects; ownership is visible; first scavenger warning and repeat bounty.");
 }

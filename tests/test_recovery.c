@@ -52,6 +52,13 @@ static void bleeding_cut(Actor *a, float hp, float blood, float bleed) {
     g.depth.actors[a - g.actors].trauma[CHEST] = 16;
 }
 
+static void lay_in_bed(Actor *a) {
+    int bed = add_build(a->x, a->y, BED, FREE, 0);
+    assert(bed >= 0);
+    a->taskKind = 3;
+    a->taskIndex = bed;
+    a->action = REST_DURATION;
+}
 static void injuries(void) {
     Actor *a = fresh();
     float weak = coma_threshold(a);
@@ -61,13 +68,15 @@ static void injuries(void) {
     injury_knockout(a, 20);
     assert(a->unconscious > 0 && !recovery_coma(a));
     step(17);
-    assert(conscious(a) && a->health[CHEST] > 0);
+    assert(conscious(a) && a->health[CHEST] == -7);
     a = fresh();
     a->health[CHEST] = -180;
     injury_knockout(a, 160);
     step(19);
     assert(!a->dead && recovery_coma(a));
-    step(65);
+    dress_wounds(a);
+    lay_in_bed(a);
+    step(90);
     assert(conscious(a));
     a = fresh();
     a->health[HEAD] = -90;
@@ -81,13 +90,21 @@ static void injuries(void) {
     bleeding_cut(a, -19, 90, 1.3f);
     injury_knockout(a, 36);
     step(60);
+    assert(recovery_coma(a) && a->bleed == 0 && (a->woundFlags & WOUND_CUTS));
+    dress_wounds(a);
+    lay_in_bed(a);
+    step(50);
     assert(conscious(a) && !(a->woundFlags & WOUND_CUTS));
     a = fresh();
     a->race = 2;
     a->health[CHEST] = -21;
     injury_knockout(a, 34);
     step(28);
-    assert(conscious(a) && a->health[CHEST] < 5);
+    assert(recovery_coma(a) && a->health[CHEST] == -21);
+    injury_repair(a, &g.depth.actors[0]);
+    lay_in_bed(a);
+    step(30);
+    assert(conscious(a) && a->health[CHEST] > 0);
     puts("PASS: Toughness changes coma threshold; ordinary knockouts wake; severe chest trauma can recover; head trauma and bleeding can kill.");
 }
 
@@ -97,7 +114,7 @@ static void timed_treatments(void) {
     bleeding_cut(a, 45, 70, 1.5f);
     assert(save_game("build/v174/field-cut.sav"));
     step(3);
-    assert(a->health[LARM] > 41 && a->health[CHEST] < 45 && a->blood < 70);
+    assert(a->health[LARM] == 40 && a->health[CHEST] < 45 && a->blood < 70);
     float hp = a->health[CHEST], blood = a->blood;
     int kits = inventory_count(a, MEDKIT);
     assert(heal_actor(0, 0));
@@ -111,7 +128,7 @@ static void timed_treatments(void) {
     assert(a->health[CHEST] < 48);
     hp = a->health[CHEST];
     step(8);
-    assert(a->health[CHEST] > hp + 2.5f && a->health[CHEST] < hp + 5);
+    assert(a->health[CHEST] > hp + .3f && a->health[CHEST] < hp + 1);
     a = fresh();
     bleeding_cut(a, 48, 75, 1.5f);
     kits = inventory_count(a, MEDKIT);
@@ -144,7 +161,7 @@ static void timed_treatments(void) {
     step(6);
     assert(a->health[LARM] > 45 && a->health[LARM] < 50 && a->woundFlags & WOUND_REPAIRS);
     step(22);
-    assert(a->health[LARM] > 65);
+    assert(a->health[LARM] > 48 && a->health[LARM] < 52);
 
     a = fresh();
     a->x = towns[0].x;
@@ -154,29 +171,33 @@ static void timed_treatments(void) {
     assert(doctor_heal(0) && a->health[CHEST] == 38 && g.money == money);
     step(a->action + .2f);
     assert(a->bleed == 0 && a->health[CHEST] < 43 && g.money == money - 80);
-    step(36);
+    step(55);
     assert(a->health[CHEST] >= 95);
-    puts("PASS: cuts worsen and bruises heal; field dressings, repairs and clinic care are timed; movement cancels treatment and saves retain it.");
+    puts("PASS: cuts worsen and untreated wounds retain damage; field dressings, repairs and clinic care are timed; movement cancels treatment and saves retain it.");
 }
 
 static void custody(void) {
     Actor *a = fresh();
-    a->x = towns[0].x;
-    a->y = towns[0].y + 2;
-    init_actor(1, "Jail guard", GUARD, g.townOwner[0], a->x + .6f, a->y, 14);
+    const Building *jail = &g.buildings[g.field.jail[0] - 1];
+    a->x = jail->x + 1.45f;
+    a->y = jail->y + 2.5f;
+    init_actor(1, "Jail guard", GUARD, g.townOwner[0], a->x, a->y - .6f, 14);
     g.actors[1].homeTown = 0;
     crime_add(a, g.townOwner[0], 100);
     bleeding_cut(a, -30, 8, 18);
     injury_knockout(a, 42);
     simulate(.05f);
-    assert(a->prisonTown == 0 && a->taskKind == TASK_JAIL_CARE && a->health[CHEST] < 0 && a->bleed > 0);
+    assert(a->carriedBy == 1 && a->taskKind == TASK_JAIL_CARE && !a->prisonTime);
+    step(4);
+    assert(a->prisonTown == 0 && actor_inside(a) == g.field.jail[0] &&
+           a->taskKind == TASK_JAIL_CARE && a->health[CHEST] < 0 && a->bleed > 0);
     assert(!hostile(&g.actors[1], a));
     assert(save_game("build/v174/jail-bleeding.sav"));
     g.actors[1].active = 0;
     assert(!jail_pick_start(0));
     step(a->action + .2f);
     assert(a->bleed == 0 && a->prisonTime > 0 && a->health[CHEST] < 0 && !a->dead);
-    step(28);
+    step(45);
     assert(conscious(a) && a->prisonTime > 0 && a->blood > 25);
 
     a->xp[LOCKPICK] = 117612;
@@ -192,7 +213,11 @@ static void custody(void) {
     assert(a->taskKind == TASK_CELL_LOCK && a->prisonTime > 0);
     g.rng = roll_seed(100, 0);
     tick_expansion(a->action + .01f);
-    assert(a->prisonTime == 0 && a->prisonTown == -1 && wanted_amount(a, g.townOwner[0]) == 200);
+    assert(jail_cell_open(a) && wanted_amount(a, g.townOwner[0]) == 100);
+    g.interiorX = 3.5f;
+    g.interiorY = 6.4f;
+    press(KEY_CROSS);
+    assert(!a->prisonTime && !actor_inside(a));
     float x = a->x;
     move_actor(a, 0, 1, .2f);
     assert(a->x == x && conscious(a));
@@ -204,11 +229,11 @@ static void custody(void) {
     assert(jail_pick_start(0) && !a->taskIndex && a->action > 10);
     g.rng = roll_seed(100, 99);
     tick_expansion(a->action + .01f);
-    assert(a->prisonTime > 180 && wanted_amount(a, g.townOwner[0]) == 20);
+    assert(a->prisonTime < 180 && wanted_amount(a, g.townOwner[0]) == 0);
     assert(jail_pick_start(0));
     g.rng = roll_seed(100, 0);
     tick_expansion(a->action + .01f);
-    assert(!a->prisonTime && wanted_amount(a, g.townOwner[0]) == 120);
+    assert(!a->prisonTime && wanted_amount(a, g.townOwner[0]) == 0);
     puts("PASS: jail intake always begins gradual care, including when the guard leaves. Timed lockpicking supports tools, wire, save/load and failed attempts.");
 }
 

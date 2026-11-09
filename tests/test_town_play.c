@@ -45,7 +45,7 @@ static void shops_and_theft(void) {
     for (int i = 0; i < g.buildingCount; i++)
         if (g.buildings[i].type == HOUSE)
             assert(distance(g.buildings[i].x, g.buildings[i].y, g.buildings[shop].x, g.buildings[shop].y) > 3);
-    assert(nearest_ore(towns[town].x, towns[town].y, 17, NODE_ORE) >= 0);
+    assert(nearest_ore(towns[town].x, towns[town].y, 28, NODE_ORE) >= 0);
     assert(depth_named(0) < 0 && g.depth.npc[NPC_NELL] == -1);
     at_door(a, shop);
     assert(interior_enter(shop));

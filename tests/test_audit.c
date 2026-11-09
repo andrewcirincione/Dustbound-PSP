@@ -119,11 +119,11 @@ int main(void) {
     press(KEY_CIRCLE);
     CHECK(ui.screen == SCREEN_PACK && ui.selection == 17 && ui.scroll == 9);
     ui.screen = SCREEN_TITLE;
-    ui.selection = 2;
+    ui.selection = 1;
     press(KEY_CROSS);
     CHECK(ui.screen == SCREEN_SAVES);
     press(KEY_CIRCLE);
-    CHECK(ui.screen == SCREEN_TITLE && ui.selection == 2);
+    CHECK(ui.screen == SCREEN_TITLE && ui.selection == 1);
     ui.screen = SCREEN_MENU;
     ui.menuTab = 0;
     ui.selection = 5;
@@ -258,6 +258,8 @@ int main(void) {
     CHECK(a->x > 42 && a->x < 49);
     for(int i=0;i<LANDMARKS;i++)g.depth.siteBuilding[i]=-1; /* This fixture replaces all world buildings. */
     memset(g.trails.bed, 0, sizeof(g.trails.bed));
+    memset(g.field.jail, 0, sizeof(g.field.jail));
+    memset(g.field.camp, 0, sizeof(g.field.camp));
     CHECK(save_game("build/v052-workers.sav"));
     int q = stored(0, RATION);
     CHECK(load_game("build/v052-workers.sav"));

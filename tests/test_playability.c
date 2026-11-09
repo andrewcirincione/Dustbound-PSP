@@ -152,6 +152,7 @@ int main(void) {
     a->hunger = 10;
     a->bleed = 0;
     a->health[LARM] = 40;
+    dress_wounds(a);
     a->taskKind = 3;
     a->action = 100;
     step(1);

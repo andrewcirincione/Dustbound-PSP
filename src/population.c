@@ -81,6 +81,25 @@ static void set_destination(int k,int town){
     float angle=(random_step(&e->seed)%628)/100.f;
     m->targetX=towns[town].x+cosf(angle)*28;m->targetY=towns[town].y+sinf(angle)*28;clear_position(&m->targetX,&m->targetY);
 }
+static int vendor_member(const WorldEvent *e) {
+    if (e->count <= 0)
+        return -1;
+    if (e->type == POP_MERCHANTS || e->type == POP_SMUGGLERS ||
+        (e->type == POP_SCAVENGERS && e->serial % 5 == 0) ||
+        (e->type == POP_HUNTERS && e->serial % 7 == 0))
+        return e->serial % e->count;
+    return -1;
+}
+int population_vendor(int n) {
+    if (n < 0 || n >= g.actorCount)
+        return 0;
+    int k = population_owned(n) - 1;
+    if (k < 0 || g.actors[n].squad)
+        return 0;
+    WorldEvent *e = &P.groups[k];
+    int vendor = vendor_member(e);
+    return vendor >= 0 && e->members[vendor] == n && !g.actors[n].dead;
+}
 static void make_actor(int k,int i){
     WorldEvent*e=&P.groups[k];Actor*a=&e->reserve[i];DepthActor*z=&e->reserveDepth[i];unsigned seed=random_step(&e->seed);
     static const char *first[]={"Ash","Reed","Mara","Flint","Korin","Sable","Iris","Tarn","Vera","Rook","Nox","Dara","Holt","Ren","Edda","Kest"};
@@ -99,6 +118,12 @@ static void make_actor(int k,int i){
     a->x=a->homeX=a->tx=e->x+(i%4-1)*1.8f;a->y=a->homeY=a->ty=e->y+(i/4)*1.8f;clear_position(&a->x,&a->y);
     a->homeX=a->tx=a->x;a->homeY=a->ty=a->y;a->blood=a->hunger=100;a->speechCooldown=20+seed%40;
     living_gear(a,i%8,tier,(int)(seed%10000));
+    if (i == vendor_member(e)) {
+        inventory_add(a, RATION, 3 + tier);
+        inventory_add(a, MEDKIT, 2);
+        inventory_add(a, e->type == POP_SMUGGLERS ? PARTS : BEDROLL_ITEM, 1 + seed % 2);
+        if (e->type == POP_SMUGGLERS) inventory_add(a, CARTRIDGE, 12);
+    }
     if(e->type==POP_REFUGEES||e->type==POP_WOUNDED){a->gear[0]=STAFF;a->gear[1]=RAGS;a->gear[2]=0;}
     if((e->type==POP_ARMY||e->type==POP_PATROL)&&war_faction_index(e->faction)>=0){
         war_outfit(a,ROLE_MARSHAL,i,tier>=2?2:1);
@@ -199,8 +224,7 @@ static void physiology(int k,float dt){
     for(int i=0;i<e->count;i++){
         Actor*a=member(k,i);if(!a||a->dead)continue;
         if(e->spawned)continue;DepthActor*z=member_depth(k,i);
-        if (!fatal_injury(a) && a->unconscious <= 0 &&
-            (a->bleed > .01f || (a->woundFlags & WOUND_CUTS)) && inventory_remove(a, MEDKIT, 1))
+        if (a->unconscious <= 0 && injury_needs_dressing(a, z) && inventory_remove(a, MEDKIT, 1))
             injury_dress(a, z);
         if (injury_tick(a, z, dt, m->phase == POP_REST)) {
             a->dead = 1;
@@ -245,7 +269,21 @@ static void offline_battle(int a,int b,float dt){
         int own=side?b:a,other=side?a:b;WorldEvent*att=&P.groups[own],*def=&P.groups[other];float strength=0;
         for(int i=0;i<att->count;i++){Actor*x=member(own,i);if(x&&!x->dead&&x->unconscious<=0)strength+=4+level(x,MELEE)*.13f+itemDefs[x->gear[0]].power*.08f;}
         int start=random_step(&att->seed)%def->count;
-        for(int q=0;q<def->count;q++){Actor*x=member(other,(start+q)%def->count);if(!x||x->dead||x->unconscious>0)continue;int l=random_step(&att->seed)%5==0?HEAD:CHEST;float damage=fminf(25,strength*dt*.09f/(1+itemDefs[x->gear[1]].armor*.025f));x->health[l]-=damage;if(depth_organic(x,l))x->bleed+=damage*.003f;if(x->health[l]<=0)x->unconscious=90;break;}
+        for (int q = 0; q < def->count; q++) {
+            Actor *x = member(other, (start + q) % def->count);
+            if (!x || x->dead || x->unconscious > 0)
+                continue;
+            int l = random_step(&att->seed) % 5 == 0 ? HEAD : CHEST;
+            float damage = fminf(25, strength * dt * .09f / (1 + itemDefs[x->gear[1]].armor * .025f));
+            x->health[l] -= damage;
+            x->treatedMask &= ~(1 << l);
+            x->woundFlags &= ~(1u << (WOUND_REPAIR_SHIFT + l));
+            if (depth_organic(x, l))
+                x->bleed += damage * .003f;
+            if (x->health[l] <= 0)
+                x->unconscious = 90;
+            break;
+        }
     }
 }
 void population_tick(float dt){
@@ -323,7 +361,7 @@ int population_prop_style(int k,int object){float x,y;int type=population_object
 static int safe_at(const Actor*a){
     for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(b!=a&&b->active&&conscious(b)&&hostile(a,b)&&distance(a->x,a->y,b->x,b->y)<12)return 0;}return 1;
 }
-int population_sleep_valid(const Actor*a){int raw=-1000-a->taskIndex,k=raw/4,bed=raw%4+1;float x,y;return k>=0&&k<POP_GROUPS&&bed<=P.state[k].beds&&population_object(k,bed,&x,&y)==2&&distance(a->x,a->y,x,y)<2&&safe_at(a);}
+int population_sleep_valid(const Actor*a){int raw=-1000-a->taskIndex,k=raw/4,bed=raw%4+1;float x,y;return k>=0&&k<POP_GROUPS&&bed<=P.state[k].beds&&population_object(k,bed,&x,&y)==2&&distance(a->x,a->y,x,y)<2;}
 int population_action_valid(int k,int action){
     if(k<0||k>=POP_GROUPS||!P.version||depth_room(&g.actors[g.selected]))return 0;Actor*a=&g.actors[g.selected];WorldEvent*e=&P.groups[k];float x=e->x,y=e->y;
     if(!conscious(a))return 0;if(!action)return distance(a->x,a->y,e->x,e->y)<=8;
@@ -334,7 +372,7 @@ int population_action_valid(int k,int action){
 }
 void population_detail(int k,char*out,int size){
     if(k<0||k>=POP_GROUPS){snprintf(out,size,"No travelers here.");return;}WorldEvent*e=&P.groups[k];PopulationState*m=&P.state[k];int live=0,down=0;for(int i=0;i<e->count;i++){Actor*a=member(k,i);if(a&&!a->dead){live++;down+=a->unconscious>0;}}
-    snprintf(out,size,"%s: %d alive, %d down; %s. %s",names[e->type],live,down,g.life.version?life_goal_name(g.life.groups[k].goal):phases[m->phase],m->beds?"Camp beds can be used when safe. Supplies are finite.":e->type==POP_PRISONERS?"Prisoners can be freed after evading or defeating guards.":e->type==POP_WOUNDED?"Dressings may save the wounded.":e->type==POP_BATTLEFIELD?"The survivors and fallen carry their actual equipment.":"These travelers follow their own route.");
+    snprintf(out,size,"%s: %d alive, %d down; %s. %s",names[e->type],live,down,g.life.version?life_goal_name(g.life.groups[k].goal):phases[m->phase],m->beds?"Camp beds are available when unoccupied.":e->type==POP_PRISONERS?"Prisoners can be freed after evading or defeating guards.":e->type==POP_WOUNDED?"Dressings may save the wounded.":e->type==POP_BATTLEFIELD?"The survivors and fallen carry their actual equipment.":"These travelers follow their own route.");
 }
 static int cache_owner(const WorldEvent *e) {
     return e->type == POP_BATTLEFIELD || e->faction == HOSTILE ? FREE : e->faction;
@@ -357,8 +395,6 @@ const char *population_action_reason(int k, int action) {
         if (!inventory_add_owned(&test, RATION, 1, owner))
             return "Pack full";
     } else if (action >= 11 && action <= 13) {
-        if (!safe_at(a))
-            return "Enemies nearby";
         float x, y;
         population_object(k, action - 10, &x, &y);
         for (int n = 0; n < g.actorCount; n++)
@@ -439,6 +475,7 @@ int population_action(int k, int action) {
         inventory_add(a, traderItems[i], 1);
         g.money -= traderPrices[i];
         m->stock[i]--;
+        trade_goodwill(e->faction, traderPrices[i]);
         log_msg("Bought %s for %d silver.", itemDefs[traderItems[i]].name, traderPrices[i]);
     } else
         return 0;
@@ -451,7 +488,26 @@ const char *population_actor_role(int n){
  if((e->type==POP_RAIDERS||e->type==POP_AMBUSH)&&e->modifier==1)return "STARVING BANDIT";
  return roles[e->type];
 }
-const char *population_dialogue(int n){static char line[220];int k=population_owned(n);if(!k)return NULL;population_detail(k-1,line,sizeof(line));return line;}
+const char *population_dialogue(int n) {
+    int k = population_owned(n) - 1;
+    if (k < 0)
+        return NULL;
+    const WorldEvent *e = &P.groups[k];
+    if (population_vendor(n))
+        return e->type == POP_SMUGGLERS ? "Keep your voice down. I've a few things the watch doesn't need to see." :
+               "I can spare some of what's in my pack. Have a look before we move on.";
+    static const char *lines[] = {
+        "We're looking for scrap the other crews missed.", "We left with what we could carry.",
+        "Keep your voice down. Something's been following us.", "I'm here to watch the road. Talk to the one with the pack.",
+        "We're moving on soon. The road gets worse after dark.", "We've got orders to keep this road open.",
+        "Keep walking.", "The animal bares its teeth.", "There should be shelter beyond the next ridge.",
+        "Got a dressing to spare?", "I haven't counted the dead. I don't want to.",
+        "Stay clear of the column.", "You've come a long way out here.",
+        "Mind the ruins. The floor gives out in places.", "Keep back from the prisoners.",
+        "Give me room. I'm waiting for someone."
+    };
+    return lines[e->type];
+}
 int population_validate(const Game*s){
     const Population*p=&s->population;if(!p->version){for(int n=0;n<s->actorCount;n++)if(s->living.owned[n]>EVENTS)return 0;return 1;}if(p->version!=1||p->serial<0||!isfinite(p->pulse)||!isfinite(p->offlinePulse)||p->pulse<0||p->offlinePulse<0)return 0;
     int used[MAX_ACTORS]={0};

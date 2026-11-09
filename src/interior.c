@@ -23,38 +23,76 @@ static void restock_chest(int building) {
     }
     g.townLife.chestRefresh[building] = g.day + 2 + mix % 3;
 }
-static Stack *chest_stack(int row) {
-    if (!g.interiorBuilding || g.interiorBuilding != ui.storageIndex + 1 ||
-        !private_chest(ui.storageIndex))
-        return NULL;
-    Building *b = &g.buildings[ui.storageIndex];
-    for (int i = 0; i < 16; i++)
-        if (b->storage[i].item && row-- == 0)
-            return &b->storage[i];
+static Stack *chest_stack(int row, int *slot) {
+    Stack *stacks;
+    int count;
+    if (ui.chestKind == CHEST_PROPERTY) {
+        if (ui.storageIndex < 0 || ui.storageIndex >= SLAVE_CAMPS)
+            return NULL;
+        stacks = g.field.seized[ui.storageIndex];
+        count = SEIZED_STACKS;
+    } else {
+        if (!g.interiorBuilding || g.interiorBuilding != ui.storageIndex + 1 ||
+            !private_chest(ui.storageIndex))
+            return NULL;
+        stacks = g.buildings[ui.storageIndex].storage;
+        count = 16;
+    }
+    for (int i = 0; i < count; i++)
+        if (stacks[i].item && stacks[i].qty && row-- == 0) {
+            if (slot) *slot = i;
+            return &stacks[i];
+        }
     return NULL;
 }
-const Stack *interior_chest_item(int row) { return chest_stack(row); }
+const Stack *interior_chest_item(int row) {
+    if (ui.chestKind != CHEST_FIELD)
+        return chest_stack(row, NULL);
+    const Node *node = &g.nodes[ui.storageIndex];
+    static Stack contents;
+    contents = (Stack){node->item, node->qty};
+    return row == 0 && !node->locked && node->remaining && node->item && node->qty ? &contents : NULL;
+}
+int chest_owner(void) {
+    if (ui.chestKind == CHEST_PROPERTY)
+        return FREE;
+    if (ui.chestKind == CHEST_FIELD)
+        return g.nodes[ui.storageIndex].owner;
+    return g.buildings[ui.storageIndex].faction;
+}
 int interior_chest_count(void) {
+    if (ui.chestKind == CHEST_FIELD)
+        return interior_chest_item(0) != NULL;
     int count = 0;
-    while (chest_stack(count))
+    while (chest_stack(count, NULL))
         count++;
     return count;
 }
 void interior_chest_take(int row) {
-    Stack *s = chest_stack(row);
     Actor *a = &g.actors[g.selected];
-    if (!s || !conscious(a))
+    const Stack *contents = interior_chest_item(row);
+    if (!contents || !conscious(a))
         return;
-    Building *b = &g.buildings[ui.storageIndex];
-    int item = s->item;
-    if (!inventory_add_owned(a, item, 1, b->faction)) {
+    int item = contents->item, owner = chest_owner(), slot = 0;
+    Stack *stack = ui.chestKind == CHEST_FIELD ? NULL : chest_stack(row, &slot);
+    if (ui.chestKind == CHEST_PROPERTY)
+        owner = g.field.seizedOwner[ui.storageIndex][slot];
+    if (!inventory_add_owned(a, item, 1, owner)) {
         log_msg("Pack full.");
         return;
     }
-    if (!--s->qty)
-        s->item = NONE;
+    if (stack) {
+        if (!--stack->qty) {
+            stack->item = NONE;
+            if (ui.chestKind == CHEST_PROPERTY)
+                g.field.seizedOwner[ui.storageIndex][slot] = 0;
+        }
+    } else {
+        g.nodes[ui.storageIndex].qty--;
+    }
     log_msg("Took %s from the chest.", itemDefs[item].name);
-    witnessed_theft(a, b->faction, 6, 18);
+    if (owner && ui.chestKind != CHEST_PROPERTY)
+        witnessed_theft(a, owner, 6, 18);
 }
 /* Match an occupied home to an actual resident. Service NPCs keep their posts. */
 int home_occupant(int building) {
@@ -107,7 +145,7 @@ int actor_in_bed(const Actor *a) {
     return type == BED || type == BAR || type == HOUSE || type == TOWER;
 }
 int rest_at(Actor *a, int bed, float x, float y, int room, int price) {
-    if (!conscious(a) || a->attackPhase || a->target >= 0 || a->carrying >= 0 || a->prisonTime > 0)
+    if (!conscious(a) || a->attackPhase == 1 || a->attackPhase == 2 || a->carrying >= 0 || a->prisonTime > 0)
         return 0;
     for (int i = 0; i < g.actorCount; i++) {
         const Actor *other = &g.actors[i];
@@ -134,20 +172,25 @@ int rest_at(Actor *a, int bed, float x, float y, int room, int price) {
     a->taskKind = 3;
     a->taskIndex = bed;
     a->action = REST_DURATION;
-    a->autoattack = 0;
+    a->autoattack = a->attackPhase = 0;
+    a->target = g.living.command[a - g.actors] = -1;
+    g.field.playingDead[a - g.actors] = 0;
     ui.screen = SCREEN_WORLD;
-    log_msg("Resting in bed. Move to wake; dress any open cuts.");
+    log_msg("Resting in bed.");
     return 1;
 }
 int building_has_interior(int type) {
-    return type <= TOWER || type == FORGE || type == BENCH || type == STORE;
+    return type <= TOWER || type == FORGE || type == BENCH || type == STORE || type == JAIL;
 }
 int actor_inside(const Actor *a) { return depth_room(a); }
 int interior_props(int building, InteriorProp *p) {
     int type = g.buildings[building].type, n = 0;
     p[n++] = (InteriorProp){5.8f, .9f, .65f, .5f, 21, ROOM_NONE};
     p[n++] = (InteriorProp){6.1f, 5.6f, .25f, .25f, 22, ROOM_NONE};
-    if (type == SHOP) {
+    if (type == JAIL) {
+        p[n++] = (InteriorProp){1.3f, 1.4f, .65f, .55f, 16, ROOM_NONE};
+        p[n++] = (InteriorProp){5.5f, 1.4f, .65f, .55f, 16, ROOM_NONE};
+    } else if (type == SHOP) {
         p[n++] = (InteriorProp){3.0f, 2.1f, 1.25f, .55f, 17, ROOM_TRADE};
         p[n++] = (InteriorProp){1.1f, 4.4f, .5f, .4f, 20,
                                 private_chest(building) ? ROOM_CHEST : ROOM_NONE};
@@ -179,24 +222,19 @@ int interior_enter(int building) {
     Building *b = &g.buildings[building];
     if (distance(a->x, a->y, b->x + 1.45f, b->y + .65f) > 2.1f)
         return 0;
-    if (a->attackPhase || a->target >= 0) {
-        log_msg("Break away from combat before entering.");
+    if (a->attackPhase == 1 || a->attackPhase == 2)
         return 0;
-    }
-    if (b->faction == HOSTILE || (b->owner < 0 && g.rep[b->faction] < -25)) {
-        log_msg("The occupants bar the door to your faction.");
-        return 0;
-    }
     if(!depth_build_ready(building)) {log_msg("Finish construction before entering.");return 0;}
     g.interiorBuilding = building + 1;
     g.interiorActor = g.selected;
     g.interiorX = 3.5f;
     g.interiorY = 6.1f;
-    ui.waypoint = 0;
     a->taskKind = 0;
     a->attackPhase = 0;
     a->target = -1;
     a->movedTimer = 0;
+    g.depth.actors[g.selected].trespass = 0;
+    g.field.playingDead[g.selected] = 0;
     depth_enter_room(building);
     log_msg("Inside. Walk to a service; \001 use. Return to the door to leave.");
     return 1;
@@ -206,13 +244,16 @@ void interior_leave(void) {
         return;
     Actor *a = &g.actors[g.interiorActor];
     Building *b = &g.buildings[g.interiorBuilding - 1];
+    if (a->prisonTime > 0 && !jail_cell_open(a))
+        return;
+    jail_exit(a);
     a->x = b->x + 1.45f;
     a->y = b->y + .65f;
     a->taskKind = 0;
     a->target = -1;
+    g.depth.actors[g.interiorActor].trespass = 0;
     depth_leave_room(g.interiorBuilding-1);
     g.interiorBuilding = 0;
-    ui.waypoint = 0;
     log_msg("Back on the frontier.");
     find_context();
 }
@@ -301,6 +342,7 @@ void interior_interact(void) {
     case ROOM_CHEST:
         restock_chest(id);
         ui.storageIndex = id;
+        ui.chestKind = CHEST_ROOM;
         ui.screen = SCREEN_CHEST;
         break;
     case ROOM_FORGE:
@@ -318,6 +360,9 @@ void interior_interact(void) {
 }
 static int room_clear(float x, float y) {
     if (x < .4f || y < .4f || x > 6.6f || y > 6.6f)
+        return 0;
+    if (g.buildings[g.interiorBuilding - 1].type == JAIL &&
+        fabsf(y - 3.65f) < .2f && fabsf(x - 3.5f) > .85f)
         return 0;
     InteriorProp p[8];
     int n = interior_props(g.interiorBuilding - 1, p);

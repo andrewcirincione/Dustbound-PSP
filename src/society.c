@@ -109,6 +109,20 @@ void society_stock(int t){
  if(t==12){g.stock[t][gear_id(39,0,1)]=2;g.stock[t][gear_id(57,0,1)]=2;}
  if(t==6){g.stock[t][gear_id(34,1,1)]=2;g.stock[t][gear_id(50,1,1)]=2;}
 }
+void faction_goodwill(int faction, int amount) {
+    if (faction <= FREE || faction >= WILDLIFE)
+        return;
+    g.rep[faction] += amount;
+    log_progress("Standing with %s improved (+%d).", factionNames[faction], amount);
+}
+void trade_goodwill(int faction, int price) {
+    if (faction <= FREE || faction >= WILDLIFE || g.rep[faction] >= 20)
+        return;
+    int total = g.field.tradeCredit[faction] + (int)fminf(price, 360);
+    g.field.tradeCredit[faction] = total % 120;
+    if (total >= 120)
+        faction_goodwill(faction, total / 120);
+}
 int wanted_amount(const Actor*a,int f){int n=actor_no(a);if(n<0||f<0||f>=FACTIONS)return 0;int sum=0;for(int j=0;j<FACTIONS;j++)sum+=S.wanted[n][j];return sum?S.wanted[n][f]:f==UNION?a->bounty:0;}
 static void wanted_sum(Actor*a){int n=actor_no(a);a->bounty=0;for(int f=0;f<FACTIONS;f++)a->bounty+=S.wanted[n][f];}
 void crime_add(Actor*a,int f,int amount){int n=actor_no(a);if(n<0||f<=FREE||f>=FACTIONS)return;if(a->bounty>0){int sum=0;for(int j=0;j<FACTIONS;j++)sum+=S.wanted[n][j];if(!sum)S.wanted[n][UNION]=a->bounty;}S.wanted[n][f]=(int)bound(S.wanted[n][f]+amount,0,100000);S.recognized[n][f]=600;wanted_sum(a);}
@@ -147,9 +161,19 @@ int society_gate(Actor*a,float x,float y){
 int society_hostile(const Actor*a,const Actor*b){
  int ai=actor_no(a),bi=actor_no(b),pa=a->squad||(ai>=0&&S.freed[ai]),pb=b->squad||(bi>=0&&S.freed[bi]);
  const Actor*p=pa?a:pb?b:NULL,*w=pa?b:a;if(!p||w->squad||(pa&&pb))return -1;
- int n=actor_no(p),f=w->faction,t=w->homeTown;if(n<0||f==FREE||f==WILDLIFE)return -1;
+ int n=actor_no(p),wi=actor_no(w),f=w->faction,t=w->homeTown;if(n<0||f==FREE||f==WILDLIFE)return -1;
  if(disguise_score(p,f)>=40&&S.recognized[n][f]<=0&&(actor_no(w)<0||!g.living.anger[actor_no(w)]))return 0;
+ if (slave_in_camp(p) && S.captorFaction[n] == f) return 0;
+ int room = depth_room(p);
+ if (room && g.buildings[room - 1].owner < 0 && g.buildings[room - 1].faction == f &&
+     g.rep[f] < -25 && g.depth.actors[n].trespass < 7 && (wi < 0 || !g.living.anger[wi])) return 0;
+ if (room && g.buildings[room - 1].owner < 0 && g.buildings[room - 1].faction == f &&
+     g.rep[f] < -25 && g.depth.actors[n].trespass >= 7) return 1;
+ if (w->kind == GUARD && p->prisonTime <= 0 && g.field.cellOpen[n] > 0) return 0;
  if(w->kind==GUARD&&wanted_amount(p,f)>=80)return 1;
+ if (w->kind == GUARD && (g.field.escaped[n] & (1u << f))) return 1;
+ if (!room && w->kind == GUARD && t < 0 && !strcmp(w->name, "Camp overseer") &&
+     !slave_in_camp(p) && distance(p->x, p->y, w->homeX, w->homeY) < 10) return 1;
  if(t>=0&&restricted(t)&&distance(p->x,p->y,towns[t].x,towns[t].y)<18&&disguise_score(p,f)<40)return 1;
  return -1;
 }
@@ -190,6 +214,11 @@ static void rescue_refuge(Actor*a,int former){
 }
 static void rescue_finish(int n,int helper){
  Actor*a=&g.actors[n];DepthActor*z=&g.depth.actors[n];int faction=rescue_faction(n);
+ if (g.field.laborCamp[n]) {
+     g.field.laborCamp[n] = 0;
+     g.field.escaped[n] |= 1u << faction;
+ }
+ g.field.cellOpen[n] = 0;
  z->escape=0;z->captive=0;z->recognized=helper>=0?1800:0;S.cannibal[n]=0;S.eating[n]=0;S.rescueHelper[n]=0;
  g.war.prisonTown[n]=0;
  if (a->taskKind == TASK_CELL_LOCK || a->taskKind == TASK_JAIL_CARE) a->taskKind = 0;
@@ -334,7 +363,7 @@ int society_complete(int n){if(n<0||n>=CONTRACTS||g.contracts[n].active!=1)retur
  if(c->type==4){if(!contract_use_items(c->item,c->needed,town)){log_msg("Bring the full shipment and its carriers.");return 0;}g.stock[town][c->item]+=c->needed;}
  else if(c->type==7){int who=S.jobActor[n]-1;if(who<0||who>=g.actorCount||a->carrying!=who||g.actors[who].bountyReward<=0){log_msg("Carry the named bounty; previously claimed proofs cannot pay twice.");return 0;}Actor*b=&g.actors[who];if(!b->dead&&b->unconscious<=0){log_msg("The prisoner must be subdued.");return 0;}if(b->dead)reward/=2;b->bountyReward=0;b->active=0;b->carriedBy=-1;a->carrying=-1;}
  else if(!c->progress){log_msg("Complete the escort or patrol first.");return 0;}
- c->active=2;c->completed=1;g.money+=reward;g.contractsDone++;g.rep[g.townOwner[town]]+=5;S.jobBond[n]=0;log_level("%s paid %d silver for %s.", towns[town].name, reward, contract_title(c->type));return 1;
+ c->active=2;c->completed=1;g.money+=reward;g.contractsDone++;faction_goodwill(g.townOwner[town],5);S.jobBond[n]=0;log_level("%s paid %d silver for %s.", towns[town].name, reward, contract_title(c->type));return 1;
 }
 int society_npc_job(int n,float dt){
  Actor*freed=&g.actors[n];if(S.freed[n]&&!freed->squad){
@@ -432,7 +461,21 @@ static void tick_cannibals(float dt){
  }else if(S.cannibal[n]==2){
  DepthActor*z=&g.depth.actors[n];a->target=-1;a->attackPhase=0;a->taskKind=0;
 
- if(near_guard(a,14,5)>=0){S.eating[n]+=dt;if(S.eating[n]>=45){S.eating[n]-=10;a->health[CHEST]-=12;a->blood-=15;a->unconscious=fmaxf(a->unconscious,12);if(a->squad)log_warn("Cannibals are eating %s!",a->name);if(fatal_injury(a)){z->captive=0;S.cannibal[n]=0;}}}
+ if (near_guard(a, 14, 5) >= 0) {
+     S.eating[n] += dt;
+     if (S.eating[n] >= 45) {
+         S.eating[n] -= 10;
+         a->health[CHEST] -= 12;
+         depth_wound(a, CHEST, 12);
+         a->blood -= 15;
+         a->unconscious = fmaxf(a->unconscious, 12);
+         if (a->squad) log_warn("Cannibals are eating %s!", a->name);
+         if (fatal_injury(a)) {
+             z->captive = 0;
+             S.cannibal[n] = 0;
+         }
+     }
+ }
  }else if(a->squad&&a->race!=2&&!actor_inside(a)&&a->unconscious>0&&a->carriedBy<0&&!g.depth.actors[n].captive&&g.townOwner[14]==HOSTILE&&distance(a->x,a->y,towns[14].x,towns[14].y)<24){int c=near_guard(a,14,TALK_REACH);if(c>=0&&g.actors[c].carrying<0){g.actors[c].carrying=n;a->carriedBy=c;S.cannibal[n]=1;g.depth.actors[n].captive=3;a->bleed=0;log_warn("Cannibals seized %s and are carrying them to the fire.",a->name);}}
  }
 }
@@ -465,14 +508,36 @@ int nearby_actions(void){
  if(g.depth.actors[g.selected].captive)add_action(ACTION_RESCUE,0,g.selected);
  for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(n==g.selected||!b->active||population_hidden(n)||depth_room(b)!=room||depth_distance(a,b)>TALK_REACH||b->carriedBy>=0)continue;
   if(!b->dead&&(g.depth.actors[n].captive||b->prisonTime>0))add_action(ACTION_RESCUE,0,n);
+  if (!b->squad && wound_needs_dressing(b)) add_action(ACTION_TREAT_OTHER, 0, n);
   if(S.freed[n]&&!b->squad&&!b->dead){add_action(S.freed[n]==1?ACTION_RESCUED_LEAVE:ACTION_RESCUED_FOLLOW,0,n);add_action(ACTION_RESCUED_RECRUIT,0,n);}
   if(b->dead||b->unconscious>0){add_action(ACTION_CONTEXT,0,n);if(a->carrying<0&&!g.depth.actors[n].captive)add_action(ACTION_CARRY,0,n);}
   else if(!b->squad){if(!hostile(a,b)||b->target<0){add_action(ACTION_CONTEXT,0,n);if(a->sneaking)add_action(ACTION_STEAL,0,n);}add_action(ACTION_ATTACK,0,n);}
   else add_action(ACTION_CONTEXT,0,n);
  }
- if(room){if(interior_context()!=-2)add_action(ACTION_CONTEXT,5,room-1);return actionCount;}
+ if(room){
+  if(interior_context()!=-2)add_action(ACTION_CONTEXT,5,room-1);
+  if (playing_dead(a) || a->target >= 0 || wound_needs_dressing(a) || a->treatedMask)
+      add_action(ACTION_PLAY_DEAD, 0, g.selected);
+  return actionCount;
+ }
  for(int n=0;n<g.nodeCount;n++)if(g.nodes[n].remaining&&distance(a->x,a->y,g.nodes[n].x,g.nodes[n].y)<=WORK_REACH){if(g.nodes[n].locked){add_action(ACTION_UNLOCK,1,n);add_action(ACTION_OPEN,1,n);}else add_action(ACTION_CONTEXT,1,n);}
- for(int b=0;b<g.buildingCount;b++){Building*v=&g.buildings[b];if(building_has_interior(v->type)&&distance(a->x,a->y,v->x+1.45f,v->y+.65f)<=1.7f)add_action(ACTION_CONTEXT,3,b);if(v->type>=WELL&&v->type!=WALL&&v->type!=WINDMILL&&distance(a->x,a->y,v->x,v->y)<=1.7f)add_action(ACTION_CONTEXT,2,b);}
+ for (int b = 0; b < g.buildingCount; b++) {
+     Building *v = &g.buildings[b];
+     if (portable_bedroll(b) < 0)
+         continue;
+     if (building_has_interior(v->type) && distance(a->x, a->y, v->x + 1.45f, v->y + .65f) <= 1.7f)
+         add_action(ACTION_CONTEXT, 3, b);
+     if (distance(a->x, a->y, v->x, v->y) > 1.7f)
+         continue;
+     if (v->type >= WELL && v->type <= STORE && v->type != WALL && v->type != WINDMILL)
+         add_action(ACTION_CONTEXT, 2, b);
+     if (portable_bedroll(b) > 0)
+         add_action(ACTION_PACK_BEDROLL, 2, b);
+     if (v->type == SLAVE_YARD && !slave_in_camp(a))
+         add_action(ACTION_PROPERTY, 2, b);
+ }
+ if (playing_dead(a) || a->target >= 0 || wound_needs_dressing(a) || a->treatedMask)
+     add_action(ACTION_PLAY_DEAD, 0, g.selected);
  for(int i=0;i<living_local_count();i++)add_action(ACTION_EVENT,6,living_local_slot(i));
  for(int k=0;k<POP_GROUPS;k++)if(g.population.version&&distance(a->x,a->y,g.population.groups[k].x,g.population.groups[k].y)<55){
   if(distance(a->x,a->y,g.population.groups[k].x,g.population.groups[k].y)<8)add_action(ACTION_POPULATION,0,k);
@@ -498,6 +563,16 @@ void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_
               g.actors[g.selected].gear[1] == RAGS ? "Tear worn rags to stop bleeding" : "Stop bleeding (2 cloth)");
      return;
  }
+ if (x->type == ACTION_PACK_BEDROLL || x->type == ACTION_PROPERTY || x->type == ACTION_PLAY_DEAD) {
+     snprintf(out, size, "%s", x->type == ACTION_PACK_BEDROLL ? "Pack up bedroll" :
+         x->type == ACTION_PROPERTY ? "Open confiscated belongings" :
+         playing_dead(&g.actors[g.selected]) ? "Get up" : "Play dead");
+     return;
+ }
+ if (x->type == ACTION_TREAT_OTHER) {
+     snprintf(out, size, "Bandage %s", g.actors[x->target].name);
+     return;
+ }
  if(x->type==ACTION_POLITICS){snprintf(out,size,"Council at %s",towns[x->target].name);return;}
  if(x->type==ACTION_POPULATION){population_action_label(x->target,x->kind,out,size);return;}
  if(x->type==ACTION_EVENT){char name[70];living_title(x->target,name,sizeof(name));snprintf(out,size,"Investigate %s",name);return;}
@@ -507,11 +582,11 @@ void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_
  int kind=ui.contextKind,index=ui.contextIndex;ui.contextKind=x->kind;ui.contextIndex=x->target;
  const char *verb = context_action();
  if (x->type == ACTION_OPEN)
-     verb = g.nodes[x->target].owner ? "STEAL" : "TAKE";
+     verb = g.nodes[x->target].owner ? "SEARCH OWNED" : "SEARCH";
  snprintf(out,size,"%s %s",verb,context_name());ui.contextKind=kind;ui.contextIndex=index;
 }
 static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!conscious(a)||depth_room(a)!=x->room)return 0;int n=x->target;
- if (x->type == ACTION_SELF_AID || x->type == ACTION_SELF_REPAIR || x->type == ACTION_EMERGENCY)
+ if (x->type == ACTION_SELF_AID || x->type == ACTION_SELF_REPAIR || x->type == ACTION_EMERGENCY || x->type == ACTION_PLAY_DEAD)
      return n == g.selected;
  if(x->type==ACTION_POLITICS)return n>=0&&n<TOWNS&&distance(a->x,a->y,towns[n].x,towns[n].y)<=24;
  if(x->type==ACTION_POPULATION)return population_action_valid(n,x->kind);
@@ -529,6 +604,15 @@ static const char *action_reason(const NearbyAction *x, int queueing) {
         return "Select a conscious member";
     if (!action_valid(x))
         return "Out of reach";
+    if (x->type == ACTION_PLAY_DEAD)
+        return a->prisonTime > 0 || g.depth.actors[g.selected].captive ? "Restrained" : NULL;
+    if (x->type == ACTION_PACK_BEDROLL)
+        return portable_bedroll(n) > 0 ? NULL : "Already packed";
+    if (x->type == ACTION_PROPERTY)
+        return slave_camp_at(n) >= 0 && !slave_in_camp(a) ? NULL : "Restrained";
+    if (x->type == ACTION_TREAT_OTHER)
+        return !wound_needs_dressing(&g.actors[n]) ? "No wound needs dressing" :
+               !inventory_count(a, MEDKIT) ? "Need a field dressing" : NULL;
     if (x->type == ACTION_SELF_AID)
         return !wound_needs_dressing(a) ? "No wound needs dressing" :
                !inventory_count(a, MEDKIT) ? "Need a field dressing" : NULL;
@@ -551,11 +635,6 @@ static const char *action_reason(const NearbyAction *x, int queueing) {
         }
         if (x->type == ACTION_UNLOCK && !node->locked)
             return "Already unlocked";
-        if (!node->locked && node->type >= NODE_LOOT) {
-            Actor test = *a;
-            if (!inventory_add_owned(&test, node->item, node->qty, node->owner))
-                return "Pack full";
-        }
     }
     if (x->kind == 2 && depth_build_ready(n)) {
         Building *b = &g.buildings[n];
@@ -586,6 +665,15 @@ static void perform_action(const NearbyAction *x) {
  const char *reason = action_reason(x, 0);
  if (reason) { log_msg("%s.", reason); return; }
  if (x->type == ACTION_SELF_AID) { heal_actor(n, n); return; }
+ if (x->type == ACTION_TREAT_OTHER) { heal_actor(g.selected, n); return; }
+ if (x->type == ACTION_PLAY_DEAD) { play_dead(a); return; }
+ if (x->type == ACTION_PACK_BEDROLL) { pack_bedroll(n); return; }
+ if (x->type == ACTION_PROPERTY) {
+     ui.chestKind = CHEST_PROPERTY;
+     ui.storageIndex = slave_camp_at(n);
+     depth_open(SCREEN_CHEST);
+     return;
+ }
  if (x->type == ACTION_SELF_REPAIR) { depth_repair(n, n); return; }
  if (x->type == ACTION_EMERGENCY) { begin_treatment(n, n, TREAT_PRESSURE, -1); return; }
  if(x->type==ACTION_POLITICS){politics_open(n);return;}
@@ -612,7 +700,9 @@ int society_validate(const Game*v){const Society*s=&v->society;if(!s->version)re
  for(int t=0;t<TOWNS;t++)if(s->crisis[t]<0||s->crisis[t]>2)return 0;
  for(int n=0;n<MAX_ACTORS;n++){if(s->rescueHelper[n]<0||s->rescueHelper[n]>v->actorCount||s->freed[n]<0||s->freed[n]>3||s->captorFaction[n]<0||s->captorFaction[n]>=FACTIONS)return 0;for(int c=0;c<WEAPON_XP_SLOTS;c++)if(!isfinite(s->weaponXP[n][c])||s->weaponXP[n][c]<0||s->weaponXP[n][c]>117612)return 0;if(s->queueCount[n]<0||s->queueCount[n]>ACTION_QUEUE||s->cannibal[n]<0||s->cannibal[n]>2||!isfinite(s->eating[n])||!isfinite(s->suspicion[n])||!isfinite(s->gateMessage[n]))return 0;
   for(int f=0;f<FACTIONS;f++)if(s->wanted[n][f]<0||s->wanted[n][f]>100000||!isfinite(s->recognized[n][f]))return 0;
-  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_SELF_REPAIR||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
+  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_TREAT_OTHER||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
+   if(a->type==ACTION_PACK_BEDROLL||a->type==ACTION_PROPERTY){if(a->kind!=2||a->target>=v->buildingCount)return 0;continue;}
+   if(a->type==ACTION_TREAT_OTHER){if(a->kind!=0||a->target>=v->actorCount)return 0;continue;}
    if(a->type>=ACTION_EMERGENCY){if(a->target!=n||a->target>=v->actorCount||a->kind!=0)return 0;continue;}
    if(a->type==ACTION_POLITICS){if(a->target>=TOWNS||a->kind!=0)return 0;continue;}
    if(a->type==ACTION_POPULATION){if(a->target>=POP_GROUPS||!(a->kind==0||a->kind==1||(a->kind>=11&&a->kind<=13)||a->kind==20||(a->kind>=30&&a->kind<=32)))return 0;continue;}

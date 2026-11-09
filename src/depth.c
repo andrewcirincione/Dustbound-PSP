@@ -133,6 +133,7 @@ int depth_validate(const Game *s) {
     return 1;
 }
 int depth_trade_open(int town) {
+    ui.roadTrader = 0;
     if (town < 0)
         return 0;
     if (g.dayTime < 6 || g.dayTime >= 22) {
@@ -308,6 +309,7 @@ int depth_capture_action(int n) {
     DepthActor *z = &D.actors[n];
     if (!conscious(a) || b->dead || depth_distance(a, b) > TALK_REACH)
         return 0;
+    if (n == g.selected && slave_in_camp(b)) return slave_pick_start(n);
     return (z->captive || b->prisonTime > 0) && society_rescue_start(n);
 }
 static void captivity(float dt) {
@@ -316,6 +318,7 @@ static void captivity(float dt) {
         DepthActor *z = &D.actors[i];
         if (!a->active || a->dead || fatal_injury(a))
             continue;
+        if (g.field.laborCamp[i] || g.field.intake[i]) continue;
         if (z->captive == 2) { /* physical capture, no teleport */
             if (a->carriedBy < 0) {
                 z->captive = 0;
@@ -342,7 +345,7 @@ static void captivity(float dt) {
             a->hunger = fmaxf(25, a->hunger);
             if (a->race == 2 && a->unconscious > 0)
                 injury_repair(a, z);
-        } else if (a->squad && a->unconscious > 0 && a->carriedBy < 0 && !actor_inside(a) &&
+        } else if (!g.field.version && a->squad && a->unconscious > 0 && a->carriedBy < 0 && !actor_inside(a) &&
                    distance(a->x, a->y, D.siteX[3], D.siteY[3]) < 24) {
             for (int j = 0; j < g.actorCount; j++) {
                 Actor *b = &g.actors[j];
@@ -508,7 +511,7 @@ void depth_after_tick(float dt) {
         for (int j = 0; j < LIMBS; j++)
             a->health[j] = fminf(a->health[j], limb_max_health(a,j) - z->trauma[j]);
         int n = depth_named(i);
-        if (z->captive == 1 && n != NPC_RELL && !g.war.prisonTown[i]) {
+        if (z->captive == 1 && n != NPC_RELL && !g.war.prisonTown[i] && !g.field.laborCamp[i]) {
             a->x = D.siteX[3] + (n == NPC_TAMSIN ? 1.2f : 0);
             a->y = D.siteY[3];
         }
@@ -606,8 +609,13 @@ int depth_input(float dt, Input in) {
         return 1;
     }
     if (ui.screen == SCREEN_WORLD && z->captive) {
+        if ((p & KEY_CIRCLE) && slave_in_camp(a) && a->taskKind == TASK_CELL_LOCK) {
+            a->taskKind = 0;
+            return 1;
+        }
         if (p & KEY_CROSS) {
-            depth_open(SCREEN_CARE);
+            if (slave_in_camp(a)) slave_pick_start(g.selected);
+            else depth_open(SCREEN_CARE);
             return 1;
         }
         if (!(p & (KEY_L | KEY_R | KEY_START | KEY_SELECT | KEY_TRIANGLE))) {

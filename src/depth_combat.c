@@ -44,9 +44,9 @@ static int shot_clear(float x, float y) {
     /* Water blocks walking, not a projectile traveling above the ground. */
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
-        if (b->type != HOUSE && b->type != SHOP && b->type != BAR && b->type != TOWER && b->type != WALL)
+        if (b->type != HOUSE && b->type != SHOP && b->type != BAR && b->type != TOWER && b->type != WALL && b->type != JAIL)
             continue;
-        float r = b->type == TOWER ? .8f : b->type == WALL ? .55f : 1.25f;
+        float r = b->type == TOWER || b->type == JAIL ? .8f : b->type == WALL ? .55f : 1.25f;
         if (fabsf(b->x - x) < r && fabsf(b->y - y) < r)
             return 0;
     }
@@ -92,7 +92,7 @@ void depth_enter_room(int building) {
         if (!b->squad && depth_named(i) < 0 &&
             b->faction == g.buildings[building].faction &&
             ((type == SHOP && role == ROLE_MERCHANT) || (type == BAR && role == ROLE_INNKEEPER) ||
-             (type == TOWER && b->kind == GUARD))) {
+             ((type == TOWER || type == JAIL) && b->kind == GUARD))) {
             float d = distance(a->x, a->y, b->x, b->y);
             if (d < near) {
                 near = d;
@@ -111,7 +111,7 @@ void depth_enter_room(int building) {
 }
 void depth_leave_room(int building) {
     for (int i = 0; i < g.actorCount; i++)
-        if (D.actors[i].room == building + 1) {
+        if (D.actors[i].room == building + 1 && g.actors[i].prisonTime <= 0) {
             D.actors[i].room = 0;
             D.actors[i].trespass = 0;
             g.actors[i].target = -1;
@@ -159,40 +159,56 @@ void depth_room_tick(float dt) {
     for (int i = 0; i < g.actorCount; i++) {
         Actor *a = &g.actors[i];
         int room = depth_room(a);
-        if (!room || !conscious(a))
+        if (!room || !conscious(a) || a->prisonTime > 0 || playing_dead(a))
             continue;
         if (a->squad) {
             Building *b = &g.buildings[room - 1];
             DepthActor *z = &D.actors[i];
-            int privateRoom = b->owner < 0 && (b->type == HOUSE || b->type == TOWER ||
+            int unwelcome = b->owner < 0 && g.rep[b->faction] < -25 &&
+                (disguise_score(a, b->faction) < 40 || g.society.recognized[i][b->faction] > 0);
+            int privateRoom = b->owner < 0 && (b->type == HOUSE || b->type == TOWER || b->type == JAIL ||
                                                (b->type == SHOP && (g.dayTime < 6 || g.dayTime >= 22)));
-            if (privateRoom) {
-                int witness = 0;
+            int witness = -1;
+            if (unwelcome || privateRoom) {
                 for (int j = 0; j < g.actorCount; j++) {
                     Actor *w = &g.actors[j];
-                    if (!w->squad && w->faction == b->faction && conscious(w) && depth_room(w) == room &&
-                        depth_distance(a, w) < (a->sneaking ? 3 : 8)) {
-                        witness = 1;
+                    if (!w->squad && w->faction == b->faction && depth_room(w) == room &&
+                        npc_sees(w, a, npc_sight_range(w))) {
+                        witness = j;
                         break;
                     }
                 }
-                float before = z->trespass;
-                if (witness)
-                    z->trespass += dt;
+            }
+            float before = z->trespass;
+            if (unwelcome && (witness >= 0 || before > 0)) {
+                z->trespass += dt;
+                if (!before)
+                    log_warn("%s: Get out. You've got no business here.", g.actors[witness].name);
+                if (before < 7 && z->trespass >= 7) {
+                    if (witness >= 0) {
+                        g.actors[witness].target = i;
+                        g.living.anger[witness] = 1;
+                    }
+                    log_warn("The occupants are turning on %s.", a->name);
+                }
+            } else if (privateRoom && witness >= 0) {
+                z->trespass += dt;
                 if (before < 5 && z->trespass >= 5)
                     log_msg("Private property. Leave before the occupants raise alarm.");
                 if (before < 12 && z->trespass >= 12) {
-                    crime_add(a,b->faction,80);
+                    crime_add(a, b->faction, 80);
                     g.rep[b->faction] -= 30;
-                    log_warn("Trespass witnessed: bounty +80.");
+                    log_warn("The occupants called the watch.");
                 }
-            } else
+            } else if (!privateRoom) {
                 z->trespass = 0;
+            }
         }
         int target = -1;
         float best = 10;
         for (int j = 0; j < g.actorCount; j++)
-            if (i != j && conscious(&g.actors[j]) && hostile(a, &g.actors[j])) {
+            if (i != j && conscious(&g.actors[j]) && !playing_dead(&g.actors[j]) && hostile(a, &g.actors[j]) &&
+                (!g.actors[j].sneaking || npc_sees(a, &g.actors[j], npc_sight_range(a)))) {
                 float d = depth_distance(a, &g.actors[j]);
                 if (d < best) {
                     target = j;
@@ -201,7 +217,8 @@ void depth_room_tick(float dt) {
             }
         if (target >= 0 && (!a->squad || a->autoattack)) {
             Actor *b = &g.actors[target];
-            if (civilian_flees(a)) {
+            int eviction = b->squad && D.actors[target].trespass >= 7 && a->gear[0];
+            if (civilian_flees(a) && !eviction) {
                 a->target = -1;
                 depth_move_room(a, depth_x(a) - depth_x(b), depth_y(a) - depth_y(b), dt);
                 continue;

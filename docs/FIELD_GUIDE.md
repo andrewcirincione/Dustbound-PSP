@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.17.4
+# Dustbound field guide — 0.17.5
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -14,7 +14,7 @@ Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/
 
 New expedition opens character creation. Choose a name, origin, species, body, skin, hairstyle, hair color, beard and scars. ![horizontal](../assets/ui/horizontal.svg) adjusts each choice; ![cross](../assets/ui/cross.svg) edits your name or begins.
 
-Origins change equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts three companions. Species changes health, carry, speed, appetite and starting skills. The preview shows your starting values. Clockworks need spare parts, not food or bandages. A town barber can change your appearance later.
+Origins change equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts as a group of three. Species changes health, carry, speed, appetite and starting skills. The preview shows your starting values. Clockworks need spare parts, not food or bandages. A town barber can change your appearance later.
 
 ## 3. The Borderlands
 
@@ -24,7 +24,7 @@ The 1536 by 1536 borderlands contain sixteen settlements and nine terrain region
 
 ## 4. Combat
 
-![square](../assets/ui/square.svg) toggles fighting. L + Square opens opponents; Cross orders an attack, including neutrals (assault adds bounty). Small feet marks: teal line friendly, gold dot neutral, red chevron hostile. Red corners mark your opponent. Move into weapon reach to attack automatically; followers engage nearby threats. ![r](../assets/ui/r.svg) pauses combat for orders. Heavy steel needs strength equal to twice its weight. Weak or injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords hit hard; anchor cleavers bleed. Guns use cartridges; bows use bolts.
+![square](../assets/ui/square.svg) toggles fighting. L + Square opens opponents; Cross orders an attack, including neutrals (assault adds bounty). Small feet marks: teal line friendly, gold dot neutral, red chevron hostile. Red corners mark your opponent. Move into weapon reach to attack automatically; followers engage nearby threats. ![r](../assets/ui/r.svg) pauses combat for orders. Heavy steel handles best with strength equal to twice its weight. Weak or injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords hit hard; anchor cleavers bleed. Guns use cartridges; bows use bolts.
 
 Armor protects specific body locations. Piercing weapons ignore some armor; serrated blades bleed; staggering hits interrupt. Skills improve through use. Retreat from stronger opponents and use terrain. Gold windup marks show incoming strikes. Enemy combat bars show remaining knockout reserve from head, chest and blood. Square to passive cancels your attack; move away to disengage.
 
@@ -32,13 +32,13 @@ Armor protects specific body locations. Piercing weapons ignore some armor; serr
 
 Head or chest injuries and blood loss can knock a survivor out. Below your Toughness threshold, a recovery coma lasts until your vitals recover. Severe head trauma or bleeding out can kill.
 
-Blunt wounds improve by themselves. Open cuts worsen until they clot or are dressed. Dressings take longer to apply for more severe or numerous wounds. Healing follows gradually, faster in a bed or under clinic care. Nearby Actions offers first aid and emergency cloth dressings. An ally can treat or carry someone who is down. A rare passerby may help or carry you to a safe bed. Lost limbs never regrow. A bad leg injury makes you limp; a missing leg or two disabled legs makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Prosthetics are uncommon on ordinary travelers; high-grade parts are rarer. Actual fitted limbs on fallen wanderers can be looted. Death is permanent; dismiss the body from Squad to free its slot.
+Dress an injured body part before it can heal. Clotting stops blood loss. It still takes a dressing to start healing. Severe wounds take longer to bandage and recover. Beds and clinic care speed up recovery. Health shows healthy tissue in teal, untreated damage in red and dressed damage in gold. Nearby Actions offers first aid, emergency dressings and Play dead. You can treat yourself while playing dead. An ally can treat or carry someone who is down. A rare passerby may help or carry you to a safe bed. Lost limbs never regrow. A bad leg injury makes you limp; a missing leg or two disabled legs makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Prosthetics are uncommon on ordinary travelers; high-grade parts are rarer. Actual fitted limbs on fallen wanderers can be looted. Death is permanent; dismiss the body from Squad to free its slot.
 
 ## 6. Food & Sleep
 
 Rations are eaten below forty hunger: first your pack, then a nearby companion or owned depot within three meters. Water supports farms; tonics restore blood and treat exposure. Starvation damages the chest.
 
-An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and restores wounds once bleeding stops and hunger is above twenty. Move to wake. The sun completes a day in thirty minutes of simulation; menus and tactical pause stop time.
+An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and helps dressed wounds heal. Severe hunger slows recovery. Move to wake. The sun completes a day in thirty minutes of simulation; menus and tactical pause stop time.
 
 ## 7. Equipment
 
@@ -108,9 +108,9 @@ Tonics and rest help recover. Rain irrigates farms. The northern highlands are c
 
 ## 18. Captivity
 
-Vulture Nest cannibals carry defeated outsiders to their cooking ground, shackle and eat them. Kill or distract guards and pick the shackles to rescue a captive. Wanted survivors defeated by lawful guards may wake in town custody. They lose stolen cargo and must serve time, pay bail or attempt an escape. A conscious free companion can still be selected.
+The watch carries wanted survivors to a jail cell, treats injuries and confiscates stolen goods. In the cell, ![cross](../assets/ui/cross.svg) offers bail or lockpicking. The watch can relock an open cell if you linger. Move to the exit and press ![cross](../assets/ui/cross.svg) to leave.
 
-When imprisoned, movement is restricted to the holding area. ![cross](../assets/ui/cross.svg) opens the custody dialogue. Paying clears the local bounty. Escape attempts use lockpicking, may fail and raise the bounty. The prison timer, injuries and inventory persist through saving.
+Slavers carry fallen survivors to a work camp. Shackled prisoners work in issued garb. The camp chest holds their seized equipment and supplies. Press ![cross](../assets/ui/cross.svg) to pick your shackles. Former captors can recognize escapees.
 
 ## 19. Building Interiors
 
@@ -118,7 +118,7 @@ Approach a house, inn, shop, tower or workshop door and press ![cross](../assets
 
 Counters open local trade. Beds cost 25 silver in town; owned beds are free. Workshop stations open forging, research or storage. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other groups and hired guards remain outside.
 
-Save games preserve the building and indoor position. Switching squad members leaves the room. Interiors shelter you from weather; hostile occupants refuse entry.
+Save games preserve the building and indoor position. Switching squad members leaves the room. Interiors shelter you from weather; occupants who distrust you may demand you leave and attack if you stay.
 
 ## 20. Backpacks
 
@@ -126,7 +126,7 @@ Buy travel packs, medicine rolls, ore harnesses and bedroll packs from the BACKP
 
 CARGO: travel 80%, medicine 85%, ore 60%, bedroll 70% of carried weight. Worn gear and carried people keep full weight. CARRY adds load allowance; LOAD previews a swap. All packs use the same 24 inventory slots.
 
-FIGHT reduces melee attack/defence: travel -2, medicine 0, ore -7, bedroll -4. Bulky packs hurt stealth. Medicine aids first aid; bedrolls improve rest but are not beds. Unworn packs give no bonus.
+FIGHT reduces melee attack/defence: travel -2, medicine 0, ore -7, bedroll -4. Bulky packs hurt stealth. Medicine rolls speed up first aid. Bedroll packs help you recover while resting. Buy a Bedroll in Supplies to lay out a portable bed.
 
 ## 21. Finding Work
 
@@ -136,23 +136,23 @@ Work is posted intermittently. Ask a merchant, marshal, innkeeper or smith, or a
 
 Squad management sets Balanced, Defensive, Keep range or Hold fire. Defensive gives +18 defence but never attacks. Ranged allies retreat if a foe closes within 3.5m. Projectiles travel and hit walls or allies: clear your firing line.
 
-Assign each survivor to one of three groups and choose its leader. Map pins are bearings only. Walk with the analog stick; group members follow their leader. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume the Priority queue in Squad management.
+Assign each survivor to one of three groups and choose its leader. A pin marks the destination on both maps. Follow its line on the minimap. Walk with the analog stick; group members follow their leader. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume the Priority queue in Squad management.
 
 ## 23. Camp Work & Fuel
 
-The wilderness has persistent camps, patrols, refugees, raiders, beasts, prisoners and armies. Groups travel, rest, gather and clash even far away. Camp beds are free when safe and unoccupied. Campfires cook 2 meat into 1 ration. Traders sell finite supplies by their fire; taking owned caches is theft.
+The wilderness has persistent camps, patrols, refugees, raiders, beasts, prisoners and armies. Groups travel, rest, gather and clash even far away. Camp beds are free when unoccupied. Campfires cook 2 meat into 1 ration. Road traders and some smugglers carry their own stock. Search a chest to see its contents before taking anything.
 
-Construction consumes materials when a foundation is placed. Stay beside it to build; moving cancels work. Resume from the nearby action or Camp ledger. Unfinished stations and beds cannot work.
+Highlight a Bedroll in the pack and press ![cross](../assets/ui/cross.svg) to lay it out. Use Nearby Actions to rest or pack it up. Construction consumes materials when a foundation is placed. Stay beside it to build; moving cancels work. Resume from the nearby action or Camp ledger. Unfinished stations and beds cannot work.
 
 Campfires and forges burn one charge per production action. Add clean timber for four charges or coal for ten. Stations lose a little condition with use. One timber repairs 35 condition. Town workshops supply their own fuel. Windpumps irrigate nearby farms. Queues skip unavailable jobs.
 
 ## 24. Trauma & Repair
 
-Unbandaged cuts worsen and bleeding can kill. Blunt wounds heal on their own. Dressings take time, then wounds and trauma recover gradually. Beds speed up recovery.
+Cuts can worsen while bleeding. Bandaging starts gradual recovery from organic damage. Deep wounds take longer. Rest in a bed to recover faster.
 
 Mechanical characters and prosthetics need timed repairs with spare parts. Medicine and sleep cannot repair metal. Health & recovery shows health, trauma and armor condition. Cloth restores equipment condition.
 
-Raiders near the chain yard may carry a fallen survivor away. Escape takes time away from guards. Tools speed it up. Free allies can unlock captives. Escapees are remembered for a day.
+Free allies can pick a captive's shackles. First aid, trade and completed work improve faction standing.
 
 ## 25. Armor Layers
 

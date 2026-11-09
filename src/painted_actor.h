@@ -500,7 +500,6 @@ static void painted_head(const Actor *a, float x, float top, float endX, float b
         painted_line(HX(-.21f,.73f), HY(.73f), HX(.41f,.90f), HY(.90f), sheen);
     }
     if (a->race == 2) {
-        painted_line(HX(-.60f,.49f), HY(.49f), HX(.60f,.49f), HY(.49f), shade(0xa3d0c4, li));
         painted_line(HX(-.39f,.82f), HY(.82f), HX(.39f,.82f), HY(.82f), shade(0x343d3c, li));
     }
     if (a->race == 3) {
@@ -551,7 +550,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     int tf = gear_family(torso), hf = gear_family(head), lf = gear_family(legs), bf = gear_family(back),
         ff = gear_family(boots);
     if (tf < 32 || tf > 47)
-        tf = torso == DUSTER ? 32 : torso == PLATE ? 38 : torso == LEATHER ? 35 : torso == RAGS ? 46 : torso ? 33 : 72;
+        tf = torso == DUSTER ? 32 : torso == PLATE ? 38 : torso == LEATHER ? 35 : (torso == RAGS || torso == SLAVE_GARB) ? 46 : torso ? 33 : 72;
     if (hf < 48 || hf > 59)
         hf = head == STRAW ? 48 : head == HELM ? 50 : head == HAT ? 49 : -1;
     if (lf < 68 || lf > 75)
@@ -560,7 +559,8 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         ff = boots == SANDALS ? 61 : 60;
     int face = a->facing ? 1 : -1, missing = a->lostMask & ~a->prostheticMask;
     float progress = a->attackDuration > 0 ? fmaxf(0, fminf(1, 1 - a->attackClock / a->attackDuration)) : 0;
-    int stowed = a->squad && !a->autoattack && !a->attackPhase ? a->gear[0] : 0;
+    float block = a->impactKind == 2 && a->hitFlash > 0 ? pose_ease(a->hitFlash / .27f) : 0;
+    int stowed = a->squad && !a->autoattack && !a->attackPhase && block <= 0 ? a->gear[0] : 0;
     int weapon = a->attackPhase ? a->attackWeapon : stowed ? 0 : a->gear[0];
     if (stowed)
         stance = 0;
@@ -568,6 +568,14 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     CombatPose rig = combat_pose(weapon, a->attackPhase, progress, variant);
     float blend=a->attackPhase>=2?1:a->attackPhase==1?fmaxf(stance,pose_ease(progress)):stance;
     rig=pose_mix(profile->idle,rig,blend);
+    if (block > 0) {
+        CombatPose parry = profile->guard;
+        parry.handX = 7; parry.handY = -26;
+        parry.rearX = 4; parry.rearY = -27;
+        parry.blade = -1.18f; parry.crouch = 3.1f;
+        parry.shift = -1.5f; parry.step = 2;
+        rig = pose_mix(rig, parry, block);
+    }
     float aim = a->attackPhase ? a->attackAngle : (face > 0 ? 0 : 3.14159265f), forward = cosf(aim),
           depth = sinf(aim);
     int arms = limb_arms(a), leadLeg = face > 0 ? 1 : 0;
@@ -602,7 +610,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
 #define PART(id, xx, yy, xx1, yy1, w, tint, q)                                                               \
     part(id, RX(xx, yy), RY(yy), RX(xx1, yy1), RY(yy1), (w) * sc, tint, li, q, face < 0, 0, 1)
     uint32_t cloth = torso ? itemDefs[torso].color : 0x9b8670, lc = legs ? itemDefs[legs].color : 0x786d5e;
-    if (a->dead || a->unconscious > 0 || a->taskKind == 3) {
+    if (a->dead || a->unconscious > 0 || a->taskKind == 3 || playing_dead(a)) {
         /* Rotate the complete dressed rig: hats, boots and packs stay attached. */
         static uint32_t prone[128*120];
         Actor standing=*a;standing.dead=0;standing.unconscious=0;standing.taskKind=0;
@@ -804,8 +812,17 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
             }
         }
     }
-    if (a->carrying >= 0)
-        part(33, x - 9 * sc, y - 24 * sc, x + 9 * sc, y - 24 * sc, 7 * sc, 0x7c6852, li, 0, 0, 0, 1);
+    if (a->carrying >= 0 && a->carrying < g.actorCount) {
+        const Actor *carried = &g.actors[a->carrying];
+        uint32_t tint = carried->gear[1] ? itemDefs[carried->gear[1]].color : actor_skin(carried);
+        float sway = walk * sinf(a->anim) * 1.7f;
+        part(33, x - face * 10 * sc, y - 23 * sc, x + face * 8 * sc, y - 24 * sc,
+             8 * sc, tint, li, 0, 0, 0, 1);
+        part(61, x + face * 11 * sc, y - (28 + sway) * sc, x + face * 12 * sc, y - (22 + sway) * sc,
+             5.4f * sc, actor_skin(carried), li, 0, face < 0, 0, 1);
+        part(67, x - face * 10 * sc, y - 23 * sc, x - face * 17 * sc, y - (15 - sway) * sc,
+             4.5f * sc, 0x6b6253, li, 0, face < 0, 0, 1);
+    }
 #undef PART
 #undef RX
 #undef RY
@@ -898,11 +915,6 @@ static void paint_cached_actor(ActorSprite *sprite, Actor *a, float li, float st
         }
     }
 }
-static PaintBounds outline_paint_bounds(PaintBounds b, int originX, int originY) {
-    b.left--; b.top--; b.right++; b.bottom++;
-    b = clip_paint(b, 1, 1, ACT_W - 1, ACT_H - 1);
-    return clip_paint(b, clipLeft - originX, clipTop - originY, clipRight - originX, clipBottom - originY);
-}
 static uint64_t actor_key(const Actor *a, int lum, float stance, int variant) {
     uint64_t k = 1469598103934665603ull;
 #define HASHV(v) k = (k ^ (uint32_t)(v)) * 1099511628211ull
@@ -923,6 +935,7 @@ static uint64_t actor_key(const Actor *a, int lum, float stance, int variant) {
     HASHV(a->squad && !a->autoattack);
     HASHV(a->dead);
     HASHV(a->unconscious > 0);
+    HASHV(playing_dead(a));
     HASHV(a->taskKind == 3);
     HASHV(actor_in_bed(a));
     HASHV(a->kind);
@@ -943,7 +956,13 @@ static uint64_t actor_key(const Actor *a, int lum, float stance, int variant) {
     HASHV(limb_crawling(a));
     HASHV(limb_limping(a) ? (a->health[LLEG] / limb_max_health(a, LLEG) <
                              a->health[RLEG] / limb_max_health(a, RLEG) ? 1 : 2) : 0);
-    HASHV(a->carrying >= 0);
+    HASHV(a->carrying + 1);
+    if (a->carrying >= 0 && a->carrying < g.actorCount) {
+        const Actor *carried = &g.actors[a->carrying];
+        HASHV(carried->gear[1]);
+        HASHV(carried->skin);
+        HASHV(carried->race);
+    }
     HASHV((int)(a->hitFlash * 30));
     HASHV(a->impactKind);
     HASHV((int)(a->recoilX * 8));
@@ -961,6 +980,19 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
             if(rel<0){line(x-3,y+3,x,y+6,col);line(x,y+6,x+3,y+3,col);}
             else if(rel>0)line(x-3,y+4,x+3,y+4,col);else rect(x-1,y+3,2,2,col);
         }
+        const Actor *controlled = &g.actors[g.selected];
+        if (controlled->sneaking && !a->squad && conscious(a) &&
+            depth_distance(controlled, a) < 8) {
+            int seen = npc_sees(a, controlled, npc_sight_range(a));
+            int eyeX = x + 14, eyeY = y - 15;
+            rect(eyeX - 5, eyeY - 4, 11, 9, INK);
+            uint32_t c = seen ? RED : MUTED;
+            line(eyeX - 4, eyeY, eyeX, eyeY - 2, c);
+            line(eyeX, eyeY - 2, eyeX + 4, eyeY, c);
+            line(eyeX + 4, eyeY, eyeX, eyeY + 2, c);
+            line(eyeX, eyeY + 2, eyeX - 4, eyeY, c);
+            if (seen) rect(eyeX, eyeY - 1, 1, 3, c);
+        }
         int target=g.living.command[g.selected]>=0?g.living.command[g.selected]:g.actors[g.selected].target;
         if(n==target&&!a->dead){int left=x-11,right=x+11,top=y-37,bottom=y+2;
             line(left,top,left+4,top,RED);line(left,top,left,top+4,RED);line(right-4,top,right,top,RED);line(right,top,right,top+4,RED);
@@ -968,11 +1000,14 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
         }
     }
     Actor dressed;
-    if (!a->gear[1] && (uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors+g.actorCount) &&
-        g.depth.actors[a-g.actors].layer) {
-        dressed = *a;
-        dressed.gear[1] = g.depth.actors[a-g.actors].layer;
-        a = &dressed;
+    if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + g.actorCount)) {
+        int layer = a->gear[1] ? NONE : g.depth.actors[a - g.actors].layer;
+        if (layer || playing_dead(a)) {
+            dressed = *a;
+            if (layer) dressed.gear[1] = layer;
+            if (playing_dead(a)) dressed.unconscious = .5f;
+            a = &dressed;
+        }
     }
     float li = sc == 1 ? fminf(1.15f, light() + (chosen ? .16f : .06f)) : 1;
     if (chosen && sc == 1) {
@@ -1008,21 +1043,8 @@ static void person(Actor *a, int x, int y, int sc, int chosen) {
                      (((*d & 0xff00) * m >> 8) & 0xff00);
             }
     }
-    /* One-pixel silhouette edge separates clothing from earth without a panel. */
     const ActorSprite *sprite = &actorCache[slot];
     int originX = x - ACT_W / 2, originY = y - ACT_ANCHOR / 2;
-    PaintBounds outline = outline_paint_bounds(sprite->bounds, originX, originY);
-    for (int yy = outline.top; yy < outline.bottom; yy++) {
-        for (int xx = outline.left; xx < outline.right; xx++) {
-            const uint32_t *p = sprite->pixels + yy * ACT_W + xx;
-            if ((*p >> 24) > 24) continue;
-            int above = (p[-ACT_W] >> 24) > 128, below = (p[ACT_W] >> 24) > 128;
-            int left = (p[-1] >> 24) > 128, right = (p[1] >> 24) > 128;
-            if (above || below || left || right)
-                rgba_over(fb + (originY + yy) * pitch + originX + xx,
-                          chosen ? 0xc0090908 : 0x99101513);
-        }
-    }
     PaintBounds body = clip_paint(sprite->bounds, clipLeft - originX, clipTop - originY,
                                   clipRight - originX, clipBottom - originY);
     for (int yy = body.top; yy < body.bottom; yy++)
@@ -1118,24 +1140,4 @@ static float portrait_scale(Actor *a, int width, int height, int drawX, int draw
                 rgba_over(fb + dy * pitch + dx, portraitCache[slot].pixels[yy * PORTRAIT_W + xx]);
         }
     return scale;
-}
-
-/* Late silhouette pass retains the real pose through foreground scenery. */
-static void actor_outline(Actor*a,int x,int y,int chosen){
- float stance=combat_stance(a);int variant=combat_attack_variant(a);
- Actor dressed;if(!a->gear[1]&&g.depth.actors[a-g.actors].layer){dressed=*a;dressed.gear[1]=g.depth.actors[a-g.actors].layer;a=&dressed;}
- float li=fminf(1.15f,light()+(chosen?.16f:.06f));uint64_t key=actor_key(a,(int)(li*64),stance,variant);int slot=-1;for(int i=0;i<ACT_CACHE;i++)if(actorCache[i].key==key){slot=i;break;}if(slot<0)return;
- uint32_t col = a->squad ? 0x90090908 : 0x907a8bb7;
- const ActorSprite *sprite = &actorCache[slot];
- int originX = x - ACT_W / 2, originY = y - ACT_ANCHOR / 2;
- PaintBounds outline = outline_paint_bounds(sprite->bounds, originX, originY);
- for (int yy = outline.top; yy < outline.bottom; yy++) {
-     for (int xx = outline.left; xx < outline.right; xx++) {
-         const uint32_t *p = sprite->pixels + yy * ACT_W + xx;
-         if ((*p >> 24) > 24) continue;
-         if ((p[-1] >> 24) < 128 && (p[1] >> 24) < 128 && (p[-ACT_W] >> 24) < 128 && (p[ACT_W] >> 24) < 128)
-             continue;
-         rgba_over(fb + (originY + yy) * pitch + originX + xx, col);
-     }
- }
 }

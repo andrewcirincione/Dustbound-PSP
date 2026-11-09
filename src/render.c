@@ -497,7 +497,7 @@ static void terrain(void) {
 }
 static int building_sprite(int id) {
     Building *b = &g.buildings[id];
-    static const int ids[] = {0, 1, 2, 3, 24, 25, 27, 26, 28, 6, 29, 30, 7};
+    static const int ids[] = {0, 1, 2, 3, 24, 25, 27, 26, 28, 6, 29, 30, 7, 3, 31};
     int base = b->type == HOUSE ? (b->faction == HOSTILE ? 5 : b->faction == SHOGUN ? 4 : id % 3 == 0 ? 7 : 0) : ids[b->type];
     return civil_building_sprite(id,base);
 }
@@ -538,6 +538,23 @@ static void building(int id) {
     if (b->type == CAMPFIRE) {
         int flicker = (int)(g.time * 10) % 3;
         px(x - 2 + flicker, y - 13 - flicker, 0xe5b66a);
+    }
+    if (b->type == SLAVE_YARD) {
+        float li = light();
+        art(26, x - 16, y + 9, li, 0);
+        art(27, x + 22, y + 9, li, 0);
+        for (int j = -3; j <= 3; j++) {
+            int px = x + j * 9, py = y - 10 + abs(j) * 2;
+            line(px, py - 17, px, py, shade(0x5f4d3d, li));
+            if (j < 3)
+                line(px, py - 12, px + 9, y - 22 + abs(j + 1) * 2, shade(0x8d7557, li));
+        }
+    }
+    if (b->type == JAIL || b->type == SLAVE_YARD) {
+        const char *label = b->type == JAIL ? "JAIL" : "SLAVE CAMP";
+        int w = text_width(label) + 8, top = y - (b->type == JAIL ? artSprites[sprite].ay : 27);
+        rect(x - w / 2, top - 10, w, 11, INK);
+        center(x, top - 8, label, GOLD, 1);
     }
     if (b->type == SHOP || b->type == BAR) {
         const char *name = b->type == SHOP ? "TRADING POST" : "THE WAYWARD";
@@ -596,7 +613,7 @@ static void squad_health_bar(const Actor *a, int x, int y) {
         fminf(a->health[HEAD], a->health[CHEST]) * 100 / species_health(a);
     bar(x - 10, y - 43, 21, 3, hp, a->bleed > .01f ? RED : TEAL);
     if (a->bleed > .01f)
-        rect(x - 10, y - 43, 2, 3, RED);
+        rect(x - 10, y - 43, 21, 1, RED);
 }
 static void objects_draw(void) {
     static const unsigned char decor[9][8] = {
@@ -614,12 +631,12 @@ static void objects_draw(void) {
     int n = 0;
     for (int i = 0; i < g.nodeCount; i++) {
         Node *b = &g.nodes[i];
-        if (fabsf(b->x - ui.camX) < 20 && fabsf(b->y - ui.camY) < 20)
+        if (b->remaining && fabsf(b->x - ui.camX) < 20 && fabsf(b->y - ui.camY) < 20)
             objects[n++] = (Object){b->x + b->y, 0, i, 0, 0};
     }
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
-        if (fabsf(b->x - ui.camX) < 20 && fabsf(b->y - ui.camY) < 20)
+        if (portable_bedroll(i) >= 0 && fabsf(b->x - ui.camX) < 20 && fabsf(b->y - ui.camY) < 20)
             objects[n++] = (Object){b->x + b->y, 1, i, 0, 0};
     }
     for (int i = 0; i < g.actorCount; i++) {
@@ -757,9 +774,6 @@ static void objects_draw(void) {
             continue;
         int id = o->index;
         Actor *a = &g.actors[id];
-        if (a->squad || ((a->target == g.selected || g.actors[g.selected].target == id) &&
-                         distance(a->x, a->y, ui.camX, ui.camY) < 9))
-            actor_outline(a, o->x, o->y, id == g.selected);
         if (a->squad) {
             squad_health_bar(a, o->x, o->y);
             if (id == g.selected)
@@ -989,11 +1003,31 @@ static void interior_draw(void) {
             art(props[i].art, x, y + 5, 1, 0);
         }
     }
+    if (b->type == JAIL) {
+        const Actor *a = &g.actors[g.selected];
+        int open = a->prisonTime <= 0 || jail_cell_open(a);
+        int lastX = 0, lastY = 0;
+        for (int i = 0; i <= 16; i++) {
+            float bx = .52f + i * .37f;
+            room_project(bx, 3.65f, &x, &y);
+            if (!open || i < 6 || i > 10) {
+                line(x, y, x, y - 28, 0x444d4c);
+                line(x + 1, y, x + 1, y - 28, 0x87918a);
+            }
+            if (i && (!open || i <= 6 || i > 11)) {
+                line(lastX, lastY - 26, x, y - 26, 0x676c62);
+                line(lastX, lastY - 7, x, y - 7, 0x676c62);
+            }
+            lastX = x;
+            lastY = y;
+        }
+    }
     const char *name = b->type == SHOP    ? "TRADING POST / INTERIOR"
                        : b->type == BAR   ? "THE WAYWARD / ROOMS"
                        : b->type == FORGE ? "SMITHY / INTERIOR"
                        : b->type == STORE ? "DEPOT / INTERIOR"
                        : b->type == BENCH ? "WORKSHOP / INTERIOR"
+                       : b->type == JAIL  ? "JAIL / CELLS"
                        : b->type == TOWER ? "WATCH HOUSE / INTERIOR"
                                           : "FRONTIER HOME / INTERIOR";
     text(12, 32, name, GOLD, 1);
@@ -1027,6 +1061,47 @@ static void map_north(int x, int y) {
     line(x + 13, y + 2, x + 11, y + 7, MUTED);
     text(x + 17, y, "N", TEXT, 1);
 }
+/* Route guidance stays inside the map viewport, even for distant pins. */
+static void map_pin(MapView view, const Actor *a, int left, int top, int right, int bottom, int edge) {
+    if (!ui.waypoint)
+        return;
+    int px = map_x(view, ui.travelX, ui.travelY), py = map_y(view, ui.travelX, ui.travelY);
+    int oldL = clipLeft, oldT = clipTop, oldR = clipRight, oldB = clipBottom;
+    clipLeft = left;
+    clipTop = top;
+    clipRight = right;
+    clipBottom = bottom;
+    int x = map_x(view, a->x, a->y), y = map_y(view, a->x, a->y);
+    if (x >= left && x < right && y >= top && y < bottom) {
+        float tx = ui.travelX, ty = ui.travelY;
+        if (world_is_expanded())
+            army_ford_waypoint(a->x, a->y, &tx, &ty);
+        int dx = map_x(view, tx, ty) - x, dy = map_y(view, tx, ty) - y;
+        float limit = 1;
+        if (dx > 0) limit = fminf(limit, (right - 1 - x) / (float)dx);
+        if (dx < 0) limit = fminf(limit, (left - x) / (float)dx);
+        if (dy > 0) limit = fminf(limit, (bottom - 1 - y) / (float)dy);
+        if (dy < 0) limit = fminf(limit, (top - y) / (float)dy);
+        float steps = fmaxf(abs(dx), abs(dy));
+        if (steps > 0) {
+            for (int n = 1; n < steps * limit; n += 6) {
+                float from = n / steps, to = fminf(limit, (n + 3) / steps);
+                line(x + dx * from, y + dy * from, x + dx * to, y + dy * to, GOLD);
+            }
+            if (edge && (limit < 1 || tx != ui.travelX || ty != ui.travelY))
+                diamond(x + dx * limit, y + dy * limit, 3, 3, GOLD);
+        }
+    }
+    if (px >= left && px < right && py >= top && py < bottom) {
+        diamond(px, py, 5, 5, INK);
+        diamond(px, py, 3, 3, GOLD);
+    }
+    clipLeft = oldL;
+    clipTop = oldT;
+    clipRight = oldR;
+    clipBottom = oldB;
+}
+
 static void mini_map(void) {
     int ox = 402, oy = 40;
     MapView view = {ui.camX, ui.camY, ox + 33, oy + 30, 2.5f, 1.25f};
@@ -1040,7 +1115,7 @@ static void mini_map(void) {
         }
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
-        if (fabsf(b->x - ui.camX) > 20 || fabsf(b->y - ui.camY) > 20)
+        if (portable_bedroll(i) < 0 || fabsf(b->x - ui.camX) > 20 || fabsf(b->y - ui.camY) > 20)
             continue;
         int x = map_x(view, b->x, b->y), y = map_y(view, b->x, b->y);
         if (x >= ox && x < ox + 65 && y >= oy && y < oy + 59)
@@ -1054,9 +1129,26 @@ static void mini_map(void) {
         if (x >= ox && x < ox + 65 && y >= oy && y < oy + 59 && !population_hidden(i))
             rect(x, y, 2, 2, a->squad ? TEAL : a->faction == HOSTILE ? RED : GOLD);
     }
+    map_pin(view, &g.actors[g.selected], ox, oy, ox + 66, oy + 60, 1);
     frame(ox - 3, oy - 3, 72, 66, EDGE);
     map_north(ox + 40, oy + 2);
 }
+static uint32_t limb_condition_color(const Actor *a, int limb) {
+    if (limb_missing(a, limb))
+        return RED;
+    if (a->health[limb] >= limb_max_health(a, limb) - .05f)
+        return TEAL;
+    return (a->treatedMask & (1 << limb)) ||
+           (a->woundFlags & (1u << (WOUND_REPAIR_SHIFT + limb))) ? GOLD : RED;
+}
+static void limb_health_bar(const Actor *a, int limb, int x, int y, int w, int h) {
+    uint32_t wound = limb_condition_color(a, limb);
+    int hp = fmaxf(0, fminf(1, a->health[limb] / limb_max_health(a, limb))) * w;
+    rect(x, y, w, h, wound);
+    if (!limb_missing(a, limb))
+        rect(x, y, hp, h, TEAL);
+}
+
 static void detailed_status(void) {
     Actor *a = &g.actors[g.selected];
     char value[64];
@@ -1068,9 +1160,9 @@ static void detailed_status(void) {
     for (int i = 0; i < LIMBS; i++) {
         int y = 74 + i * 11;
         int missing = (a->lostMask & (1 << i)) && !(a->prostheticMask & (1 << i));
-        uint32_t color = missing || a->health[i] < 30 ? RED : a->health[i] < 75 ? GOLD : TEAL;
+        uint32_t color = limb_condition_color(a, i);
         text(16, y, limbNames[i], MUTED, 1);
-        bar(86, y + 2, 66, 4, missing ? 0 : a->health[i]*100/limb_max_health(a,i), color);
+        limb_health_bar(a, i, 86, y + 2, 66, 4);
         if (missing) snprintf(value, sizeof(value), "LOST");
         else snprintf(value, sizeof(value), "%d", (int)a->health[i]);
         text(163, y, value, color, 1);
@@ -1112,12 +1204,6 @@ static void hud(void) {
         return;
     if (!g.interiorBuilding)
         mini_map();
-    if (ui.waypoint && !g.interiorBuilding) {
-        float dx = ui.travelX - a->x, dy = ui.travelY - a->y;
-        snprintf(b, sizeof(b), "PIN %.0fm %s", distance(a->x, a->y, ui.travelX, ui.travelY), bearing(dx, dy));
-        rect(346, 103, text_width(b) + 8, 13, INK);
-        text(350, 106, b, GOLD, 1);
-    }
     if (!g.interiorBuilding) {
         int ore = nearest_ore(a->x, a->y, 5.5f, -1);
         if (ore >= 0) {
@@ -1132,7 +1218,7 @@ static void hud(void) {
             }
         }
     }
-    recovery_hint(b,sizeof(b));if(b[0]){rect(4,211,472,12,INK);b[77]=0;text(8,213,b,TEAL,1);}
+    recovery_hint(b,sizeof(b));if(b[0]){rect(4,211,472,12,INK);b[77]=0;text(8,213,b,a->bleed>.01f?RED:TEAL,1);}
     if (ui.paused) {
         panel(192, 43, 94, 18);
         center(239, 49, "PAUSED", GOLD, 1);
@@ -1189,13 +1275,18 @@ static void hud(void) {
     }
 
     if (a->taskKind == TASK_CELL_LOCK)
-        snprintf(b, sizeof(b), "PICKING CELL LOCK %.0fs   \002 CANCEL", ceilf(a->action));
+        snprintf(b, sizeof(b), "PICKING %s %.0fs   \002 CANCEL",
+                 slave_in_camp(a) ? "SHACKLES" : "CELL LOCK", ceilf(a->action));
     else if (a->taskKind == TASK_TREAT)
         snprintf(b, sizeof(b), "TREATMENT IN PROGRESS %.0fs", ceilf(a->action));
     else if (a->taskKind == TASK_JAIL_CARE)
         snprintf(b, sizeof(b), "JAIL STAFF TREATING YOU %.0fs", ceilf(a->action));
+    else if (jail_cell_open(a))
+        snprintf(b, sizeof(b), "%s", interior_context() == -1 ? "\001 LEAVE JAIL" : "MOVE TO THE EXIT");
     else if (a->prisonTime > 0)
         snprintf(b, sizeof(b), "%s", a->unconscious > 0 ? "RECOVERING IN CUSTODY" : "\001 JAIL ACTIONS");
+    else if (slave_in_camp(a))
+        snprintf(b, sizeof(b), "\001 PICK SHACKLES");
     else if(a->carrying>=0)snprintf(b,sizeof(b),"\001 PUT DOWN %.24s",g.actors[a->carrying].name);
     else if (ui.contextKind == 1 && ui.contextIndex >= 0 && g.nodes[ui.contextIndex].owner)
         snprintf(b, sizeof(b), "\001 %s %s", context_action(), context_name());
@@ -1225,12 +1316,9 @@ static void title(void) {
         }
     line(30, 45, 205, 45, EDGE);
     text(29, 61, "DUSTBOUND", GOLD, 3);
-    text(31, 93, "A WASTELAND WITHOUT HEROES", TEXT, 1);
-    text(31, 112, "SQUAD SURVIVAL RPG / PSP", MUTED, 1);
-    const char *opts[] = {"NEW EXPEDITION", "CARAVAN START", "CONTINUE EXPEDITION",
-                          "FIELD GUIDE"};
-    for (int i = 0; i < 4; i++) {
-        int y = 148 + i * 23;
+    const char *opts[] = {"NEW EXPEDITION", "CONTINUE EXPEDITION", "FIELD GUIDE"};
+    for (int i = 0; i < 3; i++) {
+        int y = 130 + i * 27;
         if (i == ui.selection) {
             rect(25, y - 5, 255, 20, 0x494132);
             text(32, y, ">", TEAL, 1);
@@ -1313,7 +1401,7 @@ static void equipment_comparison(int it, int y) {
         float after=weapon_handling(a,it)*fmaxf(.55f,d->cooldown-effective_level(a,DEXTERITY)*.003f);
         if(fabsf(before-after)>.01f)compare_stat(cell++,y+26,"DELAY SEC",before,after,1,1);
         if(weapon_strength(it)>level(a,STRENGTH)) {
-            snprintf(b,sizeof(b),"NEEDS STR %d / HAVE %d",weapon_strength(it),effective_level(a,STRENGTH));
+            snprintf(b,sizeof(b),"STR FOR FULL SPEED %d / HAVE %d",weapon_strength(it),effective_level(a,STRENGTH));
             clipped(31+(cell%2)*211,y+26+(cell/2)*12,b,33,RED);cell++;
         }
     } else if(d->slot==5) {
@@ -1348,6 +1436,10 @@ static const char *item_function(int it){
 static void pack_screen(void) {
     Actor *a=&g.actors[g.selected];char b[120];int count=item_view_count(),it=count?a->pack[ui.selection].item:0;
     overlay_header("PACK & EQUIPMENT","\001 EQUIP / USE   \004 WORN GEAR   \003 PASS TO ALLY");
+    float load = encumbrance(a);
+    int capacity = actor_capacity(a);
+    snprintf(b, sizeof(b), "LOAD %.0f/%d", load, capacity);
+    text(449 - text_width(b), 61, b, load > capacity ? GOLD : TEAL, 1);
     Actor preview=preview_actor();int wearable=it&&itemDefs[it].slot>=0;
     if(wearable)preview.gear[itemDefs[it].slot]=it;
     portrait_scale(&preview,103,69,28,81,1);
@@ -1359,7 +1451,9 @@ static void pack_screen(void) {
         clipped(146,y,itemDefs[id].name,46,k==ui.selection?TEXT:MUTED);
         snprintf(b,sizeof(b),"%d",a->pack[k].qty);text(442-strlen(b)*6,y,b,GOLD,1);
     }
-    snprintf(b,sizeof(b),"%d/%d SLOTS  LOAD %.0f/%d%s",count,PACK,encumbrance(a),actor_capacity(a),count&&a->stolen[ui.selection]?"  STOLEN":"");text(146,183,b,MUTED,1);
+    snprintf(b, sizeof(b), "%d/%d SLOTS%s", count, PACK,
+             count && a->stolen[ui.selection] ? "  STOLEN" : "");
+    text(146, 183, b, MUTED, 1);
     int wornDisguise=disguise_faction(a),nextDisguise=disguise_faction(&preview);
     if (count > 10) {
         snprintf(b, sizeof(b), "%d-%d OF %d", first + 1, first + 10, count);
@@ -1376,7 +1470,7 @@ static void pack_screen(void) {
     int before=a->gear[d->slot];ItemDef*old=&itemDefs[before];
     compare_stat(0,190,d->slot==0?"DAMAGE":d->slot==5?"CAPACITY":"ARMOR",d->slot==0?old->power:d->slot==5?old->capacity:old->armor,d->slot==0?d->power:d->slot==5?d->capacity:d->armor,0,0);
     compare_stat(1,190,"WEIGHT",old->weight,d->weight,0,1);
-    if(!d->slot){compare_stat(2,190,"REACH",before?old->range:1.55f,d->range,1,0);compare_stat(3,190,"DELAY",weapon_handling(a,before)*fmaxf(.55f,(before?old->cooldown:1)-effective_level(a,DEXTERITY)*.003f),weapon_handling(a,it)*fmaxf(.55f,d->cooldown-effective_level(a,DEXTERITY)*.003f),1,1);snprintf(b,sizeof(b),"REQUIRES STR %d / HAVE %d",weapon_strength(it),effective_level(a,STRENGTH));text(31,214,b,weapon_strength(it)>effective_level(a,STRENGTH)?RED:MUTED,1);}
+    if(!d->slot){compare_stat(2,190,"REACH",before?old->range:1.55f,d->range,1,0);compare_stat(3,190,"DELAY",weapon_handling(a,before)*fmaxf(.55f,(before?old->cooldown:1)-effective_level(a,DEXTERITY)*.003f),weapon_handling(a,it)*fmaxf(.55f,d->cooldown-effective_level(a,DEXTERITY)*.003f),1,1);snprintf(b,sizeof(b),"STR FOR FULL SPEED %d / HAVE %d",weapon_strength(it),effective_level(a,STRENGTH));text(31,214,b,weapon_strength(it)>effective_level(a,STRENGTH)?RED:MUTED,1);}
     else {compare_stat(2,190,"STEALTH",old->stealth,d->stealth,0,0);compare_stat(3,190,d->slot==5?"LOADED WT":"MOVE %",d->slot==5?encumbrance(a):old->speed*.5f,d->slot==5?backpack_load_preview(a,it):d->speed*.5f,1,d->slot==5);compare_stat(4,190,"WEATHER",old->protection,d->protection,0,0);compare_stat(5,190,"CAPACITY",old->capacity,d->capacity,0,0);}
     clipped(31,226,limb_arms(a)==1&&combat_two_hands(it)?"ONE ARM: -40% DAMAGE / -25 AIM / +65% DELAY":item_function(it),69,TEXT);
 }
@@ -1427,8 +1521,8 @@ static void skills_screen(void) {
         STEALTH, THEFT, LOCKPICK, MEDICINE, LABOUR, FARMING, COOKING, SMITHING, ENGINEERING, SCIENCE
     };
     static const struct { const char *name; int start, count, x, y; } groups[] = {
-        {"BODY & MOVEMENT", 0, 5, 31, 80}, {"COMBAT", 5, 4, 31, 134},
-        {"FIELDCRAFT", 9, 4, 245, 80}, {"TRADES", 13, 6, 245, 134}
+        {"BODY & MOVEMENT", 0, 5, 31, 80}, {"COMBAT", 5, 4, 31, 139},
+        {"FIELDCRAFT", 9, 4, 245, 80}, {"TRADES", 13, 6, 245, 129}
     };
     for (unsigned k = 0; k < sizeof(groups) / sizeof(*groups); k++) {
         int x = groups[k].x;
@@ -1465,21 +1559,25 @@ static void health_screen(void) {
         int y=111+i*13,missing=(a->lostMask&(1<<i))&&!(a->prostheticMask&(1<<i));
         if(i==ui.selection)rect(25,y-2,425,12,0x4a4030);
         text(31,y,limbNames[i],i==ui.selection?TEXT:MUTED,1);
-        bar(157,y+2,91,4,missing?0:a->health[i]*100/limb_max_health(a,i),a->health[i]<30||missing?RED:TEAL);
+        limb_health_bar(a, i, 157, y + 2, 91, 4);
         if(missing)snprintf(b,sizeof(b),"LOST");else snprintf(b,sizeof(b),"%.0f/%.0f",a->health[i],limb_max_health(a,i)-z->trauma[i]);
         text(261,y,b,missing?RED:TEXT,1);
-        const char *wound = missing ? "LOST" : a->woundFlags & (1u << i) ? "CUT" :
+        uint32_t color = limb_condition_color(a, i);
+        const char *wound = missing ? "LOST" : a->woundFlags & (1u << i) ?
+            (a->bleed > .01f ? "OPEN CUT" : "CLOTTED CUT") :
             a->woundFlags & (1u << (WOUND_REPAIR_SHIFT + i)) ? "REPAIRING" :
-            a->treatedMask & (1 << i) ? "DRESSED" : !depth_organic(a, i) ? "MECH" :
-            a->health[i] < species_health(a) - 1 ? "BRUISED" : "OK";
+            a->treatedMask & (1 << i) ? "DRESSED" : color == TEAL ? "OK" :
+            !depth_organic(a, i) ? "DAMAGED" : "UNTREATED";
         snprintf(b, sizeof(b), "%s / %.0f", wound, z->trauma[i]);
-        text(323, y, b, a->woundFlags & (1u << i) ? RED : MUTED, 1);
+        text(323, y, b, color, 1);
     }
-    snprintf(b,sizeof(b),"BLOOD %.0f  BLEED %.1f  FOOD %.0f  FATIGUE %.0f",a->blood,a->bleed,a->hunger,a->fatigue);text(31,194,b,a->bleed>.01f?RED:MUTED,1);
+    snprintf(b, sizeof(b), "BLOOD %.0f   FOOD %.0f   FATIGUE %.0f", a->blood, a->hunger, a->fatigue);
+    text(31, 194, b, a->bleed > .01f ? RED : MUTED, 1);
+    if (a->bleed > .01f) text(323, 194, "BLEEDING", RED, 1);
     snprintf(b, sizeof(b), "DRESSINGS %d  GEAR %.0f%%  COMA THRESHOLD %.0f", inventory_count(a,MEDKIT),
              z->upkeep, coma_threshold(a));
     text(31,207,b,GOLD,1);
-    text(31,221,z->captive?"Work shackles away from guards.":"\006 LIMBS: fit, compare and detach replacements.",MUTED,1);
+    text(31, 221, z->captive ? "\001 PICK SHACKLES" : "TEAL HEALTH   RED UNTREATED   GOLD DRESSED   \006 LIMBS", MUTED, 1);
 }
 static void limbs_screen(void) {
     Actor *a=&g.actors[g.selected];char b[140];int surgery=ui.screen==SCREEN_SURGERY,confirm=ui.screen==SCREEN_LIMBCONFIRM;
@@ -1552,7 +1650,7 @@ static void squad_screen(void) {
         }
         text(31, 208, "First available job runs. Put Follow or Hold last.", MUTED, 1);
     } else {
-        row(121, ui.selection == 0, "Direct job", jobNames[a->job]);
+        row(121, ui.selection == 0, "Direct job", slave_in_camp(a) ? "Forced labour" : jobNames[a->job]);
         row(139, ui.selection == 1, "Combat orders", orderNames[z->order]);
         snprintf(b, sizeof(b), "%d / 3", z->group + 1);
         row(157, ui.selection == 2, "Follow spacing", b);
@@ -1659,16 +1757,13 @@ static void world_atlas(void) {
     int oldL=clipLeft,oldR=clipRight,oldT=clipTop,oldB=clipBottom;
     clipLeft=ox;clipRight=ox+size;clipTop=oy;clipBottom=oy+size;
     map_roads(view);
-    if(ui.waypoint){
-        float x=AX(a->x, a->y),y=AY(a->x, a->y),dx=AX(ui.travelX, ui.travelY)-x,dy=AY(ui.travelX, ui.travelY)-y,steps=fmaxf(fabsf(dx),fabsf(dy));
-        for(int k=0;k<steps;k+=6)line(x+dx*k/fmaxf(1,steps),y+dy*k/fmaxf(1,steps),x+dx*fminf(k+3,steps)/fmaxf(1,steps),y+dy*fminf(k+3,steps)/fmaxf(1,steps),0x72cfd2);
-    }
     for(int t=0;t<TOWNS;t++)if(g.discovered[t]){
         int x=AX(towns[t].x, towns[t].y),y=AY(towns[t].x, towns[t].y);
         if(t>=OLD_TOWNS){diamond(x,y,5,5,INK);diamond(x,y,3,3,label_color(g.townOwner[t]));}
         else{rect(x-3,y-3,7,7,INK);frame(x-2,y-2,5,5,label_color(g.townOwner[t]));}
     }
     int px=AX(a->x, a->y),py=AY(a->x, a->y);
+    map_pin(view, a, ox, oy, ox + size, oy + size, 0);
     triangle(px,py-6,px-5,py+4,px+5,py+4,TEXT);triangle(px,py-4,px-3,py+3,px+3,py+3,0x72cfd2);
     int sx=AX(ui.mapX, ui.mapY),sy=AY(ui.mapX, ui.mapY);
     frame(sx-6,sy-6,13,13,GOLD);
@@ -1795,25 +1890,12 @@ static void map_screen(void) {
             for(int k=0;k<steps;k+=6) line(youx+dx*k/fmaxf(1,steps),youy+dy*k/fmaxf(1,steps),
                 youx+dx*fminf(k+3,steps)/fmaxf(1,steps),youy+dy*fminf(k+3,steps)/fmaxf(1,steps),GOLD);
         }
-        if (ui.waypoint) {
-            int dx = MAPX(ui.travelX, ui.travelY), dy = MAPY(ui.travelX, ui.travelY);
-            /* Clip the route to the visible map rectangle. */
-            float vx = dx - youx, vy = dy - youy, t = 1;
-            if (vx > 0)
-                t = fminf(t, (ox + mw - 1 - youx) / vx);
-            else if (vx < 0)
-                t = fminf(t, (ox - youx) / vx);
-            if (vy > 0)
-                t = fminf(t, (oy + mh - 1 - youy) / vy);
-            else if (vy < 0)
-                t = fminf(t, (oy - youy) / vy);
-            line(youx, youy, youx + vx * t, youy + vy * t, TEAL);
-        }
         diamond(youx, youy, 5, 4, TEAL);
         frame(youx - 5, youy - 5, 11, 11, TEXT);
     }
     line(x - 5, y, x + 5, y, TEXT);
     line(x, y - 5, x, y + 5, TEXT);
+    map_pin(view, leader, ox, oy, ox + mw, oy + mh, 0);
     clipLeft=oldL;clipRight=oldR;clipTop=oldT;clipBottom=oldB;
     frame(ox - 1, oy - 1, mw + 2, mh + 2, EDGE);
     text(328,84,"NEAREST TOWN",GOLD,1);
@@ -1848,7 +1930,7 @@ static void trade_screen(void) {
     for (int j = 0; j < 6 && first + j < count; j++) {
         int i = ui.sell ? item_view_slot(first+j) : first+j, it = ui.sell ? g.actors[g.selected].pack[i].item : shop_item(i);
         snprintf(b,100,"%.33s",it?itemDefs[it].name:"--");row(84+j*13,i==ui.selection,b,NULL);
-        snprintf(v,sizeof(v),"%d",ui.sell?g.actors[g.selected].pack[i].qty:g.stock[ui.tradeTown][it]);text(263,84+j*13,v,MUTED,1);
+        snprintf(v,sizeof(v),"%d",ui.sell?g.actors[g.selected].pack[i].qty:market_quantity(ui.tradeTown, it));text(263,84+j*13,v,MUTED,1);
         snprintf(v,sizeof(v),"%d S",item_price(ui.tradeTown,it,ui.sell));text(301,84+j*13,v,GOLD,1);
         int pct=market_percent(ui.tradeTown,it,ui.sell);snprintf(v,sizeof(v),"%+d%%",pct);text(400,84+j*13,v,pct==0?MUTED:((ui.sell?pct>0:pct<0)?0x73c58b:0xde8375),1);
     }
@@ -2210,12 +2292,16 @@ static void journal_screen(void) {
     text(31, 222, b, TEAL, 1);
 }
 static void chest_screen(void) {
-    const Building *b = &g.buildings[ui.storageIndex];
     char buf[105], qty[16];
-    overlay_header(b->type == SHOP ? "SHOP STOCK CHEST" : "HOUSEHOLD CHEST",
-                   "\001 TAKE ONE   \015 SELECT ITEM   \002 LEAVE");
-    snprintf(buf, sizeof(buf), "OWNED BY %s. TAKING ITEMS IS THEFT.", factionNames[b->faction]);
-    clipped(31, 85, buf, 68, GOLD);
+    int owner = chest_owner();
+    const char *name = ui.chestKind == CHEST_PROPERTY ? "CONFISCATED BELONGINGS" :
+        ui.chestKind == CHEST_FIELD ? "CHEST CONTENTS" :
+        g.buildings[ui.storageIndex].type == SHOP ? "SHOP STOCK CHEST" : "HOUSEHOLD CHEST";
+    overlay_header(name, "\001 TAKE ONE   \015 SELECT ITEM   \002 LEAVE");
+    if (owner) {
+        snprintf(buf, sizeof(buf), "OWNED BY %s. TAKING ITEMS IS THEFT.", factionNames[owner]);
+        clipped(31, 85, buf, 68, GOLD);
+    }
     int count = interior_chest_count();
     if (!count) {
         text(31, 114, "The chest is empty.", MUTED, 1);
@@ -2227,7 +2313,7 @@ static void chest_screen(void) {
         snprintf(qty, sizeof(qty), "x%d", item->qty);
         row(109 + i * 16, ui.selection == first + i, itemDefs[item->item].name, qty);
     }
-    text(31, 219, "Witnesses can warn you or report you to the watch.", MUTED, 1);
+    if (owner) text(31, 219, "Witnesses can warn you or report you to the watch.", MUTED, 1);
 }
 static void factions_screen(void) {
     overlay_header("FLAGS OF THE FRONTIER", "FACTION COLORS / ! HOSTILE TO YOU / YOUR STANDING");

@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.17.4"
+#define VERSION "0.17.5"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -25,7 +25,12 @@
 #define LIMB_ITEMS V100_ITEMS
 #define SEVERED_ARM (LIMB_ITEMS+8)
 #define SEVERED_LEG (LIMB_ITEMS+9)
-#define ITEMS (LIMB_ITEMS+10)
+#define TOWN_STOCK_ITEMS (LIMB_ITEMS+10)
+#define BEDROLL_ITEM TOWN_STOCK_ITEMS
+#define SLAVE_GARB (BEDROLL_ITEM+1)
+#define ITEMS (SLAVE_GARB+1)
+#define SLAVE_CAMPS 3
+#define SEIZED_STACKS (SQUAD * (PACK + GEARS + 1))
 #define SPECIES 5
 #define START_SCENARIOS 5
 #define ELITES 18
@@ -112,7 +117,7 @@ enum {
 };
 enum { PLAYER, SETTLER, GUARD, TRADER, RECRUIT, RAIDER, BEAST, CARAVAN };
 enum { FREE, UNION, SCAVENGERS, HOSTILE, SHOGUN, MONKS, OUTLAWS, WILDLIFE };
-enum { HOUSE, SHOP, BAR, TOWER, WINDMILL, WELL, CAMPFIRE, BED, FARM, FORGE, BENCH, WALL, STORE };
+enum { HOUSE, SHOP, BAR, TOWER, WINDMILL, WELL, CAMPFIRE, BED, FARM, FORGE, BENCH, WALL, STORE, JAIL, SLAVE_YARD };
 enum { NODE_ORE, NODE_COPPER, NODE_WOOD, NODE_LOOT, NODE_LOCKED, NODE_RUIN };
 enum { JOB_FOLLOW, JOB_HOLD, JOB_MINE, JOB_FARM, JOB_MEDIC, JOB_SMELT, JOB_COOK, JOB_HAUL };
 enum {
@@ -246,7 +251,7 @@ typedef struct {
 typedef struct {
     uint32_t seed, rng;
     float time, dayTime, raidTimer, autosave;
-    int day, money, selected, squadCount, tech, rep[FACTIONS], kills, discovered[TOWNS], stock[TOWNS][ITEMS],
+    int day, money, selected, squadCount, tech, rep[FACTIONS], kills, discovered[TOWNS], stock[TOWNS][TOWN_STOCK_ITEMS],
         lastRestock;
     int actorCount, buildingCount, nodeCount, baseExists;
     float baseX, baseY;
@@ -282,7 +287,20 @@ typedef struct {
     unsigned theftWarnings;
     struct { int actor, patient, bed, generated, day; float until; } roadsideAid;
     TownLife townLife; /* v21 extension */
+    struct {
+        int version;
+        int stock[TOWNS][ITEMS - TOWN_STOCK_ITEMS];
+        unsigned short tradeCredit[FACTIONS];
+        signed char rolls[MAX_BUILDINGS]; /* -1 packed, 0 fixed, otherwise 1 + stolen owner */
+        int jail[TOWNS], camp[SLAVE_CAMPS]; /* building index plus one */
+        int intake[MAX_ACTORS]; /* destination building plus one, while being carried */
+        unsigned char laborCamp[MAX_ACTORS], escaped[MAX_ACTORS], playingDead[MAX_ACTORS];
+        float cellOpen[MAX_ACTORS];
+        Stack seized[SLAVE_CAMPS][SEIZED_STACKS];
+        unsigned char seizedOwner[SLAVE_CAMPS][SEIZED_STACKS];
+    } field; /* v22 extension */
 } Game;
+enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE, ROOM_CHEST };
 typedef struct {
     float x, y, w, d;
@@ -300,6 +318,13 @@ void interior_move(float dx, float dy, float dt);
 int interior_chest_count(void);
 const Stack *interior_chest_item(int row);
 void interior_chest_take(int row);
+int chest_owner(void);
+int deploy_bedroll(Actor *a, int slot);
+int portable_bedroll(int building);
+void pack_bedroll(int building);
+void field_init(void);
+int field_validate(const Game *save);
+int *market_stock(int town, int item);
 int home_occupant(int building);
 int rest_at(Actor *a, int bed, float x, float y, int room, int price);
 int actor_in_bed(const Actor *a);
@@ -317,6 +342,7 @@ typedef struct {
     int createRow, createOrigin, createBody, createSkin, createHair, createHairColor, createBeard,
         createRace;
     int nameCursor, nameCell, storageIndex, storageSide, shopFilter, saveMode, lootActor, mapZoom, mapTown;
+    int chestKind, roadTrader; /* road trader index plus one */
     char createName[16];
     SaveInfo saves[SAVE_SLOTS];
     int helpSelection, helpScroll, saveReturn, saveExit, contextChoice, contextCount, squadCyclePending;
@@ -438,6 +464,7 @@ int wound_needs_dressing(const Actor *a);
 float treatment_burden(const Actor *a);
 int civilian_flees(const Actor *a);
 void dress_wounds(Actor *a);
+int injury_needs_dressing(const Actor *a, const DepthActor *z);
 void injury_dress(Actor *a, const DepthActor *z);
 void injury_repair(Actor *a, const DepthActor *z);
 int begin_treatment(int medic, int patient, int type, int slot);
@@ -452,6 +479,22 @@ void roadside_aid_finished(int medic, int patient);
 int jail_pick_start(int n);
 int jail_bail(int n);
 int jail_bail_cost(const Actor *a);
+int jail_cell_open(const Actor *a);
+void jail_exit(Actor *a);
+void custody_tick(float dt);
+int conscious(const Actor *a);
+int playing_dead(const Actor *a);
+void play_dead(Actor *a);
+void faction_goodwill(int faction, int amount);
+void trade_goodwill(int faction, int price);
+int npc_sees(const Actor *observer, const Actor *target, float reach);
+float npc_sight_range(const Actor *a);
+int population_vendor(int n);
+int road_trade(int item, int slot);
+int market_quantity(int town, int item);
+int slave_pick_start(int n);
+int slave_camp_at(int building);
+int slave_in_camp(const Actor *a);
 float jail_pick_duration(const Actor *a, int tools);
 void witnessed_theft(Actor *a, int owner, int range, int penalty);
 int loot_take(int slot, int all);

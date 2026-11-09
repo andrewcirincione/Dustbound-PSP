@@ -150,8 +150,10 @@ int main(int argc, char **argv) {
     D.actors[0].queue[2] = JOB_HOLD;
     a->taskKind = 0;
     a->target = -1;
-    a->x = 24;
-    a->y = 34;
+    int seam = nearest_ore(towns[0].x, towns[0].y, 150, NODE_ORE);
+    C(seam >= 0);
+    a->x = g.nodes[seam].x;
+    a->y = g.nodes[seam].y;
     ui.playerIdle = 5;
     depth_queue(a);
     C(assigned_job(a) == JOB_MINE && a->job == JOB_FOLLOW);

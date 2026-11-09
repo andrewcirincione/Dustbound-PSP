@@ -1,3 +1,14 @@
+# 0.17.5 — Field survival
+
+- Untreated limb damage stays until bandaged. Treated wounds recover slowly on the trail and faster in beds. Severe damage takes longer. Limb bars show healthy tissue, untreated damage and dressed damage separately, and bleeding is marked red.
+- Guards carry wanted survivors into jail cells, confiscate stolen goods and provide treatment. Pick the cell lock and reach the exit before the watch relocks it.
+- Slave camps issue shackles and forced work. Seized belongings stay in the camp chest. Pick the shackles or get help from an ally, and watch for former captors.
+- Portable bedrolls can be bought, deployed and packed up. Outdoor chests open a contents list. Ore seams are farther apart and outside towns.
+- Nearby NPCs show whether they can see a sneaking survivor. Pursuers track the last place they saw you. You can play dead and bandage yourself, and blocks have a distinct animation.
+- Some traveling groups trade from their own packs. Faction conversations and rumors have separate lines. Trade, treatment and jobs improve standing. Unwelcome visitors may be warned before occupants attack.
+- Map pins show on both maps with minimap guidance and clear on arrival. The title, pack and skill layouts are cleaned up. Starting backpacks belong to the Prospector and Caravan starts.
+- Save v22 retains v21 and earlier expeditions.
+
 # 0.17.4 — Town life and combat
 
 - Towns have zero to two work offers from an identifiable local contact. The Journal tracks current objectives, progress, turn-in and payment. Retired the scripted Copper Road and regional quest menus.

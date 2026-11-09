@@ -140,7 +140,7 @@ int main(void) {
     a->autoattack = 0;
     int aid = heal_actor(0, 0);
     for (int j = 0; j < 70; j++) simulate(.1f);
-    CHECK(aid && a->bleed == 0 && a->health[CHEST] > 40 && a->health[CHEST] < 50 &&
+    CHECK(aid && a->bleed == 0 && (a->treatedMask & (1 << CHEST)) && a->health[CHEST] < 45 &&
               inventory_count(a, MEDKIT) == kits - 1,
           "first aid takes time, stops bleeding and starts gradual healing");
     a->hunger = 30;
@@ -228,8 +228,12 @@ int main(void) {
     CHECK(craft_item(3) && inventory_count(a, SABRE) == 1, "research unlocks sabre crafting");
     fresh();
     a = &g.actors[0];
-    a->x = 24;
-    a->y = 34;
+    int seam = nearest_ore(towns[0].x, towns[0].y, 150, NODE_ORE);
+    CHECK(seam >= 0, "an iron seam remains outside the settlement");
+    if (seam < 0) return 1;
+    a->x = g.nodes[seam].x;
+    a->y = g.nodes[seam].y;
+    for (int i = 1; i < g.actorCount; i++) g.actors[i].active = 0;
     find_context();
     CHECK(ui.contextKind == 1, "resource context finds nearby iron deposit");
     interact();

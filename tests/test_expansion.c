@@ -171,6 +171,7 @@ int main(void) {
     CHECK(a->health[CHEST] > 30 && a->health[CHEST] < 45 && a->bleed == 0 && g.money == oldmoney - 80,
           "doctor treats wounds over time for the stated fee");
     a->health[LARM] = 40;
+    dress_wounds(a);
     a->fatigue = 80;
     for (int j=0;j<g.buildingCount;j++) if (g.buildings[j].type==BED) { a->x=g.buildings[j].x; a->y=g.buildings[j].y; break; }
     CHECK(start_sleep(0), "bedside interaction starts paid rest");
@@ -205,8 +206,10 @@ int main(void) {
     a->bounty = 100;
     a->unconscious = 30;
     simulate(.1f);
-    CHECK(a->prisonTime > 0 && a->prisonTown == 0,
-          "nearby law guards take defeated wanted survivors into custody");
+    CHECK(a->carriedBy == guard && !a->prisonTime, "law guards carry defeated wanted survivors");
+    for (int i = 0; i < 650 && a->prisonTime <= 0; i++) simulate(.1f);
+    CHECK(a->prisonTime > 0 && a->prisonTown == 0 && actor_inside(a) == g.field.jail[0],
+          "the watch delivers the prisoner to a jail cell");
     float x = a->x;
     move_actor(a, 1, 0, 1);
     CHECK(a->x == x, "custody prevents walking out of the holding area");
