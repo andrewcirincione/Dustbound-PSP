@@ -28,16 +28,6 @@ float depth_distance(const Actor *a, const Actor *b) {
     return depth_room(a) != depth_room(b) ? 9999
                                           : distance(depth_x(a), depth_y(a), depth_x(b), depth_y(b));
 }
-static int room_clear(int room, float x, float y) {
-    if (room <= 0 || room > g.buildingCount || x < .4f || y < .4f || x > 6.6f || y > 6.6f)
-        return 0;
-    InteriorProp props[ROOM_PROPS];
-    int n = interior_props(room - 1, props);
-    for (int i = 0; i < n; i++)
-        if (fabsf(x - props[i].x) < props[i].w + .18f && fabsf(y - props[i].y) < props[i].d + .18f)
-            return 0;
-    return 1;
-}
 static int shot_clear(float x, float y) {
     if (x < 0 || y < 0 || x >= WORLD || y >= WORLD)
         return 0;
@@ -61,9 +51,9 @@ void depth_move_room(Actor *a, float dx, float dy, float dt) {
         return;
     float step = movement_speed(a) * dt / len;
     float x = depth_x(a), y = depth_y(a), ox=x, oy=y, nx = x + dx * step, ny = y + dy * step;
-    if (room_clear(room, nx, y))
+    if (interior_walkable(room, nx, y))
         x = nx;
-    if (room_clear(room, x, ny))
+    if (interior_walkable(room, x, ny))
         y = ny;
     if (g.interiorBuilding && n == g.interiorActor) {
         g.interiorX = x;
@@ -92,11 +82,9 @@ void actor_leave_room(int n) {
     int room = depth_room(a);
     if (!room)
         return;
-    const Building *b = &g.buildings[room - 1];
     D.actors[n].room = 0;
     D.actors[n].trespass = 0;
-    a->x = b->x + 1.45f;
-    a->y = b->y + .65f;
+    building_door(room - 1, &a->x, &a->y);
     a->routeLen = a->routePos = 0;
     a->target = -1;
     a->attackPhase = 0;
@@ -106,7 +94,7 @@ void actor_leave_room(int n) {
 void depth_leave_room(int building) {
     for (int i = 0; i < g.actorCount; i++)
         if (g.actors[i].squad && D.actors[i].room == building + 1 && g.actors[i].prisonTime <= 0 &&
-            !g.field.intake[i])
+            !g.field.intake[i] && !actor_in_bed(&g.actors[i]))
             actor_leave_room(i);
 }
 int depth_room_target(void) {
@@ -280,7 +268,7 @@ void depth_projectiles(float dt) {
             p->x += p->vx * step;
             p->y += p->vy * step;
             p->left -= 18 * step;
-            if (p->left <= 0 || (p->room ? !room_clear(p->room, p->x, p->y) : !shot_clear(p->x, p->y))) {
+            if (p->left <= 0 || (p->room ? !interior_walkable(p->room, p->x, p->y) : !shot_clear(p->x, p->y))) {
                 p->active = 0;
                 break;
             }

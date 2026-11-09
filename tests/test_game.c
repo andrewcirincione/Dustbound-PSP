@@ -1,4 +1,4 @@
-#include "game.h"
+#include "frontier_fixture.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,7 +37,7 @@ int main(void) {
           "world includes sixteen towns, residents, hostiles and resources");
     CHECK(g.squadCount == 1 && g.money == 650, "wanderer starts with one member and 650 silver");
     CHECK(can_walk(a->x, a->y), "player starts on walkable ground");
-    CHECK(!can_walk(22, 24) && !can_walk(-1, 2), "buildings and map boundaries block movement");
+    CHECK(!can_walk(g.buildings[0].x, g.buildings[0].y) && !can_walk(-1, 2), "buildings and map boundaries block movement");
     clear_pack(a);
     CHECK(inventory_add(a, ORE, 5) && inventory_count(a, ORE) == 5, "inventory can add and count a stack");
     CHECK(!inventory_remove(a, ORE, 6) && inventory_count(a, ORE) == 5, "insufficient removal is atomic");
@@ -51,7 +51,8 @@ int main(void) {
     fresh();
     a = &g.actors[0];
     m = g.money;
-    CHECK(buy_item(0, LEATHER) && g.money == m - 180 && inventory_count(a, LEATHER) == 1,
+    int ask = item_price(0, LEATHER, 0);
+    CHECK(buy_item(0, LEATHER) && g.money == m - ask && inventory_count(a, LEATHER) == 1,
           "buying updates money, stock and inventory");
     int slot = -1;
     for (int i = 0; i < PACK; i++)
@@ -138,13 +139,13 @@ int main(void) {
     CHECK(bleeding, "cutting weapons cause bleeding");
     a->health[CHEST] = 40;
     a->bleed = 2;
-    int kits = inventory_count(a, MEDKIT);
+    int kits = fixture_dressings(a);
     e->active = 0;
     a->autoattack = 0;
     int aid = heal_actor(0, 0);
-    for (int j = 0; j < 70; j++) simulate(.1f);
+    for (int j = 0; j < 130; j++) simulate(.1f);
     CHECK(aid && a->bleed == 0 && (a->treatedMask & (1 << CHEST)) && a->health[CHEST] < 45 &&
-              inventory_count(a, MEDKIT) == kits - 1,
+              fixture_dressings(a) < kits && fixture_dressings(a) > kits - 100,
           "first aid takes time, stops bleeding and starts gradual healing");
     a->hunger = 30;
     int food = inventory_count(a, RATION);
@@ -218,8 +219,15 @@ int main(void) {
     CHECK(build_structure(3), "forge can be constructed from timber and iron bars");
     a->x += .5f;
     finish_build();
+    int forge = g.buildingCount - 1;
+    CHECK(!craft_item(0), "forge requires entry");
+    fixture_door(a, forge);
+    CHECK(interior_enter(forge), "use the forge door");
+    fixture_service(ROOM_FORGE);
     CHECK(craft_item(0) && inventory_count(a, ORE) == 3, "forge smelts three ore into one iron bar");
+    interior_leave();
     a->x = 66;
+    a->y = 40;
     CHECK(build_structure(4), "research bench can be built");
     inventory_add(a, RELIC, 3);
     g.money = 2000;
@@ -227,7 +235,9 @@ int main(void) {
     finish_build();
     CHECK(research_tech() && g.tech == 1 && inventory_count(a, RELIC) == 2,
           "research consumes relic and money and unlocks a tier");
-    a->x = 60.5f;
+    fixture_door(a, forge);
+    CHECK(interior_enter(forge), "return to the forge");
+    fixture_service(ROOM_FORGE);
     CHECK(craft_item(3) && inventory_count(a, SABRE) == 1, "research unlocks sabre crafting");
     fresh();
     a = &g.actors[0];

@@ -1,4 +1,4 @@
-#include "game.h"
+#include "frontier_fixture.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -116,25 +116,29 @@ static void timed_treatments(void) {
     step(3);
     assert(a->health[LARM] == 40 && a->health[CHEST] < 45 && a->blood < 70);
     float hp = a->health[CHEST], blood = a->blood;
-    int kits = inventory_count(a, MEDKIT);
+    int kits = fixture_dressings(a);
     assert(heal_actor(0, 0));
     assert(a->taskKind == TASK_TREAT && a->health[CHEST] == hp && a->blood == blood);
     step(1);
-    assert(inventory_count(a, MEDKIT) == kits && a->bleed > 0);
+    assert(fixture_dressings(a) == kits && a->bleed > 0);
     assert(save_game("build/v174/treating.sav") && load_game("build/v174/treating.sav"));
     a = &g.actors[0];
     step(a->action + .15f);
-    assert(a->bleed == 0 && !(a->woundFlags & WOUND_CUTS) && inventory_count(a, MEDKIT) == kits - 1);
+    assert(a->bleed == 0 && a->taskKind == TASK_TREAT && (a->woundFlags & WOUND_CUTS));
+    assert(fixture_dressings(a) < kits && fixture_dressings(a) > kits - 100);
+    for (int phase = 0; phase < LIMBS && a->taskKind == TASK_TREAT; phase++)
+        step(a->action + .15f);
+    assert(!(a->woundFlags & WOUND_CUTS) && (a->treatedMask & (1 << LARM)));
     assert(a->health[CHEST] < 48);
     hp = a->health[CHEST];
     step(8);
     assert(a->health[CHEST] > hp + .3f && a->health[CHEST] < hp + 1);
     a = fresh();
     bleeding_cut(a, 48, 75, 1.5f);
-    kits = inventory_count(a, MEDKIT);
+    kits = fixture_dressings(a);
     assert(heal_actor(0, 0));
     game_tick(.1f, (Input){.ax = .8f});
-    assert(!a->taskKind && inventory_count(a, MEDKIT) == kits && a->bleed > 0);
+    assert(!a->taskKind && fixture_dressings(a) == kits && a->bleed > 0);
 
     a = fresh();
     bleeding_cut(a, 49, 70, .8f);

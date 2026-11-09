@@ -113,6 +113,10 @@ static void make_actor(int k,int i){
     a->race=e->faction==SHOGUN?(seed%3==0?4:0):e->faction==MONKS?(seed%2?1:3):seed%5;
     int tier=e->tier-(i>0&&e->tier>0),lv=4+tier*9+random_step(&seed)%7;
     if(e->type==POP_REFUGEES||e->type==POP_WOUNDED)lv=3+random_step(&seed)%6;
+    if ((a->kind == RAIDER || a->kind == BEAST) && starter_country(e->x, e->y)) {
+        tier = 0;
+        if (lv > 12) lv = 12;
+    }
     for(int s=0;s<SKILLS;s++)a->xp[s]=12*(lv-1)*(lv-1);
     for(int l=0;l<LIMBS;l++)a->health[l]=species_health(a);
     a->x=a->homeX=a->tx=e->x+(i%4-1)*1.8f;a->y=a->homeY=a->ty=e->y+(i/4)*1.8f;clear_position(&a->x,&a->y);
@@ -121,8 +125,9 @@ static void make_actor(int k,int i){
     living_gear(a,i%8,poor ? 0 : tier,(int)(seed%10000));
     if (i == vendor_member(e)) {
         inventory_add(a, RATION, 3 + tier);
-        inventory_add(a, MEDKIT, 2);
-        inventory_add(a, e->type == POP_SMUGGLERS ? PARTS : BEDROLL_ITEM, 1 + seed % 2);
+        inventory_add(a, portion_item(MEDKIT, seed % 23 == 0 ? 100 : 40 + seed % 48), 1);
+        inventory_add(a, seed % 2 ? JERKY : OATCAKE, 1);
+        inventory_add(a, e->type == POP_SMUGGLERS ? PARTS : BEDROLL_ITEM, 1);
         if (e->type == POP_SMUGGLERS) inventory_add(a, CARTRIDGE, 12);
     }
     if(e->type==POP_REFUGEES||e->type==POP_WOUNDED){a->gear[0]=STAFF;a->gear[1]=RAGS;a->gear[2]=0;}
@@ -423,7 +428,7 @@ const char *population_action_reason(int k, int action) {
     return NULL;
 }
 void population_action_label(int k,int action,char*out,int size){
-    if(!action)snprintf(out,size,"Observe %s",population_name(k));
+    if (!action) snprintf(out,size,"Observe %s",P.groups[k].type == POP_SMUGGLERS ? "smugglers" : population_name(k));
     else if(action>=11&&action<=13)snprintf(out,size,"Rest in camp bed %d (free)",action-10);
     else if(action==1)snprintf(out,size,"Cook at fire: 2 meat > 1 ration");
     else if (action == 20) {
@@ -450,7 +455,8 @@ int population_action(int k, int action) {
         return 0;
     }
     if (!action) {
-        log_msg("%s: %d standing / %s / %d beds.", names[e->type], standing(k),
+        log_msg("%s: %d standing / %s / %d beds.",
+                e->type == POP_SMUGGLERS && !population_object_count(k) ? "Smugglers" : names[e->type], standing(k),
                 g.life.version ? life_goal_name(g.life.groups[k].goal) : phases[m->phase], m->beds);
     } else if (action >= 11 && action <= 13) {
         float x, y;
@@ -522,7 +528,7 @@ int population_validate(const Game*s){
             for(int j=0;j<PACK;j++)if(a->pack[j].item<0||a->pack[j].item>=ITEMS||a->pack[j].qty<0||a->pack[j].qty>999||a->stolen[j]<0||a->stolen[j]>=FACTIONS)return 0;
             for(int j=0;j<GEARS;j++)if(a->gear[j]<0||a->gear[j]>=ITEMS||a->gearStolen[j]<0||a->gearStolen[j]>=FACTIONS)return 0;
             for(int j=0;j<SKILLS;j++)if(!isfinite(a->xp[j])||a->xp[j]<0)return 0;
-            const PopulationSocial*so=&p->social[k][i];for(int j=0;j<WEAPON_XP_SLOTS;j++)if(!isfinite(so->weaponXP[j])||so->weaponXP[j]<0||so->weaponXP[j]>117612)return 0;for(int j=0;j<FACTIONS;j++)if(so->wanted[j]<0||so->wanted[j]>100000||!isfinite(so->recognized[j]))return 0;if(so->cannibal<0||so->cannibal>2||so->captorFaction<0||so->captorFaction>=FACTIONS)return 0;
+            const PopulationSocial*so=&p->social[k][i];for(int j=0;j<WEAPON_XP_SLOTS;j++)if(!isfinite(so->weaponXP[j])||so->weaponXP[j]<0||so->weaponXP[j]>SKILL_XP_CAP)return 0;for(int j=0;j<FACTIONS;j++)if(so->wanted[j]<0||so->wanted[j]>100000||!isfinite(so->recognized[j]))return 0;if(so->cannibal<0||so->cannibal>2||so->captorFaction<0||so->captorFaction>=FACTIONS)return 0;
         }
     }
     for(int n=0;n<s->actorCount;n++)if(s->living.owned[n]>EVENTS&&!used[n])return 0;return 1;

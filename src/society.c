@@ -51,7 +51,7 @@ static void merge_weapon_xp(float xp[WEAPON_XP_SLOTS]) {
         merged[styleSkill[i]] += xp[i];
     memset(xp, 0, sizeof(float) * WEAPON_XP_SLOTS);
     for (int i = 0; i < WEAPON_CLASSES; i++)
-        xp[i] = fminf(117612, merged[i]);
+        xp[i] = fminf(SKILL_XP_CAP, merged[i]);
 }
 void weapon_xp_migrate(Game *save) {
     for (int actor = 0; actor < MAX_ACTORS; actor++)
@@ -62,8 +62,8 @@ void weapon_xp_migrate(Game *save) {
                 merge_weapon_xp(save->population.social[group][member].weaponXP);
     }
 }
-int weapon_class_level(const Actor*a,int c){int n=actor_no(a);if(c<0||c>=WEAPON_CLASSES||n<0)return 1;if(!a->squad)return level(a,c>=WC_ARCHERY?CROSSBOWS:MELEE);return (int)bound(1+sqrtf(S.weaponXP[n][c]/12),1,100);}
-void weapon_class_gain(Actor*a,int w,float amount){int n=actor_no(a),c=weapon_class(w);if(n<0||c<0||!a->squad)return;S.weaponXP[n][c]=bound(S.weaponXP[n][c]+amount,0,117612);}
+int weapon_class_level(const Actor*a,int c){int n=actor_no(a);if(c<0||c>=WEAPON_CLASSES||n<0)return 1;if(!a->squad)return level(a,c>=WC_ARCHERY?CROSSBOWS:MELEE);return (int)bound(1+sqrtf(S.weaponXP[n][c]/12),1,SKILL_CAP);}
+void weapon_class_gain(Actor*a,int w,float amount){int n=actor_no(a),c=weapon_class(w);if(n<0||c<0||!a->squad)return;S.weaponXP[n][c]=bound(S.weaponXP[n][c]+amount,0,SKILL_XP_CAP);}
 float weapon_cut_ratio(int it) {
     if (!it) return 1;
     if (it == STAFF || gear_family(it) == 16) return .05f;
@@ -81,6 +81,7 @@ float combat_learning(float learner,float opponent){float d=opponent-learner;ret
 int combat_evasion(const Actor*a){return !a->gear[0]||weapon_ranged(a->gear[0])||a->stun>0;}
 float dodge_mobility(const Actor*a){float capacity=actor_capacity(a);return bound(1-fmaxf(0,encumbrance(a)-capacity)/fmaxf(1,capacity),.05f,1);}
 static const int exports[TOWNS]={GRAIN,COPPER,WATER,HIDE,MEAT,ORE,IRONBAR,CLOTH,PARTS,WOOD,COAL,IRONBAR,MEDKIT,GRAIN,MEAT,WOOD,PARTS,IRONBAR,MEDKIT};
+int town_export(int town) { return exports[town]; }
 static const int imports[TOWNS]={IRONBAR,WOOD,GRAIN,MEDKIT,CLOTH,WATER,COAL,MEAT,MEDKIT,IRONBAR,WOOD,PARTS,WATER,ORE,MEDKIT,PARTS,COAL,GRAIN,WATER};
 static int commodity(int it){return it==RATION||it==MEDKIT||it==ORE||it==COPPER||it==WOOD||it==CLOTH||it==WATER||it==GRAIN||it==MEAT||it==IRONBAR||it==HIDE||it==COAL||it==PARTS||it==TONIC||it==RELIC;}
 float market_factor(int town,int item){
@@ -378,6 +379,10 @@ static int can_spawn_convoy(void) {
 int society_job_available(int town, int kind) {
     return service_actor(town, kind) >= 0 || (kind == CONTRACT_ESCORT && can_spawn_convoy());
 }
+int society_bounty_reward(int town) {
+    int who = service_actor(town, CONTRACT_BOUNTY);
+    return who >= 0 ? g.actors[who].bountyReward * 2 : 0;
+}
 int society_contract(int town,int kind){
  if(town<0||town>=TOWNS||kind<4||kind>7)return 0;
  int slot=-1,live=0;for(int i=0;i<CONTRACTS;i++){if(g.contracts[i].active==1){if(g.contracts[i].town==town&&g.contracts[i].type==kind){log_msg("That job is already active.");return 0;}if(g.contracts[i].type==5||g.contracts[i].type==6)live++;}else if(slot<0)slot=i;}
@@ -391,15 +396,15 @@ int society_contract(int town,int kind){
   }
   if(actor<0){log_msg(kind==7?"No unclaimed named bounty today.":"No free employer here; finish current work.");return 0;}
  }
- Contract c={0};c.active=1;c.type=kind;c.town=town;c.target=contract_destination(town, g.townOwner[town]);c.reward=kind==4?260:kind==5?280:kind==6?180:600;c.needed=kind==4?4:1;
+ Contract c={0};c.active=1;c.type=kind;c.town=town;c.target=contract_destination(town, g.townOwner[town]);c.reward=contract_reward(town, kind);c.needed=kind==4?4:1;
  if(kind==4){c.item=exports[town];int bond=item_price(town,c.item,0)*c.needed;if(g.money<bond){log_msg("Freight deposit: %d silver, refunded on delivery.",bond);return 0;}
   if(!inventory_add(p,c.item,c.needed)){log_msg("Make room for four units of freight.");return 0;}g.money-=bond;S.jobBond[slot]=bond;
  }else S.jobBond[slot]=0;
  if(kind==7)c.reward=g.actors[actor].bountyReward*2;
- g.contracts[slot]=c;S.jobActor[slot]=actor+1;S.jobStage[slot]=0;S.jobWarned[slot]=0;S.jobFar[slot]=S.jobWarning[slot]=0;S.jobElapsed[slot]=S.jobNear[slot]=S.jobPaid[slot]=S.jobDistance[slot]=0;
+ g.contracts[slot]=c;g.frontier.giver[slot]=ui.screen==SCREEN_DIALOG?ui.dialogActor+1:work_contact(town)+1;S.jobActor[slot]=actor+1;S.jobStage[slot]=0;S.jobWarned[slot]=0;S.jobFar[slot]=S.jobWarning[slot]=0;S.jobElapsed[slot]=S.jobNear[slot]=S.jobPaid[slot]=S.jobDistance[slot]=0;
  if(actor>=0){S.jobX[slot]=g.actors[actor].x;S.jobY[slot]=g.actors[actor].y;}
  if(kind==5||kind==6){log_msg("Follow %s. Stay within 8m while moving to earn wages.",g.actors[actor].name);return 1;}
- log_msg(kind==4?"Freight loaded. Deliver through your journal at the destination.":kind==7?"Named bounty accepted. Carry the wanted person to this town.":"Service accepted. Stay within 8m of your employer to earn wages.");return 1;
+ log_msg(kind==4?"Freight loaded. Delivery added to the Journal.":kind==7?"Named bounty accepted. Carry the wanted person to this town.":"Service accepted. Stay within 8m of your employer to earn wages.");return 1;
 }
 void society_contract_text(int n, char *out, int size) {
     const Contract *c = &g.contracts[n];
@@ -409,16 +414,15 @@ void society_contract_text(int n, char *out, int size) {
     if (c->active == 3)
         snprintf(out, size, "Job failed. Wages earned so far are yours.");
     else if (c->type == CONTRACT_FREIGHT)
-        snprintf(out, size, "The merchants need %s in %s. Deliver %d (%d/%d in squad). Claim here on arrival for %d silver and your %d deposit.",
+        snprintf(out, size, "The merchants need %s in %s. Deliver %d (%d/%d in squad). Speak to the local contact for %d silver and your %d deposit.",
                  itemDefs[c->item].name, towns[c->target].name, c->needed,
                  contract_item_count(c->item, -1), c->needed, c->reward, S.jobBond[n]);
-    else if (contract_ready(n))
-        snprintf(out, size, "Job complete. Claim payment here in Journal when you reach %s.",
-                 towns[contract_turn_in(n)].name);
     else if (c->type == CONTRACT_BOUNTY)
-        snprintf(out, size, "%s is wanted for road raids. %s Bring them to %s. %d alive; %d dead.",
-                 name, valid && (employer->dead || employer->unconscious > 0) ? "Subdued. Pick them up." : "Locate the last report; subdue and carry them.",
-                 towns[c->town].name, c->reward, c->reward / 2);
+        snprintf(out, size, "%s is wanted for road raids. Carry them to a paying jailkeeper. See their belongings for the list.",
+                 name);
+    else if (contract_ready(n))
+        snprintf(out, size, "Job complete. Speak to your contact in %s.",
+                 towns[contract_turn_in(n)].name);
     else if (c->type == CONTRACT_ESCORT)
         snprintf(out, size, "The supply caravan needs protection. Follow %s to %s (%.0fm left). Stay within 8m to earn wages.",
                  name, towns[c->target].name, valid ? distance(employer->x, employer->y, towns[c->target].x, towns[c->target].y) : 0);
@@ -431,7 +435,7 @@ int society_complete(int n){if(n<0||n>=CONTRACTS||g.contracts[n].active!=1)retur
  if(c->type==4){if(!contract_use_items(c->item,c->needed,town)){log_msg("Bring the full shipment and its carriers.");return 0;}g.stock[town][c->item]+=c->needed;}
  else if(c->type==7){int who=S.jobActor[n]-1;if(who<0||who>=g.actorCount||a->carrying!=who||g.actors[who].bountyReward<=0){log_msg("Carry the named bounty; previously claimed proofs cannot pay twice.");return 0;}Actor*b=&g.actors[who];if(!b->dead&&b->unconscious<=0){log_msg("The prisoner must be subdued.");return 0;}if(b->dead)reward/=2;b->bountyReward=0;b->active=0;b->carriedBy=-1;a->carrying=-1;}
  else if(!c->progress){log_msg("Complete the escort or patrol first.");return 0;}
- c->active=2;c->completed=1;g.money+=reward;g.contractsDone++;faction_goodwill(g.townOwner[town],5);S.jobBond[n]=0;log_level("%s paid %d silver for %s.", towns[town].name, reward, contract_title(c->type));return 1;
+ c->active=2;c->completed=1;remember_contract(c);g.money+=reward;g.contractsDone++;faction_goodwill(g.townOwner[town],5);S.jobBond[n]=0;log_level("%s paid %d silver for %s.", towns[town].name, reward, contract_title(c->type));return 1;
 }
 int society_npc_job(int n,float dt){
  Actor*freed=&g.actors[n];if(S.freed[n]&&!freed->squad){
@@ -596,7 +600,7 @@ void society_tick(float dt){
   else S.suspicion[n]=fmaxf(0,S.suspicion[n]-dt*2);
  }
  S.economyClock+=dt;if(S.economyClock>=60){S.economyClock-=60;
- for(int t=0;t<TOWNS;t++){int it=exports[t];g.stock[t][it]=(int)bound(g.stock[t][it]+4,0,90);int food=g.stock[t][RATION]+g.stock[t][GRAIN];if(g.stock[t][RATION]>0)g.stock[t][RATION]--;else if(g.stock[t][GRAIN]>0)g.stock[t][GRAIN]--;if(g.stock[t][WATER]>0)g.stock[t][WATER]--;g.prosperity[t]=(int)bound(g.prosperity[t]+(food<4?-1:1),10,95);
+ for(int t=0;t<TOWNS;t++){int it=exports[t]==MEDKIT?CLOTH:exports[t];g.stock[t][it]=(int)bound(g.stock[t][it]+1,0,3 + town_design(t)->marketTier);int food=g.stock[t][RATION]+g.stock[t][GRAIN];if(g.stock[t][RATION]>0)g.stock[t][RATION]--;else if(g.stock[t][GRAIN]>0)g.stock[t][GRAIN]--;if(g.stock[t][WATER]>0)g.stock[t][WATER]--;g.prosperity[t]=(int)bound(g.prosperity[t]+(food<4?-1:1),10,95);
   if(g.day!=S.lastEconomyDay){S.crisis[t]=(g.day+t*3+g.seed)%9<2?1+(g.day+t)%2:0;if(S.crisis[t])g.stock[t][imports[t]]=g.stock[t][imports[t]]/2;}
  }S.lastEconomyDay=g.day;}
 }
@@ -606,6 +610,13 @@ int living_local_count(void){int n=0;Actor*a=&g.actors[g.selected];for(int e=0;e
 int living_local_slot(int row){Actor*a=&g.actors[g.selected];for(int e=0;e<EVENTS;e++)if(!g.living.events[e].status&&distance(a->x,a->y,g.living.events[e].x,g.living.events[e].y)<8&&row--==0)return e;return -1;}
 int nearby_actions(void){
  actionCount=0;Actor*a=&g.actors[g.selected];int room=depth_room(a);
+ if (a->carrying >= 0) {
+     for (int n = 0; n < g.actorCount; n++)
+         if (bounty_guard(n, a->carrying))
+             add_action(ACTION_BOUNTY_TURN_IN, 0, n);
+     if (lay_carried_in_bed(a, 0)) add_action(ACTION_LAY_IN_BED, 0, a->carrying);
+     add_action(ACTION_PUT_DOWN, 0, a->carrying);
+ }
  if (wound_needs_dressing(a))
      add_action(ACTION_SELF_AID, 0, g.selected);
  if (depth_needs_repair(a))
@@ -618,13 +629,11 @@ int nearby_actions(void){
   if (!b->squad && wound_needs_dressing(b)) add_action(ACTION_TREAT_OTHER, 0, n);
   if(S.freed[n]&&!b->squad&&!b->dead){add_action(S.freed[n]==1?ACTION_RESCUED_LEAVE:ACTION_RESCUED_FOLLOW,0,n);add_action(ACTION_RESCUED_RECRUIT,0,n);}
   if(b->dead||b->unconscious>0){add_action(ACTION_CONTEXT,0,n);if(a->carrying<0&&!g.depth.actors[n].captive)add_action(ACTION_CARRY,0,n);}
-  else if(!b->squad){if(!hostile(a,b)||b->target<0){add_action(ACTION_CONTEXT,0,n);if(a->sneaking)add_action(ACTION_STEAL,0,n);}add_action(ACTION_ATTACK,0,n);}
+  else if(!b->squad){if(!hostile(a,b)||b->target<0){add_action(ACTION_CONTEXT,0,n);if(a->sneaking)add_action(ACTION_STEAL,0,n);}if(a->autoattack)add_action(ACTION_ATTACK,0,n);}
   else add_action(ACTION_CONTEXT,0,n);
  }
  if(room){
   if(interior_context()!=-2)add_action(ACTION_CONTEXT,5,room-1);
-  if (playing_dead(a) || a->target >= 0 || wound_needs_dressing(a) || a->treatedMask)
-      add_action(ACTION_PLAY_DEAD, 0, g.selected);
   return actionCount;
  }
  for(int n=0;n<g.nodeCount;n++)if(g.nodes[n].remaining&&distance(a->x,a->y,g.nodes[n].x,g.nodes[n].y)<=WORK_REACH){if(g.nodes[n].locked){add_action(ACTION_UNLOCK,1,n);add_action(ACTION_OPEN,1,n);}else add_action(ACTION_CONTEXT,1,n);}
@@ -632,19 +641,17 @@ int nearby_actions(void){
      Building *v = &g.buildings[b];
      if (portable_bedroll(b) < 0)
          continue;
-     if (building_has_interior(v->type) && distance(a->x, a->y, v->x + 1.45f, v->y + .65f) <= DOOR_REACH)
+     if (building_has_interior(v->type) && building_door_distance(b, a->x, a->y) <= DOOR_REACH)
          add_action(ACTION_CONTEXT, 3, b);
      if (distance(a->x, a->y, v->x, v->y) > 1.7f)
          continue;
-     if (v->type >= WELL && v->type <= STORE && v->type != WALL && v->type != WINDMILL)
+     if (v->type >= WELL && v->type <= STORE && v->type != WALL && v->type != WINDMILL && v->type != FORGE)
          add_action(ACTION_CONTEXT, 2, b);
      if (portable_bedroll(b) > 0)
          add_action(ACTION_PACK_BEDROLL, 2, b);
      if (v->type == SLAVE_YARD && !slave_in_camp(a))
          add_action(ACTION_PROPERTY, 2, b);
  }
- if (playing_dead(a) || a->target >= 0 || wound_needs_dressing(a) || a->treatedMask)
-     add_action(ACTION_PLAY_DEAD, 0, g.selected);
  for(int i=0;i<living_local_count();i++)add_action(ACTION_EVENT,6,living_local_slot(i));
  for(int k=0;k<POP_GROUPS;k++)if(g.population.version&&distance(a->x,a->y,g.population.groups[k].x,g.population.groups[k].y)<55){
   if(distance(a->x,a->y,g.population.groups[k].x,g.population.groups[k].y)<8)add_action(ACTION_POPULATION,0,k);
@@ -660,9 +667,18 @@ int nearby_actions(void){
 }
 const NearbyAction *nearby_action(int row){return row>=0&&row<actionCount?&actions[row]:NULL;}
 void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_action(row);if(!x){snprintf(out,size,"Nothing within reach");return;}
+ if (x->type == ACTION_BOUNTY_TURN_IN) {
+     snprintf(out, size, "Turn in %s to the jailkeeper", g.actors[g.selected].carrying >= 0 ?
+              g.actors[g.actors[g.selected].carrying].name : "bounty");
+     return;
+ }
+ if (x->type == ACTION_LAY_IN_BED || x->type == ACTION_PUT_DOWN) {
+     snprintf(out, size, x->type == ACTION_LAY_IN_BED ? "Lay %s in bed" : "Put down %s", g.actors[x->target].name);
+     return;
+ }
  if (x->type == ACTION_SELF_AID || x->type == ACTION_SELF_REPAIR) {
      snprintf(out, size, "%s", x->type == ACTION_SELF_AID
-         ? "Bandage yourself (1 field dressing)" : "Repair yourself (1 spare part)");
+         ? "Bandage yourself" : "Repair yourself (1 spare part)");
      return;
  }
  if (x->type == ACTION_EMERGENCY) {
@@ -670,10 +686,9 @@ void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_
               g.actors[g.selected].gear[1] == RAGS ? "Tear worn rags to stop bleeding" : "Stop bleeding (2 cloth)");
      return;
  }
- if (x->type == ACTION_PACK_BEDROLL || x->type == ACTION_PROPERTY || x->type == ACTION_PLAY_DEAD) {
+ if (x->type == ACTION_PACK_BEDROLL || x->type == ACTION_PROPERTY) {
      snprintf(out, size, "%s", x->type == ACTION_PACK_BEDROLL ? "Pack up bedroll" :
-         x->type == ACTION_PROPERTY ? "Open confiscated belongings" :
-         playing_dead(&g.actors[g.selected]) ? "Get up" : "Play dead");
+         "Open confiscated belongings");
      return;
  }
  if (x->type == ACTION_TREAT_OTHER) {
@@ -690,11 +705,21 @@ void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_
  const char *verb = context_action();
  if (x->type == ACTION_OPEN)
      verb = g.nodes[x->target].owner ? "SEARCH OWNED" : "SEARCH";
- snprintf(out,size,"%s %s",verb,context_name());ui.contextKind=kind;ui.contextIndex=index;
+ if (x->type == ACTION_UNLOCK)
+     snprintf(out, size, "Pick lock (%d%%) / %s", lockpick_chance(&g.actors[g.selected], LOCK_SALVAGE), context_name());
+ else if (x->kind == 2 && g.buildings[x->target].type == BENCH && depth_build_ready(x->target))
+     snprintf(out, size, "Use research bench");
+ else
+     snprintf(out, size, "%s %s", verb, context_name());
+ ui.contextKind=kind;ui.contextIndex=index;
 }
 static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!conscious(a)||depth_room(a)!=x->room)return 0;int n=x->target;
  if (x->type == ACTION_SELF_AID || x->type == ACTION_SELF_REPAIR || x->type == ACTION_EMERGENCY || x->type == ACTION_PLAY_DEAD)
      return n == g.selected;
+ if (x->type == ACTION_BOUNTY_TURN_IN)
+     return bounty_guard(n, a->carrying);
+ if (x->type == ACTION_PUT_DOWN || x->type == ACTION_LAY_IN_BED)
+     return n >= 0 && a->carrying == n && (x->type == ACTION_PUT_DOWN || lay_carried_in_bed(a, 0));
  if(x->type==ACTION_POLITICS)return n>=0&&n<TOWNS&&distance(a->x,a->y,towns[n].x,towns[n].y)<=24;
  if(x->type==ACTION_POPULATION)return population_action_valid(n,x->kind);
  if(x->type==ACTION_EVENT)return n>=0&&n<EVENTS&&!g.living.events[n].status&&distance(a->x,a->y,g.living.events[n].x,g.living.events[n].y)<=8;
@@ -702,7 +727,9 @@ static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!
  if(x->kind==1)return n>=0&&n<g.nodeCount&&g.nodes[n].remaining&&distance(a->x,a->y,g.nodes[n].x,g.nodes[n].y)<=WORK_REACH;
  if(x->kind==4)return 0;
  if(x->kind==5)return g.interiorBuilding==n+1;
- return n>=0&&n<g.buildingCount&&distance(a->x,a->y,g.buildings[n].x+(x->kind==3?1.45f:0),g.buildings[n].y+(x->kind==3?.65f:0))<=(x->kind==3?DOOR_REACH:1.7f);
+  if (n < 0 || n >= g.buildingCount) return 0;
+ if (x->kind == 3) return building_door_distance(n, a->x, a->y) <= DOOR_REACH;
+ return distance(a->x, a->y, g.buildings[n].x, g.buildings[n].y) <= 1.7f;
 }
 static const char *action_reason(const NearbyAction *x, int queueing) {
     Actor *a = &g.actors[g.selected];
@@ -712,7 +739,9 @@ static const char *action_reason(const NearbyAction *x, int queueing) {
     if (!action_valid(x))
         return "Out of reach";
     if (x->type == ACTION_PLAY_DEAD)
-        return a->prisonTime > 0 || g.depth.actors[g.selected].captive ? "Restrained" : NULL;
+        return "Action unavailable";
+    if (x->type == ACTION_ATTACK && !a->autoattack)
+        return "Switch to Fight stance";
     if (x->type == ACTION_PACK_BEDROLL)
         return portable_bedroll(n) > 0 ? NULL : "Already packed";
     if (x->type == ACTION_PROPERTY)
@@ -771,12 +800,13 @@ static void perform_action(const NearbyAction *x) {
  int n = x->target;
  const char *reason = action_reason(x, 0);
  if (reason) { log_msg("%s.", reason); return; }
- if (x->type != ACTION_SELF_AID && x->type != ACTION_SELF_REPAIR && x->type != ACTION_EMERGENCY &&
-     x->type != ACTION_PLAY_DEAD)
+ if (x->type != ACTION_SELF_AID && x->type != ACTION_SELF_REPAIR && x->type != ACTION_EMERGENCY)
      g.field.playingDead[g.selected] = 0;
+ if (x->type == ACTION_BOUNTY_TURN_IN) { bounty_turn_in(n); return; }
+ if (x->type == ACTION_LAY_IN_BED) { lay_carried_in_bed(a, 1); return; }
+ if (x->type == ACTION_PUT_DOWN) { put_down(a); return; }
  if (x->type == ACTION_SELF_AID) { heal_actor(n, n); return; }
  if (x->type == ACTION_TREAT_OTHER) { heal_actor(g.selected, n); return; }
- if (x->type == ACTION_PLAY_DEAD) { play_dead(a); return; }
  if (x->type == ACTION_PACK_BEDROLL) { pack_bedroll(n); return; }
  if (x->type == ACTION_PROPERTY) {
      ui.chestKind = CHEST_PROPERTY;
@@ -808,9 +838,9 @@ void nearby_action_choose(int row){const NearbyAction*p=nearby_action(row);if(!p
 void society_queue_tick(void){int n=g.selected;Actor*a=&g.actors[n];if(ui.paused||ui.screen!=SCREEN_WORLD||!S.queueCount[n]||a->taskKind||a->attackPhase||society_rescue_busy(n))return;NearbyAction x=S.queue[n][0];for(int i=1;i<S.queueCount[n];i++)S.queue[n][i-1]=S.queue[n][i];S.queueCount[n]--;perform_action(&x);}
 int society_validate(const Game*v){const Society*s=&v->society;if(!s->version)return 1;if(s->version!=1||!isfinite(s->economyClock)||s->economyClock<0||s->prisonSeeded<0||s->prisonSeeded>1)return 0;
  for(int t=0;t<TOWNS;t++)if(s->crisis[t]<0||s->crisis[t]>2)return 0;
- for(int n=0;n<MAX_ACTORS;n++){if(s->rescueHelper[n]<0||s->rescueHelper[n]>v->actorCount||s->freed[n]<0||s->freed[n]>3||s->captorFaction[n]<0||s->captorFaction[n]>=FACTIONS)return 0;for(int c=0;c<WEAPON_XP_SLOTS;c++)if(!isfinite(s->weaponXP[n][c])||s->weaponXP[n][c]<0||s->weaponXP[n][c]>117612)return 0;if(s->queueCount[n]<0||s->queueCount[n]>ACTION_QUEUE||s->cannibal[n]<0||s->cannibal[n]>2||!isfinite(s->eating[n])||!isfinite(s->suspicion[n])||!isfinite(s->gateMessage[n]))return 0;
+ for(int n=0;n<MAX_ACTORS;n++){if(s->rescueHelper[n]<0||s->rescueHelper[n]>v->actorCount||s->freed[n]<0||s->freed[n]>3||s->captorFaction[n]<0||s->captorFaction[n]>=FACTIONS)return 0;for(int c=0;c<WEAPON_XP_SLOTS;c++)if(!isfinite(s->weaponXP[n][c])||s->weaponXP[n][c]<0||s->weaponXP[n][c]>SKILL_XP_CAP)return 0;if(s->queueCount[n]<0||s->queueCount[n]>ACTION_QUEUE||s->cannibal[n]<0||s->cannibal[n]>2||!isfinite(s->eating[n])||!isfinite(s->suspicion[n])||!isfinite(s->gateMessage[n]))return 0;
   for(int f=0;f<FACTIONS;f++)if(s->wanted[n][f]<0||s->wanted[n][f]>100000||!isfinite(s->recognized[n][f]))return 0;
-  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_TREAT_OTHER||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
+  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_BOUNTY_TURN_IN||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
    if(a->type==ACTION_PACK_BEDROLL||a->type==ACTION_PROPERTY){if(a->kind!=2||a->target>=v->buildingCount)return 0;continue;}
    if(a->type==ACTION_TREAT_OTHER){if(a->kind!=0||a->target>=v->actorCount)return 0;continue;}
    if(a->type>=ACTION_EMERGENCY){if(a->target!=n||a->target>=v->actorCount||a->kind!=0)return 0;continue;}

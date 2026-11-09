@@ -1,10 +1,10 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.17.7 — Dust soundtrack
+## 0.18.0 — Frontier towns and survival
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
-Dust.mp3 loops across the title screen, gameplay and menus. The full soundtrack is built into the EBOOT.
+Dust.mp3 loops across the title screen, gameplay and menus. The full soundtrack is built into the EBOOT and decoded ahead of playback.
 
 [Three Banners design](docs/FRONTIER_WAR.md) · [Field guide](docs/FIELD_GUIDE.md)
 
@@ -12,7 +12,7 @@ Town work appears in small batches. Ask around for the person hiring, and use th
 
 Fight stance automatically answers nearby attacks and repeats at the weapon's cooldown. Passive stance stows the weapon. Leg injuries can cause a limp or a crawl. Bed rest places the survivor on the mattress, and serious wounds take longer to dress and heal.
 
-Nineteen settlements include Brass Junction, Vermilion Keep and Cinder Abbey. The Compact, Shogunate and Ash Monastery send armies against one another. Captured cities can have guarded labor yards, and nearby residents pass on news of actual raids and victories.
+All nineteen settlements have their own street plans, amenities and interiors. Brass Junction has an armorer and a six-bed inn. Vermilion Keep has a stockade, while Copper Cross uses watch cages. Dustward Clan lodges share beds and training access for members. The Compact, Shogunate and Ash Monastery send armies against one another. Captured cities can have guarded labor yards, and nearby residents pass on news of actual raids and victories.
 
 ![Nearby roles and military equipment](evidence/v150-psp-army.png)
 
@@ -20,7 +20,7 @@ There is no map or group auto-travel. Cross on the map places a pin on both maps
 
 Starving bandits carry poor weapons and wear incomplete clothing. Soldiers wear coordinated armor and move in three-wide formations. Elite duelists wear complete superior equipment. Nearby labels show a broad role in faction colors, with a red **!** for hostility. Enemy combat bars show knockout reserve from head, chest and blood. Nearby characters do not expose skill values or encounter tiers. Start > World > Factions shows the color key, reputation and wanted standing.
 
-New expeditions start in one of five settlements with different equipment, companions, and difficulty. The atlas and local map share the walking view's orientation. Nearby Actions lists self-treatment and shows why unavailable actions are disabled. Wounds recover after treatment. A bed speeds up recovery, and portable bedrolls can be deployed and packed away. Toughness determines the threshold for a recovery coma. Jail staff treat prisoners, and rare travelers can help injured strangers.
+New expeditions start in one of five settlements with different equipment, companions, and difficulty. The atlas and local map share the walking view's orientation. Nearby Actions lists self-treatment and shows why unavailable actions are disabled. First aid stops bleeding before dressing individual wounds. Food and dressings can be used in portions, and wounds recover after treatment. A bed speeds up recovery, and portable bedrolls can be deployed and packed away. Toughness determines the threshold for a recovery coma. Jail staff treat prisoners, and rare travelers can help injured strangers.
 
 The thin control strip shows common menu shortcuts. Squad management separates direct assignments from job priorities. Follow tracks the controlled member, and the active character's assigned work waits for five idle seconds in Passive stance. The scrolling news bar keeps urgent injury alerts and gives the last message more time on screen.
 
@@ -45,7 +45,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dustbound-0.17.7-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v23 reads earlier expeditions and remembers each faction’s charges alongside custody and confiscated belongings. Existing equipment, training and town control carry over.
+Extract `Dustbound-0.18.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v24 reads earlier expeditions and adds partially used supplies, known sites, clan membership and completed contracts. Existing equipment, training and town control carry over.
 
 ## Controls
 

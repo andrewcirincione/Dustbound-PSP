@@ -418,9 +418,9 @@ int expansion_input(float dt, Input in) {
         return 1;
     }
     if (ui.screen == SCREEN_TRADE && (p & (KEY_L | KEY_R))) {
-        if (ui.sell)
+        if (ui.sell || (ui.tradeSmith && ui.tradeSmith != TRADE_SMITH))
             return 1;
-        if (ui.tradeSmith) {
+        if (ui.tradeSmith == TRADE_SMITH) {
             static const int filters[] = {0, 2, 3};
             int index = ui.shopFilter == 2 ? 1 : ui.shopFilter == 3 ? 2 : 0;
             ui.shopFilter = filters[wrapi(index + (p & KEY_L ? -1 : 1), 3)];
@@ -570,15 +570,17 @@ int expansion_input(float dt, Input in) {
             open_view(SCREEN_WORLD);
             return 1;
         }
+        if (ui.screen == SCREEN_JOURNAL && (p & (KEY_LEFT | KEY_RIGHT | KEY_L | KEY_R))) {
+            ui.journalTab ^= 1;
+            ui.selection = 0;
+        }
         int n = ui.screen == SCREEN_JOURNAL ? journal_count() : FACTIONS;
         if (!n) return 1;
         if (p & KEY_UP)
             ui.selection = wrapi(ui.selection - 1, n);
         if (p & KEY_DOWN)
             ui.selection = wrapi(ui.selection + 1, n);
-        if (ui.screen == SCREEN_JOURNAL && (p & KEY_CROSS))
-            complete_contract(journal_slot(ui.selection));
-        if (ui.screen == SCREEN_JOURNAL && (p & KEY_SQUARE)) {
+        if (ui.screen == SCREEN_JOURNAL && !ui.journalTab && (p & KEY_SQUARE)) {
             float x, y;
             int town = contract_location(journal_slot(ui.selection), &x, &y);
             if (town >= 0) {
@@ -727,10 +729,16 @@ int expansion_input(float dt, Input in) {
                 if (choice == 2 || (choice == 0 && jail_bail(n)) || (choice == 1 && jail_pick_start(n)))
                     open_view(SCREEN_WORLD);
             } else if (ui.dialogPage == DIALOG_WORK) {
-                int kind = contract_offer(town, choice);
-                if (kind >= 0) {
+                int turnIn = work_turn_in(n, choice), offset = 0;
+                while (work_turn_in(n, offset) >= 0)
+                    offset++;
+                int kind = n == work_contact(town) && choice >= offset ? contract_offer(town, choice - offset) : -1;
+                if (turnIn >= 0 && depth_distance(a, b) <= TALK_REACH && conscious(b)) {
+                    if (complete_contract(turnIn))
+                        open_view(SCREEN_WORLD);
+                } else if (kind >= 0 && depth_distance(a, b) <= TALK_REACH && conscious(b)) {
                     if (accept_contract(town, kind))
-                        ui.selection = 0;
+                        open_view(SCREEN_WORLD);
                 } else {
                     ui.dialogPage = 0;
                     ui.selection = 0;
@@ -738,7 +746,7 @@ int expansion_input(float dt, Input in) {
             } else
                 switch (dialogue_action(n, choice)) {
                 case 16:ui.limbReturn=SCREEN_DIALOG;limb_open(SCREEN_SURGERY);break;
-                case 17:if(town>=0&&depth_trade_open(town)){ui.tradeTown=town;ui.shopFilter=5;ui.sell=0;open_view(SCREEN_TRADE);}break;
+                case 17:if(town>=0&&depth_trade_open(town)){ui.tradeTown=town;ui.tradeSmith=TRADE_APOTHECARY;ui.shopFilter=0;ui.sell=0;open_view(SCREEN_TRADE);}break;
                 case 14:ui.dialogPage=4;ui.selection=0;break;
                 case 15:open_view(SCREEN_FACTIONS);break;
                 case 0:
@@ -750,7 +758,8 @@ int expansion_input(float dt, Input in) {
                         open_view(SCREEN_TRADE);
                     } else if (town >= 0 && depth_trade_open(town)) {
                         ui.tradeTown = town;
-                        ui.tradeSmith = npc_role(b) == ROLE_SMITH;
+                        ui.tradeSmith = npc_role(b) == ROLE_SMITH ? TRADE_SMITH :
+                                        npc_role(b) == ROLE_INNKEEPER ? TRADE_INN : TRADE_GENERAL;
                         ui.sell = 0;
                         ui.shopFilter = 0;
                         open_view(SCREEN_TRADE);
@@ -769,6 +778,8 @@ int expansion_input(float dt, Input in) {
                     break;
                 case 4:
                     ui.dialogPage = watch_town(b) >= 0 && wanted_amount(a, b->faction) ? DIALOG_BOUNTY : 5;
+                    if (ui.dialogPage == 5 && town == 8 && b->faction == g.townOwner[8])
+                        g.frontier.tollKnown = 1;
                     ui.selection = 0;
                     break;
                 case 5:
@@ -785,7 +796,7 @@ int expansion_input(float dt, Input in) {
                     }
                     break;
                 case 7:
-                    open_view(SCREEN_FORGE);
+                    log_msg("Use the forge inside the smithy.");
                     break;
                 case 9:
                     merc_hire(n, 0);

@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.17.7"
+#define VERSION "0.18.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -28,7 +28,18 @@
 #define TOWN_STOCK_ITEMS (LIMB_ITEMS+10)
 #define BEDROLL_ITEM TOWN_STOCK_ITEMS
 #define SLAVE_GARB (BEDROLL_ITEM+1)
-#define ITEMS (SLAVE_GARB+1)
+#define V23_ITEMS (SLAVE_GARB+1)
+#define JERKY V23_ITEMS
+#define OATCAKE (JERKY+1)
+#define STEW (OATCAKE+1)
+#define HERBAL_TEA (STEW+1)
+#define PORTION_ITEMS (HERBAL_TEA+1)
+#define PORTION_TYPES 6
+#define ITEMS (PORTION_ITEMS+PORTION_TYPES*99)
+#define LODGES 3
+#define COMPLETED_CONTRACTS 32
+#define SKILL_CAP 150
+#define SKILL_XP_CAP (12 * (SKILL_CAP - 1) * (SKILL_CAP - 1))
 #define SLAVE_CAMPS 3
 #define SEIZED_STACKS (SQUAD * (PACK + GEARS + 1))
 #define SPECIES 5
@@ -74,7 +85,7 @@ enum {
     WOUND_CLINIC = 1u << (WOUND_REPAIR_SHIFT + LIMBS), WOUND_TONIC = WOUND_CLINIC << 1,
     WOUND_FLAGS = (WOUND_TONIC << 1) - 1
 };
-enum { TASK_CELL_LOCK = 5, TASK_TREAT, TASK_JAIL_CARE };
+enum { TASK_CELL_LOCK = 5, TASK_TREAT, TASK_JAIL_CARE, TASK_TRAIN };
 enum { REST_DURATION = 300 };
 enum { TREAT_DRESS, TREAT_PRESSURE, TREAT_REPAIR, TREAT_CLINIC };
 enum {
@@ -290,7 +301,7 @@ typedef struct {
     TownLife townLife; /* v21 extension */
     struct {
         int version;
-        int stock[TOWNS][ITEMS - TOWN_STOCK_ITEMS];
+        int stock[TOWNS][V23_ITEMS - TOWN_STOCK_ITEMS];
         unsigned short tradeCredit[FACTIONS];
         signed char rolls[MAX_BUILDINGS]; /* -1 packed, 0 fixed, otherwise 1 + stolen owner */
         int jail[TOWNS], camp[SLAVE_CAMPS]; /* building index plus one */
@@ -301,20 +312,56 @@ typedef struct {
         unsigned char seizedOwner[SLAVE_CAMPS][SEIZED_STACKS];
     } field; /* v22 extension */
     unsigned short charges[MAX_ACTORS][FACTIONS]; /* v23 extension */
+    struct {
+        int version, lodge[LODGES], clanMember;
+        unsigned char variant[MAX_BUILDINGS];
+        unsigned short giver[CONTRACTS]; /* actor index plus one */
+        unsigned short completedNext, completedCount;
+        Contract completed[COMPLETED_CONTRACTS];
+        float taskTotal[MAX_ACTORS];
+        unsigned char treatmentDose[MAX_ACTORS];
+        signed char treatmentPhase[MAX_ACTORS]; /* 0 bleeding, 1..6 limbs, -1 other */
+        int stock[TOWNS][ITEMS - V23_ITEMS];
+        unsigned char venue[TOWNS][ITEMS];
+        unsigned char knownSites[LANDMARKS], tollKnown, knownLodges[LODGES];
+    } frontier; /* v24 extension */
 } Game;
 enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
-enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE };
-enum { ROOM_PROPS = 10 };
-#define DOOR_REACH 2.75f
+enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN };
+enum { ROOM_PROPS = 18 };
+enum { ROOM_HEARTH_ART = 25, ROOM_SHRINE_ART, ROOM_ARMOR_ART, ROOM_BALES_ART, ROOM_STOVE_ART };
+#define DOOR_REACH 1.65f
+enum { BUILD_NORMAL, BUILD_ARMORER, BUILD_LODGE };
+enum { TRADE_GENERAL, TRADE_SMITH, TRADE_INN, TRADE_ARMORER, TRADE_APOTHECARY };
+typedef struct {
+    const char *inn, *market;
+    unsigned char beds, smith, custody, marketTier, plan, turn;
+} TownDesign;
+const TownDesign *town_design(int town);
+int building_town(int id);
+int starter_country(float x, float y);
+unsigned bounty_payers(int target);
+int bounty_guard(int guard, int target);
+int bounty_turn_in(int guard);
+void bounty_details(int target, char *out, int size);
+const char *building_name(int id);
+void civil_clear_position(float *x, float *y);
+void building_footprint(int id, float *w, float *d, int *height);
+void building_door(int id, float *x, float *y);
+float building_door_distance(int id, float x, float y);
 typedef struct {
     float x, y, w, d;
     int art, action;
 } InteriorProp;
 int building_has_interior(int type);
+int lodge_joined(int building);
+void training_tick(Actor *a, float dt);
 int interior_enter(int building);
+void actor_enter_room(int actor, int building);
 void interior_leave(void);
 int actor_inside(const Actor *a);
 int interior_props(int building, InteriorProp *props);
+int interior_walkable(int room, float x, float y);
 int interior_context(void);
 const char *interior_prompt(void);
 void interior_interact(void);
@@ -327,6 +374,15 @@ int deploy_bedroll(Actor *a, int slot);
 int portable_bedroll(int building);
 void pack_bedroll(int building);
 void field_init(void);
+int portion_base(int item);
+int portion_percent(int item);
+int portion_item(int base, int percent);
+int food_capacity(int item);
+void portion_content(void);
+float treatment_progress(const Actor *a);
+int treatment_patient(const Actor *a);
+int lay_carried_in_bed(Actor *carrier, int place);
+void frontier_world_init(void);
 int field_validate(const Game *save);
 int *market_stock(int town, int item);
 int home_occupant(int building);
@@ -438,6 +494,8 @@ int work_contact(int town);
 const char *work_hint(int town, int speaker);
 int contract_destination(int town, int faction);
 int society_job_available(int town, int kind);
+int society_bounty_reward(int town);
+int town_export(int town);
 void town_life_init(void);
 float settlement_time(void);
 void town_theft(int town);
@@ -495,7 +553,6 @@ void jail_exit(Actor *a);
 void custody_tick(float dt);
 int conscious(const Actor *a);
 int playing_dead(const Actor *a);
-void play_dead(Actor *a);
 void faction_goodwill(int faction, int amount);
 void trade_goodwill(int faction, int price);
 int npc_sees(const Actor *observer, const Actor *target, float reach);
@@ -506,6 +563,8 @@ int market_quantity(int town, int item);
 int slave_pick_start(int n);
 int slave_camp_at(int building);
 int slave_in_camp(const Actor *a);
+enum { LOCK_SALVAGE, LOCK_CELL, LOCK_SHACKLES };
+int lockpick_chance(const Actor *a, int lock);
 float jail_pick_duration(const Actor *a, int tools);
 void witnessed_theft(Actor *a, int owner, int range, int penalty);
 int loot_take(int slot, int all);
@@ -579,7 +638,7 @@ extern const uint32_t factionColors[FACTIONS];
 void audio_event(int kind);
 void audio_init(const char *eboot);
 void audio_shutdown(void);
-void audio_debug(unsigned stats[3]);
+void audio_debug(unsigned stats[4]);
 void content_init(void);
 int gear_id(int family, int material, int quality);
 int gear_family(int item);
@@ -601,6 +660,11 @@ int accept_contract(int town, int kind);
 int contract_offer(int town, int row);
 int journal_count(void);
 int journal_slot(int row);
+const Contract *journal_contract(int slot);
+void remember_contract(const Contract *c);
+int work_turn_in(int actor, int row);
+int contract_reward(int town, int kind);
+int contract_recipient(int slot);
 const char *contract_title(int kind);
 int contract_turn_in(int slot);
 int contract_item_count(int item, int town);

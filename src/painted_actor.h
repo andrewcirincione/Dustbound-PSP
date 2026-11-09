@@ -697,16 +697,8 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         if(limb_arms(a)&&weapon)weapon_sprite(weapon,handx,handy,sc,face>0?-.18f:3.32f,face,li);
         return;
     }
-    if (stowed) {
-        int style = weapon_style(stowed);
-        if (style == WS_KATANA || style == WS_SABRE || style == WS_RAPIER || style == WS_KNIFE) {
-            int reach = style == WS_KNIFE ? 11 : 21;
-            part(72, RX(-face * 3, -14), RY(-14), RX(-face * reach, -17), RY(-17),
-                 2.6f * sc, 0x2b2420, li, 0, 0, 0, 1);
-            painted_line(RX(-face * 3, -14), RY(-14), RX(face * 2, -13), RY(-13), shade(0x80705a, li));
-        } else
-            weapon_sprite(stowed, RX(-face * 7, -20), RY(-20), sc, face > 0 ? -2.2f : -.94f, face, li * .74f);
-    }
+    if (stowed)
+        weapon_sprite(stowed, RX(-face * 6, -10), RY(-10), sc, -1.5707963f, face, li * .74f);
     if (back) {
         int bid = bf >= 76 && bf <= 83 ? 88 + bf - 76 : 88;
         BackAttachment mount = back_attachment(back);
@@ -773,9 +765,9 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     for (int i = 0; i < 2; i++) {
         if (relaxed || (weapon && !twoHands && i != primary)) {
             float swing = -feet[i].stride * walk * (1 - .65f * blend);
-            float out = (i ? face : -face) * (weapon ? 1.9f : 1.2f);
-            wrists[i][0] = shoulders[i][0] + (out + swing * walkX * 2.5f) * sc;
-            wrists[i][1] = shoulders[i][1] + (12.9f - blend * 1.2f + swing * walkY * .8f) * sc;
+            float out = (i ? face : -face) * (weapon ? .95f : 1.2f);
+            wrists[i][0] = shoulders[i][0] + (out + swing * walkX * 1.8f) * sc;
+            wrists[i][1] = shoulders[i][1] + (13.1f + swing * walkY * .7f) * sc;
         } else if (!weapon) {
             float hx = i == primary ? rig.handX : rig.rearX;
             float hy = i == primary ? rig.handY : rig.rearY;
@@ -822,7 +814,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     if (weapon && arms) {
         weapon_sprite(weapon, grip.x, grip.y, sc, angle, face, li);
         for (int i = 0; i < 2; i++) {
-            if (missing & (1 << (LARM + i)))
+            if ((missing & (1 << (LARM + i))) || (!twoHands && i != primary))
                 continue;
             float hx = wrists[i][0], hy = wrists[i][1];
             int grade = limb_item_grade(limb_installed(a, LARM + i));

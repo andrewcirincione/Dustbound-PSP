@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.17.7
+# Dustbound field guide — 0.18.0
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -30,13 +30,13 @@ Armor protects specific body locations. Piercing weapons ignore some armor; serr
 
 ## 5. Wounds & Rescue
 
-Head or chest injuries and blood loss can knock a survivor out. Below your Toughness threshold, a recovery coma lasts until your vitals recover. A waking survivor stays down and can treat their own injuries. Move to get up. Severe head trauma or bleeding out can kill.
+Head or chest injuries and blood loss can knock a survivor out. Below your Toughness threshold, a recovery coma lasts until your vitals recover. Dressed vital wounds recover a little faster in a coma. A waking survivor stays down and can treat their own injuries. Move to get up. Severe head trauma or bleeding out can kill.
 
-Dress an injured body part before it can heal. Clotting stops blood loss. It still takes a dressing to start healing. Severe wounds take longer to bandage and recover. Beds and clinic care speed up recovery. Health shows healthy tissue in teal, untreated damage in red and dressed damage in gold. Nearby Actions offers first aid, emergency dressings and Play dead. You can treat yourself while playing dead. An ally can treat or carry someone who is down. A rare passerby may help or carry you to a safe bed. Lost limbs never regrow. A bad leg injury makes you limp; a missing leg or two disabled legs makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Prosthetics are uncommon on ordinary travelers; high-grade parts are rarer. Actual fitted limbs on fallen wanderers can be looted. Death is permanent; dismiss the body from Squad to free its slot.
+Dress an injured body part before it can heal. Clotting stops blood loss. It still takes a dressing to start healing. Severe wounds take longer to bandage and recover. Beds and clinic care speed up recovery. Health shows healthy tissue in teal, untreated damage in red and dressed damage in gold. Nearby Actions offers first aid and emergency dressings. First aid stops bleeding before treating each wound. Check the remaining charge on a field dressing. An ally can treat someone who is down or carry them to an unoccupied bed. A rare passerby may help or carry you to a safe bed. Lost limbs never regrow. A bad leg injury makes you limp; a missing leg or two disabled legs makes you crawl. One missing arm penalizes two-handed weapons. Health: R opens individual limb slots. Fit replacements for 2 machine parts. Surgeon Venn in Dusk Haven removes limbs for 400 silver. Copper Cross sells reinforced limbs; Iron Gate precision limbs; Black Mesa relic limbs. Prosthetics are uncommon on ordinary travelers; high-grade parts are rarer. Actual fitted limbs on fallen wanderers can be looted. Death is permanent; dismiss the body from Squad to free its slot.
 
 ## 6. Food & Sleep
 
-Rations are eaten below forty hunger: first your pack, then a nearby companion or owned depot within three meters. Water supports farms; tonics restore blood and treat exposure. Starvation damages the chest.
+Food is eaten below forty hunger. You eat what you need and save the remainder. Supplies come from your pack, then a nearby companion or owned depot within three meters. Water supports farms; tonics restore blood and treat exposure. Starvation damages the chest.
 
 An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and helps dressed wounds heal. Severe hunger slows recovery. Move to wake. The sun completes a day in thirty minutes of simulation; menus and tactical pause stop time.
 
@@ -54,7 +54,7 @@ Regional exports are cheap; imports and shortages cost more. Green percentages m
 
 ## 9. Forging Gear
 
-Walk to a forge or ask a smith to use the smithy. Choose slot, design, material and quality with ![horizontal](../assets/ui/horizontal.svg). The preview updates before you spend anything.
+Enter a smithy and walk to the forge. Choose slot, design, material and quality with ![horizontal](../assets/ui/horizontal.svg). The preview updates before you spend anything.
 
 ![cross](../assets/ui/cross.svg) on Forge makes the selected design. Metal, cloth and timber costs scale with material and grade; relic gear also needs a relic. Higher grades require smithing experience and research. Missing materials or a full pack cancel the transaction without charging you.
 
@@ -62,7 +62,7 @@ Walk to a forge or ask a smith to use the smithy. Choose slot, design, material 
 
 Crafting recipes make supplies, refined metal, ammunition and prosthetics. A forge smelts ore and shapes weapons. A campfire cooks grain or meat with water. A research bench makes dressings.
 
-Stand close to the station. Each ingredient shows HAVE/NEED: 6/3 means you own six and need three. Green means enough, including exact amounts; red means short. Research, station reach and fuel are also shown. ![square](../assets/ui/square.svg) switches recipes/equipment. Research consumes relics and silver in three tiers. Skills rise when crafting succeeds. A shared depot supplies worker jobs, but hand crafting uses the selected survivor's pack.
+Stand close to the station. Enter a smithy before using its forge. Each ingredient shows HAVE/NEED: 6/3 means you own six and need three. Green means enough, including exact amounts; red means short. Research, station reach and fuel are also shown. ![square](../assets/ui/square.svg) switches recipes/equipment. Research consumes relics and silver in three tiers. Skills rise when crafting succeeds. A shared depot supplies worker jobs, but hand crafting uses the selected survivor's pack.
 
 ## 11. Your Outpost
 
@@ -90,9 +90,9 @@ Contracts raise standing; theft lowers it. The Factions ledger shows each factio
 
 ## 15. Contracts
 
-Ask merchants or marshals for work. Freight needs a refundable deposit and four real goods; deliver through Journal at the destination. Escort caravans or patrol beside a guard for 12 silver per 30 seconds of nearby movement, plus a completion bonus. Stay within 8m; the employer warns you when wages pause. Named bounties pay more alive: subdue, carry and claim.
+Ask merchants or marshals for work. Freight needs a refundable deposit and four real goods. Bring the cargo to the receiving contact. Escort caravans or patrol beside a guard for 12 silver per 30 seconds of nearby movement, plus a completion bonus. Stay within 8m; the employer warns you when wages pause. A wanted target has a silver mark beside their name. Their loot screen lists the paying factions. Carry them to one of those factions' jailkeepers for payment. A live target pays twice as much.
 
-Journal shows your current objective and where to claim pay. Incidents renew naturally; nearby actions reveal them only when encountered. Armies can change town control. Strong leaders carry signature loot.
+Journal shows your objective, payment and contact. Completed contracts have their own tab. Incidents renew naturally; nearby actions reveal them only when encountered. Armies can change town control. Strong leaders carry signature loot.
 
 ## 16. Saves
 
@@ -116,7 +116,7 @@ Slavers carry fallen survivors to a work camp. Shackled prisoners work in issued
 
 Approach a house, inn, shop, tower or workshop door and press ![cross](../assets/ui/cross.svg) to enter. Walk around the room with the analog stick. Furniture blocks movement; use the aisles. ![cross](../assets/ui/cross.svg) near the door returns outside.
 
-Counters open local trade and smithies sell weapons and armor. Inns offer multiple beds for 25 silver each. Owned beds are free. Use a research bench directly from outside. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other groups and hired guards remain outside.
+Counters open local trade and smithies sell weapons and armor. Inns offer beds for 25 silver each. Owned beds are free. Join the Dustward Clan for 280 silver to use beds and training dummies at any of its lodges. Dummies train your equipped weapon skill or Martial Arts up to level 20. Use a research bench directly from outside. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other groups and hired guards remain outside.
 
 Save games preserve the building and indoor position. Switching squad members leaves the room. Interiors shelter you from weather; occupants who distrust you may demand you leave and attack if you stay.
 
@@ -130,7 +130,7 @@ FIGHT reduces melee attack/defence: travel -2, medicine 0, ore -7, bedroll -4. B
 
 ## 21. Finding Work
 
-Work is posted intermittently. Ask a merchant, marshal, innkeeper or smith, or ask locals what they have heard. If someone is hiring, the local contact will name the job. A town can have zero, one or two postings. After accepting one, allow time for new work. The Journal shows the current objective and where to claim payment.
+Work is posted intermittently. Ask a merchant, marshal, innkeeper or smith, or ask locals what they have heard. If someone is hiring, the local contact will name the job. A town can have zero, one or two postings. After accepting one, allow time for new work. The Journal lists the objective, payout and the person who pays.
 
 ## 22. Orders & Groups
 
@@ -140,7 +140,7 @@ Assign each survivor to one of three groups and choose its leader. A pin marks t
 
 ## 23. Camp Work & Fuel
 
-The wilderness has persistent camps, patrols, refugees, raiders, beasts, prisoners and armies. Groups travel, rest, gather and clash even far away. Camp beds are free when unoccupied. Campfires cook 2 meat into 1 ration. Road traders and some smugglers carry their own stock. Search a chest to see its contents before taking anything.
+The wilderness has persistent camps, patrols, refugees, raiders, beasts, prisoners and armies. Groups travel, rest, gather and clash even far away. Camp beds are free when unoccupied. Ore seams and cuttable timber have distinct markings and sit outside settlements. Campfires cook 2 meat into 1 ration. Road traders and some smugglers carry their own stock. Search a chest to see its contents before taking anything.
 
 Highlight a Bedroll in the pack and press ![cross](../assets/ui/cross.svg) to lay it out. Use Nearby Actions to rest or pack it up. Construction consumes materials when a foundation is placed. Stay beside it to build; moving cancels work. Resume from the nearby action or Camp ledger. Unfinished stations and beds cannot work.
 

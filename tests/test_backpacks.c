@@ -1,4 +1,4 @@
-#include "game.h"
+#include "frontier_fixture.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -6,20 +6,21 @@
 static void near(float a, float b) { assert(fabsf(a - b) < .001f); }
 int main(void) {
     game_new(73819, 0);
-    const int packs[] = {76, 78, 79, 82};
+    unsigned stockedFamilies = 0;
     for (int t = 0; t < TOWNS; t++) {
         ui.tradeTown = t;
         ui.shopFilter = 4;
-        for (int k = 0; k < 4; k++)
-            assert(g.stock[t][gear_id(packs[k], 0, 0)] == 2);
+        assert(shop_count() <= 1);
         for (int i = 0; i < shop_count(); i++) {
             int item = shop_item(i);
-            assert(item && itemDefs[item].slot == 5);
+            assert(item && itemDefs[item].slot == 5 && market_quantity(t, item) == 1);
+            stockedFamilies |= 1u << (gear_family(item) - 76);
             for (int j = 0; j < i; j++)
                 assert(shop_item(j) != item);
         }
         assert(shop_item(shop_count()) == NONE);
     }
+    assert(__builtin_popcount(stockedFamilies) >= 4);
     Actor *a = &g.actors[0];
     Actor original = *a;
     int swaps = 0;

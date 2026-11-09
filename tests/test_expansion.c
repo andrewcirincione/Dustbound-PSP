@@ -1,4 +1,4 @@
-#include "game.h"
+#include "frontier_fixture.h"
 #include "combat_pose.h"
 #include "legacy.h"
 #include <math.h>
@@ -73,8 +73,11 @@ int main(void) {
     CHECK(ui.screen == SCREEN_FORGE, "guide returns to originating screen");
     fresh();
     a = &g.actors[0];
-    a->x = 34;
-    a->y = 32;
+    int forge = 0;
+    while (g.buildings[forge].type != FORGE || building_town(forge) != 0) forge++;
+    fixture_door(a, forge);
+    CHECK(interior_enter(forge), "enter the town smithy");
+    fixture_service(ROOM_FORGE);
     g.tech = 3;
     a->xp[SMITHING] = 12 * 40 * 40;
     inventory_add(a, IRONBAR, 80);
@@ -92,6 +95,7 @@ int main(void) {
     g.tech = 0;
     CHECK(!forge_equipment(piece) && !memcmp(a, &snapshot, sizeof(*a)), "locked forging is atomic");
     g.tech = 3;
+    interior_leave();
     a->x = 42;
     a->y = 44;
     int before = g.buildingCount;
@@ -167,14 +171,19 @@ int main(void) {
     int treatment = doctor_heal(0);
     CHECK(treatment && a->health[CHEST] == 30 && g.money == oldmoney,
           "doctor begins care before healing or charging");
-    step(6);
+    step(8);
     CHECK(a->health[CHEST] > 30 && a->health[CHEST] < 45 && a->bleed == 0 && g.money == oldmoney - 80,
           "doctor treats wounds over time for the stated fee");
     a->health[LARM] = 40;
     dress_wounds(a);
     a->fatigue = 80;
-    for (int j=0;j<g.buildingCount;j++) if (g.buildings[j].type==BED) { a->x=g.buildings[j].x; a->y=g.buildings[j].y; break; }
-    CHECK(start_sleep(0), "bedside interaction starts paid rest");
+    int inn = 0;
+    while (g.buildings[inn].type != BAR || building_town(inn) != 0) inn++;
+    fixture_door(a, inn);
+    CHECK(interior_enter(inn), "enter the inn");
+    fixture_service(ROOM_REST);
+    interior_interact();
+    CHECK(a->taskKind == 3, "bedside interaction starts paid rest");
     step(2);
     CHECK(a->health[LARM] > 40 && a->fatigue < 80, "sleep restores wounds and fatigue");
     fresh();

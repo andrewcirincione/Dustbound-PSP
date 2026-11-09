@@ -1,4 +1,4 @@
-#include "game.h"
+#include "frontier_fixture.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -78,9 +78,13 @@ int main(void) {
     a->health[CHEST] = 50;
     use_item(owned(a, MEDKIT, UNION));
     CHECK(a->taskKind == TASK_TREAT && owned(a, MEDKIT, UNION) >= 0 && a->health[CHEST] == 50);
-    for (int i = 0; i < 100 && a->taskKind == TASK_TREAT; i++)
+    for (int i = 0; i < 180 && a->taskKind == TASK_TREAT; i++)
         simulate(.05f);
-    CHECK(owned(a, MEDKIT, UNION) < 0 && inventory_count(a, MEDKIT) == 1 && a->health[CHEST] > 50);
+    int used = 0;
+    for (int j = 0; j < PACK; j++)
+        if (portion_base(a->pack[j].item) == MEDKIT && a->stolen[j] == UNION)
+            used = portion_percent(a->pack[j].item);
+    CHECK(used > 0 && used < 100 && fixture_dressings(a) == 100 + used && a->health[CHEST] > 50);
     /* Full-pack craft failure must restore both cargo and ownership bytes. */
     fresh();
     a = &g.actors[0];
@@ -89,6 +93,9 @@ int main(void) {
     a->y = 44;
     g.buildingCount = 1;
     g.buildings[0] = (Building){.x = 42, .y = 44, .type = FORGE, .owner = 0};
+    fixture_door(a, 0);
+    CHECK(interior_enter(0));
+    fixture_service(ROOM_FORGE);
     for (int i = 0; i < PACK; i++) {
         a->pack[i] = (Stack){gear_id(i, 0, 0), 2};
         a->stolen[i] = SHOGUN;
@@ -180,6 +187,10 @@ int main(void) {
     press(KEY_CROSS);
     CHECK(a->carrying == 1 && b->carriedBy == 0 && b->bleed > 0);
     press(KEY_CROSS);
+    CHECK(ui.screen == SCREEN_ACTIONS);
+    ui.selection = fixture_action(ACTION_PUT_DOWN);
+    CHECK(ui.selection >= 0);
+    press(KEY_CROSS);
     CHECK(a->carrying == -1 && b->carriedBy == -1);
     empty(a);
     empty(b);
@@ -209,7 +220,7 @@ int main(void) {
     a->y = 44;
     CHECK(nearby_station(FORGE, 1.7f) < 0);
     a->x = 43;
-    CHECK(nearby_station(FORGE, 1.7f) == 0);
+    CHECK(nearby_station(FORGE, 1.7f) < 0);
     g.interiorBuilding = 1;
     g.interiorActor = 0;
     g.interiorX = 3.5;
@@ -260,6 +271,7 @@ int main(void) {
     memset(g.trails.bed, 0, sizeof(g.trails.bed));
     memset(g.field.jail, 0, sizeof(g.field.jail));
     memset(g.field.camp, 0, sizeof(g.field.camp));
+    memset(g.frontier.lodge, 0, sizeof(g.frontier.lodge));
     CHECK(save_game("build/v052-workers.sav"));
     int q = stored(0, RATION);
     CHECK(load_game("build/v052-workers.sav"));

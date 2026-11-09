@@ -1,4 +1,4 @@
-#include "game.h"
+#include "frontier_fixture.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -72,8 +72,9 @@ static void gear_and_chests(void) {
     assert(weapon_handling(a, heavy) < 1.05f && actor_capacity(a) > capacity);
     assert(buy_item(3, BEDROLL_ITEM));
     use_item(pack_slot(a, BEDROLL_ITEM));
-    int bed = g.buildingCount - 1;
-    assert(portable_bedroll(bed) > 0 && depth_build_ready(bed) && !g.baseExists);
+    int bed = 0;
+    while (bed < g.buildingCount && portable_bedroll(bed) <= 0) bed++;
+    assert(bed < g.buildingCount && portable_bedroll(bed) > 0 && depth_build_ready(bed) && !g.baseExists);
     assert(!inventory_count(a, BEDROLL_ITEM));
     assert(save_game("build/v175-roll.sav") && load_game("build/v175-roll.sav"));
     a = &g.actors[0];
@@ -116,10 +117,14 @@ static void wounds(void) {
     assert(a->bleed == 0 && wound_needs_dressing(a) && a->health[LARM] == max - 20);
     advance(10);
     assert(a->health[CHEST] == hp);
-    action(ACTION_PLAY_DEAD);
+    int choices = nearby_actions();
+    for (int n = 0; n < choices; n++) assert(nearby_action(n)->type != ACTION_PLAY_DEAD);
+    a->unconscious = .1f;
+    advance(.3f);
     assert(playing_dead(a) && conscious(a));
     action(ACTION_SELF_AID);
-    advance(a->action + .2f);
+    for (int phase = 0; phase <= LIMBS && a->taskKind == TASK_TREAT; phase++)
+        advance(a->action + .2f);
     assert(playing_dead(a) && (a->treatedMask & (1 << CHEST)) && (a->treatedMask & (1 << LARM)));
     float severe = a->health[CHEST], mild = a->health[LARM];
     advance(20);
@@ -139,7 +144,7 @@ static unsigned successful_seed(void) {
         x ^= x << 13;
         x ^= x >> 17;
         x ^= x << 5;
-        if (x % 100 < 20)
+        if (x % 100 < 5)
             return n;
     }
     assert(0);

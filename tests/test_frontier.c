@@ -1,4 +1,4 @@
-#include "game.h"
+#include "frontier_fixture.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -56,7 +56,9 @@ int main(void) {
     p->bleed = 3;
     m->target = -1;
     frontier_tick(.1f);
-    assert(p->bleed == 0); /* hired aid is useful after a fight */
+    assert(m->taskKind == TASK_TREAT && p->bleed > 0);
+    for (int i = 0; i < 150; i++) simulate(1.f / 30);
+    assert(p->bleed == 0);
     assert(save_game("build/v050-contract.sav"));
     float until = g.mercUntil[slot];
     g.mercUntil[slot] = 0;
@@ -78,12 +80,11 @@ int main(void) {
     assert(merc_slot(m) < 0);
     assert(!merc_hire(guards[0], 0));
     game_new(73819, 0);
-    assert(g.stock[0][gear_id(84, 1, 1)] > 0);
-    assert(!g.stock[0][gear_id(85, 1, 1)]);
-    assert(g.stock[1][gear_id(85, 1, 1)] > 0);
+    assert(town_design(0)->smith && town_design(1)->smith);
+    assert(town_design(0)->marketTier > town_design(1)->marketTier);
     ui.tradeTown = 1;
     ui.shopFilter = 2;
-    assert(shop_item(0) >= BASE_ITEMS); /* show regional gear before shared starter stock */
+    assert(shop_count() > 0 && shop_count() <= 2);
     for (int i = 0; i < shop_count(); i++) {
         int item = shop_item(i);
         assert(item > 0 && item < ITEMS && itemDefs[item].slot == 0 && g.stock[1][item] > 0);

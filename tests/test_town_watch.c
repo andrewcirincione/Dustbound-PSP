@@ -1,4 +1,4 @@
-#include "game.h"
+#include "frontier_fixture.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -40,8 +40,7 @@ static void step(float seconds) {
 static void key(int button) { game_tick(.05f, (Input){.pressed = button}); }
 
 static void at_door(Actor *a, int n) {
-    a->x = g.buildings[n].x + 1.45f;
-    a->y = g.buildings[n].y + .65f;
+    fixture_door(a, n);
 }
 
 static void officer(int n, int town, float x, float y) {
@@ -118,9 +117,10 @@ static void charges_and_payment(void) {
 static void shop_and_inn(void) {
     Actor *a = isolated();
     int town = 3, shop = town_building(town, SHOP), inn = town_building(town, BAR);
-    int forge = town_building(town, FORGE), bench = town_building(town, BENCH);
+    int forge = town_building(1, FORGE), bench = town_building(town, BENCH);
+    assert(!town_design(town)->smith && town_design(1)->smith);
     at_door(a, shop);
-    a->y += 2.3f;
+    a->y += 1.2f;
     init_actor(1, "Counter keeper", TRADER, g.townOwner[town], a->x, a->y, 6);
     g.actors[1].homeTown = town;
     at_door(&g.actors[1], shop);
@@ -128,8 +128,7 @@ static void shop_and_inn(void) {
     assert(!actor_inside(&g.actors[1]));
     assert(town_npc_routine(1, .1f) && actor_inside(&g.actors[1]) == shop + 1);
     for (int i = 0; i < 220; i++) town_npc_routine(1, .05f);
-    g.interiorX = 1.6f;
-    g.interiorY = 4.2f;
+    fixture_service(ROOM_CHEST);
     a->sneaking = 1;
     assert(npc_sees(&g.actors[1], a, 6));
     interior_interact();
@@ -149,12 +148,11 @@ static void shop_and_inn(void) {
     InteriorProp props[ROOM_PROPS];
     int beds = 0, count = interior_props(inn, props);
     for (int i = 0; i < count; i++) beds += props[i].action == ROOM_REST;
-    assert(beds == 4);
+    assert(beds == town_design(town)->beds && beds > town_design(1)->beds);
     g.dayTime = 8;
     at_door(a, forge);
     assert(interior_enter(forge));
-    g.interiorX = 4;
-    g.interiorY = 4.6f;
+    fixture_service(ROOM_SMITH_TRADE);
     interior_interact();
     assert(ui.screen == SCREEN_TRADE && ui.tradeSmith && shop_count() > 0);
     for (int i = 0; i < shop_count(); i++) {
@@ -192,6 +190,10 @@ static void stock_and_recovery(void) {
     b->dead = 1;
     b->carriedBy = 0;
     a->carrying = 1;
+    key(KEY_CROSS);
+    assert(ui.screen == SCREEN_ACTIONS);
+    ui.selection = fixture_action(ACTION_PUT_DOWN);
+    assert(ui.selection >= 0);
     key(KEY_CROSS);
     assert(b->active && b->carriedBy < 0 && a->carrying < 0 && depth_distance(a, b) < TALK_REACH);
 

@@ -16,8 +16,12 @@ static void restock_chest(int building) {
     static const int store[] = {MEDKIT, IRONBAR, CLOTH, RATION, BOLTS, HIDE};
     memset(b->storage, 0, sizeof(b->storage));
     if (b->type == SHOP) {
-        b->storage[0] = (Stack){store[mix % 6], 2};
-        b->storage[1] = (Stack){store[(mix % 6 + 1 + mix % 5) % 6], 1};
+        for (int i = 0; i < 2; i++) {
+            int item = store[(mix % 6 + i * (1 + mix % 5)) % 6];
+            if (item == MEDKIT && mix % 19)
+                item = portion_item(MEDKIT, 30 + mix % 61);
+            b->storage[i] = (Stack){item, i == 0 ? 2 : 1};
+        }
     } else if (mix % 5 != 0) {
         b->storage[0] = (Stack){home[mix % 5], 1 + mix % 2};
     }
@@ -105,7 +109,7 @@ static int home_destination(int n, int town) {
     for (int j = 0; j < g.buildingCount; j++) {
         const Building *home = &g.buildings[j];
         if (home->type != HOUSE || home->owner >= 0 || home->faction != a->faction ||
-            fabsf(home->x - towns[town].x) > 14 || fabsf(home->y - towns[town].y) > 14)
+            building_town(j) != town)
             continue;
         unsigned score = (shift ^ (j * 65537u)) * 2654435761u;
         if (chosen < 0 || score > best) {
@@ -127,7 +131,7 @@ static int town_service_building(const Actor *a, int town, int type) {
     for (int b = 0; b < g.buildingCount; b++) {
         const Building *v = &g.buildings[b];
         if (v->type != type || v->owner >= 0 || v->faction != a->faction ||
-            fabsf(v->x - towns[town].x) > 14 || fabsf(v->y - towns[town].y) > 14 || !depth_build_ready(b))
+            building_town(b) != town || !depth_build_ready(b))
             continue;
         float d = distance(a->homeX, a->homeY, v->x, v->y);
         if (d < nearest) {
@@ -136,6 +140,22 @@ static int town_service_building(const Actor *a, int town, int type) {
         }
     }
     return found;
+}
+static void service_post(int building, int service, float *x, float *y) {
+    InteriorProp props[ROOM_PROPS];
+    int count = interior_props(building, props);
+    for (int i = 0; i < count; i++) {
+        const InteriorProp *p = &props[i];
+        if (p->action != service)
+            continue;
+        float px = p->w < p->d ? p->x - p->w - .52f : p->x;
+        float py = p->w < p->d ? p->y : p->y + p->d + .52f;
+        if (interior_walkable(building + 1, px, py)) {
+            *x = px;
+            *y = py;
+        }
+        break;
+    }
 }
 int town_npc_routine(int n, float dt) {
     Actor *a = &g.actors[n];
@@ -178,6 +198,8 @@ int town_npc_routine(int n, float dt) {
                 break;
             }
     if (room) {
+        if (goal == room - 1 && (role == ROLE_MERCHANT || role == ROLE_INNKEEPER || role == ROLE_SMITH))
+            service_post(goal, role == ROLE_SMITH ? ROOM_SMITH_TRADE : ROOM_TRADE, &postX, &postY);
         float x = goal == room - 1 ? postX : 3.5f;
         float y = goal == room - 1 ? postY : 6.35f;
         float dx = x - depth_x(a), dy = y - depth_y(a);
@@ -191,20 +213,30 @@ int town_npc_routine(int n, float dt) {
     }
     if (goal < 0)
         return 0;
-    const Building *b = &g.buildings[goal];
-    float x = b->x + 1.45f, y = b->y + .65f;
+    float x, y;
+    building_door(goal, &x, &y);
     if (distance(a->x, a->y, x, y) > .8f) {
         route_toward(a, x, y, dt * .65f);
         return 1;
     }
-    DepthActor *z = &g.depth.actors[n];
-    z->room = goal + 1;
-    z->rx = 3.5f;
-    z->ry = 6.15f;
-    a->x = x;
-    a->y = y;
-    a->routeLen = a->routePos = 0;
+    actor_enter_room(n, goal);
     return 1;
+}
+void actor_enter_room(int n, int building) {
+    Actor *a = &g.actors[n];
+    DepthActor *z = &g.depth.actors[n];
+    z->room = building + 1;
+    z->rx = 3.5f;
+    z->ry = 6.1f;
+    building_door(building, &a->x, &a->y);
+    a->routeLen = a->routePos = 0;
+    if (n == g.selected) {
+        g.interiorBuilding = z->room;
+        g.interiorActor = n;
+        g.interiorX = z->rx;
+        g.interiorY = z->ry;
+        z->room = 0;
+    }
 }
 int actor_in_bed(const Actor *a) {
     int bed = a->taskIndex;
@@ -217,27 +249,26 @@ int actor_in_bed(const Actor *a) {
     int type = g.buildings[bed].type;
     return type == BED || type == BAR || type == HOUSE || type == TOWER;
 }
-int rest_at(Actor *a, int bed, float x, float y, int room, int price) {
-    if (!conscious(a) || a->attackPhase == 1 || a->attackPhase == 2 || a->carrying >= 0 || a->prisonTime > 0)
-        return 0;
+static int bed_unoccupied(const Actor *a, float x, float y, int room) {
     for (int i = 0; i < g.actorCount; i++) {
         const Actor *other = &g.actors[i];
-        if (other != a && other->active && !other->dead && other->taskKind == 3 &&
-            depth_room(other) == room && distance(x, y, depth_x(other), depth_y(other)) < .9f) {
-            log_msg("That bed is occupied.");
+        if (other != a && other->active && !other->dead && actor_in_bed(other) &&
+            depth_room(other) == room && distance(x, y, depth_x(other), depth_y(other)) < .9f)
             return 0;
-        }
     }
-    if (g.money < price) {
-        log_msg("A bed costs %d silver.", price);
-        return 0;
-    }
-    if (a->taskKind == 3 && a->taskIndex == bed)
-        return 1;
-    g.money -= price;
+    return 1;
+}
+static void bed_position(Actor *a, int bed, float x, float y, int room) {
+    int n = a - g.actors;
+    DepthActor *z = &g.depth.actors[n];
+    z->room = room;
     if (room) {
-        g.interiorX = x;
-        g.interiorY = y;
+        z->rx = x;
+        z->ry = y;
+        if (n == g.selected) {
+            g.interiorX = x;
+            g.interiorY = y;
+        }
     } else {
         a->x = x;
         a->y = y;
@@ -246,66 +277,218 @@ int rest_at(Actor *a, int bed, float x, float y, int room, int price) {
     a->taskIndex = bed;
     a->action = REST_DURATION;
     a->autoattack = a->attackPhase = 0;
-    a->target = g.living.command[a - g.actors] = -1;
-    g.field.playingDead[a - g.actors] = 0;
+    a->target = g.living.command[n] = -1;
+    g.field.playingDead[n] = 0;
+}
+int rest_at(Actor *a, int bed, float x, float y, int room, int price) {
+    if (!conscious(a) || a->attackPhase == 1 || a->attackPhase == 2 || a->carrying >= 0 || a->prisonTime > 0)
+        return 0;
+    if (!bed_unoccupied(a, x, y, room)) {
+        log_msg("That bed is occupied.");
+        return 0;
+    }
+    if (g.money < price) {
+        log_msg("A bed costs %d silver.", price);
+        return 0;
+    }
+    if (a->taskKind == 3 && a->taskIndex == bed)
+        return 1;
+    g.money -= price;
+    bed_position(a, bed, x, y, room);
     ui.screen = SCREEN_WORLD;
     log_msg("Resting in bed.");
+    return 1;
+}
+int lay_carried_in_bed(Actor *carrier, int place) {
+    if (carrier->carrying < 0 || carrier->carrying >= g.actorCount || !conscious(carrier))
+        return 0;
+    Actor *patient = &g.actors[carrier->carrying];
+    if (patient->dead || patient->prisonTime > 0 || g.depth.actors[carrier->carrying].captive)
+        return 0;
+    int room = depth_room(carrier), bed = -1, cost = 0;
+    float x = 0, y = 0, reach = 1.95f;
+    if (room) {
+        Building *b = &g.buildings[room - 1];
+        if (b->type == HOUSE && b->owner < 0 && !lodge_joined(room - 1))
+            return 0;
+        InteriorProp props[ROOM_PROPS];
+        int n = interior_props(room - 1, props);
+        for (int i = 0; i < n; i++) {
+            if (props[i].action != ROOM_REST) continue;
+            float d = distance(depth_x(carrier), depth_y(carrier), props[i].x, props[i].y);
+            if (d < reach && bed_unoccupied(patient, props[i].x, props[i].y, room)) {
+                bed = room - 1;
+                x = props[i].x;
+                y = props[i].y;
+                reach = d;
+            }
+        }
+        int t = town_near(b->x, b->y, 22);
+        cost = b->owner < 0 && t >= 0 ? regional_bed_cost(t) : 0;
+    } else {
+        for (int i = 0; i < g.buildingCount; i++) {
+            Building *b = &g.buildings[i];
+            if (b->type != BED || portable_bedroll(i) < 0 || !depth_build_ready(i)) continue;
+            float d = distance(carrier->x, carrier->y, b->x, b->y);
+            if (d < reach && bed_unoccupied(patient, b->x, b->y, 0)) {
+                bed = i;
+                x = b->x;
+                y = b->y;
+                reach = d;
+                int t = town_near(x, y, 22);
+                cost = b->owner < 0 && t >= 0 && !trail_bed(i) ? regional_bed_cost(t) : 0;
+            }
+        }
+        for (int k = 0; k < POP_GROUPS; k++)
+            if (distance(carrier->x, carrier->y, g.population.groups[k].x, g.population.groups[k].y) < 30)
+                for (int j = 1; j < population_object_count(k) && j < 5; j++) {
+                    float bx, by;
+                    if (population_object(k, j, &bx, &by) != 2) continue;
+                    float d = distance(carrier->x, carrier->y, bx, by);
+                    if (d < reach && bed_unoccupied(patient, bx, by, 0)) {
+                        bed = -1000 - k * 4 - (j - 1);
+                        x = bx; y = by; reach = d; cost = 0;
+                    }
+                }
+    }
+    if (bed == -1 || g.money < cost)
+        return 0;
+    if (place) {
+        g.money -= cost;
+        carrier->carrying = patient->carriedBy = -1;
+        patient->x = carrier->x;
+        patient->y = carrier->y;
+        bed_position(patient, bed, x, y, room);
+        log_msg("%s laid %s in bed.", carrier->name, patient->name);
+    }
     return 1;
 }
 int building_has_interior(int type) {
     return type <= TOWER || type == FORGE || type == STORE || type == JAIL;
 }
 int actor_inside(const Actor *a) { return depth_room(a); }
+enum { LODGE_FEE = 280 };
+
+static void put_prop(InteriorProp *p, int *count, float x, float y, float w, float d, int art, int action) {
+    p[(*count)++] = (InteriorProp){x,y,w,d,art,action};
+}
 int interior_props(int building, InteriorProp *p) {
-    int type = g.buildings[building].type, n = 0;
-    p[n++] = (InteriorProp){5.8f, .9f, .65f, .5f, 21, ROOM_NONE};
-    p[n++] = (InteriorProp){6.1f, 5.6f, .25f, .25f, 22, ROOM_NONE};
-    if (type == JAIL) {
-        p[n++] = (InteriorProp){1.3f, 1.4f, .65f, .55f, 16, ROOM_NONE};
-        p[n++] = (InteriorProp){5.5f, 1.4f, .65f, .55f, 16, ROOM_NONE};
-    } else if (type == SHOP) {
-        p[n++] = (InteriorProp){3.0f, 2.1f, 1.25f, .55f, 17, ROOM_TRADE};
-        p[n++] = (InteriorProp){1.1f, 4.4f, .5f, .4f, 20,
-                                private_chest(building) ? ROOM_CHEST : ROOM_NONE};
-        p[n++] = (InteriorProp){5.1f, 4.5f, .8f, .6f, 18, ROOM_NONE};
-    } else if (type == FORGE) {
-        p[n++] = (InteriorProp){1.5f, 1.6f, .8f, .7f, 19, ROOM_FORGE};
-        p[n++] = (InteriorProp){4.5f, 3.7f, 1.1f, .5f, 17,
-                                g.buildings[building].owner < 0 ? ROOM_SMITH_TRADE : ROOM_NONE};
-        p[n++] = (InteriorProp){1.0f, 4.5f, .5f, .4f, 20, ROOM_NONE};
-    } else if (type == STORE) {
-        p[n++] = (InteriorProp){2.0f, 2.0f, .5f, .4f, 20, ROOM_STORAGE};
-        p[n++] = (InteriorProp){4.4f, 3.7f, .5f, .4f, 20, ROOM_STORAGE};
-        p[n++] = (InteriorProp){1.1f, 4.5f, .5f, .4f, 20, ROOM_STORAGE};
-    } else if (type == BAR) {
-        p[n++] = (InteriorProp){1.2f, 2.0f, .75f, .75f, 16, ROOM_REST};
-        p[n++] = (InteriorProp){1.05f, 4.85f, .75f, .75f, 16, ROOM_REST};
-        p[n++] = (InteriorProp){5.6f, 2.25f, .75f, .75f, 16, ROOM_REST};
-        p[n++] = (InteriorProp){5.45f, 4.6f, .75f, .75f, 16, ROOM_REST};
-        p[n++] = (InteriorProp){4.0f, 1.15f, 1.1f, .5f, 17, ROOM_TRADE};
-    } else {
-        p[n++] = (InteriorProp){1.2f, 2.0f, .75f, .9f, 16, ROOM_REST};
-        p[n++] = (InteriorProp){4.6f, 4.0f, .8f, .7f, 18, ROOM_NONE};
-        if (private_chest(building))
-            p[n++] = (InteriorProp){1.0f, 4.5f, .5f, .4f, 20, ROOM_CHEST};
+    const Building *b = &g.buildings[building];
+    int t = building_town(building), style = t < 0 ? 0 : civil_style(t);
+    int variant = g.frontier.variant[building], n = 0;
+    const TownDesign *plan = town_design(t);
+    int layout = (building + (t + 1) * 5) % 3;
+    static const int decor[] = {ROOM_STOVE_ART, ROOM_ARMOR_ART, ROOM_SHRINE_ART,
+                               ROOM_BALES_ART, ROOM_HEARTH_ART, ROOM_BALES_ART};
+    if (variant == BUILD_LODGE) {
+        put_prop(p,&n,1.1f,1.7f,.62f,.82f,16,ROOM_REST);
+        put_prop(p,&n,1.1f,4.25f,.62f,.82f,16,ROOM_REST);
+        put_prop(p,&n,5.3f,1.4f,1.0f,.45f,17,ROOM_MEMBERSHIP);
+        put_prop(p,&n,5.65f,4.25f,.35f,.35f,24,ROOM_TRAIN);
+        put_prop(p,&n,3.0f,3.0f,1.1f,.7f,23,ROOM_NONE);
+        return n;
     }
+    if (b->type == JAIL) {
+        int beds = plan->custody == 2 ? 4 : plan->custody == 1 ? 2 : 1;
+        for (int j = 0; j < beds; j++) {
+            float x = j & 1 ? 5.5f : 1.1f;
+            float y = j >= 2 ? 2.65f : 1.02f;
+            put_prop(p,&n,x,y,.57f,.64f,16,ROOM_NONE);
+        }
+        if (plan->custody) put_prop(p,&n,5.72f,5.4f,.72f,.38f,17,ROOM_NONE);
+        if (plan->custody == 2) put_prop(p,&n,1.1f,5.2f,.5f,.5f,21,ROOM_NONE);
+    } else if (b->type == SHOP) {
+        int sideCounter = layout == 1 || style == 2;
+        if (sideCounter)
+            put_prop(p,&n,5.23f,2.67f,.46f,1.24f + plan->marketTier*.11f,17,ROOM_TRADE);
+        else
+            put_prop(p,&n,layout == 2 ? 4.1f : 3.35f,1.62f,
+                     1.28f + plan->marketTier*.15f,.48f,17,ROOM_TRADE);
+        if (private_chest(building))
+            put_prop(p,&n,sideCounter ? 6.15f : 1.05f,sideCounter ? 1.26f : 3.32f,.43f,.37f,20,ROOM_CHEST);
+        put_prop(p,&n,1.1f,1.06f,.62f,.40f,variant == BUILD_ARMORER ? ROOM_ARMOR_ART : decor[style],ROOM_NONE);
+        if (layout == 2 && t == 3) {
+            put_prop(p,&n,1.4f,4.82f,.76f,.55f,18,ROOM_NONE);
+            put_prop(p,&n,5.53f,4.91f,.58f,.52f,20,ROOM_NONE);
+        } else
+            put_prop(p,&n,sideCounter ? 1.28f : 5.55f,4.8f,.64f,.55f,variant == BUILD_ARMORER ? ROOM_ARMOR_ART : 18,ROOM_NONE);
+        if (plan->marketTier)
+            put_prop(p,&n,sideCounter ? 3.65f : 5.97f,sideCounter ? .95f : 3.4f,.43f,.42f,21,ROOM_NONE);
+        if (plan->marketTier == 2)
+            put_prop(p,&n,2.2f,3.7f,.59f,.47f,18,ROOM_NONE);
+        if (style == 1 || style == 2)
+            put_prop(p,&n,3.5f,5.25f,1.08f,.58f,23,ROOM_NONE);
+    } else if (b->type == FORGE) {
+        put_prop(p,&n,1.47f,1.47f,.9f,.7f,19,ROOM_FORGE);
+        put_prop(p,&n,4.8f,2.18f,1.12f,.47f,17,b->owner < 0 ? ROOM_SMITH_TRADE : ROOM_NONE);
+        put_prop(p,&n,1.02f,4.7f,.47f,.48f,20,ROOM_NONE);
+        put_prop(p,&n,5.6f,4.7f,.58f,.48f,ROOM_ARMOR_ART,ROOM_NONE);
+        put_prop(p,&n,5.72f,1.0f,.40f,.36f,21,ROOM_NONE);
+    } else if (b->type == STORE) {
+        for (int j = 0; j < 3 + plan->marketTier; j++) {
+            float x = j & 1 ? 5.55f : 1.12f;
+            float y = 1.30f + (j / 2) * 1.7f;
+            put_prop(p,&n,x,y,.48f+(j%3)*.10f,.44f,20,ROOM_STORAGE);
+        }
+        put_prop(p,&n,3.8f,1.1f,.95f,.45f,21,ROOM_NONE);
+    } else if (b->type == BAR) {
+        int beds = t < 0 ? 3 : plan->beds;
+        int alcove = beds >= 4 && (layout == 1 || style == 2);
+        int sideBar = alcove || (t >= 0 && (plan->turn == 2 || plan->plan == 4) && beds <= 3);
+        for (int j = 0; j < beds; j++) {
+            float x, y, w = .60f, d = .67f;
+            if (alcove) {
+                x = 1.14f + (j % 3) * 1.88f;
+                y = 1.05f + (j / 3) * 1.98f;
+            } else {
+                x = sideBar ? 1.12f + j * 1.66f : ((j + layout) & 1) ? 5.80f : 1.12f;
+                y = sideBar ? 1.20f : 1.11f + (j / 2) * 1.77f;
+                if (beds == 1) { w = .76f; d = .56f; }
+            }
+            put_prop(p,&n,x,y,w,d,16,ROOM_REST);
+        }
+        if (sideBar) {
+            put_prop(p,&n,5.65f,5.15f,.47f,1.05f,17,ROOM_TRADE);
+            put_prop(p,&n,1.35f,5.2f,.63f,.49f,decor[style],ROOM_NONE);
+            put_prop(p,&n,3.59f,5.34f,.76f,.57f,23,ROOM_NONE);
+        } else {
+            put_prop(p,&n,3.55f,1.05f,1.11f,.43f,17,ROOM_TRADE);
+            if (beds > 2)
+                put_prop(p,&n,layout == 1 ? 2.75f : 4.25f,3.7f,.60f,.55f,18,ROOM_NONE);
+            if (style == 2 || beds >= 4)
+                put_prop(p,&n,3.58f,5.15f,1.10f,.68f,23,ROOM_NONE);
+            if (beds < 4)
+                put_prop(p,&n,style == 3 ? 5.73f : 1.1f,5.35f,.50f,.43f,decor[style],ROOM_NONE);
+        }
+    } else {
+        float bx = layout == 1 ? 5.45f : 1.28f;
+        put_prop(p,&n,bx,layout == 2 ? 3.1f : 1.55f,layout == 2 ? .82f : .59f,layout == 2 ? .54f : .81f,16,ROOM_REST);
+        put_prop(p,&n,layout == 1 ? 1.42f : 5.48f,layout == 2 ? 2.05f : 4.08f,.66f,.57f,18,ROOM_NONE);
+        put_prop(p,&n,layout == 1 ? 1.12f : 5.62f,1.0f,.65f,.37f,decor[style],ROOM_NONE);
+        if (private_chest(building))
+            put_prop(p,&n,layout == 1 ? 5.5f : 1.17f,4.85f,.46f,.42f,20,ROOM_CHEST);
+        if (style == 2 || style == 1 || layout == 0)
+            put_prop(p,&n,3.58f,3.15f,1.08f,.75f,23,ROOM_NONE);
+    }
+    if (style == 4 || variant == BUILD_ARMORER)
+        put_prop(p,&n,6.35f,5.98f,.22f,.24f,22,ROOM_NONE);
     return n;
+}
+
+int lodge_joined(int building) {
+    return g.frontier.variant[building] == BUILD_LODGE && g.frontier.clanMember;
 }
 int interior_enter(int building) {
     Actor *a = &g.actors[g.selected];
     if (building < 0 || building >= g.buildingCount || !building_has_interior(g.buildings[building].type) ||
-        !conscious(a) || a->prisonTime > 0 || a->carrying >= 0)
+        !conscious(a) || a->prisonTime > 0)
         return 0;
-    Building *b = &g.buildings[building];
-    if (distance(a->x, a->y, b->x + 1.45f, b->y + .65f) > DOOR_REACH)
+    if (building_door_distance(building, a->x, a->y) > DOOR_REACH)
         return 0;
     if (a->attackPhase == 1 || a->attackPhase == 2)
         return 0;
     if(!depth_build_ready(building)) {log_msg("Finish construction before entering.");return 0;}
-    g.interiorBuilding = building + 1;
-    g.interiorActor = g.selected;
-    g.interiorX = 3.5f;
-    g.interiorY = 6.1f;
+    actor_enter_room(g.selected, building);
     a->taskKind = 0;
     a->attackPhase = 0;
     a->target = -1;
@@ -313,25 +496,29 @@ int interior_enter(int building) {
     g.depth.actors[g.selected].trespass = 0;
     g.field.playingDead[g.selected] = 0;
     depth_enter_room(building);
-    log_msg("Inside. Walk to a service; \001 use. Return to the door to leave.");
+    if (a->carrying >= 0) {
+        DepthActor *carried = &g.depth.actors[a->carrying];
+        carried->room = building + 1;
+        carried->rx = g.interiorX;
+        carried->ry = g.interiorY;
+    }
     return 1;
 }
 void interior_leave(void) {
     if (!g.interiorBuilding)
         return;
     Actor *a = &g.actors[g.interiorActor];
-    Building *b = &g.buildings[g.interiorBuilding - 1];
+    int building = g.interiorBuilding - 1;
     if (a->prisonTime > 0 && !jail_cell_open(a))
         return;
     jail_exit(a);
-    a->x = b->x + 1.45f;
-    a->y = b->y + .65f;
+    building_door(building, &a->x, &a->y);
+    if (a->carrying >= 0) g.depth.actors[a->carrying].room = 0;
     a->taskKind = 0;
     a->target = -1;
     g.depth.actors[g.interiorActor].trespass = 0;
     depth_leave_room(g.interiorBuilding-1);
     g.interiorBuilding = 0;
-    log_msg("Back on the frontier.");
     find_context();
 }
 int interior_context(void) {
@@ -373,6 +560,10 @@ const char *interior_prompt(void) {
         return "OPEN DEPOT";
     case ROOM_CHEST:
         return "SEARCH OWNED CHEST";
+    case ROOM_MEMBERSHIP:
+        return g.frontier.clanMember ? "Dustward Clan membership" : "Join Dustward Clan (280 silver)";
+    case ROOM_TRAIN:
+        return "Train with the practice dummy";
     }
     return "EXPLORE";
 }
@@ -396,7 +587,7 @@ void interior_interact(void) {
     Building *b = &g.buildings[id];
     InteriorProp p[ROOM_PROPS];
     interior_props(id, p);
-    int town = town_near(b->x, b->y, 14);
+    int town = building_town(id);
     ui.selection = ui.scroll = 0;
     switch (p[c].action) {
     case ROOM_TRADE:
@@ -407,16 +598,20 @@ void interior_interact(void) {
         }
         if(!depth_trade_open(town))break;
         ui.tradeTown = town;
-        ui.tradeSmith = p[c].action == ROOM_SMITH_TRADE;
+        ui.roadTrader = 0;
+        ui.tradeSmith = p[c].action == ROOM_SMITH_TRADE ? TRADE_SMITH :
+                        b->type == BAR ? TRADE_INN :
+                        g.frontier.variant[id] == BUILD_ARMORER ? TRADE_ARMORER : TRADE_GENERAL;
         ui.sell = ui.shopFilter = 0;
         ui.screen = SCREEN_TRADE;
         break;
     case ROOM_REST:
-        if (b->type == HOUSE && b->owner < 0) {
-            log_msg("Private bed. Try the inn.");
+        if (b->type == HOUSE && b->owner < 0 && !lodge_joined(id)) {
+            log_msg(g.frontier.variant[id] == BUILD_LODGE ? "Dustward beds are reserved for members." : "Private bed.");
             break;
         }
-        rest_at(a, id, p[c].x, p[c].y, id + 1, b->owner < 0 && town >= 0 ? regional_bed_cost(town) : 0);
+        rest_at(a, id, p[c].x, p[c].y, id + 1,
+                b->owner < 0 && town >= 0 && !lodge_joined(id) ? regional_bed_cost(town) : 0);
         break;
     case ROOM_CHEST:
         restock_chest(id);
@@ -427,6 +622,32 @@ void interior_interact(void) {
     case ROOM_FORGE:
         ui.screen = SCREEN_FORGE;
         break;
+    case ROOM_MEMBERSHIP:
+        if (g.frontier.clanMember)
+            log_msg("Dustward beds and dummies are open to your squad.");
+        else if (g.money < LODGE_FEE)
+            log_msg("Dustward membership costs %d silver.", LODGE_FEE);
+        else {
+            g.money -= LODGE_FEE;
+            g.frontier.clanMember = 1;
+            log_warn("Joined the Dustward Clan.");
+        }
+        break;
+    case ROOM_TRAIN:
+        if (!lodge_joined(id)) {
+            log_msg("Only Dustward members can use the dummy.");
+            break;
+        }
+        if (a->gear[0] ? weapon_class_level(a, weapon_class(a->gear[0])) >= 20 : level(a, MARTIAL) >= 20) {
+            log_msg("You've outgrown this dummy.");
+            break;
+        }
+        a->taskKind = TASK_TRAIN;
+        a->taskIndex = id;
+        a->action = 4;
+        a->autoattack = 0;
+        a->target = -1;
+        break;
     case ROOM_STORAGE:
         ui.storageIndex = id;
         ui.storageSide = 0;
@@ -434,16 +655,16 @@ void interior_interact(void) {
         break;
     }
 }
-static int room_clear(float x, float y) {
-    if (x < .4f || y < .4f || x > 6.6f || y > 6.6f)
+int interior_walkable(int room, float x, float y) {
+    if (room <= 0 || room > g.buildingCount || x < .4f || y < .4f || x > 6.6f || y > 6.6f)
         return 0;
-    if (g.buildings[g.interiorBuilding - 1].type == JAIL &&
+    if (g.buildings[room - 1].type == JAIL &&
         fabsf(y - 3.65f) < .2f && fabsf(x - 3.5f) > .85f)
         return 0;
     InteriorProp p[ROOM_PROPS];
-    int n = interior_props(g.interiorBuilding - 1, p);
+    int n = interior_props(room - 1, p);
     for (int i = 0; i < n; i++)
-        if (fabsf(x - p[i].x) < p[i].w + .18f && fabsf(y - p[i].y) < p[i].d + .18f)
+        if (p[i].art != 23 && fabsf(x - p[i].x) < p[i].w + .18f && fabsf(y - p[i].y) < p[i].d + .18f)
             return 0;
     return 1;
 }
@@ -466,10 +687,31 @@ void interior_move(float dx, float dy, float dt) {
         wy /= length;
     }
     float x = g.interiorX + wx * speed, y = g.interiorY + wy * speed;
-    if (room_clear(x, g.interiorY))
+    if (interior_walkable(g.interiorBuilding, x, g.interiorY))
         g.interiorX = x;
-    if (room_clear(g.interiorX, y))
+    if (interior_walkable(g.interiorBuilding, g.interiorX, y))
         g.interiorY = y;
     a->taskKind = 0;
     walk_motion(a, g.interiorX - (x - wx * speed), g.interiorY - (y - wy * speed));
+}
+
+void training_tick(Actor *a, float dt) {
+    int id = a->taskIndex;
+    if (id < 0 || id >= g.buildingCount || depth_room(a) != id + 1 || !lodge_joined(id) || !conscious(a)) {
+        a->taskKind = 0;
+        return;
+    }
+    if ((a->action -= dt) > 0) return;
+    int weapon = a->gear[0], skill = weapon ? weapon_class(a->gear[0]) : MARTIAL;
+    float current = weapon ? g.society.weaponXP[a - g.actors][skill] : a->xp[MARTIAL];
+    float needed = 12 * 19 * 19 - current;
+    if (needed <= 0) {
+        a->taskKind = 0;
+        a->action = 0;
+        return;
+    }
+    float points = fminf(needed, 78);
+    if (weapon) weapon_class_gain(a, weapon, points);
+    else gain(a, MARTIAL, points);
+    a->action = 4;
 }

@@ -1,4 +1,4 @@
-#include "game.h"
+#include "frontier_fixture.h"
 #include "save_fixture.h"
 #include "combat_pose.h"
 #include <stddef.h>
@@ -25,18 +25,17 @@ int main(void) {
             bar = i;
     }
     CHECK(shop >= 0 && bar >= 0);
-    Building *b = &g.buildings[shop];
     CHECK(!interior_enter(shop));
-    a->x = b->x + 1.45f;
-    a->y = b->y + .65f;
+    fixture_door(a, shop);
     a->target = -1;
-    find_context();
-    CHECK(ui.contextKind == 3 && ui.contextIndex == shop);
-    interact();
+    int haveDoor = 0;
+    for (int k = 0, count = nearby_actions(); k < count; k++)
+        haveDoor |= nearby_action(k)->kind == 3 && nearby_action(k)->target == shop;
+    CHECK(haveDoor);
+    interact_context(3, shop);
     CHECK(g.interiorBuilding == shop + 1);
     CHECK(interior_context() == -1);
-    g.interiorX = 3.0f;
-    g.interiorY = 3.4f;
+    fixture_service(ROOM_TRADE);
     interior_interact();
     CHECK(ui.screen == SCREEN_TRADE && ui.tradeTown == 0);
     ui.screen = SCREEN_WORLD;
@@ -48,10 +47,13 @@ int main(void) {
         interior_move(0, -1, .1f);
     CHECK(g.interiorY > .4f && g.interiorX > .4f);
     CHECK(g.interiorX != oldx || g.interiorY != oldy);
-    g.interiorX = 3;
-    g.interiorY = 2.9f;
-    interior_move(1, -1, .1f);
-    CHECK(g.interiorY >= 2.9f); /* counter collision */
+    fixture_service(ROOM_TRADE);
+    InteriorProp props[ROOM_PROPS];
+    interior_props(shop, props);
+    int counter = interior_context();
+    for (int step = 0; step < 35; step++)
+        interior_move(1, -1, .04f);
+    CHECK(fabsf(g.interiorY - props[counter].y) >= props[counter].d);
     g.interiorX = 3.5f;
     g.interiorY = 4.8f;
     CHECK(save_game("build/interior-test.sav"));
@@ -63,13 +65,10 @@ int main(void) {
     CHECK(load_game("build/v2-test.sav"));
     CHECK(g.interiorBuilding == 0);
     a = &g.actors[0];
-    b = &g.buildings[bar];
-    a->x = b->x + 1.45f;
-    a->y = b->y + .65f;
+    fixture_door(a, bar);
     a->target = -1;
     CHECK(interior_enter(bar));
-    g.interiorX = 1.2f;
-    g.interiorY = 3.2f;
+    fixture_service(ROOM_REST);
     a->health[LARM] = 40;
     a->bleed = 0;
     dress_wounds(a);
@@ -87,9 +86,7 @@ int main(void) {
     CHECK(!interior_enter(-1) && !interior_enter(g.buildingCount));
     game_new(73819, 1);
     a = &g.actors[0];
-    b = &g.buildings[bar];
-    a->x = b->x + 1.45f;
-    a->y = b->y + .65f;
+    fixture_door(a, bar);
     a->target = -1;
     CHECK(interior_enter(bar));
     a->dead = 1;

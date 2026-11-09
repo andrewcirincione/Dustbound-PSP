@@ -1,3 +1,13 @@
+# 0.18.0 — Frontier towns and survival
+
+- Rebuilt all nineteen settlements with distinct street plans, entrances, custody facilities, faction architecture and furnished rooms. Larger towns can have specialized armorers. Small stores carry a few essentials.
+- Bounty targets show a silver mark and their paying factions. Bring a captured or dead target to an eligible jailkeeper. Contracts show their payout, require an in-person hand-in, and move to the completed tab.
+- First aid stops bleeding before treating individual wounds. Supplies have partial charges, food has servings, and recovery comas speed up dressed vital recovery. Carry an injured person to an unoccupied bed.
+- Added Dustward Clan lodges with shared beds and basic weapon training. All skills cap at 150. Lockpicking displays success odds, and prices are higher.
+- Centered the controlled survivor, revised passive weapon stow and sabre posture, and added the selected survivor's attack cooldown. Recovery starts prone. Fight stance gates the Attack action.
+- Ore and cuttable timber stand out outside towns. Unknown sites stay off the local map until discovery or a tip. Incidental enemies near the easier starts use weaker gear and skill.
+- Buffered the full Dust soundtrack so playback keeps running through menus and across the end of the track. Save format v24 reads earlier expeditions.
+
 # 0.17.7 — Dust soundtrack
 
 - The full Dust.mp3 loops from the title screen through gameplay, menus and pauses. The EBOOT streams it from disk alongside the game’s sound effects.

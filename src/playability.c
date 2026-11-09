@@ -36,6 +36,7 @@ const char *npc_role_name(const Actor *a) {
         if(g.society.freed[ai])return "FREED SURVIVOR";
 
     }
+    if (!strcmp(a->name, "Jailkeeper")) return "JAILKEEPER";
     if (a->kind == RAIDER)
         return "RAIDER";
     if (a->kind == BEAST)
@@ -45,7 +46,7 @@ const char *npc_role_name(const Actor *a) {
     return names[npc_role(a)];
 }
 static const int services[][7] = {
- {6,12,8,-1}, {0,14,1,6,12,8,-1}, {6,12,18,8,-1}, {1,4,15,6,8,-1}, {2,1,6,12,8,-1},
+ {6,12,8,-1}, {0,14,1,6,12,8,-1}, {6,12,18,8,-1}, {1,4,15,6,8,-1}, {0,2,1,6,12,8,-1},
  {3,6,12,8,-1}, {0,7,1,6,12,8,-1}, {5,6,12,8,-1}, {1,14,6,12,8,-1}, {9,10,6,12,8,-1}};
 int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
@@ -82,6 +83,7 @@ const char *dialogue_option(int actor, int row) {
     if(action==16)return "Removal surgery. 400 silver";
     if(action==17)return "Show me mechanical limbs.";
     if(action==18)return "What have you heard?";
+    if(action==0 && npc_role(&g.actors[actor])==ROLE_INNKEEPER)return "What food and drink do you have?";
     if(action==2 && !regional_bed_cost(town_near(g.actors[actor].x,g.actors[actor].y,14)))return "Rest at the sanctuary. Free";
     if (action == 6 && npc_role(&g.actors[actor]) == ROLE_RECRUIT)
         return "Join my expedition. 300 silver";
@@ -95,12 +97,11 @@ float context_distance(void) {
     if (ui.contextKind == 4)
         return distance(a->x, a->y, g.depth.siteX[n], g.depth.siteY[n]);
     if (ui.contextKind == 0)
-        return distance(a->x, a->y, g.actors[n].x, g.actors[n].y);
+        return depth_distance(a, &g.actors[n]);
     if (ui.contextKind == 1)
         return distance(a->x, a->y, g.nodes[n].x, g.nodes[n].y);
     Building *b = &g.buildings[n];
-    return distance(a->x, a->y, b->x + (ui.contextKind == 3 ? 1.45f : 0),
-                    b->y + (ui.contextKind == 3 ? .65f : 0));
+    return ui.contextKind == 3 ? building_door_distance(n, a->x, a->y) : distance(a->x, a->y, b->x, b->y);
 }
 float context_reach(void) {
     return ui.contextKind == 1 ? WORK_REACH : ui.contextKind == 0 ? TALK_REACH : ui.contextKind == 3 ? DOOR_REACH : 1.7f;
@@ -123,10 +124,7 @@ const char *context_name(void) {
         }
         return s[g.nodes[n].type];
     }
-    static const char *s[] = {"FRONTIER HOME",  "TRADING POST", "INN",     "WATCH HOUSE", "WINDPUMP",
-                              "WELL",           "CAMPFIRE",     "BEDROLL", "CROP FIELD",  "SMITHY",
-                              "RESEARCH BENCH", "PALISADE",     "DEPOT", "JAIL", "SLAVE CAMP"};
-    return s[g.buildings[n].type];
+    return building_name(n);
 }
 const char *context_action(void) {
     int n = ui.contextIndex;
@@ -501,18 +499,13 @@ void frontier_tick(float dt) {
             g.mercActor[j] = 0;
             g.mercUntil[j] = 0;
             log_msg(a->dead ? "A hired guard has died." : "Guard contract expired. Returning home.");
-        } else if (a->target < 0 && conscious(a)) {
-            if (a->bleed > 0 && inventory_remove(a, MEDKIT, 1))
-                a->bleed = 0;
+        } else if (a->target < 0 && conscious(a) && a->taskKind != TASK_TREAT) {
+            if (a->bleed > 0 && begin_treatment(n, n, TREAT_DRESS, -1))
+                continue;
             for (int i = 0; i < g.actorCount; i++) {
                 Actor *ally = &g.actors[i];
-                if (ally->squad && !ally->dead && ally->bleed > 0 && !actor_inside(ally) &&
-                    distance(a->x, a->y, ally->x, ally->y) < 2.5f && inventory_remove(a, MEDKIT, 1)) {
-                    ally->bleed = 0;
-                    gain(a, MEDICINE, 8);
-                    log_msg("Hired guard bandaged %s.", ally->name);
+                if (ally->squad && ally->bleed > 0 && begin_treatment(n, i, TREAT_DRESS, -1))
                     break;
-                }
             }
         }
     }
@@ -748,7 +741,7 @@ void skill_benefit(int skill, char *out, int size) {
     case MARTIAL: snprintf(out,size,"Unarmed base damage %.1f, plus strength and attack",7+lv*.4f);break;
     case STEALTH: snprintf(out,size,"Sneak detection range %.0f%% before weather",100*fmaxf(.12f,.5f-lv*.003f-gear_bonus(a,2)*.003f));break;
     case THEFT: snprintf(out,size,"Base theft %.0f%%; item, approach and witnesses modify it",100*pickpocket_chance(a));break;
-    case LOCKPICK: snprintf(out,size,"Salvage lock success %.0f%% per attempt",100*fminf(1,.62f+lv*.008f));break;
+    case LOCKPICK: snprintf(out,size,"Salvage lock success %.0f%% per attempt",(double)lockpick_chance(a, LOCK_SALVAGE));break;
     case MEDICINE: snprintf(out,size,"Dressing takes %.1f seconds. Healing follows over time.",fmaxf(1.75f,3.4f-.035f*lv-gear_bonus(a,5)*.05f));break;
     case LABOUR: snprintf(out,size,"Gathering cycle %.2f seconds",fmaxf(.8f,2.8f-lv*.035f));break;
     case FARMING: snprintf(out,size,"Harvest %d grain per crop",harvest_yield(a));break;

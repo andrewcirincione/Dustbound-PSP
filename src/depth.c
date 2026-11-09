@@ -189,7 +189,9 @@ int depth_fuel(int b) {
     if (b < 0 || b >= g.buildingCount || !depth_build_ready(b) || g.buildings[b].owner < 0 ||
         (g.buildings[b].type != FORGE && g.buildings[b].type != CAMPFIRE))
         return 0;
-    if (!actor_inside(a) && distance(a->x, a->y, g.buildings[b].x, g.buildings[b].y) > 1.7f) {
+    if (actor_inside(a) ? actor_inside(a) != b + 1 :
+        distance(a->x, a->y, g.buildings[b].x, g.buildings[b].y) > 1.7f &&
+        (g.buildings[b].type != FORGE || building_door_distance(b, a->x, a->y) > DOOR_REACH)) {
         log_msg("Stand beside the fire or forge.");
         return 0;
     }
@@ -453,8 +455,8 @@ int depth_group_job(Actor *a, float dt) {
         if (depth_distance(a, lead) > 2.2f)
             depth_move_room(a, depth_x(lead) - depth_x(a), depth_y(lead) - depth_y(a), dt);
     } else if (!room && leadRoom) {
-        Building *door = &g.buildings[leadRoom - 1];
-        float x = door->x + 1.45f, y = door->y + .65f;
+        float x, y;
+        building_door(leadRoom - 1, &x, &y);
         if (distance(a->x, a->y, x, y) > 1.7f)
             route_toward(a, x, y, dt);
         else {

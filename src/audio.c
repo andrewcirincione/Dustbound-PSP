@@ -1,143 +1,141 @@
-/* Mix the streamed soundtrack and procedural effects on one PSP audio channel. */
+/* Decode ahead of the PSP audio mixer. Storage stalls must not hold the output thread. */
 #include "game.h"
 #ifdef PLATFORM_PSP
 #include <limits.h>
 #include <pspaudio.h>
 #include <pspkernel.h>
-#include <pspmp3.h>
-#include <psputility.h>
 #include <stdio.h>
 #include <string.h>
 
-enum { BLOCK_FRAMES = 512 };
-static const unsigned mp3End = 0x80671402u;
+#define MINIMP3_ONLY_MP3
+#define MINIMP3_NO_SIMD
+#define MINIMP3_IMPLEMENTATION
+#include "vendor/minimp3.h"
+
+enum { BLOCK_FRAMES = 1024, MUSIC_BLOCKS = 32 };
 static volatile int audioRunning, readEvent, writeEvent;
-static volatile unsigned musicFrames, audibleFrames, musicLoops;
-static int events[16], channel = -1, thread = -1;
+static volatile unsigned musicFrames, audibleFrames, musicLoops, musicUnderruns;
+static int events[16], channel = -1, mixer = -1, decoder = -1, emptyBlocks = -1, readyBlocks = -1;
 static const char *launcherPath;
-static short buffer[BLOCK_FRAMES * 2] __attribute__((aligned(64)));
-static unsigned char mp3Input[16384] __attribute__((aligned(64)));
-static unsigned char mp3Output[9216] __attribute__((aligned(64)));
-static char fileBuffer[16384];
+static short output[2][BLOCK_FRAMES * 2] __attribute__((aligned(64)));
+static struct {
+    short pcm[BLOCK_FRAMES * 2];
+    unsigned wraps;
+} musicQueue[MUSIC_BLOCKS];
 
-typedef struct {
+static struct {
     FILE *file;
-    long offset, length, next;
-    int avLoaded, mp3Loaded, resource, handle;
-    short *pcm;
-    int frames;
-} Music;
+    long offset, length, position;
+    int inputSize, cursor, samples, consumed;
+    unsigned wraps;
+    unsigned char input[16384];
+    short pcm[MINIMP3_MAX_SAMPLES_PER_FRAME];
+    mp3dec_t mp3;
+} stream;
 
-static void music_close(Music *m) {
-    if (m->handle >= 0) sceMp3ReleaseMp3Handle(m->handle);
-    if (m->resource) sceMp3TermResource();
-    if (m->mp3Loaded) sceUtilityUnloadModule(PSP_MODULE_AV_MP3);
-    if (m->avLoaded) sceUtilityUnloadModule(PSP_MODULE_AV_AVCODEC);
-    if (m->file) fclose(m->file);
-    *m = (Music){.handle = -1};
+static FILE *open_eboot(void) {
+    FILE *file = fopen(launcherPath, "rb");
+    return file ? file : fopen("EBOOT.PBP", "rb");
 }
 
-static int music_refill(Music *m) {
-    unsigned char *dst;
-    SceInt32 space, position;
-    if (sceMp3GetInfoToAddStreamData(m->handle, &dst, &space, &position) < 0 ||
-        position < 0 || position > m->length)
+static int open_soundtrack(void) {
+    uint32_t header[10];
+    stream.file = open_eboot();
+    if (!stream.file || fread(header, sizeof(header), 1, stream.file) != 1 ||
+        header[0] != 0x50425000u || header[1] != 0x10000u || header[8] < sizeof(header) ||
+        header[9] <= header[8] || header[9] > LONG_MAX || fseek(stream.file, 0, SEEK_END) != 0)
         return 0;
-    if (space <= 0 || position == m->length)
-        return 1;
-    int wrapping = position == 0 && m->next == m->length;
-    if (position != m->next && fseek(m->file, m->offset + position, SEEK_SET) != 0)
+    stream.offset = header[9];
+    stream.length = ftell(stream.file) - stream.offset;
+    mp3dec_init(&stream.mp3);
+    return stream.length > 0 && fseek(stream.file, stream.offset, SEEK_SET) == 0;
+}
+
+/* Reopen at the same byte after a transient storage error, for example on resume. */
+static int read_music(void) {
+    int left = stream.inputSize - stream.cursor;
+    memmove(stream.input, stream.input + stream.cursor, left);
+    stream.inputSize = left;
+    stream.cursor = 0;
+    long remaining = stream.length - stream.position;
+    int count = sizeof(stream.input) - left;
+    if (count > remaining) count = remaining;
+    if (!count) return 1;
+    if (!stream.file) {
+        stream.file = open_eboot();
+        if (stream.file && fseek(stream.file, stream.offset + stream.position, SEEK_SET) != 0) {
+            fclose(stream.file);
+            stream.file = NULL;
+        }
+    }
+    if (!stream.file) return 0;
+    if (fread(stream.input + left, 1, count, stream.file) != (size_t)count) {
+        fclose(stream.file);
+        stream.file = NULL;
         return 0;
-    int remaining = m->length - position;
-    int count = space < remaining ? space : remaining;
-    if (fread(dst, 1, count, m->file) != (size_t)count ||
-        sceMp3NotifyAddStreamData(m->handle, count) < 0)
-        return 0;
-    m->next = position + count;
-    if (wrapping) musicLoops++;
+    }
+    stream.inputSize += count;
+    stream.position += count;
     return 1;
 }
 
-static int music_open(Music *m) {
-    m->file = fopen(launcherPath, "rb");
-    if (!m->file)
-        m->file = fopen("EBOOT.PBP", "rb");
-    if (!m->file)
-        return 0;
-
-    setvbuf(m->file, fileBuffer, _IOFBF, sizeof(fileBuffer));
-    /* DATA.PSAR contains the complete MP3. Stream only that section from disk. */
-    uint32_t header[10];
-    if (fread(header, sizeof(header), 1, m->file) != 1 || header[0] != 0x50425000u ||
-        header[1] != 0x10000u || header[8] < sizeof(header) || header[9] <= header[8] ||
-        header[9] > LONG_MAX || fseek(m->file, 0, SEEK_END) != 0)
-        return 0;
-    m->offset = header[9];
-    long end = ftell(m->file);
-    if (end <= m->offset)
-        return 0;
-    m->length = end - m->offset;
-    m->next = -1;
-
-    if (sceUtilityLoadModule(PSP_MODULE_AV_AVCODEC) < 0)
-        return 0;
-    m->avLoaded = 1;
-    if (sceUtilityLoadModule(PSP_MODULE_AV_MP3) < 0)
-        return 0;
-    m->mp3Loaded = 1;
-    if (sceMp3InitResource() < 0)
-        return 0;
-    m->resource = 1;
-    SceMp3InitArg args = {
-        .mp3StreamStart = 0, .mp3StreamEnd = m->length,
-        .mp3Buf = mp3Input, .mp3BufSize = sizeof(mp3Input),
-        .pcmBuf = mp3Output, .pcmBufSize = sizeof(mp3Output),
-    };
-    m->handle = sceMp3ReserveMp3Handle(&args);
-    return m->handle >= 0 && music_refill(m) && sceMp3Init(m->handle) >= 0 &&
-           sceMp3GetSamplingRate(m->handle) == 44100 && sceMp3GetMp3ChannelNum(m->handle) == 2 &&
-           sceMp3SetLoopNum(m->handle, -1) >= 0;
+static void rewind_music(void) {
+    if (stream.file && fseek(stream.file, stream.offset, SEEK_SET) != 0) {
+        fclose(stream.file);
+        stream.file = NULL;
+    }
+    stream.position = stream.cursor = stream.inputSize = 0;
+    stream.wraps++;
+    mp3dec_init(&stream.mp3);
 }
 
-static int music_decode(Music *m) {
-    for (int attempt = 0; attempt < 2; attempt++) {
-        int need = sceMp3CheckStreamDataNeeded(m->handle);
-        if (need < 0 || (need && !music_refill(m)))
-            return -1;
-        int bytes = sceMp3Decode(m->handle, &m->pcm);
-        if (bytes > 0) {
-            if (!m->pcm || bytes > (int)sizeof(mp3Output) / 2 || bytes % (2 * sizeof(short)))
-                return -1;
-            m->frames = bytes / (2 * sizeof(short));
+static int decode_frame(void) {
+    for (int attempt = 0; attempt < 12; attempt++) {
+        if (stream.inputSize - stream.cursor < 4096 && !read_music())
+            return 0;
+        mp3dec_frame_info_t info = {0};
+        int frames = mp3dec_decode_frame(&stream.mp3, stream.input + stream.cursor,
+                                         stream.inputSize - stream.cursor, stream.pcm, &info);
+        stream.cursor += info.frame_bytes;
+        if (frames && info.hz == 44100 && info.channels == 2) {
+            stream.samples = frames;
+            stream.consumed = 0;
             return 1;
         }
-        if (bytes < 0 && (unsigned)bytes != mp3End)
-            return -1;
+        if (stream.position == stream.length && stream.cursor == stream.inputSize)
+            rewind_music();
     }
     return 0;
 }
 
-static int music_mix(Music *m, int *audible) {
-    int frames = 0;
-    memset(buffer, 0, sizeof(buffer));
-    while (frames < BLOCK_FRAMES && m->handle >= 0) {
-        if (!m->frames) {
-            int decoded = music_decode(m);
-            if (decoded < 0) music_close(m);
-            if (decoded <= 0) break;
+static int decode_thread(SceSize n, void *arg) {
+    (void)n;
+    (void)arg;
+    if (open_soundtrack()) {
+        unsigned write = 0;
+        while (audioRunning && sceKernelWaitSema(emptyBlocks, 1, NULL) >= 0 && audioRunning) {
+            int filled = 0;
+            unsigned before = stream.wraps;
+            while (filled < BLOCK_FRAMES && audioRunning) {
+                if (stream.consumed == stream.samples && !decode_frame()) {
+                    sceKernelDelayThread(75000);
+                    continue;
+                }
+                int count = stream.samples - stream.consumed;
+                if (count > BLOCK_FRAMES - filled) count = BLOCK_FRAMES - filled;
+                memcpy(musicQueue[write].pcm + filled * 2, stream.pcm + stream.consumed * 2,
+                       count * 2 * sizeof(short));
+                stream.consumed += count;
+                filled += count;
+            }
+            if (!audioRunning) break;
+            musicQueue[write].wraps = stream.wraps - before;
+            write = (write + 1) % MUSIC_BLOCKS;
+            sceKernelSignalSema(readyBlocks, 1);
         }
-        int count = BLOCK_FRAMES - frames;
-        if (count > m->frames) count = m->frames;
-        for (int i = 0; i < count * 2; i++) {
-            short sample = m->pcm[i] / 2;
-            buffer[frames * 2 + i] = sample;
-            *audible |= sample;
-        }
-        m->pcm += count * 2;
-        m->frames -= count;
-        frames += count;
     }
-    return frames;
+    if (stream.file) fclose(stream.file);
+    return 0;
 }
 
 typedef struct {
@@ -152,16 +150,26 @@ void audio_event(int kind) {
     events[writeEvent] = kind;
     writeEvent = next;
 }
-static int sound_thread(SceSize n, void *p) {
+static int sound_thread(SceSize n, void *arg) {
     (void)n;
-    (void)p;
-    Music music = {.handle = -1};
-    if (!music_open(&music))
-        music_close(&music);
-    unsigned serial = 0;
+    (void)arg;
+    unsigned serial = 0, read = 0, back = 0;
     while (audioRunning) {
+        short *buffer = output[back];
         int audible = 0;
-        int played = music_mix(&music, &audible);
+        int playing = readyBlocks >= 0 && sceKernelPollSema(readyBlocks, 1) >= 0;
+        if (playing) {
+            for (int i = 0; i < BLOCK_FRAMES * 2; i++) {
+                buffer[i] = musicQueue[read].pcm[i] / 2;
+                audible |= buffer[i];
+            }
+            musicLoops += musicQueue[read].wraps;
+            read = (read + 1) % MUSIC_BLOCKS;
+            sceKernelSignalSema(emptyBlocks, 1);
+        } else {
+            memset(buffer, 0, sizeof(output[0]));
+            if (musicFrames) musicUnderruns++;
+        }
         while (readEvent != writeEvent) {
             int kind = events[readEvent];
             readEvent = (readEvent + 1) & 15;
@@ -199,47 +207,65 @@ static int sound_thread(SceSize n, void *p) {
                 buffer[2 * i + side] = sample > 30000 ? 30000 : sample < -30000 ? -30000 : sample;
             }
         }
+        sceKernelDcacheWritebackRange(buffer, sizeof(output[0]));
         if (sceAudioOutputBlocking(channel, 0x5800, buffer) >= 0) {
-            musicFrames += played;
-            if (audible) audibleFrames += played;
+            if (playing) musicFrames += BLOCK_FRAMES;
+            if (audible) audibleFrames += BLOCK_FRAMES;
+            back ^= 1;
         } else {
             sceKernelDelayThread(10000);
         }
     }
-    music_close(&music);
     return 0;
 }
+
+static int start_audio_thread(const char *name, SceKernelThreadEntry fn, int priority, int stack) {
+    int id = sceKernelCreateThread(name, fn, priority, stack, 0, NULL);
+    if (id < 0) return -1;
+    if (sceKernelStartThread(id, 0, NULL) >= 0) return id;
+    sceKernelDeleteThread(id);
+    return -1;
+}
+
 void audio_init(const char *eboot) {
     launcherPath = eboot && *eboot ? eboot : "EBOOT.PBP";
     channel = sceAudioChReserve(PSP_AUDIO_NEXT_CHANNEL, BLOCK_FRAMES, PSP_AUDIO_FORMAT_STEREO);
-    if (channel < 0)
-        return;
+    if (channel < 0) return;
+    emptyBlocks = sceKernelCreateSema("Dust music free", 0, MUSIC_BLOCKS, MUSIC_BLOCKS, NULL);
+    readyBlocks = sceKernelCreateSema("Dust music ready", 0, 0, MUSIC_BLOCKS, NULL);
     audioRunning = 1;
-    thread = sceKernelCreateThread("Dustbound sound", sound_thread, 0x18, 0x4000, 0, 0);
-    if (thread >= 0 && sceKernelStartThread(thread, 0, 0) >= 0)
-        return;
-    audioRunning = 0;
-    if (thread >= 0) sceKernelDeleteThread(thread);
-    sceAudioChRelease(channel);
-    channel = thread = -1;
+    if (emptyBlocks >= 0 && readyBlocks >= 0)
+        decoder = start_audio_thread("Dust music", decode_thread, 0x19, 0x8000);
+    mixer = start_audio_thread("Dust mixer", sound_thread, 0x16, 0x4000);
+    if (mixer < 0) audio_shutdown();
 }
+
 void audio_shutdown(void) {
     audioRunning = 0;
-    if (thread >= 0) {
-        sceKernelWaitThreadEnd(thread, 0);
-        sceKernelDeleteThread(thread);
+    if (decoder >= 0) {
+        sceKernelSignalSema(emptyBlocks, 1);
+        sceKernelWaitThreadEnd(decoder, NULL);
+        sceKernelDeleteThread(decoder);
     }
-    if (channel >= 0)
-        sceAudioChRelease(channel);
+    if (mixer >= 0) {
+        sceKernelWaitThreadEnd(mixer, NULL);
+        sceKernelDeleteThread(mixer);
+    }
+    if (emptyBlocks >= 0) sceKernelDeleteSema(emptyBlocks);
+    if (readyBlocks >= 0) sceKernelDeleteSema(readyBlocks);
+    if (channel >= 0) sceAudioChRelease(channel);
+    decoder = mixer = emptyBlocks = readyBlocks = channel = -1;
 }
-void audio_debug(unsigned stats[3]) {
+
+void audio_debug(unsigned stats[4]) {
     stats[0] = musicFrames;
     stats[1] = audibleFrames;
     stats[2] = musicLoops;
+    stats[3] = musicUnderruns;
 }
 #else
 void audio_event(int kind) { (void)kind; }
 void audio_init(const char *eboot) { (void)eboot; }
 void audio_shutdown(void) {}
-void audio_debug(unsigned stats[3]) { stats[0] = stats[1] = stats[2] = 0; }
+void audio_debug(unsigned stats[4]) { stats[0] = stats[1] = stats[2] = stats[3] = 0; }
 #endif

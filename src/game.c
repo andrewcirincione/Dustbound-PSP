@@ -164,11 +164,11 @@ const char *travel_hold_reason(const Actor *a) {
         return "COMBAT";
     return NULL;
 }
-int level(const Actor *a, int s) { return (int)clamp(1 + sqrtf(a->xp[s] / 12), 1, 100); }
+int level(const Actor *a, int s) { return (int)clamp(1 + sqrtf(a->xp[s] / 12), 1, SKILL_CAP); }
 void gain(Actor *a, int s, float n) {
     if (s < 0 || s >= SKILLS || !a->squad)
         return;
-    a->xp[s] = fminf(117612, a->xp[s] + n);
+    a->xp[s] = fminf(SKILL_XP_CAP, a->xp[s] + n);
 }
 static void log_write(int priority, const char *fmt, va_list ap) {
     char b[100]; vsnprintf(b,sizeof(b),fmt,ap);
@@ -270,10 +270,59 @@ const char *log_current(int *priority,int *offset) {
     *offset = (int)ui.feedScroll;
     return ui.feed[0];
 }
+/* Portion variants are ordinary inventory IDs. All transfers and theft ownership
+   work the same way for a partly used item as for a sealed one. */
+static const int portionBases[PORTION_TYPES] = {MEDKIT, RATION, JERKY, OATCAKE, STEW, HERBAL_TEA};
+
+int portion_base(int item) {
+    return item >= PORTION_ITEMS && item < ITEMS ? portionBases[(item - PORTION_ITEMS) / 99] : item;
+}
+int portion_percent(int item) {
+    return item >= PORTION_ITEMS && item < ITEMS ? (item - PORTION_ITEMS) % 99 + 1 : 100;
+}
+int portion_item(int base, int percent) {
+    if (percent >= 100) return base;
+    if (percent > 0)
+        for (int i = 0; i < PORTION_TYPES; i++)
+            if (portionBases[i] == base)
+                return PORTION_ITEMS + i * 99 + percent - 1;
+    return NONE;
+}
+int food_capacity(int item) {
+    switch (portion_base(item)) {
+    case RATION: return 48;
+    case JERKY: return 36;
+    case OATCAKE: return 25;
+    case STEW: return 68;
+    case HERBAL_TEA: return 16;
+    default: return 0;
+    }
+}
+void portion_content(void) {
+    static char labels[PORTION_TYPES][99][32];
+    itemDefs[MEDKIT].desc = "Uses supplies in proportion to the wound. Stops bleeding first.";
+    itemDefs[RATION].desc = "Fills up to 48 hunger. Unfinished portions stay in your pack.";
+    itemDefs[JERKY] = (ItemDef){"Smoked jerky", "Dried strips of meat. Fills up to 36 hunger.", 26, 1, -1, 0, 0, 0x976946, -1};
+    itemDefs[OATCAKE] = (ItemDef){"Oatcake", "A crumbly grain cake. Fills up to 25 hunger.", 18, 1, -1, 0, 0, 0xcba477, -1};
+    itemDefs[STEW] = (ItemDef){"Bean stew", "A crock of thick stew. Fills up to 68 hunger.", 49, 2, -1, 0, 0, 0xa57a43, -1};
+    itemDefs[HERBAL_TEA] = (ItemDef){"Herbal tea", "A flask of steeped leaves. Fills up to 16 hunger.", 12, 1, -1, 0, 0, 0xa9a86c, -1};
+    for (int i = 0; i < PORTION_TYPES; i++) {
+        ItemDef base = itemDefs[portionBases[i]];
+        for (int pct = 1; pct < 100; pct++) {
+            ItemDef *item = &itemDefs[portion_item(portionBases[i], pct)];
+            char *name = labels[i][pct - 1];
+            snprintf(name, 32, "%s (%d%%)", base.name, pct);
+            *item = base;
+            item->name = name;
+            item->price = (base.price * pct + 99) / 100;
+        }
+    }
+}
+
 int inventory_count(const Actor *a, int item) {
     int n = 0;
     for (int i = 0; i < PACK; i++)
-        if (a->pack[i].item == item)
+        if (a->pack[i].item == item || (item == MEDKIT && portion_base(a->pack[i].item) == MEDKIT))
             n += a->pack[i].qty;
     return n;
 }
@@ -304,6 +353,32 @@ int inventory_remove_slot(Actor *a, int slot, int qty) {
     }
     return 1;
 }
+static int use_portion(Actor *a, int slot, int amount) {
+    int item = a->pack[slot].item;
+    int left = portion_percent(item) - amount;
+    if (left <= 0)
+        return inventory_remove_slot(a, slot, 1);
+    int remainder = portion_item(portion_base(item), left);
+    if (!remainder) return 0;
+    if (a->pack[slot].qty == 1) {
+        a->pack[slot].item = remainder;
+        return 1;
+    }
+    if (!inventory_add_owned(a, remainder, 1, a->stolen[slot]))
+        return 0;
+    return inventory_remove_slot(a, slot, 1);
+}
+
+static int eat_from_pack(Actor *eater, Actor *owner, int slot) {
+    int item = owner->pack[slot].item, fill = food_capacity(item);
+    if (!fill || eater->hunger >= 99.99f) return 0;
+    int amount = (int)fminf(portion_percent(item), ceilf((100 - eater->hunger) * 100 / fill));
+    if (!use_portion(owner, slot, amount)) return 0;
+    eater->hunger = fminf(100, eater->hunger + amount * fill * .01f);
+    log_msg("%s ate %s.", eater->name, itemDefs[portion_base(item)].name);
+    return 1;
+}
+
 int inventory_transfer(Actor *from, Actor *to, int slot, int qty) {
     if (from == to || slot < 0 || slot >= PACK || qty <= 0 || from->pack[slot].qty < qty)
         return 0;
@@ -351,7 +426,7 @@ int inventory_remove(Actor *a, int item, int qty) {
     if (qty <= 0 || inventory_count(a, item) < qty)
         return 0;
     for (int i = 0; i < PACK && qty; i++)
-        if (a->pack[i].item == item) {
+        if ((a->pack[i].item == item || (item == MEDKIT && portion_base(a->pack[i].item) == MEDKIT))) {
             int n = a->pack[i].qty < qty ? a->pack[i].qty : qty;
             a->pack[i].qty -= n;
             qty -= n;
@@ -425,9 +500,14 @@ int can_walk(float x, float y) {
         return 0;
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
-        if (b->type == HOUSE || b->type == SHOP || b->type == BAR || b->type == TOWER || b->type == WALL || b->type == JAIL) {
-            float r = b->type == TOWER || b->type == JAIL ? .8f : b->type == WALL ? 1.01f : 1.25f;
-            if (fabsf(b->x - x) < r && fabsf(b->y - y) < r)
+        if (fabsf(b->x - x) > 2.6f || fabsf(b->y - y) > 2.6f) continue;
+        if (b->type == WALL && fabsf(b->x - x) < 1.01f && fabsf(b->y - y) < 1.01f)
+            return 0;
+        if (building_has_interior(b->type)) {
+            float w, d;
+            int height;
+            building_footprint(i, &w, &d, &height);
+            if (fabsf(b->x - x) < w && fabsf(b->y - y) < d)
                 return 0;
         }
     }
@@ -572,6 +652,7 @@ int add_build(float x, float y, int type, int faction, int owner) {
     else
         g.depth.buildings[n] = (DepthBuilding){.condition = 100};
     g.field.rolls[n] = 0;
+    g.frontier.variant[n] = 0;
     g.buildings[n] = (Building){x, y, type, faction, owner, 1, 0, 0};
     return n;
 }
@@ -582,18 +663,57 @@ void add_node(float x, float y, int type, int owner, int item, int qty) {
         (Node){x,    y,   type, type <= NODE_WOOD ? 20 : 1, type == NODE_LOCKED || type == NODE_RUIN, owner,
                item, qty, 0};
 }
+static void offer_stock(int town, int item, int qty, int venue) {
+    *market_stock(town, item) = qty;
+    g.frontier.venue[town][item] = venue;
+}
 void restock_town(int t) {
-        memset(g.stock[t], 0, sizeof(g.stock[t]));
-        g.field.stock[t][BEDROLL_ITEM - TOWN_STOCK_ITEMS] = 2;
-        g.field.stock[t][SLAVE_GARB - TOWN_STOCK_ITEMS] = 0;
-        for (int j = 1; j < BASE_ITEMS; j++)
-            g.stock[t][j] = j <= 10 ? 16 : (j == BOLTS || j == CARTRIDGE ? 60 : j == RELIC ? 1 : 3);
-        for (int j = 0; j < 36; j++) {
-            int f = (t * 11 + j * 7 + g.day * 3) % FAMILIES;
-            int m = (t + j / 6 + g.day) % MATERIALS, q = (j + t + g.day) % QUALITIES;
-            g.stock[t][gear_id(f, m, q)] = 1 + (j % 3);
+    const TownDesign *plan = town_design(t);
+    unsigned roll = (g.seed * 31u) ^ ((t + 3u) * 2654435761u) ^ (g.day * 1597334677u);
+    int tier = plan->marketTier;
+    memset(g.stock[t], 0, sizeof(g.stock[t]));
+    memset(g.field.stock[t], 0, sizeof(g.field.stock[t]));
+    memset(g.frontier.stock[t], 0, sizeof(g.frontier.stock[t]));
+    memset(g.frontier.venue[t], 0, sizeof(g.frontier.venue[t]));
+    offer_stock(t, RATION, 2 + tier, TRADE_GENERAL);
+    offer_stock(t, portion_item(MEDKIT, roll % 17 == 0 ? 100 : 35 + roll % 51), 1, TRADE_GENERAL);
+    offer_stock(t, BEDROLL_ITEM, 1, TRADE_GENERAL);
+    offer_stock(t, WATER, 1 + tier, TRADE_GENERAL);
+    offer_stock(t, roll % 2 ? JERKY : OATCAKE, 1, TRADE_GENERAL);
+    int weapon = t % 2 ? SABRE : RUSTSWORD;
+    if (roll % 23 == 0) weapon = gear_id((t * 7 + 3) % WEAPON_FAMILIES, 2, 1);
+    offer_stock(t, weapon, 1, TRADE_GENERAL);
+    if (roll % 3 || tier) offer_stock(t, t % 2 ? RAGS : STRAW, 1, TRADE_GENERAL);
+    if (tier) {
+        offer_stock(t, CLOTH, 2 + tier, TRADE_GENERAL);
+        offer_stock(t, BOLTS, 6 + tier * 3, TRADE_GENERAL);
+        if (town_export(t) != MEDKIT) offer_stock(t, town_export(t), 2, TRADE_GENERAL);
+        offer_stock(t, gear_id(76 + (t + g.day) % 8, 0, 0), 1, TRADE_GENERAL);
+    }
+    if (t == 0) offer_stock(t, LEATHER, 1, TRADE_GENERAL);
+    if (tier == 2) offer_stock(t, CARTRIDGE, 8, TRADE_GENERAL);
+    offer_stock(t, STEW, 1 + plan->beds / 2, TRADE_INN);
+    offer_stock(t, HERBAL_TEA, 2 + plan->beds / 3, TRADE_INN);
+    offer_stock(t, portion_item(t % 2 ? JERKY : OATCAKE, 65 + roll % 21), 2, TRADE_INN);
+    if (plan->smith) {
+        for (int n = 0; n < 3 + tier; n++) {
+            int family = (roll / 17 + t * 3 + n * 7) % WEAPON_FAMILIES;
+            int quality = roll % 19 == (unsigned)n ? 2 : (n + tier) % 3 == 0;
+            offer_stock(t, gear_id(family, (t + n) % (2 + tier), quality), 1, TRADE_SMITH);
         }
-    frontier_restock(t);regional_restock(t);society_stock(t);civil_stock(t);limbs_stock(t);
+        for (int n = 0; n < 2 + tier; n++)
+            offer_stock(t, gear_id(32 + (roll / 7 + n * 5 + t) % 36, 1 + n % 2,
+                                   n ? n % 2 : tier > 0), 1, TRADE_SMITH);
+    }
+    if (tier == 2 && t != 8 && t != 18)
+        for (int n = 0; n < 5; n++)
+            offer_stock(t, gear_id(32 + (t * 5 + n * 7 + g.day) % 36, 3 + n % 2,
+                                   n == 0 && roll % 5 == 0 ? 3 : 2), 1, TRADE_ARMORER);
+    if (tier == 2 || t == 7 || t == 12) {
+        offer_stock(t, PARTS, 2, TRADE_APOTHECARY);
+        offer_stock(t, LIMB_ITEMS + (roll % 8), 1, TRADE_APOTHECARY);
+        offer_stock(t, TONIC, 1, TRADE_APOTHECARY);
+    }
 }
 void restock(void) {
     for (int t = 0; t < TOWNS; t++) restock_town(t);
@@ -718,6 +838,7 @@ static void new_world(uint32_t seed, int scenario) {
 void game_new(uint32_t seed, int scenario) {
     new_world(seed, scenario);
     field_init();
+    frontier_world_init();
     find_context();
 }
 
@@ -757,18 +878,6 @@ int playing_dead(const Actor *a) {
     uintptr_t addr = (uintptr_t)a, start = (uintptr_t)g.actors;
     return addr >= start && addr < start + sizeof(g.actors) &&
            g.field.playingDead[(addr - start) / sizeof(Actor)];
-}
-void play_dead(Actor *a) {
-    int n = (int)(a - g.actors);
-    if (!conscious(a) || a->prisonTime > 0 || g.depth.actors[n].captive)
-        return;
-    if (playing_dead(a)) {
-        g.field.playingDead[n] = 0;
-        return;
-    }
-    g.field.playingDead[n] = 1;
-    a->sneaking = a->autoattack = a->attackPhase = a->taskKind = a->movedTimer = 0;
-    a->target = g.living.command[n] = -1;
 }
 void put_down(Actor *carrier) {
     int n = carrier->carrying;
@@ -863,7 +972,7 @@ static void credit_squad_defeat(Actor *a) {
     g.kills++;
     contract_defeat(a);
     if (a->bountyReward)
-        log_msg("Bounty target down. Carry them to claim a named bounty.");
+        log_msg("Bounty target down. Take them to a jailkeeper who will pay.");
 }
 void combat_impact(int ai, int bi, int w) {
     if(ai<0||bi<0||ai>=g.actorCount||bi>=g.actorCount)return;
@@ -1035,7 +1144,7 @@ int injury_tick(Actor *a, DepthActor *z, float dt, int resting) {
                         a->woundFlags |= 1u << l;
         } else {
             a->bleed = 0;
-            float rate = resting || (a->woundFlags & WOUND_CLINIC) ? .58f : .11f;
+            float rate = resting || (a->woundFlags & WOUND_CLINIC) ? .58f : recovery_coma(a) ? .16f : .11f;
             if (a->woundFlags & WOUND_TONIC)
                 rate += .65f;
             a->blood = fminf(100, a->blood + dt * rate);
@@ -1078,8 +1187,10 @@ int injury_tick(Actor *a, DepthActor *z, float dt, int resting) {
             continue;
         int cared = resting || (a->woundFlags & WOUND_CLINIC);
         float severity = clamp((max - a->health[l]) / max, 0, 1.5f);
-        float rate = (cared ? 1.50f + gear_bonus(a, 6) * .01f : .082f) / (1 + severity * .45f);
-        z->trauma[l] = fmaxf(0, z->trauma[l] - dt * (cared ? .62f : .055f) * nutrition);
+        /* A motionless patient regains treated vital health faster while unconscious. */
+        float restBoost = recovery_coma(a) ? (l <= CHEST ? 1.65f : 1.30f) : 1.f;
+        float rate = (cared ? 1.50f + gear_bonus(a, 6) * .01f : .082f * restBoost) / (1 + severity * .45f);
+        z->trauma[l] = fmaxf(0, z->trauma[l] - dt * (cared ? .62f : .055f * restBoost) * nutrition);
         float cap = max - z->trauma[l];
         a->health[l] = fminf(cap, a->health[l] + dt * rate * nutrition);
         if (a->health[l] >= max)
@@ -1140,7 +1251,7 @@ static int treatment_supplies(Actor *m, int type, int slot, int consume) {
     }
     int item = type == TREAT_REPAIR ? PARTS : MEDKIT;
     if (slot >= 0)
-        return slot < PACK && m->pack[slot].item == item &&
+        return slot < PACK && portion_base(m->pack[slot].item) == item &&
             (!consume || inventory_remove_slot(m, slot, 1));
     return consume ? inventory_remove(m, item, 1) : inventory_count(m, item) > 0;
 }
@@ -1155,6 +1266,69 @@ float treatment_burden(const Actor *a) {
     }
     return fminf(8, 1.7f * damage + a->bleed * .52f);
 }
+static int med_dose(Actor *m, int preferred, int amount) {
+    Actor packBefore = *m;
+    for (int pass = 0; pass < 3 && amount > 0; pass++) {
+        for (int i = 0; i < PACK && amount > 0; i++) {
+            int item = m->pack[i].item, pct = portion_percent(item);
+            if (portion_base(item) != MEDKIT ||
+                (pass == 0 && i != preferred) || (pass == 1 && pct == 100))
+                continue;
+            while (amount > 0 && portion_base(m->pack[i].item) == MEDKIT) {
+                int take = (int)fminf(amount, portion_percent(m->pack[i].item));
+                if (!use_portion(m, i, take)) break;
+                amount -= take;
+            }
+        }
+    }
+    if (!amount) return 1;
+    *m = packBefore;
+    return 0;
+}
+
+/* Bleeding is a short first phase. Dressing each remaining injury takes its own time. */
+static int plan_dressing(int mi, const Actor *a) {
+    Actor *m = &g.actors[mi];
+    const DepthActor *wound = &g.depth.actors[a - g.actors];
+    float duration, speed = 1 + .006f * (level(m, MEDICINE) - 1) + .01f * gear_bonus(m, 5);
+    int phase = 0, dose;
+    if (a->bleed > .01f) {
+        dose = (int)fminf(25, 6 + ceilf(a->bleed * 3));
+        duration = 1.65f + fminf(2.6f, a->bleed * .30f);
+    } else {
+        for (int l = 0; l < LIMBS; l++) {
+            if (!depth_can_heal(a, l) || (a->treatedMask & (1 << l)))
+                continue;
+            if (a->health[l] < limb_max_health(a, l) - .05f || (a->woundFlags & (1u << l)) ||
+                wound->trauma[l] > .05f) {
+                phase = l + 1;
+                break;
+            }
+        }
+        if (!phase) return 0;
+        int l = phase - 1;
+        float damage = fmaxf(0, 1 - a->health[l] / limb_max_health(a, l));
+        dose = (int)fminf(50, 4 + ceilf(21 * damage + .15f * wound->trauma[l]));
+        duration = 2.5f + 6.2f * damage + .065f * wound->trauma[l];
+    }
+    g.frontier.treatmentPhase[mi] = phase;
+    g.frontier.treatmentDose[mi] = dose;
+    m->action = g.frontier.taskTotal[mi] = fmaxf(1.1f, duration / fmaxf(.65f, speed));
+    return 1;
+}
+
+int treatment_patient(const Actor *a) {
+    if (a->taskKind == TASK_JAIL_CARE)
+        return a - g.actors;
+    if (a->taskKind != TASK_TREAT || a->taskIndex < 0)
+        return -1;
+    return a->taskIndex / (PACK + 1) % MAX_ACTORS;
+}
+float treatment_progress(const Actor *a) {
+    float total = g.frontier.taskTotal[a - g.actors];
+    return total > 0 ? 100 * clamp(1 - a->action / total, 0, 1) : 0;
+}
+
 int begin_treatment(int mi, int pi, int type, int slot) {
     if (mi < 0 || pi < 0 || mi >= g.actorCount || pi >= g.actorCount)
         return 0;
@@ -1174,20 +1348,25 @@ int begin_treatment(int mi, int pi, int type, int slot) {
     m->taskIndex = (type * MAX_ACTORS + pi) * (PACK + 1) + slot + 1;
     float burden = treatment_burden(a);
     float skill = level(m, type == TREAT_REPAIR ? ENGINEERING : MEDICINE) * .035f;
+    g.frontier.treatmentPhase[mi] = -1;
+    g.frontier.treatmentDose[mi] = 0;
     if (type == TREAT_PRESSURE)
         m->action = 2.1f + fminf(2.3f, burden * .32f);
     else if (type == TREAT_CLINIC)
-        m->action = 3.5f + burden * .75f;
+        m->action = 3.5f + burden * 1.1f;
     else if (type == TREAT_REPAIR)
         m->action = fmaxf(1.75f, 5.5f - skill);
-    else
-        m->action = fmaxf(1.75f, 3.0f - skill - gear_bonus(m, 5) * .05f) + burden;
+    else if (!plan_dressing(mi, a)) {
+        m->taskKind = 0;
+        return 0;
+    }
+    g.frontier.taskTotal[mi] = m->action;
     if (mi == g.selected) {
         ui.screen = SCREEN_WORLD;
         ui.selection = ui.menuReturn = 0;
     }
     if (m->squad || a->squad)
-        log_msg("%s starts %s. Stay within reach.", m->name, type == TREAT_REPAIR ? "repairs" :
+        log_msg("%s starts %s.", m->name, type == TREAT_REPAIR ? "repairs" :
                 type == TREAT_CLINIC ? "clinic care" : "first aid");
     return 1;
 }
@@ -1208,29 +1387,53 @@ static void treatment_tick(float dt) {
             if (mi == g.selected) log_msg("Treatment interrupted.");
             continue;
         }
+        if (type == TREAT_DRESS && !g.frontier.treatmentDose[mi] && !plan_dressing(mi, a)) {
+            m->taskKind = 0;
+            continue;
+        }
         m->action -= dt;
         if (m->action > 0)
             continue;
-        m->taskKind = 0;
-        if (!treatment_ready(a, type) || !treatment_supplies(m, type, slot, 1))
-            continue;
+        if (type == TREAT_DRESS) {
+            int l = g.frontier.treatmentPhase[mi] - 1;
+            int needed = l < 0 ? a->bleed > .01f : !(a->treatedMask & (1 << l)) && depth_can_heal(a, l);
+            if (needed && !med_dose(m, slot, g.frontier.treatmentDose[mi])) {
+                m->taskKind = 0;
+                if (m->squad || a->squad) log_msg("%s ran short of dressings.", m->name);
+                continue;
+            }
+            if (needed && l < 0) {
+                a->bleed = 0;
+                if (m->squad || a->squad) {
+                if (m == a) log_msg("%s stopped the bleeding.", m->name);
+                else log_msg("%s stopped %s's bleeding.", m->name, a->name);
+            }
+            } else if (needed) {
+                a->treatedMask |= 1 << l;
+                a->woundFlags &= ~(1u << l);
+                gain(m, MEDICINE, 12);
+            }
+            if (plan_dressing(mi, a))
+                continue;
+            m->taskKind = 0;
+            if (m->squad || a->squad)
+                log_msg("%s finished dressing %s's wounds.", m->name, a->name);
+        } else {
+            m->taskKind = 0;
+            if (!treatment_ready(a, type) || !treatment_supplies(m, type, slot, 1))
+                continue;
+        }
         if (type == TREAT_REPAIR) {
             injury_repair(a, &g.depth.actors[pi]);
             gain(m, ENGINEERING, 25);
             log_msg("%s repaired %s. Parts are recovering.", m->name, a->name);
-        } else {
+        } else if (type == TREAT_PRESSURE) {
+            a->bleed = 0;
+            if (m->squad || a->squad) log_msg("%s stopped %s's bleeding.", m->name, a->name);
+        } else if (type == TREAT_CLINIC) {
             dress_wounds(a);
-            if (type == TREAT_CLINIC)
-                a->woundFlags |= WOUND_CLINIC;
-            if (type == TREAT_DRESS)
-                gain(m, MEDICINE, 24);
-            if (type == TREAT_CLINIC)
-                log_msg("Clinic care begins. Rest here while you recover.");
-            else if (a->squad && !m->squad)
-                log_warn("%s bandaged %s.", m->name, a->name);
-            else
-                log_msg("%s dressed %s's wounds.", m->name, a->name);
-
+            a->woundFlags |= WOUND_CLINIC;
+            log_msg("Clinic care begins. Rest here while you recover.");
         }
         if (m->squad && !a->squad && mi != pi)
             faction_goodwill(a->faction, 3);
@@ -1244,7 +1447,8 @@ void use_item(int s) {
     if (s < 0 || s >= PACK || !a->pack[s].item)
         return;
     int it = a->pack[s].item;
-    if (it != MEDKIT && it != PARTS && it != TONIC)
+    int base = portion_base(it);
+    if (base != MEDKIT && it != PARTS && it != TONIC)
         g.field.playingDead[g.selected] = 0;
     if (it == BEDROLL_ITEM) {
         deploy_bedroll(a, s);
@@ -1260,10 +1464,15 @@ void use_item(int s) {
         a->gear[e] = it;
         a->gearStolen[e] = owner;
         log_msg("Equipped %s.", itemDefs[it].name);
-    } else if (it == RATION || it == WATER) {
+    } else if (food_capacity(it)) {
+        if (a->hunger >= 99.99f)
+            log_msg("%s is full.", a->name);
+        else if (!eat_from_pack(a, a, s))
+            log_msg("Make room for the remaining portion.");
+    } else if (it == WATER) {
         inventory_remove_slot(a, s, 1);
-        a->hunger = fminf(100, a->hunger + (it == RATION ? 48 : 12));
-        log_msg("Used %s.", itemDefs[it].name);
+        a->hunger = fminf(100, a->hunger + 12);
+        log_msg("Drank water.");
     } else if (it == TONIC) {
         if (conscious(a) && a->race != 2 && !(a->woundFlags & WOUND_TONIC) &&
             (a->blood < 100 || a->exposure > 0)) {
@@ -1278,7 +1487,7 @@ void use_item(int s) {
         for (int t = 0; t < TOWNS; t++)
             g.discovered[t] = 1;
         log_msg("Survey chart reveals the frontier.");
-    } else if (it == MEDKIT)
+    } else if (base == MEDKIT)
         begin_treatment(g.selected, g.selected, TREAT_DRESS, s);
     else if (it == PARTS)
         begin_treatment(g.selected, g.selected, TREAT_REPAIR, s);
@@ -1332,6 +1541,7 @@ int sell_item(int town, int s) {
         return 0;
     inventory_remove_slot(a, s, 1);
     g.money += price;
+    if (!*market_stock(town, it)) g.frontier.venue[town][it] = ui.tradeSmith;
     (*market_stock(town, it))++;
     trade_goodwill(g.townOwner[town], price);
     log_msg("Sold %s for %d silver.", itemDefs[it].name, price);
@@ -1444,18 +1654,19 @@ int recipe_requirements(int c,CraftRequirements*out){
     out->station=r->station;out->tech=r->tech;return 1;
 }
 int nearby_station(int type, float r) {
-    if (g.interiorBuilding && g.selected == g.interiorActor) {
-        int id = g.interiorBuilding - 1;
-        int c = interior_context();
-        InteriorProp props[ROOM_PROPS];
-        interior_props(id, props);
-        int action = type == FORGE   ? ROOM_FORGE
-                     : type == BED   ? ROOM_REST
-                     : type == STORE ? ROOM_STORAGE
-                                     : ROOM_NONE;
-        return c >= 0 && action && props[c].action == action ? id : -1;
-    }
     Actor *a = &g.actors[g.selected];
+    int room = depth_room(a);
+    if (room) {
+        int action = type == FORGE ? ROOM_FORGE : type == BED ? ROOM_REST : type == STORE ? ROOM_STORAGE : ROOM_NONE;
+        if (!action) return -1;
+        InteriorProp props[ROOM_PROPS];
+        int count = interior_props(room - 1, props);
+        for (int i = 0; i < count; i++)
+            if (props[i].action == action && distance(depth_x(a), depth_y(a), props[i].x, props[i].y) < 2)
+                return room - 1;
+        return -1;
+    }
+    if (type == FORGE) return -1;
     for (int i = 0; i < g.buildingCount; i++)
         if (g.buildings[i].type == type && depth_build_ready(i) && distance(a->x, a->y, g.buildings[i].x, g.buildings[i].y) < r)
             return i;
@@ -1470,7 +1681,8 @@ int craft_item(int c) {
         log_msg("Research level %d required.", r->tech);
         return 0;
     }
-    if (nearby_station(r->station, 1.7f) < 0) {
+    int station = nearby_station(r->station, 1.7f);
+    if (station < 0) {
         log_msg("Stand near a %s.", r->station == FORGE      ? "forge"
                                     : r->station == CAMPFIRE ? "campfire"
                                                              : "research bench");
@@ -1497,7 +1709,7 @@ int craft_item(int c) {
         log_msg("Pack full.");
         return 0;
     }
-    if ((r->station==FORGE||r->station==CAMPFIRE)&&!depth_use_fuel(nearby_station(r->station,1.7f),1)){*a=old;return 0;}
+    if ((r->station==FORGE||r->station==CAMPFIRE)&&!depth_use_fuel(station,1)){*a=old;return 0;}
     gain(a, r->skill, 35);
     log_msg("Crafted %d %s.", qty, itemDefs[r->output].name);
     return 1;
@@ -1592,7 +1804,7 @@ void find_context(void) {
         }
         if (b->kind == TRADER || b->kind == RECRUIT || b->dead || b->unconscious > 0 || b->squad ||
             b->kind == SETTLER || b->kind == GUARD || b->kind == CARAVAN || depth_named(i)>=0)
-            add_context(0, i, distance(a->x, a->y, b->x, b->y), TALK_REACH);
+            add_context(0, i, depth_distance(a, b), TALK_REACH);
     }
     for (int i = 0; i < g.nodeCount; i++)
         if (g.nodes[i].remaining)
@@ -1601,8 +1813,8 @@ void find_context(void) {
         Building *b = &g.buildings[i];
         if (portable_bedroll(i) < 0) continue;
         if (building_has_interior(b->type))
-            add_context(3, i, distance(a->x, a->y, b->x + 1.45f, b->y + .65f), DOOR_REACH);
-        if (b->type >= WELL && b->type <= STORE && b->type != WALL && b->type != WINDMILL)
+            add_context(3, i, building_door_distance(i, a->x, a->y), DOOR_REACH);
+        if (b->type >= WELL && b->type <= STORE && b->type != WALL && b->type != WINDMILL && b->type != FORGE)
             add_context(2, i, distance(a->x, a->y, b->x, b->y), 1.7f);
     }
     if (ui.contextCount) {
@@ -1666,6 +1878,7 @@ void interact_context(int kind,int target) {
         return;
     }
     if (ui.contextKind == 4) return;
+    g.field.playingDead[g.selected] = 0;
     if ((ui.contextKind==2||ui.contextKind==3)&&!depth_build_ready(n)) {depth_build_action(n);return;}
     if (ui.contextKind == 3) {
         interior_enter(n);
@@ -1680,11 +1893,6 @@ void interact_context(int kind,int target) {
             return;
         }
         if (b->unconscious > 0 || b->dead) {
-            if (b->bountyReward && b->dead && !bounty_contract_active(n)) {
-                g.money += b->bountyReward;
-                log_msg("Bounty proof recovered: %d silver.", b->bountyReward);
-                b->bountyReward = 0;
-            }
             ui.lootActor = n;
             ui.selection = 0;
             ui.screen = SCREEN_LOOT;
@@ -1758,8 +1966,7 @@ void interact_context(int kind,int target) {
         } else
             log_msg("Need water to plant this crop.");
     } else if (b->type == FORGE) {
-        ui.screen = SCREEN_CRAFT;
-        ui.selection = 0;
+        log_msg("Enter the smithy to use the forge.");
     } else if (b->type == BENCH) {
         ui.screen = SCREEN_RESEARCH;
         ui.selection = 0;
@@ -1800,12 +2007,13 @@ static void complete_task(Actor *a) {
             a->taskKind = 0;
             return;
         }
+        int success = (int)(rnd() % 100) < lockpick_chance(a, LOCK_SALVAGE);
         gain(a, LOCKPICK, 28);
-        if (rf() < .62f + level(a, LOCKPICK) * .008f) {
+        if (success) {
             b->locked = 0;
             log_msg("Lock opened. Search the chest to see what is inside.");
         } else
-            log_msg("Lock resisted. Your lockpicking improved.");
+            log_msg("The lock held.");
     }
     a->taskKind = 0;
 }
@@ -1827,8 +2035,18 @@ void reveal_area(Actor *a) {
                 int k = (yy / 4) * FOG_SIZE + xx / 4;
                 g.seen[k >> 3] |= 1 << (k & 7);
             }
+    for (int i = 0; i < LANDMARKS; i++)
+        if (!g.frontier.knownSites[i] && distance(a->x,a->y,g.depth.siteX[i],g.depth.siteY[i]) < 9)
+            g.frontier.knownSites[i] = 1;
+    if (!g.frontier.tollKnown && distance(a->x,a->y,g.regions.campX,g.regions.campY) < 9)
+        g.frontier.tollKnown = 1;
+    for (int i = 0; i < LODGES; i++)
+        if (g.frontier.lodge[i] && !g.frontier.knownLodges[i]) {
+            const Building *b = &g.buildings[g.frontier.lodge[i] - 1];
+            if (distance(a->x,a->y,b->x,b->y) < 9) g.frontier.knownLodges[i] = 1;
+        }
     for (int t = 0; t < TOWNS; t++)
-        if (!g.discovered[t] && distance(a->x, a->y, towns[t].x, towns[t].y) < 10) {
+        if (!g.discovered[t] && distance(a->x, a->y, towns[t].x, towns[t].y) < 12) {
             g.discovered[t] = 1;
             log_msg("Discovered %s.", towns[t].name);
             gain(a, PERCEPTION, 80);
@@ -1937,15 +2155,21 @@ static void squad_job(Actor *a, float dt) {
         }
     }
 }
-static int take_ration(Actor *a) {
-    if (inventory_remove(a, RATION, 1))
-        return 1;
+static int pack_meal(Actor *eater, Actor *owner) {
+    for (int pass = 0; pass < 2; pass++)
+        for (int j = 0; j < PACK; j++) {
+            int item = owner->pack[j].item;
+            if (food_capacity(item) && (portion_percent(item) == 100) == pass && eat_from_pack(eater, owner, j))
+                return 1;
+        }
+    return 0;
+}
+static void eat_meal(Actor *a) {
+    if (pack_meal(a, a)) return;
     for (int i = 0; i < g.actorCount; i++) {
         Actor *b = &g.actors[i];
-        if (b == a || !b->active || !b->squad || b->dead || depth_distance(a, b) > 3)
-            continue;
-        if (inventory_remove(b, RATION, 1))
-            return 1;
+        if (b != a && b->active && b->squad && !b->dead && depth_distance(a, b) <= 3 && pack_meal(a, b))
+            return;
     }
     int room = actor_inside(a);
     for (int i = 0; i < g.buildingCount; i++) {
@@ -1953,14 +2177,29 @@ static int take_ration(Actor *a) {
         if (b->type != STORE || b->owner < 0 || !depth_build_ready(i) ||
             (room ? room != i + 1 : distance(a->x, a->y, b->x, b->y) > 3))
             continue;
-        for (int j = 0; j < 16; j++)
-            if (b->storage[j].item == RATION && b->storage[j].qty > 0) {
-                if (--b->storage[j].qty == 0)
-                    b->storage[j].item = NONE;
-                return 1;
+        for (int j = 0; j < 16; j++) {
+            Stack *food = &b->storage[j];
+            int fill = food_capacity(food->item);
+            if (!fill) continue;
+            int amount = (int)fminf(portion_percent(food->item), ceilf((100 - a->hunger) * 100 / fill));
+            int base = portion_base(food->item);
+            int rest = portion_item(base, portion_percent(food->item) - amount);
+            if (rest && food->qty > 1) {
+                int k;
+                for (k = 0; k < 16 && b->storage[k].item; k++) {}
+                if (k == 16) continue;
+                b->storage[k] = (Stack){rest, 1};
+                food->qty--;
+            } else if (rest) {
+                food->item = rest;
+            } else if (--food->qty == 0) {
+                food->item = NONE;
             }
+            a->hunger = fminf(100, a->hunger + amount * fill * .01f);
+            log_msg("%s ate %s.", a->name, itemDefs[base].name);
+            return;
+        }
     }
-    return 0;
 }
 int civilian_flees(const Actor *a) {
     return !a->squad && (a->kind == SETTLER || a->kind == RECRUIT || a->kind == TRADER);
@@ -2155,10 +2394,8 @@ void simulate(float dt) {
         if (a->squad && a->race!=2) {
             a->hunger = fmaxf(0, a->hunger - dt * .045f * species_food(a));
             a->fatigue = fminf(100, a->fatigue + dt * .008f);
-            if (a->hunger < 40 && take_ration(a)) {
-                a->hunger = fminf(100, a->hunger + 48);
-                log_msg("%s ate a trail ration.", a->name);
-            }
+            if (a->hunger < 40)
+                eat_meal(a);
             if (a->hunger <= 0) {
                 a->treatedMask &= ~(1 << CHEST);
                 a->health[CHEST] -= dt * .12f;
@@ -2167,6 +2404,8 @@ void simulate(float dt) {
             }
             reveal_area(a);
         }
+        if (a->taskKind == TASK_TRAIN)
+            training_tick(a, dt);
         if ((a->taskKind == 1 || a->taskKind == 2) &&
             (a->taskIndex < 0 || a->taskIndex >= g.nodeCount ||
              distance(a->x, a->y, g.nodes[a->taskIndex].x, g.nodes[a->taskIndex].y) > WORK_REACH))
@@ -2364,7 +2603,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 23 };
+enum { SAVE_VERSION = 24 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -2395,14 +2634,34 @@ static int validate_game(const Game *t) {
         t->selected >= t->actorCount || !t->actors[t->selected].squad || t->tech < 0 || t->tech > 3 ||
         t->squadCount < 1 || t->squadCount > SQUAD)
         return 0;
-    if (!field_validate(t) || t->townLife.layout < 0 || t->townLife.layout > 1)
+    if (!field_validate(t) || t->townLife.layout < 0 || t->townLife.layout > 1 ||
+        t->frontier.version < 0 || t->frontier.version > 1 || t->frontier.clanMember < 0 ||
+        t->frontier.clanMember > 1 || t->frontier.completedCount > COMPLETED_CONTRACTS ||
+        t->frontier.completedNext >= COMPLETED_CONTRACTS || t->frontier.tollKnown > 1)
         return 0;
+    for (int i = 0; i < LODGES; i++) {
+        int b = t->frontier.lodge[i];
+        if (b < 0 || b > t->buildingCount || t->frontier.knownLodges[i] > 1 ||
+            (b && (t->frontier.variant[b-1] != BUILD_LODGE || t->buildings[b-1].type != HOUSE)))
+            return 0;
+    }
+    for (int i = 0; i < t->frontier.completedCount; i++) {
+        const Contract *c = &t->frontier.completed[i];
+        if (c->active != 2 || c->type < 0 || c->type >= CONTRACT_TYPES ||
+            c->town < 0 || c->town >= TOWNS || c->target < 0 || c->target >= TOWNS)
+            return 0;
+    }
+    for (int n = 0; n < t->actorCount; n++)
+        if (!isfinite(t->frontier.taskTotal[n]) || t->frontier.taskTotal[n] < 0 ||
+            t->frontier.treatmentPhase[n] < -1 || t->frontier.treatmentPhase[n] > LIMBS ||
+            t->frontier.treatmentDose[n] > 50)
+            return 0;
     for (int n = 0; n < t->actorCount; n++)
         for (int f = 0; f < FACTIONS; f++)
             if (t->charges[n][f] & ~CRIME_MASK)
                 return 0;
     for (int i = 0; i < t->buildingCount; i++)
-        if (t->townLife.chestRefresh[i] < 0)
+        if (t->townLife.chestRefresh[i] < 0 || t->frontier.variant[i] > BUILD_LODGE)
             return 0;
     for (int i = 0; i < TOWNS; i++)
         if (t->townLife.theftCount[i] > 3 || t->townLife.boardCycle[i] < 0 ||
@@ -2410,7 +2669,8 @@ static int validate_game(const Game *t) {
             !isfinite(t->townLife.boardAfter[i]))
             return 0;
     for (int i = 0; i < CONTRACTS; i++)
-        if (!isfinite(t->townLife.huntX[i]) || !isfinite(t->townLife.huntY[i]))
+        if (!isfinite(t->townLife.huntX[i]) || !isfinite(t->townLife.huntY[i]) ||
+            t->frontier.giver[i] > t->actorCount)
             return 0;
     for (int i = 0; i < t->actorCount; i++)
         if (!isfinite(t->townLife.squadHitAt[i]))
@@ -2450,6 +2710,12 @@ static int validate_game(const Game *t) {
         for (int j = 0; j < TOWN_STOCK_ITEMS; j++)
             if (t->stock[i][j] < 0)
                 return 0;
+        for (int j = 0; j < ITEMS - V23_ITEMS; j++)
+            if (t->frontier.stock[i][j] < 0)
+                return 0;
+        for (int j = 0; j < ITEMS; j++)
+            if (t->frontier.venue[i][j] > TRADE_APOTHECARY)
+                return 0;
     }
     for (int i = 0; i < CONTRACTS; i++) {
         const Contract *c = &t->contracts[i];
@@ -2484,7 +2750,7 @@ static int validate_game(const Game *t) {
             a->attackWeapon >= ITEMS || a->attackTarget >= t->actorCount || a->prisonTown >= TOWNS ||
             a->homeTown >= TOWNS || !isfinite(a->blood) || !isfinite(a->bleed) || !isfinite(a->hunger) ||
             !isfinite(a->fatigue) || !isfinite(a->unconscious) || a->prisonTown < -1 ||
-            (a->woundFlags & ~WOUND_FLAGS) || a->taskKind < 0 || a->taskKind > TASK_JAIL_CARE ||
+            (a->woundFlags & ~WOUND_FLAGS) || a->taskKind < 0 || a->taskKind > TASK_TRAIN ||
             (a->taskKind >= TASK_CELL_LOCK && (!isfinite(a->action) || a->action < 0)))
             return 0;
         for (int j = 0; j < LIMBS; j++)
@@ -2601,6 +2867,7 @@ static int migrate_legacy(const LegacyGame *old) {
     memset(&g.life,0,sizeof(g.life));
     memset(&g.trails,0,sizeof(g.trails));
     memset(&g.war,0,sizeof(g.war));
+    memset(&g.frontier,0,sizeof(g.frontier));
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
@@ -2609,6 +2876,7 @@ static int save_shape(uint32_t version,uint32_t size) {
       (version==20 && size==offsetof(Game,townLife)) ||
       (version==21 && size==offsetof(Game,field)) ||
       (version==22 && size==offsetof(Game,charges)) ||
+      (version==23 && size==offsetof(Game,frontier)) ||
       (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
@@ -2753,6 +3021,7 @@ int load_game(const char *path) {
     war_init();
         town_life_init();
         field_init();
+    frontier_world_init();
         memset(&ui, 0, sizeof(ui));
         ui.attackFocus=-1;
         ui.speed = 1;
@@ -3203,10 +3472,7 @@ void game_tick(float dt, Input in) {
                               : "Passive stance: flee or move freely.");
     }
     if (p & KEY_CROSS) {
-        if (conscious(a) && a->carrying >= 0) {
-            g.field.playingDead[g.selected] = 0;
-            put_down(a);
-        } else if (g.interiorBuilding) {
+        if (g.interiorBuilding) {
             action_menu_open();
             return;
         } else
@@ -3294,7 +3560,7 @@ void debug_snapshot(const char *path) {
         fputc('"', f);                                                                                       \
     } while (0)
     VALUE("screen", &ui.screen, 4);
-    unsigned music[3];
+    unsigned music[4];
     audio_debug(music);
     VALUE("music", music, sizeof(music));
     VALUE("skillpage", &ui.skillPage, 4);

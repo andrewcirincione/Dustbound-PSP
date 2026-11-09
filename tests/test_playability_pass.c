@@ -1,3 +1,4 @@
+#include "frontier_fixture.h"
 #include "../src/render.c"
 #include <assert.h>
 extern void init_actor(int n, const char *name, int kind, int faction, float x, float y, int skill);
@@ -63,23 +64,23 @@ static void squad_control(void) {
     reed->x = 407;
     reed->health[LARM] = 32;
     reed->bleed = 1;
-    int kit = inventory_count(ash, MEDKIT);
+    int kit = fixture_dressings(ash);
     idle(4.9f);
-    assert(ash->x == 400 && inventory_count(ash, MEDKIT) == kit);
+    assert(ash->x == 400 && fixture_dressings(ash) == kit);
     game_tick(.1f, (Input){.ax = -.8f});
     float moved = ash->x;
     assert(moved < 400);
     idle(4.9f);
-    assert(ash->x == moved && inventory_count(ash, MEDKIT) == kit);
+    assert(ash->x == moved && fixture_dressings(ash) == kit);
     idle(.5f);
     assert(ash->x > moved && strstr(ui.workNotice, "REED"));
     press(KEY_SQUARE);
     moved = ash->x;
     idle(6);
-    assert(ash->x == moved && ash->autoattack && inventory_count(ash, MEDKIT) == kit);
+    assert(ash->x == moved && ash->autoattack && fixture_dressings(ash) == kit);
     press(KEY_SQUARE);
     idle(20);
-    assert(reed->bleed == 0 && inventory_count(ash, MEDKIT) < kit);
+    assert(reed->bleed == 0 && fixture_dressings(ash) < kit);
     puts("PASS: Follow changes lead across formations; priorities tab; selected medic waits for idle and passive stance.");
 }
 static void transfers_and_recovery(void) {
@@ -114,7 +115,9 @@ static void transfers_and_recovery(void) {
     press(KEY_CROSS);
     assert(ui.screen == SCREEN_WORLD && ash->taskKind == TASK_TREAT && ash->bleed > 0);
     idle(ash->action + .2f);
-    assert(ash->bleed == 0 && ash->treatedMask & (1 << LARM));
+    assert(ash->bleed == 0 && !(ash->treatedMask & (1 << LARM)));
+    idle(ash->action + .2f);
+    assert(ash->treatedMask & (1 << LARM));
     float hp = ash->health[LARM], trauma = g.depth.actors[0].trauma[LARM];
     idle(20);
     assert(ash->health[LARM] > hp + 1 && g.depth.actors[0].trauma[LARM] < trauma);

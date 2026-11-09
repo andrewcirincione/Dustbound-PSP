@@ -403,15 +403,19 @@ int item_price(int town, int it, int selling) {
     if (it <= 0 || it >= ITEMS)
         return 0;
     if (town == -1 && road_vendor())
-        return (int)fmaxf(1, itemDefs[it].price * (selling ? .65f : 1.12f));
+        return (int)fmaxf(1, itemDefs[it].price * (selling ? .65f : 1.48f));
     if (town < 0 || town >= TOWNS)
         return 0;
     float mod = 1 + regional_price(town,it) + (town==1&&g.depth.route==ROUTE_TRUCE?.12f:0) + (60 - g.prosperity[town]) * .004f + limit(g.rep[g.townOwner[town]]*.001f,-.15f,.1f)*(selling?.5f:-1);
     mod = limit(mod, .65f, 1.6f);
-    return (int)fmaxf(1, itemDefs[it].price * (selling ? .75f : 1) * mod * market_factor(town,it) * politics_price(town,it));
+    return (int)fmaxf(1, itemDefs[it].price * (selling ? .75f : itemDefs[it].slot >= 0 ? 1.52f : 1.38f) * mod * market_factor(town,it) * politics_price(town,it));
 }
 int *market_stock(int town, int item) {
-    return item < TOWN_STOCK_ITEMS ? &g.stock[town][item] : &g.field.stock[town][item - TOWN_STOCK_ITEMS];
+    if (item < TOWN_STOCK_ITEMS)
+        return &g.stock[town][item];
+    if (item < V23_ITEMS)
+        return &g.field.stock[town][item - TOWN_STOCK_ITEMS];
+    return &g.frontier.stock[town][item - V23_ITEMS];
 }
 int market_quantity(int town, int item) {
     if (town >= 0 && town < TOWNS)
@@ -421,7 +425,11 @@ int market_quantity(int town, int item) {
 }
 static int shop_visible(int item) {
     int slot = itemDefs[item].slot;
-    if (ui.tradeSmith && (slot < 0 || slot == 5))
+    if (ui.tradeSmith == TRADE_SMITH && (slot < 0 || slot == 5))
+        return 0;
+    if (ui.tradeSmith == TRADE_INN && !food_capacity(item) && item != WATER)
+        return 0;
+    if (ui.tradeSmith == TRADE_ARMORER && (slot < 1 || slot > 4))
         return 0;
     switch (ui.shopFilter) {
     case 1: return slot < 0;
@@ -439,7 +447,8 @@ static int shop_list(int index) {
         for (int step = 1; step < ITEMS; step++) {
             int it = ui.shopFilter == 2 ? BASE_ITEMS + step - 1 : step;
             if (it >= ITEMS) it -= ITEMS - 1;
-            if (*market_stock(town, it) > 0 && shop_visible(it) && count++ == index)
+            if (*market_stock(town, it) > 0 && g.frontier.venue[town][it] == ui.tradeSmith &&
+                shop_visible(it) && count++ == index)
                 return it;
         }
     } else {
@@ -547,7 +556,8 @@ int storage_transfer(int b, int from, int slot) {
         return 0;
     Actor *a = &g.actors[g.selected];
     Building *z = &g.buildings[b];
-    if (actor_inside(a) ? nearby_station(STORE, 1.7f) != b : distance(a->x, a->y, z->x, z->y) > 1.7f) {
+    if (actor_inside(a) ? nearby_station(STORE, 1.7f) != b :
+        distance(a->x, a->y, z->x, z->y) > 1.7f && building_door_distance(b, a->x, a->y) > DOOR_REACH) {
         log_msg("Walk to the depot before transferring goods.");
         return 0;
     }
@@ -801,8 +811,7 @@ static int place_custody_site(int town, int type, int faction, float radius) {
 static void cell_place(int n, int b) {
     Actor *a = &g.actors[n];
     DepthActor *z = &g.depth.actors[n];
-    a->x = g.buildings[b].x + 1.45f;
-    a->y = g.buildings[b].y + .65f;
+    building_door(b, &a->x, &a->y);
     z->rx = 2.6f + .55f * (n % 3);
     z->ry = 2.3f;
     z->room = b + 1;
@@ -815,6 +824,76 @@ static void cell_place(int n, int b) {
     }
 }
 
+unsigned bounty_payers(int target) {
+    if (target < 0 || target >= g.actorCount || g.actors[target].bountyReward <= 0)
+        return 0;
+    const Actor *a = &g.actors[target];
+    unsigned candidates = a->faction == OUTLAWS ? (1u << UNION) | (1u << SHOGUN) :
+                          a->faction == HOSTILE ? (1u << UNION) | (1u << SCAVENGERS) | (1u << MONKS) :
+                          (1u << UNION) | (1u << SHOGUN);
+    candidates &= ~(1u << a->faction);
+    for (int i = 0; i < CONTRACTS; i++)
+        if (g.contracts[i].active == 1 && g.contracts[i].type == CONTRACT_BOUNTY &&
+            g.society.jobActor[i] == target + 1)
+            candidates |= 1u << g.townOwner[g.contracts[i].town];
+    unsigned open = 0;
+    for (int t = 0; t < TOWNS; t++)
+        if (g.field.jail[t]) open |= 1u << g.townOwner[t];
+    return candidates & open;
+}
+int bounty_guard(int guard, int target) {
+    if (guard < 0 || guard >= g.actorCount || target < 0 || target >= g.actorCount || target == guard)
+        return 0;
+    const Actor *watch = &g.actors[guard], *a = &g.actors[g.selected], *p = &g.actors[target];
+    int town = watch_town(watch);
+    if (town < 0 || !conscious(watch) || (!p->dead && p->unconscious <= 0) ||
+        !(bounty_payers(target) & (1u << watch->faction)) || depth_distance(a, watch) > TALK_REACH)
+        return 0;
+    int jail = g.field.jail[town] - 1;
+    return depth_room(watch) == jail + 1 || !strcmp(watch->name, "Jailkeeper") ||
+           building_door_distance(jail, watch->x, watch->y) < 3.6f;
+}
+int bounty_turn_in(int guard) {
+    Actor *a = &g.actors[g.selected];
+    int n = a->carrying;
+    if (!conscious(a) || !bounty_guard(guard, n))
+        return 0;
+    Actor *p = &g.actors[n], *watch = &g.actors[guard];
+    int town = watch_town(watch), reward = p->bountyReward * (p->dead ? 1 : 2);
+    a->carrying = p->carriedBy = -1;
+    p->bountyReward = 0;
+    if (p->dead) {
+        p->active = 0;
+        g.depth.actors[n].room = 0;
+    } else {
+        p->prisonTown = town;
+        p->prisonTime = DAY_SECONDS * 2;
+        p->target = g.living.command[n] = -1;
+        p->taskKind = p->autoattack = p->attackPhase = 0;
+        cell_place(n, g.field.jail[town] - 1);
+    }
+    for (int i = 0; i < CONTRACTS; i++) {
+        Contract *c = &g.contracts[i];
+        if (c->active == 1 && c->type == CONTRACT_BOUNTY && g.society.jobActor[i] == n + 1) {
+            c->completed = 1;
+            c->active = 2;
+            remember_contract(c);
+            g.contractsDone++;
+        }
+    }
+    g.money += reward;
+    faction_goodwill(watch->faction, 5);
+    log_warn("%s paid %d silver for %s.", watch->name, reward, p->name);
+    return 1;
+}
+void bounty_details(int target, char *out, int size) {
+    unsigned mask = bounty_payers(target);
+    if (!mask) { *out = 0; return; }
+    int used = snprintf(out, size, "Pays: ");
+    for (int f = 0; f < FACTIONS && used < size; f++)
+        if (mask & (1u << f))
+            used += snprintf(out + used, size - used, "%s%s", used > 6 ? ", " : "", factionNames[f]);
+}
 static int town_lockup(int town) {
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
@@ -863,6 +942,8 @@ void field_init(void) {
     }
 }
 
+#include "frontier_towns.h"
+
 int field_validate(const Game *save) {
     if (save->field.version < 0 || save->field.version > 1)
         return 0;
@@ -870,7 +951,7 @@ int field_validate(const Game *save) {
         int jail = save->field.jail[t];
         if (jail < 0 || jail > save->buildingCount || (jail && save->buildings[jail - 1].type != JAIL))
             return 0;
-        for (int j = 0; j < ITEMS - TOWN_STOCK_ITEMS; j++)
+        for (int j = 0; j < V23_ITEMS - TOWN_STOCK_ITEMS; j++)
             if (save->field.stock[t][j] < 0)
                 return 0;
     }
@@ -980,22 +1061,69 @@ int contract_offer(int town, int row) {
     }
     return -1;
 }
+void remember_contract(const Contract *c) {
+    g.frontier.completed[g.frontier.completedNext] = *c;
+    g.frontier.completedNext = (g.frontier.completedNext + 1) % COMPLETED_CONTRACTS;
+    if (g.frontier.completedCount < COMPLETED_CONTRACTS)
+        g.frontier.completedCount++;
+}
+const Contract *journal_contract(int slot) {
+    if (slot < 0) return NULL;
+    if (slot < CONTRACTS) return &g.contracts[slot];
+    if (slot < CONTRACTS + COMPLETED_CONTRACTS) return &g.frontier.completed[slot - CONTRACTS];
+    return NULL;
+}
 int journal_slot(int row) {
+    if (ui.journalTab) {
+        if (row < 0 || row >= g.frontier.completedCount) return -1;
+        return CONTRACTS + (g.frontier.completedNext + COMPLETED_CONTRACTS - 1 - row) % COMPLETED_CONTRACTS;
+    }
     for (int i = 0; i < CONTRACTS; i++)
-        if (g.contracts[i].active && row-- == 0)
+        if ((g.contracts[i].active == 1 || g.contracts[i].active == 3) && row-- == 0)
             return i;
     return -1;
 }
 int journal_count(void) {
+    if (ui.journalTab) return g.frontier.completedCount;
     int count = 0;
     for (int i = 0; i < CONTRACTS; i++)
-        count += g.contracts[i].active != 0;
+        count += g.contracts[i].active == 1 || g.contracts[i].active == 3;
     return count;
+}
+int contract_reward(int town, int kind) {
+    static const int silver[CONTRACT_TYPES] = {220, 240, 420, 550, 260, 280, 180, 600};
+    if (kind == CONTRACT_BOUNTY) {
+        int bounty = society_bounty_reward(town);
+        if (bounty) return bounty;
+    }
+    return kind >= 0 && kind < CONTRACT_TYPES ? silver[kind] : 0;
+}
+int contract_recipient(int slot) {
+    if (slot < 0 || slot >= CONTRACTS) return -1;
+    int town = contract_turn_in(slot);
+    if (town < 0 || town >= TOWNS) return -1;
+    int giver = g.frontier.giver[slot] - 1;
+    if (giver >= 0 && giver < g.actorCount) {
+        const Actor *a = &g.actors[giver];
+        if (a->active && !a->dead && !a->squad && a->homeTown == town && a->faction == g.townOwner[town])
+            return giver;
+    }
+    return work_contact(town);
+}
+int work_turn_in(int actor, int row) {
+    for (int k = 0; k < CONTRACTS; k++)
+        if (g.contracts[k].type != CONTRACT_BOUNTY && contract_ready(k) &&
+            contract_recipient(k) == actor && row-- == 0)
+            return k;
+    return -1;
 }
 int work_dialogue_count(int town) {
     int rows = 0;
-    while (contract_offer(town, rows) >= 0)
+    while (work_turn_in(ui.dialogActor, rows) >= 0)
         rows++;
+    if (ui.dialogActor == work_contact(town))
+        for (int n = 0; contract_offer(town, n) >= 0; n++)
+            rows++;
     return rows + 1;
 }
 int work_contact(int town) {
@@ -1204,24 +1332,25 @@ int accept_contract(int town, int kind) {
     c.target = contract_destination(town, g.townOwner[town]);
     c.item = kind == CONTRACT_ORE ? ORE : kind == CONTRACT_RELIC ? RELIC : NONE;
     c.needed = kind == CONTRACT_ORE ? 8 : kind == CONTRACT_HUNT ? 3 : 1;
-    c.reward = kind == CONTRACT_DISPATCH ? 220 : kind == CONTRACT_ORE ? 240 : kind == CONTRACT_HUNT ? 420 : 550;
+    c.reward = contract_reward(town, kind);
     c.baseline = -1; /* Earlier hunt postings allowed encounters anywhere. */
     g.contracts[n] = c;
+    g.frontier.giver[n] = (ui.screen == SCREEN_DIALOG ? ui.dialogActor : work_contact(town)) + 1;
     g.townLife.huntX[n] = x;
     g.townLife.huntY[n] = y;
     take_posting(town, kind);
-    log_level("Accepted %s at %s. See Journal.", contract_title(kind), towns[town].name);
+    log_level("%s added to the Journal.", contract_title(kind));
     contract_tick();
     return 1;
 }
 void contract_description(int n, char *out, int size) {
-    if (n < 0 || n >= CONTRACTS || !g.contracts[n].active) {
-        snprintf(out, size, "Ask a merchant, innkeeper or marshal for current work.");
+    const Contract *c = journal_contract(n);
+    if (!c || !c->active) {
+        snprintf(out, size, "%s", ui.journalTab ? "No finished contracts." : "Ask around for work.");
         return;
     }
-    const Contract *c = &g.contracts[n];
     if (c->active == 2) {
-        snprintf(out, size, "Paid and closed at %s.", towns[contract_turn_in(n)].name);
+        snprintf(out, size, "%s paid the contract.", towns[c->type == CONTRACT_FREIGHT ? c->target : c->town].name);
         return;
     }
     if (c->type >= CONTRACT_FREIGHT) {
@@ -1229,8 +1358,10 @@ void contract_description(int n, char *out, int size) {
         return;
     }
     if (contract_ready(n)) {
-        snprintf(out, size, "%s complete (%d/%d). Return to %s and claim %d silver here in Journal.",
-                 contract_title(c->type), c->needed, c->needed, towns[c->town].name, c->reward);
+        int recipient = contract_recipient(n);
+        snprintf(out, size, "Work complete (%d/%d). Speak to %s in %s.",
+                 c->needed, c->needed, recipient >= 0 ? g.actors[recipient].name : "the local contact",
+                 towns[c->town].name);
         return;
     }
     switch (c->type) {
@@ -1273,6 +1404,7 @@ int complete_contract(int n) {
     }
     c->completed = 1;
     c->active = 2;
+    remember_contract(c);
     g.money += c->reward;
     g.contractsDone++;
     faction_goodwill(g.townOwner[c->town], 8);
@@ -1345,16 +1477,25 @@ const char *dialogue_line(int n, int page) {
         return "Pay bail, wait out the sentence, or pick the lock. The watch can lock it again.";
     if (page == DIALOG_WORK_HINT)
         return work_hint(town_near(g.actors[g.selected].x, g.actors[g.selected].y, 14), n);
-    if (page == DIALOG_WORK)
-        return contract_offer(town_near(g.actors[g.selected].x, g.actors[g.selected].y, 14), 0) < 0
-            ? "Nothing posted today. Check back after the next jobs go up."
-            : "Here's what the town needs. The Journal keeps track after you take a posting.";
+    if (page == DIALOG_WORK) {
+        if (work_turn_in(n, 0) >= 0)
+            return "You're back. Tell me how it went.";
+        int town = town_near(g.actors[g.selected].x, g.actors[g.selected].y, 17);
+        if (contract_offer(town, 0) < 0)
+            return "I'm afraid there's nothing paying today.";
+        return npc_role(a) == ROLE_INNKEEPER ? "A few people left word at the bar. Have a look."
+                                            : "I've got some work if you need silver.";
+    }
     if (page == 4)return trade_tip(town_near(a->x,a->y,14));
     if (page == 5){
         const char *rumor=war_rumor(a);
         int town=town_near(a->x,a->y,14);
         if (rumor)
             return rumor;
+        if (town == 8 && g.frontier.tollKnown)
+            return "The old toll camp is north of the mesa, off the road. Watch the collectors there.";
+        if ((town == 3 || town == 5) && g.frontier.version)
+            return "If you see a duelist with clean steel out in the red cuts, give them a wide berth.";
         if (town >= 0 && contract_offer(town, 0) >= 0)
             return work_hint(town, n);
         for (int k = 0; k < POP_GROUPS; k++) {
@@ -1398,7 +1539,7 @@ const char *dialogue_line(int n, int page) {
         return lines[voice];
     }
     case ROLE_INNKEEPER:
-        return "A bed costs 25 silver. Step inside the inn to rest. Patch bleeding wounds before you sleep.";
+        return "I've got stew on the stove. A bed's twenty-five silver if you need one.";
     case ROLE_MEDIC:
         return "Eighty silver for wound care. I can stop bleeding and restore health, but lost limbs need "
                "mechanical replacements.";
@@ -1470,7 +1611,7 @@ const char *ambient_line(int n) {
 }
 void dialogue_open(int n) {
     ui.dialogActor = n;
-    ui.dialogPage = dialogue_dismissive(n) ? DIALOG_DISMISS : 0;
+    ui.dialogPage = work_turn_in(n, 0) >= 0 ? DIALOG_WORK : dialogue_dismissive(n) ? DIALOG_DISMISS : 0;
     ui.selection = 0;
     ui.screen = SCREEN_DIALOG;
 }
@@ -1597,16 +1738,51 @@ static int depot_has(int depot, int item) {
 }
 static int worker_walk(Actor *a, int building, float dt) {
     Building *b = &g.buildings[building];
-    if (distance(a->x, a->y, b->x, b->y) <= 1.5f)
+    float x = b->x, y = b->y;
+    int indoors = building_has_interior(b->type);
+    if (indoors)
+        building_door(building, &x, &y);
+    if (distance(a->x, a->y, x, y) <= (indoors ? 1.05f : 1.5f))
         return 0;
-    route_toward(a, b->x, b->y, dt);
+    route_toward(a, x, y, dt);
     return 1;
+}
+static void worker_smelting(Actor *a, int station, float dt) {
+    int n = a - g.actors, selected = g.selected;
+    if (inventory_count(a, IRONBAR) || inventory_count(a, ORE) < 3) {
+        if (distance(depth_x(a), depth_y(a), 3.5f, 6.15f) < .6f) {
+            if (n == selected) interior_leave();
+            else actor_leave_room(n);
+        } else {
+            depth_move_room(a, 3.5f - depth_x(a), 6.15f - depth_y(a), dt);
+        }
+        return;
+    }
+    g.selected = n;
+    if (nearby_station(FORGE, 1.7f) == station) {
+        craft_item(0);
+    } else {
+        InteriorProp props[ROOM_PROPS];
+        int count = interior_props(station, props);
+        for (int i = 0; i < count; i++)
+            if (props[i].action == ROOM_FORGE) {
+                depth_move_room(a, props[i].x - depth_x(a), props[i].y - depth_y(a), dt);
+                break;
+            }
+    }
+    g.selected = selected;
 }
 static void worker_production(Actor *a, float dt) {
     int job = assigned_job(a);
-    if (!automatic_work(a) || g.depth.actors[a-g.actors].paused || society_rescue_busy((int)(a-g.actors)) || g.depth.actors[a-g.actors].captive || actor_inside(a) || job < JOB_SMELT || a->taskKind || !conscious(a) || a->prisonTime > 0 ||
+    if (!automatic_work(a) || g.depth.actors[a-g.actors].paused || society_rescue_busy((int)(a-g.actors)) || g.depth.actors[a-g.actors].captive || job < JOB_SMELT || a->taskKind || !conscious(a) || a->prisonTime > 0 ||
         a->carriedBy >= 0 || a->target >= 0)
         return;
+    int room = actor_inside(a);
+    if (room) {
+        if (job == JOB_SMELT && g.buildings[room - 1].type == FORGE)
+            worker_smelting(a, room - 1, dt);
+        return;
+    }
     int depot = worker_building(a, STORE),
         station = worker_building(a, job == JOB_SMELT ? FORGE : CAMPFIRE);
     int old = g.selected;
@@ -1670,9 +1846,14 @@ static void worker_production(Actor *a, float dt) {
         g.selected=old;return;
     }
     if (!worker_walk(a, station, dt)) {
+        if (job == JOB_SMELT) {
+            g.selected = old;
+            actor_enter_room((int)(a - g.actors), station);
+            return;
+        }
         a->action -= dt;
         if (a->action <= 0) {
-            craft_item(job == JOB_SMELT ? 0 : 1);
+            craft_item(1);
             a->action = 5;
         }
     }
@@ -1728,6 +1909,14 @@ int jail_bail(int n) {
     log_msg("%s was released on bail.", a->name);
     return 1;
 }
+int lockpick_chance(const Actor *a, int lock) {
+    int skill = level(a, LOCKPICK);
+    if (lock == LOCK_CELL)
+        return (int)fminf(97, 5 + skill * .9f + (inventory_count(a, TOOLS) ? 12 : 0));
+    if (lock == LOCK_SHACKLES)
+        return (int)fminf(96, 32 + skill * .7f);
+    return (int)fminf(98, 62 + skill * .8f);
+}
 float jail_pick_duration(const Actor *a, int tools) {
     return (tools ? 8.0f : 13.0f) - level(a, LOCKPICK) * (tools ? .045f : .065f);
 }
@@ -1749,7 +1938,7 @@ static void jail_medical(Actor *a, float dt) {
         return;
     if (a->taskKind != TASK_JAIL_CARE && (wound_needs_dressing(a) || depth_needs_repair(a))) {
         a->taskKind = TASK_JAIL_CARE;
-        a->action = 2.8f + treatment_burden(a) * .65f;
+        a->action = g.frontier.taskTotal[a - g.actors] = 2.8f + treatment_burden(a) * .80f;
         if (a->squad) {
             int guard = jail_guard(a, 22);
             log_warn("%s begins treating %s in custody.", guard >= 0 ? g.actors[guard].name : "Jail staff", a->name);
@@ -1780,11 +1969,10 @@ static void jail_tick(Actor *a, float dt) {
         if (!conscious(a)) {
             a->taskKind = 0;
         } else if ((a->action -= dt) <= 0) {
-            int tools = a->taskIndex && inventory_count(a, TOOLS);
-            float chance = 5 + level(a, LOCKPICK) * .90f + (tools ? 12 : 0);
+            int success = (int)(wrand() % 100) < lockpick_chance(a, LOCK_CELL);
             a->taskKind = 0;
             gain(a, LOCKPICK, 42);
-            if (wrand() % 100 < fminf(97, chance)) {
+            if (success) {
                 *open = 5;
                 log_warn("Cell unlocked. Get to the exit.");
                 if (!actor_inside(a)) {
@@ -1925,8 +2113,9 @@ static void labor_tick(int n, float dt) {
     if (a->taskKind == TASK_CELL_LOCK) {
         if ((a->action -= dt) <= 0) {
             a->taskKind = 0;
+            int success = (int)(wrand() % 100) < lockpick_chance(a, LOCK_SHACKLES);
             gain(a, LOCKPICK, 30);
-            if (wrand() % 100 < fminf(96, 32 + level(a, LOCKPICK) * .7f)) {
+            if (success) {
                 g.depth.actors[n].captive = 0;
                 g.field.laborCamp[n] = 0;
                 g.field.escaped[n] |= 1u << b->faction;
@@ -1986,6 +2175,7 @@ void custody_tick(float dt) {
             Building *dest = &g.buildings[b];
             int camp = slave_camp_at(b);
             float x = dest->x + 1.45f, y = dest->y + .65f;
+            if (camp < 0) building_door(b, &x, &y);
             if (distance(carrier->x, carrier->y, x, y) > .8f) {
                 route_toward(carrier, x, y, dt * 1.2f);
                 continue;

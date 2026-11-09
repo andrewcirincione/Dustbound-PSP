@@ -74,7 +74,7 @@ void civil_content(void){
 /* Culture remains tied to the settlement even after a faction occupation. */
 int civil_style(int t){if(t<0||t>=TOWNS)return 0;int f=towns[t].faction;return f==SHOGUN?1:f==MONKS?2:f==SCAVENGERS?3:f==OUTLAWS?4:f==HOSTILE?5:0;}
 const char*civil_style_name(int t){static const char*n[]={"TRADE BOROUGH","FORTRESS COURT","TEMPLE CLOISTER","SCRAP VILLAGE","FOUNDRY ENCLAVE","FLESH-CULT CAMP"};return n[civil_style(t)];}
-static void clear_position(float*x,float*y){float ox=*x,oy=*y;for(int r=0;r<14;r++)for(int q=0;q<16;q++){float a=q*.392699f,xx=ox+r*cosf(a),yy=oy+r*sinf(a);if(can_walk(xx,yy)&&can_walk(xx+.4f,yy)&&can_walk(xx,yy+.4f)){*x=xx;*y=yy;return;}}}
+void civil_clear_position(float*x,float*y){float ox=*x,oy=*y;for(int r=0;r<14;r++)for(int q=0;q<16;q++){float a=q*.392699f,xx=ox+r*cosf(a),yy=oy+r*sinf(a);if(can_walk(xx,yy)&&can_walk(xx+.4f,yy)&&can_walk(xx,yy+.4f)){*x=xx;*y=yy;return;}}}
 static void building_position(int style,int type,int seq,float*x,float*y){
  static const float standard[13][2]={{-4,-3},{4,-3},{-4,3},{0,-5},{0,1},{-7,5},{8,5},{8,9},{6,9},{7,0},{-9,-7},{2,8},{-7,-7}};
  static const float court[13][2]={{-7,-4},{-6,7},{6,7},{0,-8},{0,2},{-8,4},{8,-1},{-8,-1},{9,8},{9,-7},{-11,-8},{4,2},{6,-5}};
@@ -107,10 +107,10 @@ static void settlement_layout(void){
   int role=npc_role(a),type=role==ROLE_MERCHANT?SHOP:role==ROLE_INNKEEPER?BAR:role==ROLE_MEDIC?BED:role==ROLE_SMITH?FORGE:-1;
   float x=towns[t].x+(a->kind==GUARD?3:-4),y=towns[t].y+(a->kind==GUARD?9:4);
   if(type>=0)for(int b=0;b<g.buildingCount;b++)if(g.buildings[b].owner<0&&g.buildings[b].type==type&&distance(g.buildings[b].x,g.buildings[b].y,towns[t].x,towns[t].y)<15){x=g.buildings[b].x+1.8f;y=g.buildings[b].y+.8f;break;}
-  clear_position(&x,&y);a->x=a->homeX=a->tx=x;a->y=a->homeY=a->ty=y;a->routeLen=a->routePos=0;
+  civil_clear_position(&x,&y);a->x=a->homeX=a->tx=x;a->y=a->homeY=a->ty=y;a->routeLen=a->routePos=0;
  }
- for(int i=0;i<g.nodeCount;i++){Node*n=&g.nodes[i];if(n->owner&&town_near(n->x,n->y,16)>=0&&!can_walk(n->x,n->y))clear_position(&n->x,&n->y);}
- for(int i=0;i<g.actorCount;i++)if(g.actors[i].squad&&!actor_inside(&g.actors[i])&&!can_walk(g.actors[i].x,g.actors[i].y))clear_position(&g.actors[i].x,&g.actors[i].y);
+ for(int i=0;i<g.nodeCount;i++){Node*n=&g.nodes[i];if(n->owner&&town_near(n->x,n->y,16)>=0&&!can_walk(n->x,n->y))civil_clear_position(&n->x,&n->y);}
+ for(int i=0;i<g.actorCount;i++)if(g.actors[i].squad&&!actor_inside(&g.actors[i])&&!can_walk(g.actors[i].x,g.actors[i].y))civil_clear_position(&g.actors[i].x,&g.actors[i].y);
 }
 int civil_building_sprite(int n,int fallback){
  Building*b=&g.buildings[n];if(b->owner>=0)return fallback;int t=town_near(b->x,b->y,19);if(t<0)return fallback;int style=civil_style(t);
@@ -218,7 +218,7 @@ void war_add_residents(void) {
     Building *b=&g.buildings[i];
     if(b->owner<0 && b->type==station[j] && distance(b->x,b->y,x,y)<16){x=b->x+1.65f;y=b->y+.4f;break;}
    }
-   clear_position(&x,&y);
+   civil_clear_position(&x,&y);
    init_actor(n,names[k][j],kind[j],g.townOwner[town],x,y,j==0?42:j==1?26:7);
    Actor *a=&g.actors[n];
    a->homeTown=town;
@@ -260,7 +260,7 @@ void civil_init(void){
   if(weapon_ranged(a->gear[0]))inventory_add(a,z->weaponFamily>=29?CARTRIDGE:BOLTS,80);
   if(z->town>=0){a->homeTown=z->town;a->x=towns[z->town].x+2.6f;a->y=towns[z->town].y-5;}
   else{int t=5+(e-12),u=(t+4)%TOWNS;C.routeTown[e]=u;a->homeTown=t;a->x=towns[t].x*.6f+towns[u].x*.4f;a->y=towns[t].y*.6f+towns[u].y*.4f;a->bountyReward=z->faction==OUTLAWS?1500+e*100:0;}
-  clear_position(&a->x,&a->y);a->homeX=a->tx=a->x;a->homeY=a->ty=a->y;a->target=-1;a->routeLen=a->routePos=0;
+  civil_clear_position(&a->x,&a->y);a->homeX=a->tx=a->x;a->homeY=a->ty=a->y;a->target=-1;a->routeLen=a->routePos=0;
  }
  for(int t=0;t<TOWNS;t++)civil_stock(t);
 }

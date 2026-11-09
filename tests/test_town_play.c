@@ -1,4 +1,4 @@
-#include "game.h"
+#include "frontier_fixture.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -36,8 +36,7 @@ static int building_in(int town, int type) {
     return -1;
 }
 static void at_door(Actor *a, int id) {
-    a->x = g.buildings[id].x + 1.45f;
-    a->y = g.buildings[id].y + .65f;
+    fixture_door(a, id);
 }
 static void shops_and_theft(void) {
     Actor *a = fresh();
@@ -49,8 +48,7 @@ static void shops_and_theft(void) {
     assert(depth_named(0) < 0 && g.depth.npc[NPC_NELL] == -1);
     at_door(a, shop);
     assert(interior_enter(shop));
-    g.interiorX = 1.9f;
-    g.interiorY = 4.5f;
+    fixture_service(ROOM_CHEST);
     assert(save_game("build/v174/chest-ready.sav"));
     interior_interact();
     assert(ui.screen == SCREEN_CHEST && interior_chest_count() == 2);
@@ -92,8 +90,7 @@ static void shops_and_theft(void) {
     g.day = refresh;
     at_door(a, shop);
     assert(interior_enter(shop));
-    g.interiorX = 1.9f;
-    g.interiorY = 4.5f;
+    fixture_service(ROOM_CHEST);
     interior_interact();
     assert(interior_chest_count() == 2);
     printf("PASS: Dry Market spacing, local ore, owned stock, chest persistence and replenishment, pocket search and expiry.\n");
@@ -103,7 +100,7 @@ static void homes(void) {
     int present = 0, vacant = 0, bare = 0;
     for (int hour = 1; hour <= 20; hour += 19) {
         g.dayTime = hour;
-        step(45);
+        step(340);
         for (int i = 0; i < g.buildingCount; i++) {
             if (g.buildings[i].type != HOUSE)
                 continue;
@@ -138,13 +135,15 @@ static void rest_food_and_locks(void) {
     int inn = building_in(0, BAR);
     at_door(a, inn);
     assert(interior_enter(inn));
-    g.interiorX = 2.35f;
-    g.interiorY = 2;
+    fixture_service(ROOM_REST);
+    InteriorProp props[ROOM_PROPS];
+    interior_props(inn, props);
+    InteriorProp mattress = props[interior_context()];
     assert(save_game("build/v174/bed-ready.sav"));
     interior_interact();
-    assert(a->taskKind == 3 && g.interiorX == 1.2f && g.interiorY == 2);
+    assert(a->taskKind == 3 && g.interiorX == mattress.x && g.interiorY == mattress.y);
     game_tick(.1f, (Input){.ax = .8f});
-    assert(!a->taskKind && g.interiorX > 1.9f);
+    assert(!a->taskKind && distance(g.interiorX, g.interiorY, mattress.x, mattress.y) > .3f);
     interior_leave();
     a->x = a->y = 400;
     a->hunger = 32;
@@ -171,9 +170,9 @@ static void rest_food_and_locks(void) {
     a->taskKind = 0;
     a->health[LARM] = 26;
     a->health[RARM] = 52;
-    a->bleed = 1.3f;
     a->woundFlags = (1u << LARM) | (1u << RARM);
     assert(heal_actor(0, 0) && a->action > mild + 1);
+    a->bleed = 1.3f;
     float clock = g.time, blood = a->blood, remaining = a->action;
     const int menus[] = {SCREEN_PACK, SCREEN_SKILLS, SCREEN_MENU, SCREEN_MAP, SCREEN_JOURNAL,
                          SCREEN_HELP, SCREEN_TRADE, SCREEN_DIALOG};
@@ -188,7 +187,8 @@ static void contracts(void) {
     Actor *a = fresh();
     int seen[3] = {0};
     for (int t = 0; t < TOWNS; t++) {
-        int offers = work_dialogue_count(t) - 1;
+        int offers = 0;
+        while (contract_offer(t, offers) >= 0) offers++;
         assert(offers >= 0 && offers <= 2);
         seen[offers]++;
     }
@@ -222,7 +222,7 @@ static void contracts(void) {
     assert(g.contracts[0].progress == 3);
     char text[200];
     contract_description(0, text, sizeof(text));
-    assert(strstr(text, towns[town].name) && strstr(text, "claim") && contract_ready(0));
+    assert(strstr(text, towns[town].name) && strstr(text, "Speak to") && contract_ready(0));
     assert(!complete_contract(0));
     a->x = towns[town].x;
     a->y = towns[town].y + 3;
@@ -286,8 +286,106 @@ static void combat(void) {
     assert(!a->autoattack && !a->attackPhase);
     printf("PASS: town guards and armed allies defend, injuries slow movement, Fight repeats at cooldown, Passive cancels.\n");
 }
+static void settlement_layouts(void) {
+    Actor *a = fresh();
+    int rooms = 0, largeInns = 0, smallInns = 0, forges = 0, noForges = 0;
+    for (int town = 0; town < TOWNS; town++) {
+        const TownDesign *plan = town_design(town);
+        largeInns += plan->beds >= 5;
+        smallInns += plan->beds <= 2;
+        ui.tradeTown = town;
+        ui.tradeSmith = TRADE_GENERAL;
+        assert(shop_count() <= 14);
+        ui.tradeSmith = TRADE_INN;
+        assert(shop_count() >= 2 && shop_count() <= 4);
+        ui.tradeSmith = TRADE_SMITH;
+        forges += shop_count() > 0;
+        noForges += shop_count() == 0;
+        int ore = nearest_ore(towns[town].x, towns[town].y, 33, NODE_ORE);
+        assert(ore >= 0 && town_near(g.nodes[ore].x, g.nodes[ore].y, 16) < 0);
+        for (int b = 0; b < g.buildingCount; b++) {
+            if (building_town(b) != town || !building_has_interior(g.buildings[b].type))
+                continue;
+            float w, d;
+            int height;
+            building_footprint(b, &w, &d, &height);
+            for (int j = 0; j < b; j++)
+                if (building_town(j) == town && building_has_interior(g.buildings[j].type)) {
+                    float ww, dd;
+                    building_footprint(j, &ww, &dd, &height);
+                    assert(fabsf(g.buildings[b].x - g.buildings[j].x) >= w + ww ||
+                           fabsf(g.buildings[b].y - g.buildings[j].y) >= d + dd);
+                }
+            at_door(a, b);
+            assert(can_walk(a->x, a->y) && interior_enter(b) && interior_walkable(b + 1, g.interiorX, g.interiorY));
+            rooms++;
+            interior_leave();
+        }
+    }
+    assert(rooms >= 110 && largeInns && smallInns && forges && noForges);
+    puts("PASS: all nineteen settlements have walkable doors, spaced buildings, regional ore and tiered markets.");
+}
+
+static void lodging_and_bounties(void) {
+    Actor *a = fresh();
+    int lodge = g.frontier.lodge[0] - 1;
+    assert(lodge >= 0 && !lodge_joined(lodge));
+    at_door(a, lodge);
+    assert(interior_enter(lodge));
+    fixture_service(ROOM_MEMBERSHIP);
+    int silver = g.money = 1200;
+    interior_interact();
+    assert(lodge_joined(lodge) && g.money == silver - 280 && lodge_joined(g.frontier.lodge[1] - 1));
+    fixture_service(ROOM_TRAIN);
+    int weapon = a->gear[0] = SABRE, skill = weapon_class(weapon);
+    float limit = 12 * 19 * 19;
+    g.society.weaponXP[0][skill] = limit - 15;
+    interior_interact();
+    assert(a->taskKind == TASK_TRAIN);
+    step(190);
+    assert(weapon_class_level(a, skill) == 20 && !a->taskKind);
+    weapon_class_gain(a, weapon, 1e8f);
+    gain(a, LOCKPICK, 1e8f);
+    assert(weapon_class_level(a, skill) == 150 && level(a, LOCKPICK) == 150);
+    fixture_service(ROOM_REST);
+    init_actor(1, "Injured ally", PLAYER, FREE, a->x, a->y, 5);
+    Actor *ally = &g.actors[1];
+    ally->squad = 1;
+    g.squadCount = 2;
+    ally->unconscious = 50;
+    ally->carriedBy = 0;
+    a->carrying = 1;
+    int row = fixture_action(ACTION_LAY_IN_BED);
+    assert(row >= 0);
+    nearby_action_choose(row);
+    assert(a->carrying < 0 && ally->carriedBy < 0 && actor_in_bed(ally) && depth_room(ally) == lodge + 1);
+    interior_leave();
+    assert(depth_room(ally) == lodge + 1);
+
+    int town = 0, jail = g.field.jail[town] - 1;
+    at_door(a, jail);
+    init_actor(2, "Jailkeeper", GUARD, g.townOwner[town], a->x, a->y, 10);
+    g.actors[2].homeTown = town;
+    init_actor(3, "Wanted raider", RAIDER, HOSTILE, a->x, a->y, 5);
+    Actor *target = &g.actors[3];
+    target->bountyReward = 150;
+    target->unconscious = 30;
+    target->carriedBy = 0;
+    a->carrying = 3;
+    assert(bounty_payers(3) & (1u << g.actors[2].faction));
+    int money = g.money;
+    row = fixture_action(ACTION_BOUNTY_TURN_IN);
+    assert(row >= 0);
+    nearby_action_choose(row);
+    assert(g.money == money + 300 && a->carrying < 0 && target->prisonTime > 0 && depth_room(target) == jail + 1);
+    assert(!bounty_turn_in(2) && !bounty_payers(3));
+    puts("PASS: shared lodge access, skill caps, placement on a bed and a single bounty payout through the jailkeeper.");
+}
+
 int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
+    settlement_layouts();
+    lodging_and_bounties();
     shops_and_theft();
     homes();
     rest_food_and_locks();

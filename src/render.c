@@ -334,12 +334,13 @@ static void bar(int x, int y, int w, int h, float value, uint32_t c) {
     int v = (int)(fmaxf(0, fminf(100, value)) * w / 100);
     rect(x, y, v, h, c);
 }
+enum { WORLD_CENTER_Y = 150 };
 static int projectionX, projectionY;
 static inline int project_x(float x, float y) {
     return 240 + projectionX + (int)(view_horizontal(x - ui.camX, y - ui.camY) * 22);
 }
 static inline int project_y(float x, float y) {
-    return 126 + projectionY + (int)(view_vertical(x - ui.camX, y - ui.camY) * 11) - terrain_height(x, y);
+    return WORLD_CENTER_Y + projectionY + (int)(view_vertical(x - ui.camX, y - ui.camY) * 11) - terrain_height(x, y);
 }
 static void project(float x, float y, int *sx, int *sy) {
     *sx = project_x(x, y);
@@ -376,8 +377,8 @@ static void texture_ground(void) {
         initialized = 1;
     }
     for (int y = 0; y < clipBottom; y++) {
-        float u = (ui.camX + (y - 126 - projectionY) / 22.f + (-240 - projectionX) / 44.f) * 8;
-        float v = (ui.camY + (y - 126 - projectionY) / 22.f - (-240 - projectionX) / 44.f) * 8;
+        float u = (ui.camX + (y - WORLD_CENTER_Y - projectionY) / 22.f + (-240 - projectionX) / 44.f) * 8;
+        float v = (ui.camY + (y - WORLD_CENTER_Y - projectionY) / 22.f - (-240 - projectionX) / 44.f) * 8;
         uint32_t *row = fb + y * pitch;
         for (int x = 0; x < clipRight; x++, u += 8 / 44.f, v -= 8 / 44.f) {
             unsigned m = multipliers[(int)v & 63][(int)u & 63];
@@ -523,6 +524,162 @@ static void art_shadow(int id, int x, int y) {
         }
     }
 }
+typedef struct { int x, y; } ScreenPoint;
+static ScreenPoint facade_point(int x, int y, float dx, float dy, int height) {
+    return (ScreenPoint){x + (int)roundf((dx - dy) * 22), y + (int)roundf((dx + dy) * 11) - height};
+}
+static void facade_face(ScreenPoint a, ScreenPoint b, ScreenPoint c, ScreenPoint d, uint32_t color) {
+    quad(a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y, color);
+}
+static void facade_edge(ScreenPoint a, ScreenPoint b, uint32_t color) {
+    line(a.x, a.y, b.x, b.y, color);
+}
+static void facade_panel(ScreenPoint a, ScreenPoint b, int high, uint32_t color) {
+    facade_face(a, b, (ScreenPoint){b.x,b.y-high}, (ScreenPoint){a.x,a.y-high}, color);
+}
+static void facade_window(int x, int y, float dx, float dy, int alongX, float width, int z, int high, uint32_t trim) {
+    float wx = alongX ? width : 0, wy = alongX ? 0 : width;
+    ScreenPoint a = facade_point(x, y, dx - wx, dy - wy, z);
+    ScreenPoint b = facade_point(x, y, dx + wx, dy + wy, z);
+    facade_panel(a, b, high, trim);
+    a = facade_point(x, y, dx - wx * .68f, dy - wy * .68f, z + 2);
+    b = facade_point(x, y, dx + wx * .68f, dy + wy * .68f, z + 2);
+    facade_panel(a, b, high - 4, 0x2b2721);
+    if (high > 7) {
+        facade_edge((ScreenPoint){a.x,a.y-high/2}, (ScreenPoint){b.x,b.y-high/2}, trim);
+        ScreenPoint middle = facade_point(x, y, dx, dy, z + 1);
+        facade_edge(middle, (ScreenPoint){middle.x,middle.y-high+2}, trim);
+    }
+}
+static void painted_structure(int id, int x, int y, float li, int faded) {
+    Building *b = &g.buildings[id];
+    int town = building_town(id), style = town < 0 ? 0 : civil_style(town);
+    int variant = g.frontier.variant[id], type = b->type;
+    float w, d;
+    int h;
+    building_footprint(id, &w, &d, &h);
+    static const uint32_t plaster[6] = {0x826c4d,0xa79875,0xb1a188,0x7a6955,0x726c5c,0x877657};
+    static const uint32_t roofs[6] = {0x5e503a,0x794334,0x6e6550,0x735845,0x534b42,0x67533a};
+    static const uint32_t trimColors[6] = {0xb18d59,0x965343,0xbcb07e,0xa88757,0xaa865d,0xb19863};
+    float l = li * (faded ? .60f : 1);
+    uint32_t wall = shade(plaster[style], l), side = shade(plaster[style], l * .77f);
+    uint32_t roof = shade(roofs[style], l), trim = shade(trimColors[style], l), dark = shade(0x3c3027, l);
+    ScreenPoint back = facade_point(x,y,-w,-d,0), left = facade_point(x,y,-w,d,0);
+    ScreenPoint right = facade_point(x,y,w,-d,0), front = facade_point(x,y,w,d,0);
+    facade_face(back,left,front,right,shade(0x4a4034, l));
+    if (type == JAIL && town >= 0 && !town_design(town)->custody) {
+        for (int i = 0; i <= 10; i++) {
+            float f = i * .1f;
+            ScreenPoint a = facade_point(x,y,-w + f * w * 2,d,0);
+            ScreenPoint c = facade_point(x,y,w,-d + f * d * 2,0);
+            facade_edge(a, (ScreenPoint){a.x,a.y-h}, trim);
+            facade_edge(c, (ScreenPoint){c.x,c.y-h}, trim);
+        }
+        for (int k = 7; k < h; k += 12) {
+            facade_edge(facade_point(x,y,-w,d,k), facade_point(x,y,w,d,k), dark);
+            facade_edge(facade_point(x,y,w,-d,k), facade_point(x,y,w,d,k), dark);
+        }
+        facade_window(x,y,w + .04f,0,0,.42f,0,22,trim);
+        return;
+    }
+    facade_panel(left, front, h, side);
+    facade_panel(right, front, h, wall);
+    if (style == 3 || style == 4) {
+        for (float j = -d + .13f; j < d; j += .19f)
+            facade_edge(facade_point(x,y,w,j,3), facade_point(x,y,w,j,h-2), shade(wall, .91f));
+    } else {
+        for (int z = 7; z < h; z += style == 1 ? 12 : 7) {
+            facade_edge(facade_point(x,y,-w,d,z), facade_point(x,y,w,d,z), shade(side,.90f));
+            facade_edge(facade_point(x,y,w,-d,z), facade_point(x,y,w,d,z), shade(wall,.90f));
+        }
+    }
+    facade_edge(facade_point(x,y,w,d,0), facade_point(x,y,w,d,h), dark);
+    facade_panel(facade_point(x,y,-w,d,2), facade_point(x,y,w,d,2), 4, dark);
+    facade_panel(facade_point(x,y,w,-d,2), facade_point(x,y,w,d,2), 4, dark);
+    int eave = style == 1 ? 5 : 2;
+    int rise = type == STORE || style == 4 ? 5 : style == 2 ? 9 : 13 + id % 3 * 2;
+    float ew = w + .18f, ed = d + .20f + (style == 1 ? .12f : 0);
+    ScreenPoint a = facade_point(x,y,-ew,-ed,h-eave), f = facade_point(x,y,ew,-ed,h-eave);
+    ScreenPoint c = facade_point(x,y,ew,ed,h-eave), m = facade_point(x,y,-ew,ed,h-eave);
+    ScreenPoint r = facade_point(x,y,-ew,0,h+rise), s = facade_point(x,y,ew,0,h+rise);
+    if (style != 2 && style != 3 && style != 4) {
+        facade_face(a, f, s, r, shade(roof, .86f));
+        facade_face(r, s, c, m, roof);
+        triangle(f.x,f.y,s.x,s.y,c.x,c.y,shade(wall,.82f));
+        facade_edge(r,s,trim);
+        facade_edge(m,c,dark);
+        facade_edge(f,s,trim);
+        facade_edge(s,c,trim);
+        for (float beam = -ew + .22f; beam < ew; beam += style == 3 ? .20f : .34f)
+            facade_edge(facade_point(x,y,beam,0,h+rise-1), facade_point(x,y,beam,ed,h-eave-1), shade(roof,.85f));
+
+    }
+    if (style == 2) {
+        /* Cloister roofs are hipped stone terraces. */
+        int z = h + 2;
+        ScreenPoint l = facade_point(x,y,-ew,ed,z), f2 = facade_point(x,y,ew,ed,z);
+        ScreenPoint r2 = facade_point(x,y,ew,-ed,z), b2 = facade_point(x,y,-ew,-ed,z);
+        ScreenPoint tl = facade_point(x,y,-w*.55f,d*.57f,z+rise+1), tf = facade_point(x,y,w*.55f,d*.57f,z+rise+1);
+        ScreenPoint tr = facade_point(x,y,w*.55f,-d*.57f,z+rise+1), tb = facade_point(x,y,-w*.55f,-d*.57f,z+rise+1);
+        facade_face(b2,r2,tr,tb,shade(roof,.9f));
+        facade_face(b2,l,tl,tb,shade(roof,.83f));
+        facade_face(l,f2,tf,tl,shade(roof,1.15f));
+        facade_face(r2,f2,tf,tr,roof);
+        facade_face(tl,tf,tr,tb,shade(plaster[style],li*.82f));
+        facade_edge(tl,tf,trim);facade_edge(tf,tr,trim);
+        for (int q = -1; q <= 1; q += 2) {
+            ScreenPoint f3 = facade_point(x,y,q*w*.48f,0,z+rise);
+            facade_edge(f3,(ScreenPoint){f3.x,f3.y-6},trim);
+            diamond(f3.x,f3.y-8,3,2,trim);
+        }
+    } else if (style == 3 || style == 4) {
+        /* Salvagers and foundries build single-slope roofs from metal panels. */
+        int low = h - 3, high = h + rise + 6;
+        ScreenPoint al=facade_point(x,y,-ew,-ed,high), ar=facade_point(x,y,ew,-ed,high);
+        ScreenPoint bl=facade_point(x,y,-ew,ed,low), br=facade_point(x,y,ew,ed,low);
+        facade_face(al,ar,br,bl,shade(roof,town == 3 ? 1.29f : 1.03f));
+        facade_face(facade_point(x,y,w,-d,h-4), facade_point(x,y,w,d,h-4),
+                    facade_point(x,y,w,d,low), facade_point(x,y,w,-d,high), side);
+        facade_edge(ar,br,trim);facade_edge(bl,br,dark);
+        for (float beam = -ew+.15f; beam < ew; beam += .24f)
+            facade_edge(facade_point(x,y,beam,-ed,high),facade_point(x,y,beam,ed,low),shade(roof,.76f));
+    }
+    if (style == 1 && (type == BAR || type == TOWER || type == JAIL)) {
+        ScreenPoint p = facade_point(x,y,0,0,h+rise+9);
+        triangle(r.x,r.y,s.x,s.y,p.x,p.y,shade(roof,.81f));
+        facade_edge(r,p,trim);
+        facade_edge(p,s,trim);
+    }
+    if (type == FORGE || style == 4) {
+        ScreenPoint stack = facade_point(x,y,-w*.46f,-d*.32f,h+rise/2);
+        rect(stack.x-5,stack.y-24,11,25,shade(0x554c3e,l));
+        rect(stack.x-6,stack.y-25,13,4,trim);
+        if (type == FORGE) {
+            px(stack.x+1,stack.y-32-(int)(g.time*4)%4,shade(0xc19469,l));
+            px(stack.x-2,stack.y-37-(int)(g.time*3)%4,shade(0xa69a7c,l));
+        }
+    }
+    facade_window(x,y,w + .025f,0,0,type == STORE ? .45f : .34f,0,21,trim);
+    facade_window(x,y,-w*.5f,d+.025f,1,.26f,12,11,trim);
+    if (w >= 1.35f || type == BAR) facade_window(x,y,w*.46f,d+.025f,1,.25f,12,11,trim);
+    if (d >= 1.23f) facade_window(x,y,w+.025f,-d*.61f,0,.20f,13,9,trim);
+    if (type == TOWER || (type == BAR && h >= 44))
+        facade_window(x,y,0,d+.025f,1,.35f,h-16,10,trim);
+    if (type == SHOP || type == BAR || variant == BUILD_LODGE) {
+        uint32_t canvas = shade(variant == BUILD_LODGE ? 0x6d806b : type == BAR ? 0xa08458 :
+                               style == 1 ? 0x974b3f : style == 2 ? 0xb2a580 : 0x866b4c,l);
+        float span = type == BAR ? .66f : .73f;
+        ScreenPoint aw1 = facade_point(x,y,w,-span,25), aw2 = facade_point(x,y,w,span,25);
+        ScreenPoint aw3 = facade_point(x,y,w+.52f,span,18), aw4 = facade_point(x,y,w+.52f,-span,18);
+        facade_face(aw1,aw2,aw3,aw4,canvas);
+        facade_edge(aw3,aw4,trim);
+        for (float k = -span+.12f; k < span; k += .23f)
+            facade_edge(facade_point(x,y,w,k,25),facade_point(x,y,w+.52f,k,18),shade(canvas,.85f));
+    }
+    ScreenPoint t1 = facade_point(x,y,w+.03f,-.37f,0), t2 = facade_point(x,y,w+.03f,.37f,0);
+    ScreenPoint t3 = facade_point(x,y,w+.65f,.37f,0), t4 = facade_point(x,y,w+.65f,-.37f,0);
+    facade_face(t1,t2,t3,t4,shade(0x8c785b,l));
+}
 static void building(int id) {
     Building *b = &g.buildings[id];
     int x, y;
@@ -533,7 +690,10 @@ static void building(int id) {
     project(g.actors[g.selected].x, g.actors[g.selected].y, &ax, &ay);
     int fade = building_has_interior(b->type) && abs(ax - x) < artSprites[sprite].w / 2 && ay < y + 16 &&
                ay > y - artSprites[sprite].ay;
-    art(sprite, x, y, light(), fade || g.depth.buildings[id].labor>0);
+    if (building_has_interior(b->type))
+        painted_structure(id, x, y, light(), fade || g.depth.buildings[id].labor > 0);
+    else
+        art(sprite, x, y, light(), g.depth.buildings[id].labor > 0);
     if(g.depth.buildings[id].labor>0){bar(x-20,y-8,40,3,100-g.depth.buildings[id].labor/35*100,GOLD);text(x-24,y+5,"BUILDING",GOLD,1);}
     if (b->type == CAMPFIRE) {
         int flicker = (int)(g.time * 10) % 3;
@@ -550,24 +710,17 @@ static void building(int id) {
                 line(px, py - 12, px + 9, y - 22 + abs(j + 1) * 2, shade(0x8d7557, li));
         }
     }
-    if (b->type == JAIL || b->type == SLAVE_YARD) {
-        const char *label = b->type == JAIL ? "JAIL" : "SLAVE CAMP";
-        int w = text_width(label) + 8, top = y - (b->type == JAIL ? artSprites[sprite].ay : 27);
-        rect(x - w / 2, top - 10, w, 11, INK);
-        center(x, top - 8, label, GOLD, 1);
+    if ((building_has_interior(b->type) || b->type == SLAVE_YARD) &&
+        distance(b->x,b->y,g.actors[g.selected].x,g.actors[g.selected].y) < 7) {
+        float w, d;
+        int h;
+        building_footprint(id, &w, &d, &h);
+        const char *label = building_name(id);
+        int bw = text_width(label) + 8, top = y - h - (int)((w+d)*11) - 17;
+        rect(x - bw/2, top, bw, 11, INK);
+        center(x, top + 2, label, GOLD, 1);
     }
-    if (b->type == SHOP || b->type == BAR) {
-        const char *name = b->type == SHOP ? "TRADING POST" : "THE WAYWARD";
-        int town=b->owner<0?town_near(b->x,b->y,15):-1;
-        if(town>=OLD_TOWNS){
-            static const char *shops[]={"RAIL EXCHANGE","IRON TRIBUTE HALL","HERBAL DISPENSARY"};
-            static const char *inns[]={"PUMP HOUSE INN","COURT INN","PILGRIM HOSPICE"};
-            name=b->type==SHOP?shops[town-OLD_TOWNS]:inns[town-OLD_TOWNS];
-        }
-        int w = text_width(name) + 8;
-        rect(x - w / 2, y - artSprites[sprite].ay - 10, w, 11, INK);
-        center(x, y - artSprites[sprite].ay - 8, name, GOLD, 1);
-    }
+
 }
 #include "painted_actor.h"
 static int resource_sprite(int n) {
@@ -590,10 +743,20 @@ static void resource(int n) {
     int id = resource_sprite(n);
     art(id, x, y + (id < 24 ? 5 : 0), light(), 0);
     if (b->type <= NODE_COPPER) {
-        uint32_t vein = shade(b->type == NODE_ORE ? 0xb6bdc4 : 0xe29b66, light());
-        line(x - 7, y + 1, x - 1, y - 3, vein);
-        line(x - 1, y - 3, x + 5, y - 1, vein);
-        px(x + 6, y - 3, vein);
+        uint32_t vein = shade(b->type == NODE_ORE ? 0xc0b5a2 : 0x7bb5a1, light());
+        uint32_t ore = shade(b->type == NODE_ORE ? 0x775344 : 0xc58857, light());
+        diamond(x-3,y,11,5,ore);
+        line(x - 13, y + 1, x - 5, y - 4, vein);
+        line(x - 5, y - 4, x + 7, y - 1, vein);
+        line(x - 11, y + 3, x - 1, y + 2, vein);
+        px(x + 4, y - 3, vein);
+        px(x + 8, y, vein);
+    } else if (b->type == NODE_WOOD) {
+        uint32_t cut = shade(0xceaa70,light()), bark=shade(0x74583e,light());
+        line(x-14,y+3,x+9,y-4,bark);
+        line(x-14,y+4,x+10,y-3,bark);
+        diamond(x-12,y+3,4,3,cut);
+        line(x-8,y+2,x+3,y-1,cut);
     }
     if (b->locked) {
         frame(x - 2, y - 5, 4, 4, GOLD);
@@ -609,8 +772,12 @@ static int compare_obj(const void *a, const void *b) {
     return d < 0 ? -1 : d > 0 ? 1 : 0;
 }
 static void squad_health_bar(const Actor *a, int x, int y) {
-    float hp = a->dead || a->unconscious > 0 ? 0 :
-        fminf(a->health[HEAD], a->health[CHEST]) * 100 / species_health(a);
+    float hp = 100;
+    for (int l = 0; l < LIMBS; l++)
+        hp = fminf(hp, a->health[l] * 100 / limb_max_health(a, l));
+    if (hp >= 99.95f && a->bleed <= .01f && !a->dead && a->unconscious <= 0)
+        return;
+    if (a->dead || a->unconscious > 0) hp = 0;
     bar(x - 10, y - 43, 21, 3, hp, a->bleed > .01f ? RED : TEAL);
     if (a->bleed > .01f)
         rect(x - 10, y - 43, 21, 1, RED);
@@ -797,6 +964,32 @@ static int squad_combatant(int n){
  }
  return 0;
 }
+static void care_and_cooldown(int indoors) {
+    Actor *selected = &g.actors[g.selected];
+    for (int i = 0; i < g.actorCount; i++) {
+        Actor *medic = &g.actors[i];
+        int patient = treatment_patient(medic);
+        if (patient < 0 || patient >= g.actorCount || (!medic->squad && !g.actors[patient].squad) ||
+            !medic->active || depth_room(medic) != depth_room(selected))
+            continue;
+        int x, y;
+        if (indoors) room_project(depth_x(medic), depth_y(medic), &x, &y);
+        else project(medic->x, medic->y, &x, &y);
+        if (x < 12 || x > 468 || y < 74 || y > 233) continue;
+        rect(x - 5, y - 61, 11, 11, INK);
+        rect(x - 4, y - 57, 9, 3, 0x78bdea);
+        rect(x - 1, y - 60, 3, 9, 0x78bdea);
+        bar(x - 12, y - 48, 25, 3, treatment_progress(medic), 0xdc9d54);
+    }
+    if (selected->autoattack && selected->cooldown > .01f && conscious(selected)) {
+        int x, y;
+        if (indoors) room_project(depth_x(selected), depth_y(selected), &x, &y);
+        else project(selected->x, selected->y, &x, &y);
+        CombatTiming timing = combat_timing(selected, selected->attackWeapon, combat_attack_variant(selected));
+        float total = timing.windup + timing.stroke + timing.recovery;
+        bar(x - 13, y + 5, 27, 3, (1 - fminf(1, selected->cooldown / total)) * 100, 0xdc9d54);
+    }
+}
 static void nearby_labels(int indoors){
  int ids[MAX_ACTORS],count=0;float ds[MAX_ACTORS];Actor*p=&g.actors[g.selected];
  for(int i=0;i<g.actorCount;i++){Actor*a=&g.actors[i];if(!a->active||a->squad||a->carriedBy>=0||population_hidden(i)||depth_room(a)!=depth_room(p))continue;float d=depth_distance(p,a);if(d>9)continue;ids[count]=i;ds[count++]=d;}
@@ -805,7 +998,8 @@ static void nearby_labels(int indoors){
  int fighting=0;for(int i=0;i<count;i++)if(squad_combatant(ids[i]))fighting=1;
  if(fighting)for(int i=1;i<count;i++)if(ids[i]==p->target){int swap=ids[0];ids[0]=ids[i];ids[i]=swap;break;}
  for(int i=0;i<count&&used<(fighting?1:8);i++){Actor*a=&g.actors[ids[i]];if(depth_distance(p,a)>4)continue;int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);
-  char label[48];snprintf(label,sizeof(label),"%.20s%s",npc_role_name(a),a->dead?" / DEAD":a->unconscious>0?" / DOWN":actor_relation(ids[i])<0?" !":"");int w=text_width(label)+8,l=x-w/2,t=fighting?y+17:y-(a->dead||a->unconscious>0?24:56);if(l<4)l=4;if(l+w>476)l=476-w;if(t<39)t=39;
+  char label[48];snprintf(label,sizeof(label),"%.19s%s%s",a->bountyReward ? a->name : npc_role_name(a),
+    a->bountyReward ? " $" : "",a->dead?" / DEAD":a->unconscious>0?" / DOWN":actor_relation(ids[i])<0?" !":"");int w=text_width(label)+8,l=x-w/2,t=fighting?y+17:y-(a->dead||a->unconscious>0?24:56);if(l<4)l=4;if(l+w>476)l=476-w;if(t<39)t=39;
   for(int attempt=0;attempt<5;attempt++){int hit=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])hit=1;if(!hit)break;t-=13;}
   int overlaps=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])overlaps=1;
   if(overlaps||t<38||t>219||x<0||x>480||(l+w>398&&t<100))continue;
@@ -908,34 +1102,185 @@ static void texture_plane(int id, float x, float y, float ux, float uy, float vx
             fb[yy * pitch + xx] = palette[s->pixels[s->rows[sy * 3] + sx - lo]];
         }
 }
+static float roomScale = 22, roomBase = 61;
 static void room_project(float x, float y, int *sx, int *sy) {
-    *sx = 240 + (int)((x - y) * 22);
-    *sy = 61 + (int)((x + y) * 11);
+    *sx = 240 + (int)((x - y) * roomScale);
+    *sy = (int)(roomBase + (x + y) * roomScale * .5f);
+}
+static ScreenPoint room_point(float x, float y, int z) {
+    ScreenPoint p;
+    room_project(x, y, &p.x, &p.y);
+    p.y -= z;
+    return p;
+}
+static void room_top(float x, float y, float w, float d, int z, uint32_t color) {
+    facade_face(room_point(x-w,y-d,z),room_point(x+w,y-d,z),room_point(x+w,y+d,z),room_point(x-w,y+d,z),color);
+}
+static void room_box(float x, float y, float w, float d, int z, int h, uint32_t top, uint32_t wood) {
+    ScreenPoint l = room_point(x-w,y+d,z), f = room_point(x+w,y+d,z), r = room_point(x+w,y-d,z);
+    facade_panel(l,f,h,shade(wood,.82f));
+    facade_panel(r,f,h,wood);
+    room_top(x,y,w,d,z+h,top);
+    facade_edge(room_point(x-w,y+d,z+h),room_point(x+w,y+d,z+h),shade(top,1.17f));
+    facade_edge(room_point(x+w,y-d,z+h),room_point(x+w,y+d,z+h),shade(top,1.10f));
+}
+typedef struct { uint32_t wood, floor, fabric, metal; } RoomColors;
+static const RoomColors roomColors[6] = {
+    {0x796046,0x867354,0x7b684e,0xa18b64}, {0x614137,0xa28f62,0x874637,0xa7916b},
+    {0x786f5b,0xa09177,0x647669,0xb7a181}, {0x6b5844,0x816f57,0x7f6952,0x8b836d},
+    {0x696257,0x675f52,0x8b704e,0xa2865f}, {0x6e5b45,0x817055,0x826c53,0xa18d70}
+};
+static void room_furniture(const InteriorProp *p, int style, int variation) {
+    RoomColors c = roomColors[style];
+    float x=p->x, y=p->y, w=p->w, d=p->d;
+    if (p->art == 23) {
+        room_top(x,y,w,d,0,shade(c.fabric,.77f));
+        room_top(x,y,w-.09f,d-.09f,0,c.fabric);
+        room_top(x,y,w-.22f,d-.20f,0,shade(c.fabric,.86f));
+        return;
+    }
+    room_top(x+.10f,y+.09f,w,d,0,shade(c.floor,.59f));
+    if (p->art == 16) {
+        int h = style == 1 || style == 2 ? 5 : 9;
+        room_box(x,y,w,d,0,h,c.wood,shade(c.wood,.76f));
+        room_box(x,y,w-.05f,d-.05f,h,3,shade(c.fabric,1.22f),c.fabric);
+        room_top(x,y+d*.21f,w-.07f,d*.55f,h+3,c.fabric);
+        room_box(x,y-d*.64f,w*.69f,d*.20f,h+3,2,0xc2b39a,0xa0937a);
+        facade_edge(room_point(x-w*.88f,y+d*.22f,h+3),room_point(x+w*.88f,y+d*.22f,h+3),shade(c.fabric,1.24f));
+    } else if (p->art == 17 || p->art == 18) {
+        int h = p->art == 17 ? 16 : 12;
+        room_box(x,y,w*.88f,d*.82f,0,h-3,shade(c.wood,.75f),c.wood);
+        room_box(x,y,w,d,h-3,3,shade(c.wood,1.28f),c.wood);
+        if (p->art == 17 || variation) {
+            room_box(x+w*.42f,y-d*.23f,w*.22f,d*.40f,h,3,shade(c.metal,1.1f),c.wood);
+            room_box(x-w*.51f,y,d*.27f,d*.36f,h,4,c.fabric,c.wood);
+        }
+    } else if (p->art == 19) {
+        room_box(x,y,w,d,0,12,0x87705a,0x645849);
+        room_box(x,y+d*.12f,w*.64f,d*.53f,12,3,0x7a4d31,0x5b4739);
+        room_top(x+.10f,y+d*.2f,w*.32f,d*.30f,16,0xb96c39);
+        room_box(x-w*.53f,y-d*.59f,w*.41f,d*.35f,12,16,0x927763,0x64594d);
+    } else if (p->art == 20) {
+        room_box(x,y,w,d,0,12,shade(c.wood,1.13f),c.wood);
+        room_box(x,y,w*1.02f,d*1.04f,12,3,shade(c.wood,1.32f),c.wood);
+        ScreenPoint lock = room_point(x+w,y,8);
+        rect(lock.x-2,lock.y-1,4,4,c.metal);
+    } else if (p->art == 21) {
+        for (int z = 3; z <= 25; z += 11) {
+            room_box(x,y,w,d,z,2,shade(c.wood,1.25f),c.wood);
+            room_box(x-w*.42f,y,w*.23f,d*.6f,z+2,5,c.fabric,shade(c.fabric,.76f));
+            room_box(x+w*.38f,y,w*.26f,d*.6f,z+2,6,c.metal,c.wood);
+        }
+        for (int side = -1; side <= 1; side += 2) {
+            ScreenPoint peg = room_point(x+side*w,y+d,0);
+            facade_edge(peg,(ScreenPoint){peg.x,peg.y-30},shade(c.wood,.77f));
+        }
+    } else if (p->art == ROOM_SHRINE_ART) {
+        room_box(x,y,w,d,0,5,0xb6a88a,0x786f5b);
+        room_box(x,y,w*.72f,d*.8f,5,9,0x9f947a,0x786f5b);
+        room_box(x,y,w*.43f,d*.50f,14,8,0x739082,0x526259);
+        for (int side = -1; side <= 1; side += 2) {
+            ScreenPoint flame = room_point(x+side*w*.67f,y+d*.27f,15);
+            rect(flame.x,flame.y-3,2,4,0xe5b467);
+        }
+    } else if (p->art == ROOM_ARMOR_ART) {
+        room_box(x,y,w,d,0,5,c.wood,shade(c.wood,.8f));
+        for (int side = -1; side <= 1; side += 2) {
+            ScreenPoint peg = room_point(x+side*w*.73f,y,5);
+            line(peg.x,peg.y,peg.x,peg.y-29,c.wood);
+            ScreenPoint pauldron = room_point(x+side*w*.50f,y,24);
+            rect(pauldron.x-3,pauldron.y-1,7,5,c.metal);
+        }
+        room_box(x,y,w*.41f,d*.38f,10,15,shade(c.metal,1.18f),c.fabric);
+        room_box(x,y,w*.26f,d*.25f,26,6,c.metal,shade(c.metal,.73f));
+    } else if (p->art == ROOM_BALES_ART) {
+        room_box(x,y,w,d,0,9,c.fabric,c.wood);
+        room_box(x+w*.12f,y-d*.13f,w*.75f,d*.72f,9,8,shade(c.fabric,1.34f),c.fabric);
+        for (int j = -1; j <= 1; j += 2)
+            facade_edge(room_point(x+w*j*.31f,y-d*.82f,17),room_point(x+w*j*.31f,y+d*.55f,17),c.metal);
+    } else if (p->art == ROOM_STOVE_ART || p->art == ROOM_HEARTH_ART) {
+        room_box(x,y,w,d,0,12,0x645f56,0x3f3d39);
+        room_box(x+w*.45f,y-d*.47f,w*.25f,d*.24f,12,p->art == ROOM_HEARTH_ART ? 25 : 17,0x80725e,0x4c473f);
+        ScreenPoint vent = room_point(x-w*.25f,y+d,6);
+        rect(vent.x-4,vent.y-2,7,4,0x382a25);
+        rect(vent.x-2,vent.y-1,3,2,0xb27037);
+    } else if (p->art == 24) {
+        ScreenPoint a = room_point(x,y,0);
+        room_box(x,y,w,d,0,5,c.wood,shade(c.wood,.8f));
+        rect(a.x-2,a.y-33,4,29,c.wood);
+        rect(a.x-8,a.y-28,16,9,c.fabric);
+        rect(a.x-4,a.y-38,8,8,shade(c.fabric,1.24f));
+        line(a.x-14,a.y-25,a.x+14,a.y-25,c.metal);
+    } else {
+        ScreenPoint a = room_point(x,y,0);
+        room_box(x,y,w,d,0,11,c.wood,shade(c.wood,.78f));
+        rect(a.x-3,a.y-17,7,6,shade(c.metal,1.25f));
+        px(a.x,a.y-15,0xe4a759);
+    }
 }
 static void interior_draw(void) {
     int id = g.interiorBuilding - 1;
     Building *b = &g.buildings[id];
-    rect(0, 0, 480, 272, 0x211d18);
-    texture_plane(105, 86, 138, 154, -77, 0, -44, 3, 1.2f, .92f);
-    texture_plane(105, 240, 61, 154, 77, 0, -44, 3, 1.2f, .68f);
-    texture_plane(104, 240, 61, 154, 77, -154, 77, 2, 3, .96f);
-    for (int j = 0; j <= 7; j++) {
-        int x = 86 + j * 22, y = 138 - j * 11;
-        texture_plane(106, x, y, 0, -44, 3, -1.5f, 1, 1, .8f);
-        x = 240 + j * 22;
-        y = 61 + j * 11;
-        texture_plane(106, x, y, 0, -44, 3, 1.5f, 1, 1, .62f);
-    }
-    line(86, 94, 240, 17, 0x51402f);
-    line(240, 17, 394, 94, 0x382f25);
-    /* Door threshold remains visible on the removed front wall. */
+    int town = building_town(id), style = town < 0 ? 0 : civil_style(town);
+    const TownDesign *plan = town_design(town);
+    RoomColors colors = roomColors[style];
+    roomScale = b->type == BAR ? 17.5f + plan->beds * 1.45f :
+                b->type == JAIL ? 18 + plan->custody * 3 :
+                b->type == HOUSE ? 18.5f + (id % 3) * 1.1f : 22.5f + plan->marketTier;
+    if (g.frontier.variant[id] == BUILD_LODGE) roomScale = 22;
+    roomBase = 63 - (roomScale - 20) * 2;
+    rect(0, 0, 480, 272, shade(colors.wood,.32f));
+    ScreenPoint origin = room_point(0,0,0), west = room_point(0,7,0), east = room_point(7,0,0);
+    int wallHeight = b->type == JAIL && plan->custody == 0 ? 22 : 41;
     int x, y;
-    room_project(3.5f, 6.8f, &x, &y);
-    texture_plane(104, x, y - 11, 22, 11, -22, 11, .5f, .5f, .83f);
-    line(x - 22, y, x, y + 10, GOLD);
-    text(x - 15, y + 12, "EXIT", GOLD, 1);
-    room_project(3.8f, 3.6f, &x, &y);
-    art(23, x, y + 10, .8f, 0);
+    facade_panel(origin, west, wallHeight, shade(colors.wood,.75f));
+    facade_panel(origin, east, wallHeight, shade(colors.wood,.88f));
+    if (style == 0 || style == 4)
+        texture_plane(104, origin.x, origin.y, east.x-origin.x, east.y-origin.y,
+                      west.x-origin.x, west.y-origin.y, 2.4f, 2.4f, style == 4 ? .76f : .93f);
+    else
+        room_top(3.5f,3.5f,3.5f,3.5f,0,colors.floor);
+    for (int j = 1; j < 14; j++) {
+        float at = j * .5f;
+        if (style == 1 || style == 2) {
+            if (j % 2)
+                facade_edge(room_point(at,0,0),room_point(at,7,0),shade(colors.floor,.83f));
+            if (j % 4 == 0)
+                facade_edge(room_point(0,at,0),room_point(7,at,0),shade(colors.floor,.89f));
+        } else {
+            facade_edge(room_point(0,at,0),room_point(7,at,0),shade(colors.floor,.88f));
+            float end = (j % 4) + 1.f;
+            facade_edge(room_point(end,at,0),room_point(end,at+.5f,0),shade(colors.floor,.86f));
+        }
+    }
+    for (int j = 0; j < 5; j++) {
+        float at = j * 1.4f;
+        facade_edge(room_point(0,at,1),room_point(0,at,wallHeight),shade(colors.wood,.65f));
+        facade_edge(room_point(at,0,1),room_point(at,0,wallHeight),shade(colors.wood,.78f));
+    }
+    if (style == 1) {
+        for (int j = 1; j <= 4; j++) {
+            float at = j * 1.38f;
+            facade_face(room_point(at-.50f,0,wallHeight-6),room_point(at+.50f,0,wallHeight-6),
+                        room_point(at+.50f,0,10),room_point(at-.50f,0,10),shade(colors.fabric,.87f));
+            facade_edge(room_point(at,0,11),room_point(at,0,wallHeight-7),shade(colors.fabric,1.35f));
+        }
+    } else if (style == 2) {
+        for (int j = 1; j < 7; j += 2) {
+            facade_edge(room_point(0,j-.35f,15),room_point(0,j+.35f,15),shade(colors.metal,.8f));
+            facade_edge(room_point(0,j,16),room_point(0,j,29),colors.metal);
+            ScreenPoint lamp = room_point(0,j,19);
+            rect(lamp.x-2,lamp.y-4,4,5,0xc6ab69);
+        }
+    } else if (style == 3 || style == 5) {
+        for (int j = 1; j < 7; j += 2)
+            facade_edge(room_point(0,j-.5f,11),room_point(0,j+.5f,wallHeight-7),shade(colors.wood,1.32f));
+    }
+    facade_edge(room_point(0,0,wallHeight),room_point(7,0,wallHeight),shade(colors.wood,1.15f));
+    facade_edge(room_point(0,0,wallHeight),room_point(0,7,wallHeight),shade(colors.wood,1.09f));
+    room_top(3.5f,6.78f,.63f,.43f,0,shade(colors.wood,1.35f));
+    room_project(3.5f,6.82f,&x,&y);
+    text(x-11,y+7,"EXIT",GOLD,1);
     InteriorProp props[ROOM_PROPS];
     enum { ROOM_OBJECTS = MAX_ACTORS + ROOM_PROPS };
     int count = interior_props(id, props), order[ROOM_OBJECTS];
@@ -943,10 +1288,10 @@ static void interior_draw(void) {
     int roomActor[ROOM_OBJECTS];
     for (int i = 0; i < count; i++) {
         order[i] = i;
-        depth[i] = props[i].x + props[i].y;
+        depth[i] = props[i].art == 23 ? -1 : props[i].x + props[i].y;
         roomActor[i] = -1;
     }
-    int player = count, sleepProp = -1;
+    int player = count;
     Actor *controlled = &g.actors[g.selected];
     if (controlled->carriedBy < 0) {
         roomActor[count] = g.selected;
@@ -956,7 +1301,6 @@ static void interior_draw(void) {
             for (int i = 0; i < player; i++)
                 if (props[i].action == ROOM_REST &&
                     distance(props[i].x, props[i].y, g.interiorX, g.interiorY) < .35f) {
-                    sleepProp = i;
                     depth[player] = props[i].x + props[i].y + .01f;
                     break;
                 }
@@ -983,13 +1327,12 @@ static void interior_draw(void) {
         if (roomActor[i] >= 0) {
             Actor *resident = &g.actors[roomActor[i]];
             room_project(depth_x(resident), depth_y(resident), &x, &y);
-            int sleeping = roomActor[i] == g.selected && sleepProp >= 0;
-            if (sleeping) y -= 22;
+            int sleeping = actor_in_bed(resident);
+            if (sleeping) y -= style == 1 || style == 2 ? 8 : 12;
             person(resident, x, y, 1, roomActor[i] == g.selected && !sleeping);
             if (resident->squad) squad_health_bar(resident, x, y);
         } else {
-            room_project(props[i].x, props[i].y, &x, &y);
-            art(props[i].art, x, y + 5, 1, 0);
+            room_furniture(&props[i], style, (id + i) % 3);
         }
     }
     if (b->type == JAIL) {
@@ -1011,14 +1354,10 @@ static void interior_draw(void) {
             lastY = y;
         }
     }
-    const char *name = b->type == SHOP    ? "TRADING POST / INTERIOR"
-                       : b->type == BAR   ? "THE WAYWARD / ROOMS"
-                       : b->type == FORGE ? "SMITHY / INTERIOR"
-                       : b->type == STORE ? "DEPOT / INTERIOR"
-                       : b->type == JAIL  ? "JAIL / CELLS"
-                       : b->type == TOWER ? "WATCH HOUSE / INTERIOR"
-                                          : "FRONTIER HOME / INTERIOR";
-    text(12, 41, name, GOLD, 1);
+    const char *name = building_name(id);
+    int titleWidth = text_width(name);
+    rect(467-titleWidth,223,titleWidth+9,13,INK);
+    text(471-titleWidth,226,name,GOLD,1);
 }
 /* Map views share the walking camera's axes. North is up-right. */
 typedef struct { float wx, wy; int x, y; float sx, sy; } MapView;
@@ -1180,12 +1519,12 @@ static void hud(void) {
     char b[120];
     rect(0, 0, 480, 23, INK);
     line(0, 22, 480, 22, EDGE);
-    int t = town_near(a->x, a->y, 10);
+    int t = g.interiorBuilding ? building_town(g.interiorBuilding - 1) : town_near(a->x, a->y, 15);
     text(9, 8, t >= 0 ? towns[t].name : regionNames[biome(a->x, a->y)], GOLD, 1);
-    const char *phase = g.dayTime < 5 || g.dayTime >= 21 ? "NIGHT" : g.dayTime < 8 ? "DAWN"
-        : g.dayTime < 17 ? "DAYLIGHT" : "DUSK";
-    snprintf(b, sizeof(b), "DAY %d  %02d:%02d  %s", g.day, (int)g.dayTime, (int)(g.dayTime * 60) % 60, phase);
-    text(220, 8, b, MUTED, 1);
+    if (t >= 0)
+        text(155, 8, factionNames[g.townOwner[t]], label_color(g.townOwner[t]), 1);
+    snprintf(b, sizeof(b), "DAY %d %02d:%02d", g.day, (int)g.dayTime, (int)(g.dayTime * 60) % 60);
+    text(316, 8, b, MUTED, 1);
     snprintf(b, sizeof(b), "%d SILVER", g.money);
     text(472 - (int)strlen(b) * 6, 8, b, TEXT, 1);
     if (ui.screen != SCREEN_WORLD)
@@ -1274,8 +1613,9 @@ static void hud(void) {
     else if (a->prisonTime > 0)
         snprintf(b, sizeof(b), "%s", a->unconscious > 0 ? "RECOVERING IN CUSTODY" : "\001 JAIL ACTIONS");
     else if (slave_in_camp(a))
-        snprintf(b, sizeof(b), "\001 PICK SHACKLES");
-    else if(a->carrying>=0)snprintf(b,sizeof(b),"\001 PUT DOWN %.24s",g.actors[a->carrying].name);
+        snprintf(b, sizeof(b), "\001 PICK SHACKLES (%d%%)", lockpick_chance(a, LOCK_SHACKLES));
+    else if (a->carrying >= 0)
+        snprintf(b, sizeof(b), "\001 CARRYING %.16s", g.actors[a->carrying].name);
     else if (ui.contextKind == 1 && ui.contextIndex >= 0 && g.nodes[ui.contextIndex].owner)
         snprintf(b, sizeof(b), "\001 %s %s", context_action(), context_name());
     else if(nearby_actions())snprintf(b,sizeof(b),"\001 NEARBY ACTIONS");
@@ -1284,10 +1624,13 @@ static void hud(void) {
         rect(4, 223, text_width(b) + 16, 13, PANEL);
         text(12, 226, b, TEXT, 1);
     }
-    if (a->taskKind && a->taskKind != TASK_TREAT)
+    if (a->taskKind == TASK_TREAT || a->taskKind == TASK_JAIL_CARE)
+        bar(180, 236, 120, 2, treatment_progress(a), 0xdc9d54);
+    else if (a->taskKind)
         bar(180, 236, 120, 2,
             (1 - fminf(1, a->action / (a->taskKind == TASK_CELL_LOCK ? jail_pick_duration(a, a->taskIndex) :
-                 a->taskKind == 3 ? REST_DURATION : a->taskKind == TASK_JAIL_CARE ? 3 : a->taskKind == 2 ? 4.5f : 2.8f))) * 100, GOLD);
+                 a->taskKind == 3 ? REST_DURATION : a->taskKind == 2 ? 4.5f : 2.8f))) * 100,
+            a->taskKind == TASK_CELL_LOCK || a->taskKind == 2 ? 0xdc9d54 : GOLD);
     if (ui.statusPanel)
         detailed_status();
 }
@@ -1378,7 +1721,12 @@ static void equipment_comparison(int it, int y) {
     clipped(31,y,d->name,68,TEXT);
     if(it>=CATALOG_ITEMS&&it<OLD_ITEMS)text(374,y,it>=CATALOG_ITEMS+16?"SIGNATURE":"SPECIAL",GOLD,1);
     else if((it>=UNIQUE_ITEMS&&it<V090_ITEMS)||regalia_owner(it)>=0)text(404,y,"NAMED",GOLD,1);
-    snprintf(b,sizeof(b),"WORN: %s",worn?old->name:"EMPTY");clipped(31,y+12,b,68,MUTED);
+    snprintf(b,sizeof(b),"WORN: %.24s",worn?old->name:"EMPTY");clipped(31,y+12,b,33,MUTED);
+    if (d->slot == 0) {
+        int skill = weapon_class(it);
+        snprintf(b,sizeof(b),"Trains %s",skill >= 0 ? weaponClassNames[skill] : "Melee");
+        clipped(242,y+12,b,33,MUTED);
+    }
     int cell=0;
     compare_stat(cell++,y+26,d->slot==0?"DAMAGE":d->slot==5?"CAPACITY":"ARMOR",
                  d->slot==0?old->power:d->slot==5?old->capacity:old->armor,
@@ -1411,9 +1759,14 @@ static void equipment_comparison(int it, int y) {
 }
 static const char *item_function(int it){
     ItemDef*d=&itemDefs[it];int f=gear_family(it);
+    if (d->slot == 0) {
+        static char training[52];
+        int c = weapon_class(it);
+        snprintf(training, sizeof(training), "Trains %s", c >= 0 ? weaponClassNames[c] : "Melee");
+        return training;
+    }
     if(it>=CIV_ARMOR_ITEMS)return d->desc;
     if(d->slot<0)return d->desc;
-    if(d->slot==0){static char pattern[112];snprintf(pattern,sizeof(pattern),"%s construction. %s +%d. %s",weapon_design_name(it),d->effect>=0?effectNames[d->effect]:"Plain",item_effect_value(it),weapon_ranged(it)?"Needs ammunition.":"Reach and weight affect handling.");return pattern;}
     if(it>=RAPIER_ITEMS&&it<RAPIER_ITEMS+24)return "Fast, precise thrusts that pierce armor.";
     if(it>=SCIMITAR_ITEMS&&it<SCIMITAR_ITEMS+24)return "Curved cutting blade; serration causes bleeding.";
     if(d->slot==0){if(weapon_ranged(it))return f>=29?"Ranged weapon. Consumes cartridges; needs a clear shot.":"Ranged weapon. Consumes bolts; keep enemies at a distance.";if(f==84)return "Heavy two-handed blade. Extra reach; needs strong arms.";if(f==85)return "Heavy impact weapon. Pierces armor and staggers enemies.";return d->effect==0?"Melee weapon. Serrated strikes cause bleeding.":d->effect==1?"Melee weapon. Piercing strikes bypass some armor.":d->effect==3?"Melee weapon. Heavy impacts can stagger enemies.":"Melee weapon. Reach, handling and strength affect combat.";}
@@ -1495,7 +1848,7 @@ static void skills_screen(void) {
         int lv = aim ? level(a, CROSSBOWS) : weapon_class_level(a, selection);
         float xp = aim ? a->xp[CROSSBOWS] : g.society.weaponXP[g.selected][selection];
         snprintf(b, sizeof(b), "%s   LV %d   %.1f%% %s", aim ? "Ranged accuracy" : weaponClassNames[selection],
-                 lv, skill_progress(xp, lv), lv == 100 ? "MAXED" : "TO NEXT");
+                 lv, skill_progress(xp, lv), lv == SKILL_CAP ? "MAXED" : "TO NEXT");
         clipped(31, 187, b, 68, GOLD);
         if (aim) {
             skill_benefit(CROSSBOWS, b, sizeof(b));
@@ -1504,8 +1857,7 @@ static void skills_screen(void) {
         } else {
             snprintf(b, sizeof(b), "DAMAGE +%.1f%% / DELAY -%.1f%%", (lv - 1) * .25f, (lv - 1) * .15f);
             text(31, 201, b, TEAL, 1);
-            clipped(31, 217, selection == WC_ARCHERY ? "Bows and crossbows train the same weapon skill."
-                    : "Use this weapon class. Tougher opponents teach faster.", 68, TEXT);
+
         }
         return;
     }
@@ -1532,7 +1884,7 @@ static void skills_screen(void) {
     }
     int skill = skills[ui.selection < CORE_SKILL_ROWS ? ui.selection : 0], lv = level(a, skill);
     snprintf(b, sizeof(b), "%s   LV %d   %.1f%% %s", skillNames[skill], lv,
-             skill_progress(a->xp[skill], lv), lv == 100 ? "MAXED" : "TO NEXT");
+             skill_progress(a->xp[skill], lv), lv == SKILL_CAP ? "MAXED" : "TO NEXT");
     text(31, 197, b, GOLD, 1);
     skill_benefit(skill, b, sizeof(b));
     clipped(31, 207, b, 68, TEAL);
@@ -1863,15 +2215,25 @@ static void map_screen(void) {
     for (int i = 0; i < g.actorCount; i++)
         if (g.actors[i].squad && !g.actors[i].dead && INMAP(g.actors[i].x, g.actors[i].y))
             rect(MAPX(g.actors[i].x, g.actors[i].y) - 1, MAPY(g.actors[i].x, g.actors[i].y) - 1, 3, 3, TEAL);
-    for(int i=0;i<LANDMARKS;i++)if(INMAP(g.depth.siteX[i],g.depth.siteY[i])) {
+    for(int i=0;i<LANDMARKS;i++)if(g.frontier.knownSites[i] && INMAP(g.depth.siteX[i],g.depth.siteY[i])) {
         int x=MAPX(g.depth.siteX[i], g.depth.siteY[i]),y=MAPY(g.depth.siteX[i], g.depth.siteY[i]);diamond(x,y,4,3,0x151b19);diamond(x,y,2,2,GOLD);
         if(distance(ui.mapX,ui.mapY,g.depth.siteX[i],g.depth.siteY[i])<12)
             clipped(x>ox+120?x-110:x+6,y+5,landmarkNames[i],18,GOLD);
     }
-    if(INMAP(g.regions.campX,g.regions.campY) && (ui.mapTown==8 || g.discovered[8])) {
+    if(g.frontier.tollKnown && INMAP(g.regions.campX,g.regions.campY)) {
         int cx=MAPX(g.regions.campX, g.regions.campY),cy=MAPY(g.regions.campX, g.regions.campY);diamond(cx,cy,4,3,g.regions.outcome[1]?TEAL:RED);
         clipped(cx+6,cy-9,g.regions.outcome[1]?"TOLL AGREEMENT":"TOLL CAMP",18,TEXT);
     }
+    for (int i = 0; i < LODGES; i++)
+        if (g.frontier.lodge[i] && g.frontier.knownLodges[i]) {
+            const Building *b = &g.buildings[g.frontier.lodge[i] - 1];
+            if (INMAP(b->x, b->y)) {
+                int x = MAPX(b->x, b->y), y = MAPY(b->x, b->y);
+                diamond(x,y,3,3,GOLD);
+                if (distance(ui.mapX, ui.mapY, b->x, b->y) < 14)
+                    clipped(x+6,y-4,"DUSTWARD LODGE",16,TEXT);
+            }
+        }
     if (g.baseExists && INMAP(g.baseX, g.baseY))
         frame(MAPX(g.baseX, g.baseY) - 3, MAPY(g.baseX, g.baseY) - 3, 7, 7, TEAL);
     Actor *leader = &g.actors[g.selected];
@@ -1916,7 +2278,10 @@ static void trade_screen(void) {
     char b[100], v[70];
     static const char *titles[] = {"BUY / ALL STOCK", "BUY / SUPPLIES", "BUY / WEAPONS", "BUY / ARMOR",
                                    "BUY / BACKPACKS", "BUY / MECHANICAL LIMBS"};
-    overlay_header(ui.sell ? "SELL / CARRIED" : ui.tradeSmith && !ui.shopFilter ? "SMITHY / WEAPONS & ARMOR" : titles[ui.shopFilter],
+    overlay_header(ui.sell ? "SELL / CARRIED" : ui.tradeSmith == TRADE_SMITH ? "SMITHY / ARMS & ARMOR" :
+                   ui.tradeSmith == TRADE_INN ? "INN / FOOD & DRINK" :
+                   ui.tradeSmith == TRADE_ARMORER ? "ARMORER / FITTED ARMOR" :
+                   ui.tradeSmith == TRADE_APOTHECARY ? "SURGEON / SUPPLIES" : titles[ui.shopFilter],
                    ui.sell ? "\014 BUY-SELL   \001 SELL ONE"
                            : "\014 BUY-SELL   \005/\006 FILTER   \001 BUY ONE");
     int count = ui.sell ? item_view_count() : shop_count(), first = start_row(ui.sell ? item_view_row(ui.selection) : ui.selection, count, 6);
@@ -2217,7 +2582,9 @@ static void dialogue_screen(void) {
     snprintf(fine, sizeof(fine), "Pay %d silver to clear bounty", wanted_amount(&g.actors[g.selected], a->faction));
     const char *summons[] = {fine, "Serve time in jail"};
     const char *review[] = {fine, "Ask about local news", "Back"};
-    const char *prison[] = {bail, "Pick the cell lock", "Wait out the sentence"};
+    char pick[40];
+    snprintf(pick, sizeof(pick), "Pick the cell lock (%d%%)", lockpick_chance(a, LOCK_CELL));
+    const char *prison[] = {bail, pick, "Wait out the sentence"};
     const char *inspection[] = {"Let the guard search", "Refuse and leave"};
     int town = town_near(g.actors[g.selected].x, g.actors[g.selected].y, 14);
     int count = jailed ? 3 : ui.dialogPage == DIALOG_WORK ? work_dialogue_count(town)
@@ -2231,8 +2598,18 @@ static void dialogue_screen(void) {
         const char *option;
         if (jailed) option = prison[k];
         else if (ui.dialogPage == DIALOG_WORK) {
-            int kind = contract_offer(town, k);
-            option = kind >= 0 ? work[kind] : "Back";
+            static char posting[88];
+            int turnIn = work_turn_in(n, k), offset = 0;
+            while (work_turn_in(n, offset) >= 0)
+                offset++;
+            int kind = n == work_contact(town) && k >= offset ? contract_offer(town, k - offset) : -1;
+            if (turnIn >= 0)
+                snprintf(posting, sizeof(posting), "Turn in %.26s", contract_title(g.contracts[turnIn].type));
+            else if (kind >= 0)
+                snprintf(posting, sizeof(posting), "%d silver / %.34s", contract_reward(town, kind), work[kind]);
+            else
+                snprintf(posting, sizeof(posting), "Back");
+            option = posting;
         } else if (ui.dialogPage == DIALOG_INSPECTION) option = inspection[k];
         else if (ui.dialogPage == DIALOG_SUMMONS) option = summons[k];
         else if (ui.dialogPage == DIALOG_BOUNTY) option = review[k];
@@ -2284,23 +2661,30 @@ static void engage_screen(void){
     else text(31,211,"Close to weapon reach to strike. Square stops attacking.",MUTED,1);
 }
 static void journal_screen(void) {
-    overlay_header("THE ROAD JOURNAL", "\015 CONTRACT   \001 CLAIM   \003 LOCATE");
+    overlay_header(ui.journalTab ? "JOURNAL / COMPLETED" : "JOURNAL / ACTIVE",
+                   ui.journalTab ? "\016 SWITCH TAB   \015 SELECT" : "\016 SWITCH TAB   \015 SELECT   \003 LOCATE");
     char b[214], v[42];
     int count = journal_count(), first = start_row(ui.selection, count, 6);
     for (int j = 0; j < 6 && first + j < count; j++) {
         int k = journal_slot(first + j);
-        const Contract *c = &g.contracts[k];
+        const Contract *c = journal_contract(k);
         snprintf(b, sizeof(b), "%.23s / %.14s", contract_title(c->type), towns[c->town].name);
         if (c->active == 3) snprintf(v, sizeof(v), "FAILED");
         else if (c->completed) snprintf(v, sizeof(v), "PAID");
-        else if (contract_ready(k)) snprintf(v, sizeof(v), "READY TO CLAIM");
+        else if (contract_ready(k)) snprintf(v, sizeof(v), "READY TO TURN IN");
         else if (c->type == CONTRACT_PATROL)
             snprintf(v, sizeof(v), "%d/180S", (int)fminf(180, g.society.jobNear[k]));
         else snprintf(v, sizeof(v), "%d/%d", c->progress, c->needed);
         row(85 + j * 14, first + j == ui.selection, b, v);
     }
-    contract_description(journal_slot(ui.selection), b, sizeof(b));
+    int selected = journal_slot(ui.selection);
+    const Contract *entry = journal_contract(selected);
+    contract_description(selected, b, sizeof(b));
     wrap(31, 171, 68, b, TEXT);
+    if (entry && !ui.journalTab) {
+        snprintf(b, sizeof(b), "REWARD %d SILVER", entry->reward);
+        text(31, 208, b, GOLD, 1);
+    }
     snprintf(b, sizeof(b), "CONTRACTS COMPLETED %d", g.contractsDone);
     text(31, 222, b, TEAL, 1);
 }
@@ -2401,7 +2785,16 @@ static void loot_screen(void) {
         snprintf(b,sizeof(b),"%d",itemDefs[id].price);text(442-text_width(b),y,b,TEXT,1);
     }
     int it=!count?0:limb_loot_item(a,ui.selection);
-    snprintf(b,sizeof(b),"%d ITEMS / %.30s",count,a->name);text(31,160,b,MUTED,1);
+    if (a->bountyReward > 0) {
+        char payers[110];
+        bounty_details(ui.lootActor, payers, sizeof(payers));
+        snprintf(b, sizeof(b), "BOUNTY  %d ALIVE / %d DEAD", a->bountyReward * 2, a->bountyReward);
+        text(31, 73, b, GOLD, 1);
+        clipped(31, 160, payers, 68, TEXT);
+    } else {
+        snprintf(b,sizeof(b),"%d ITEMS / %.30s",count,a->name);
+        text(31,160,b,MUTED,1);
+    }
     equipment_comparison(it,173);
 }
 static void assist_screen(void) {
@@ -2415,14 +2808,14 @@ static void assist_screen(void) {
              : a->unconscious > 0 ? "DOWN"
                                   : "AWAKE");
     text(151, 102, b, a->bleed > 0 ? RED : MUTED, 1);
-    const char *opts[] = {"First aid - uses one field dressing", "Carry unconscious survivor",
+    const char *opts[] = {"First aid", "Carry unconscious survivor",
                           "Recover pack and worn equipment", "Take control of this squad member"};
     for (int i = 0; i < 4; i++) {
         if (i == ui.selection)
             rect(146, 126 + i * 21, 300, 18, 0x4a4030);
         text(152, 131 + i * 21, opts[i], i == ui.selection ? GOLD : MUTED, 1);
     }
-    text(31, 223, "CARRYING SLOWS TRAVEL. \001 IN THE WORLD PUTS THEM DOWN.", TEXT, 1);
+    text(31, 223, "\001 NEARBY ACTIONS TO PUT THEM DOWN OR LAY THEM IN BED.", TEXT, 1);
 }
 static void log_screen(void) {
     overlay_header("RECENT MESSAGES", "NEWEST FIRST - CURRENT SESSION");
@@ -2481,8 +2874,10 @@ void render_game(uint32_t *pixels, int stride) {
           if(distance(wx,wy,ui.camX,ui.camY)<10){int x,y;project(wx,wy,&x,&y);center(x,y+9,"WORK YARD",GOLD,1);}
       }
     }
-    if (ui.screen == SCREEN_WORLD)
+    if (ui.screen == SCREEN_WORLD) {
         nearby_labels(!!g.interiorBuilding);
+        care_and_cooldown(!!g.interiorBuilding);
+    }
     if(ui.screen==SCREEN_WORLD && !g.interiorBuilding && g.actors[g.selected].target<0 && g.actors[g.selected].unconscious<=0 && !g.actors[g.selected].dead) speech_bubbles();
     hud();
     switch (ui.screen) {
