@@ -649,14 +649,16 @@ static void squad_health_bar(const Actor *a, int x, int y) {
         rect(x - 10, y - 43, 21, 1, RED);
 }
 typedef struct { float x, y, w, d; } BuildingYard;
-static int scenery_clear_of_buildings(float x, float y, const BuildingYard *yards, int count) {
+static int scenery_clear_of_buildings(float x, float y, float canopyHalf, const BuildingYard *yards, int count) {
     for (int i = 0; i < count; i++) {
         const BuildingYard *yard = &yards[i];
         float dx = x - yard->x, dy = y - yard->y;
         if (fabsf(dx) < yard->w + .65f && fabsf(dy) < yard->d + .65f)
             return 0;
+        /* Keep the approach to the roofline clear of branches from behind and beside it. */
         float depth = view_vertical(dx, dy), span = yard->w + yard->d;
-        if (depth <= 0 && depth > -span - 2.6f && fabsf(view_horizontal(dx, dy)) < span + .85f)
+        if (depth <= 0 && depth > -span * 1.5f - 3.4f &&
+            fabsf(view_horizontal(dx, dy)) < span + canopyHalf + .55f)
             return 0;
     }
     return 1;
@@ -761,7 +763,7 @@ static void objects_draw(void) {
             if (sx - s->ax > 480 || sx - s->ax + s->w < 0 || sy + 4 - s->ay > 252 ||
                 sy + 4 - s->ay + s->h < 0)
                 continue;
-            if (!scenery_clear_of_buildings(wx, wy, yards, yardCount))
+            if (!scenery_clear_of_buildings(wx, wy, s->w / 44.f, yards, yardCount))
                 continue;
             objects[n++] = (Object){wx + wy, 3, id, sx, sy};
         }
