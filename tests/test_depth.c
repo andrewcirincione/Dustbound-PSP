@@ -185,13 +185,15 @@ int main(int argc, char **argv) {
     C(!craft_item(1) && !memcmp(&before, a, sizeof(*a)));
     C(depth_fuel(b));
     C(craft_item(1) && D.buildings[b].fuel == 3);
-    /* Separate groups do not follow whichever character is selected. */
+    /* Formations follow the active member, even if another member was the leader in an old save. */
     fresh();
     isolate();
     a = &g.actors[0];
     Actor *ally = &g.actors[1];
     *ally = *a;
     ally->active = 1;
+    a->x = 41;
+    a->y = 44;
     ally->x = 50;
     ally->y = 44;
     g.squadCount = 2;
@@ -199,12 +201,12 @@ int main(int argc, char **argv) {
     D.groupLeader[1] = 1;
     float x = ally->x;
     depth_group_job(ally, 1);
-    C(ally->x == x);
-    D.groupTravel[1] = 1;
-    D.groupX[1] = 54;
-    D.groupY[1] = 44;
-    depth_group_job(ally, 1);
-    C(ally->x > x);
+    C(ally->x < x);
+    select_squad_member(1);
+    x = a->x;
+    depth_group_job(a, 1);
+    C(a->x > x);
+    select_squad_member(0);
     D.actors[0].queued = 1;
     D.actors[0].queue[0] = JOB_MEDIC;
     D.actors[0].queue[1] = JOB_MINE;
@@ -213,9 +215,12 @@ int main(int argc, char **argv) {
     a->target = -1;
     a->x = 24;
     a->y = 34;
+    ui.playerIdle = 5;
     depth_queue(a);
-    C(a->job == JOB_MINE);
-    key(KEY_LEFT);
+    C(assigned_job(a) == JOB_MINE && a->job == JOB_FOLLOW);
+    key(KEY_RIGHT);
+    key(KEY_TRIANGLE);
+    key(KEY_RIGHT);
     C(D.actors[0].paused);
     /* Captives escape with time, are interrupted by guards, retain confiscated
      * gear. */

@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.17.1"
+#define VERSION "0.17.2"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -27,6 +27,7 @@
 #define SEVERED_LEG (LIMB_ITEMS+9)
 #define ITEMS (LIMB_ITEMS+10)
 #define SPECIES 5
+#define START_SCENARIOS 5
 #define ELITES 18
 #define EVENTS 8
 #define GEARS 6
@@ -37,7 +38,7 @@
 #define OLD_TOWNS 16
 #define TOWNS 19
 #define SQUAD 8
-#define LOGS 6
+#define LOGS 24
 enum {
     ATHLETICS,
     STRENGTH,
@@ -132,7 +133,8 @@ enum {
     SCREEN_LOOT,
     SCREEN_ASSIST,
     SCREEN_LOG, SCREEN_EXPEDITION, SCREEN_ORDERS, SCREEN_CAMP, SCREEN_CARE, SCREEN_ENCOUNTER, SCREEN_LAYERS,
-    SCREEN_THEFT, SCREEN_ENGAGE, SCREEN_ACTIONS, SCREEN_LIMBS, SCREEN_LIMBFIT, SCREEN_SURGERY, SCREEN_LIMBCONFIRM, SCREEN_LIFE, SCREEN_POLITICS
+    SCREEN_THEFT, SCREEN_ENGAGE, SCREEN_ACTIONS, SCREEN_LIMBS, SCREEN_LIMBFIT, SCREEN_SURGERY, SCREEN_LIMBCONFIRM, SCREEN_LIFE, SCREEN_POLITICS,
+    SCREEN_PASS, SCREEN_SCENARIOS
 };
 enum {
     KEY_UP = 1,
@@ -171,7 +173,8 @@ typedef struct {
         carriedBy, lostMask, prostheticMask, bounty, arrested, lootTaken;
     int body, skin, hair, hairColor, beard, scar, origin, race, facing, homeTown;
     int voice, speech, prisonTown, stolen[PACK], bountyReward;
-    float speechTime, speechCooldown, prisonTime, stun, exposure, bleedTimer;
+    float speechTime, speechCooldown, prisonTime, stun, exposure;
+    int treatedMask; /* occupies the unused bleedTimer save field */
     int routeLen, routePos, routeX[24], routeY[24];
     float routeClock, routeTargetX, routeTargetY;
     int attackPhase, attackTarget, attackWeapon, impactLimb, impactDamage, impactKind, defeatCredited,
@@ -252,6 +255,7 @@ typedef struct {
     FieldNotes fieldNotes;
     struct { int version, seen, bed[6], omit; } trails;
     FrontierWar war;
+    unsigned theftWarnings;
 } Game;
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_RESEARCH, ROOM_STORAGE };
 typedef struct {
@@ -278,7 +282,7 @@ typedef struct {
     int feedCount, wantedTown, wantedValue;
     float feedClock, statusClock;
     int helpReturn, helpTopic, dialogActor, dialogPage, forgeSlot, forgeFamily, forgeMaterial, forgeQuality;
-    int createRow, createOrigin, createBody, createSkin, createHair, createHairColor, createBeard, createScar,
+    int createRow, createOrigin, createBody, createSkin, createHair, createHairColor, createBeard,
         createRace;
     int nameCursor, nameCell, storageIndex, storageSide, shopFilter, saveMode, lootActor, mapZoom, mapTown;
     char createName[16];
@@ -290,6 +294,10 @@ typedef struct {
     int mapCategory,mapChoice,skillPage;
     int limbTarget, limbSourceSlot, limbReturn, limbConfirm;
     float travelStall, travelLastX, travelLastY;
+    float playerIdle;
+    int passSlot, squadPage, scenarioReturn;
+    unsigned char jobGather[MAX_ACTORS], danger[MAX_ACTORS], priorityJob[MAX_ACTORS];
+    char workNotice[80];
 } UI;
 typedef struct {
     int held, pressed;
@@ -384,6 +392,14 @@ int inventory_add_owned(Actor *a, int item, int qty, int owner);
 int inventory_remove_slot(Actor *a, int slot, int qty);
 int inventory_input_owner(const Actor *a, int item, int qty);
 int inventory_transfer(Actor *from, Actor *to, int slot, int qty);
+int pass_recipient(int row);
+const char *pass_blocked(int actor);
+int automatic_work(const Actor *a);
+void work_notice(const Actor *a, const char *action, const char *target);
+int wound_needs_dressing(const Actor *a);
+int civilian_flees(const Actor *a);
+void dress_wounds(Actor *a);
+void witnessed_theft(Actor *a, int owner, int range, int penalty);
 int loot_take(int slot, int all);
 int nearby_service(int role);
 const char *job_status(const Actor *a);
@@ -417,6 +433,8 @@ void game_new(uint32_t seed, int scenario);
 void game_tick(float dt, Input in);
 void simulate(float dt);
 void move_actor(Actor *a, float dx, float dy, float dt);
+int hostile(const Actor *a, const Actor *b);
+void select_squad_member(int n);
 void strike(int attacker, int defender);
 void use_item(int slot);
 int buy_item(int town, int item);
@@ -429,6 +447,7 @@ int heal_actor(int medic, int patient);
 void interact(void);
 void find_context(void);
 void log_progress(const char *fmt, ...);
+void log_level(const char *fmt, ...);
 void log_msg(const char *fmt, ...);
 void log_warn(const char *fmt, ...);
 void log_tick(float dt);
@@ -489,7 +508,17 @@ float pickpocket_chance(const Actor *actor);
 int pickpocket_item(int actor);
 int pause_menu_count(void);
 const char *pause_menu_label(int row);
+typedef struct { int town; const char *difficulty, *description; } StartScenario;
+extern const StartScenario startScenarios[START_SCENARIOS];
+void scenario_menu(int origin, int from);
 void character_begin(int origin);
+void reveal_area(Actor *a);
+static inline float view_horizontal(float x, float y) { return x - y; }
+static inline float view_vertical(float x, float y) { return x + y; }
+static inline void view_to_world(float u, float v, float *x, float *y) {
+    *x = (u + v) * .5f;
+    *y = (v - u) * .5f;
+}
 void character_finish(void);
 int save_inspect(int slot, SaveInfo *info);
 void save_refresh(void);
@@ -497,6 +526,8 @@ int terrain_height(float x, float y);
 int terrain_water(float x, float y);
 int terrain_road(float x, float y);
 void route_toward(Actor *a, float x, float y, float dt);
+void walk_motion(Actor *a, float dx, float dy);
+void walk_heading(const Actor *a, float *x, float *y);
 int nearby_workstation(int type);
 int start_sleep(int town);
 int doctor_heal(int town);

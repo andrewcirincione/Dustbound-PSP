@@ -72,9 +72,7 @@ void depth_move_room(Actor *a, float dx, float dy, float dt) {
         D.actors[n].rx = x;
         D.actors[n].ry = y;
     }
-    float moved=distance(ox,oy,x,y);
-    if(moved>.001f){a->movedTimer=.12f;a->anim=fmodf(a->anim+moved*2.2f,6.2831853f);}
-    a->facing = (dx - dy) > 0;
+    walk_motion(a, x - ox, y - oy);
 }
 void depth_enter_room(int building) {
     Actor *a = &g.actors[g.selected];
@@ -84,7 +82,7 @@ void depth_enter_room(int building) {
         Actor *b = &g.actors[i];
         if (!conscious(b) || b == a || depth_room(b))
             continue;
-        if (b->squad && b->job == JOB_FOLLOW && D.actors[i].group == D.actors[g.selected].group &&
+        if (b->squad && assigned_job(b) == JOB_FOLLOW && !D.actors[i].paused &&
             distance(a->x, a->y, b->x, b->y) < 4) {
             D.actors[i].room = room;
             D.actors[i].rx = 2.8f + (i % 2) * 1.3f;
@@ -198,8 +196,13 @@ void depth_room_tick(float dt) {
                 }
             }
         if (target >= 0 && (!a->squad || a->autoattack)) {
-            a->target = target;
             Actor *b = &g.actors[target];
+            if (civilian_flees(a)) {
+                a->target = -1;
+                depth_move_room(a, depth_x(a) - depth_x(b), depth_y(a) - depth_y(b), dt);
+                continue;
+            }
+            a->target = target;
             if (depth_tactics(a, target, dt))
                 continue;
             float range = a->gear[0] ? itemDefs[a->gear[0]].range : 1.55f;

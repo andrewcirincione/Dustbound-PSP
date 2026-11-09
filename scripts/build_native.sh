@@ -14,6 +14,9 @@ python3 scripts/audit_catalog.py
 cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_overhaul.c -lm -o build/test-overhaul
 ./build/test-overhaul
 python3 -c "import gzip,pathlib; pathlib.Path('build/v030-frontier.sav').write_bytes(gzip.open('tests/fixtures/v030-frontier.sav.gz','rb').read())"
+mkdir -p build/v172
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_playability_pass.c -lm -o build/test-playability-pass
+./build/test-playability-pass
 cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_playability.c -lm -o build/test-playability
 ./build/test-playability
 cc -O2 -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_weapon_art.c -lm -o build/test-weapon-art

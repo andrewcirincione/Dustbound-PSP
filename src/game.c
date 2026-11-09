@@ -17,9 +17,15 @@ typedef struct {
     uint32_t entropy;
     unsigned played;
     int variant;
+    float walkX, walkY;
 } CombatVisual;
 static CombatVisual combatVisuals[MAX_ACTORS];
-void combat_visual_reset(void) { memset(combatVisuals, 0, sizeof(combatVisuals)); }
+typedef struct { float x, y, time, stuck; } Retreat;
+static Retreat retreats[MAX_ACTORS];
+void combat_visual_reset(void) {
+    memset(combatVisuals, 0, sizeof(combatVisuals));
+    memset(retreats, 0, sizeof(retreats));
+}
 static const CombatVisual *combat_visual(const Actor *a) {
     uintptr_t address = (uintptr_t)a, start = (uintptr_t)g.actors;
     return address >= start && address < start + sizeof(g.actors)
@@ -161,20 +167,24 @@ void gain(Actor *a, int s, float n) {
         return;
     int before = level(a, s);
     a->xp[s] = fminf(117612, a->xp[s] + n);
-    if (level(a, s) > before && g.actors + g.selected == a)
-        log_progress("%s: %s %d", a->name, skillNames[s], level(a, s));
+    if (level(a, s) > before)
+        log_level("%s reached %s %d.", a->name, skillNames[s], level(a, s));
 }
 static void log_write(int priority, const char *fmt, va_list ap) {
     char b[100]; vsnprintf(b,sizeof(b),fmt,ap);
     if (!ui.logCount || strcmp(ui.logs[0],b)) {
         for(int i=LOGS-1;i>0;i--) memcpy(ui.logs[i],ui.logs[i-1],80);
-        snprintf(ui.logs[0],80,"%.79s",b);ui.logCount++;
+        snprintf(ui.logs[0],80,"%.79s",b);
+        if (ui.logCount < LOGS) ui.logCount++;
     }
     if(priority<0){if(ui.feedCount)return;priority=0;}
     snprintf(ui.notice,sizeof(ui.notice),"%s",b);ui.noticeTime=4;
     for(int i=0;i<ui.feedCount;i++) if(!strcmp(ui.feed[i],b)) return;
     int at=ui.feedCount;
-    if(priority) { at=ui.feedCount && ui.feedPriority[0]?1:0; while(at<ui.feedCount && ui.feedPriority[at])at++; }
+    if (priority) {
+        at = ui.feedCount && (priority == 1 || ui.feedPriority[0] == 2) ? 1 : 0;
+        while (at < ui.feedCount && ui.feedPriority[at] >= priority) at++;
+    }
     if(at>=12)return;
     if(ui.feedCount<12)ui.feedCount++;
     for(int i=ui.feedCount-1;i>at;i--){memcpy(ui.feed[i],ui.feed[i-1],100);ui.feedPriority[i]=ui.feedPriority[i-1];}
@@ -183,23 +193,73 @@ static void log_write(int priority, const char *fmt, va_list ap) {
 }
 void log_msg(const char *fmt, ...) { va_list ap;va_start(ap,fmt);log_write(0,fmt,ap);va_end(ap); }
 void log_progress(const char *fmt, ...) { va_list ap;va_start(ap,fmt);log_write(-1,fmt,ap);va_end(ap); }
-void log_warn(const char *fmt, ...) { va_list ap;va_start(ap,fmt);log_write(1,fmt,ap);va_end(ap); }
+void log_level(const char *fmt, ...) { va_list ap;va_start(ap,fmt);log_write(1,fmt,ap);va_end(ap); }
+void log_warn(const char *fmt, ...) { va_list ap;va_start(ap,fmt);log_write(2,fmt,ap);va_end(ap); }
+enum { TICKER_GAP = 30, TICKER_SPEED = 96 };
+static int ticker_width(const char *s) {
+    int width = 0;
+    for (; *s; s++)
+        width += *s == '\007' ? 24 : *s == '\010' ? 28 : (unsigned char)*s < 16 ? 10 : 6;
+    return width;
+}
+static void danger_news(void) {
+    unsigned char danger[MAX_ACTORS] = {0};
+    for (int i = 0; i < g.actorCount; i++) {
+        Actor *foe = &g.actors[i];
+        int n = foe->target;
+        if (n >= 0 && n < g.actorCount && !foe->squad && conscious(foe) &&
+            g.actors[n].squad && !g.actors[n].dead && depth_distance(foe, &g.actors[n]) < 12 &&
+            hostile(foe, &g.actors[n]))
+            danger[n] |= 4;
+    }
+    for (int n = 0; n < g.actorCount; n++) {
+        Actor *a = &g.actors[n];
+        if (!a->squad || a->dead)
+            continue;
+        if (a->bleed > .01f) danger[n] |= 1;
+        if (a->unconscious > 0) danger[n] |= 2;
+        if (a->blood < 35 || a->health[HEAD] < 15 || a->health[CHEST] < 15) danger[n] |= 8;
+        int added = danger[n] & ~ui.danger[n];
+        if (added & 2)
+            log_warn("%s is unconscious.", a->name);
+        if (added & 1)
+            log_warn("%s is bleeding. Nearby Actions has first aid.", a->name);
+        if ((added & 8) && !(danger[n] & 2))
+            log_warn("%s is critically wounded.", a->name);
+        else if (added == 4 && !(danger[n] & 3))
+            log_warn("%s is under attack.", a->name);
+    }
+    memcpy(ui.danger, danger, sizeof(danger));
+}
 void log_tick(float dt) {
-    ui.statusClock+=dt;
-    if(ui.feedCount){ui.feedClock+=dt;float duration=4+fmaxf(0,((float)strlen(ui.feed[0])-75)/12);
-        if(ui.feedClock>=duration){for(int i=1;i<ui.feedCount;i++){memcpy(ui.feed[i-1],ui.feed[i],100);ui.feedPriority[i-1]=ui.feedPriority[i];}ui.feedCount--;ui.feedClock=0;}}
-    if(ui.screen==SCREEN_TITLE||!g.actorCount)return;
+    ui.statusClock += dt;
+    if (ui.feedCount) {
+        ui.feedClock += dt;
+        float duration = 1.25f + (ticker_width(ui.feed[0]) + TICKER_GAP) / (float)TICKER_SPEED;
+        if (ui.feedClock >= duration) {
+            for (int i = 1; i < ui.feedCount; i++) {
+                memcpy(ui.feed[i - 1], ui.feed[i], 100);
+                ui.feedPriority[i - 1] = ui.feedPriority[i];
+            }
+            ui.feedCount--;
+            ui.feedClock = 0;
+        }
+    }
+    if (ui.screen == SCREEN_TITLE || ui.screen == SCREEN_SCENARIOS || !g.actorCount)
+        return;
+    if (ui.screen == SCREEN_WORLD)
+        danger_news();
     Actor*a=&g.actors[g.selected];int t=town_near(a->x,a->y,24),v=t>=0?wanted_amount(a,g.townOwner[t]):0;
     if(v>0&&(t!=ui.wantedTown||v!=ui.wantedValue))log_warn("%s: wanted by %s, %d silver. Guards may arrest you.",towns[t].name,factionNames[g.townOwner[t]],v);
     ui.wantedTown=t;ui.wantedValue=v;
 }
 const char *log_current(int *priority,int *offset) {
     static char status[100];*offset=0;
-    if(ui.wantedValue>0&&ui.wantedTown>=0&&(!ui.feedCount||fmodf(ui.statusClock,16)>=12)){
-        snprintf(status,sizeof(status),"WANTED HERE: %s / %d silver. See Start > World > Factions.",factionNames[g.townOwner[ui.wantedTown]],ui.wantedValue);*priority=1;return status;}
+    if(ui.wantedValue>0&&ui.wantedTown>=0&&!ui.feedCount){
+        snprintf(status,sizeof(status),"WANTED HERE: %s / %d silver. See Start > World > Factions.",factionNames[g.townOwner[ui.wantedTown]],ui.wantedValue);*priority=2;return status;}
     if(!ui.feedCount)return NULL;
-    *priority=ui.feedPriority[0];int length=(int)strlen(ui.feed[0]);
-    if(length>75)*offset=(int)fminf(length-75,fmaxf(0,ui.feedClock-1)*12);
+    *priority = ui.feedPriority[0];
+    *offset = (int)(fmaxf(0, ui.feedClock - 1.25f) * TICKER_SPEED);
     return ui.feed[0];
 }
 int inventory_count(const Actor *a, int item) {
@@ -242,6 +302,32 @@ int inventory_transfer(Actor *from, Actor *to, int slot, int qty) {
     if (!inventory_add_owned(to, from->pack[slot].item, qty, from->stolen[slot]))
         return 0;
     return inventory_remove_slot(from, slot, qty);
+}
+int pass_recipient(int row) {
+    for (int n = 0; n < g.actorCount; n++)
+        if (n != g.selected && g.actors[n].active && g.actors[n].squad && row-- == 0)
+            return n;
+    return -1;
+}
+const char *pass_blocked(int n) {
+    if (n < 0)
+        return "No other squad members";
+    const Actor *a = &g.actors[g.selected], *b = &g.actors[n];
+    if (!conscious(a))
+        return "Sender unavailable";
+    if (b->dead)
+        return "Fallen";
+    if (b->carriedBy >= 0 || g.depth.actors[n].captive || b->prisonTime > 0)
+        return "Unavailable";
+    if (depth_room(a) != depth_room(b))
+        return "Different room";
+    if (depth_distance(a, b) > 3)
+        return "Too far away";
+    const Stack *s = &a->pack[ui.passSlot];
+    Actor test = *b;
+    if (!inventory_add_owned(&test, s->item, 1, a->stolen[ui.passSlot]))
+        return "Pack full";
+    return NULL;
 }
 int inventory_input_owner(const Actor *a, int item, int qty) {
     for (int i = 0; i < PACK && qty > 0; i++)
@@ -346,7 +432,8 @@ void move_actor(Actor *a, float dx, float dy, float dt) {
     }
     if (g.hitstop > 0 || a->prisonTime > 0 || a->attackPhase == 1 || a->attackPhase == 2)
         return;
-    a->facing = dx - dy > 0 ? 1 : 0;
+    if (fabsf(dx - dy) > .08f)
+        a->facing = dx > dy;
     float sp = movement_speed(a) * dt;
     float ox = a->x, oy = a->y;
     int captive=(uintptr_t)a>=(uintptr_t)g.actors&&(uintptr_t)a<(uintptr_t)(g.actors+g.actorCount)?g.depth.actors[a-g.actors].captive:0;
@@ -356,8 +443,7 @@ void move_actor(Actor *a, float dx, float dy, float dt) {
         a->y += dy * sp;
     float moved = distance(ox, oy, a->x, a->y);
     if (moved > .001f) {
-        a->anim = fmodf(a->anim + moved * 2.2f, 6.2831853f);
-        a->movedTimer = .12f;
+        walk_motion(a, a->x - ox, a->y - oy);
         gain(a, ATHLETICS, moved * 2);
         gain(a, STRENGTH, moved * encumbrance(a) * .035f);
         if (a->sneaking)
@@ -365,8 +451,36 @@ void move_actor(Actor *a, float dx, float dy, float dt) {
         a->fatigue = clamp(a->fatigue + dt * .016f, 0, 100);
     }
 }
+void walk_motion(Actor *a, float dx, float dy) {
+    float moved = sqrtf(dx * dx + dy * dy);
+    if (moved <= .001f)
+        return;
+    float x = view_horizontal(dx, dy) / moved, y = view_vertical(dx, dy) / moved;
+    if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + MAX_ACTORS)) {
+        CombatVisual *v = &combatVisuals[a - g.actors];
+        v->walkX = x;
+        v->walkY = y;
+    }
+    if (fabsf(x) > .10f)
+        a->facing = x > 0;
+    float rate = a->kind == BEAST || limb_crawling(a) ? 2.2f : a->sneaking ? 7.4f : 5.2f;
+    a->anim = fmodf(a->anim + moved * rate, 6.2831853f);
+    a->movedTimer = .12f;
+}
+void walk_heading(const Actor *a, float *x, float *y) {
+    const CombatVisual *v = combat_visual(a);
+    if (v && (v->walkX || v->walkY)) {
+        *x = v->walkX;
+        *y = v->walkY;
+    } else {
+        *x = a->facing ? 1 : -1;
+        *y = 0;
+    }
+}
 void init_actor(int n, const char *name, int kind, int faction, float x, float y, int skill) {
     combatVisuals[n] = (CombatVisual){0};
+    retreats[n] = (Retreat){0};
+    ui.danger[n] = ui.jobGather[n] = ui.priorityJob[n] = 0;
     society_actor_reset(n);
     memset(&g.depth.actors[n], 0, sizeof(g.depth.actors[n]));
     g.depth.actors[n].upkeep = 100;
@@ -748,17 +862,46 @@ void combat_impact(int ai, int bi, int w) {
             log_warn("%s is unconscious.", b->name);
     }
 }
+int wound_needs_dressing(const Actor *a) {
+    if (a->dead || a->race == 2)
+        return 0;
+    if (a->bleed > .01f)
+        return 1;
+    const DepthActor *z = &g.depth.actors[a - g.actors];
+    for (int l = 0; l < LIMBS; l++)
+        if (depth_can_heal(a, l) && (a->health[l] < species_health(a) - z->trauma[l] - 2 ||
+            (z->trauma[l] > .5f && !(a->treatedMask & (1 << l)))))
+            return 1;
+    return 0;
+}
+void dress_wounds(Actor *a) {
+    const DepthActor *z = &g.depth.actors[a - g.actors];
+    for (int l = 0; l < LIMBS; l++)
+        if (depth_can_heal(a, l) && (a->health[l] < species_health(a) || z->trauma[l] > 0))
+            a->treatedMask |= 1 << l;
+    a->bleed = 0;
+}
+static void recover_dressed(Actor *a, float dt) {
+    if (!a->treatedMask || a->bleed > .01f || a->hunger < 20)
+        return;
+    DepthActor *z = &g.depth.actors[a - g.actors];
+    float maxHealth = species_health(a);
+    for (int l = 0; l < LIMBS; l++) {
+        if (!(a->treatedMask & (1 << l)) || !depth_can_heal(a, l))
+            continue;
+        z->trauma[l] = fmaxf(0, z->trauma[l] - dt * .038f);
+        a->health[l] = fminf(maxHealth - z->trauma[l], a->health[l] + dt * .10f);
+        if (a->health[l] >= maxHealth)
+            a->treatedMask &= ~(1 << l);
+    }
+}
 static int heal_from(int mi, int pi, int kitSlot) {
     if (mi < 0 || pi < 0 || mi >= g.actorCount || pi >= g.actorCount)
         return 0;
     Actor *m = &g.actors[mi], *p = &g.actors[pi];
     if (!conscious(m) || p->dead || depth_distance(m,p) > TALK_REACH)
         return 0;
-    int hurt = p->bleed > .01f;
-    for (int j = 0; j < LIMBS; j++)
-        if (p->health[j] < species_health(p)-g.depth.actors[pi].trauma[j]-2 && depth_can_heal(p,j))
-            hurt = 1;
-    if (!hurt)
+    if (!wound_needs_dressing(p))
         return 0;
     if (kitSlot < 0
             ? !inventory_remove(m, MEDKIT, 1)
@@ -767,7 +910,7 @@ static int heal_from(int mi, int pi, int kitSlot) {
             log_msg("No field dressings.");
         return 0;
     }
-    p->bleed = 0;
+    dress_wounds(p);
     for (int j = 0; j < LIMBS; j++)
         if (depth_can_heal(p,j))
             p->health[j] = fminf(species_health(p)-g.depth.actors[pi].trauma[j], p->health[j] + 18 + level(m, MEDICINE) * .65f + gear_bonus(m, 5));
@@ -1144,21 +1287,39 @@ void find_context(void) {
     } else
         ui.contextChoice = 0;
 }
-static void theft(Actor *a, Node *n) {
-    int seen = 0;
+void witnessed_theft(Actor *a, int owner, int range, int penalty) {
+    if (owner <= FREE || owner >= FACTIONS)
+        return;
+    int witness = -1;
+    float nearest = a->sneaking ? range * .5f : range;
     for (int i = 0; i < g.actorCount; i++) {
         Actor *b = &g.actors[i];
-        if (b->faction == n->owner && conscious(b) &&
-            distance(a->x, a->y, b->x, b->y) < (a->sneaking ? 3 : 6))
-            seen = 1;
+        if (b->squad || b->faction != owner || !conscious(b))
+            continue;
+        float d = depth_distance(a, b);
+        if (d < nearest) {
+            nearest = d;
+            witness = i;
+        }
     }
     gain(a, THEFT, 20);
-    if (seen) {
-        g.rep[n->owner] -= 18;
-        crime_add(a,n->owner,80);
-        log_warn("Witnessed theft! Faction -18; bounty +80.");
-    } else
-        log_msg("Stolen without witnesses.");
+    if (witness < 0) {
+        log_msg("Stolen from %s without witnesses.", factionNames[owner]);
+        return;
+    }
+    Actor *b = &g.actors[witness];
+    unsigned warning = 1u << owner;
+    if (!(g.theftWarnings & warning) && !wanted_amount(a, owner) && !hostile(a, b) &&
+        (owner == SCAVENGERS || (b->kind != GUARD && owner != SHOGUN))) {
+        g.theftWarnings |= warning;
+        log_warn("%s: Hands off! Those supplies belong to %s.", b->name, factionNames[owner]);
+        return;
+    }
+    g.rep[owner] -= penalty;
+    crime_add(a, owner, 80);
+    if (population_owned(witness))
+        population_anger(witness);
+    log_warn("%s saw you steal from %s. Bounty +80.", b->name, factionNames[owner]);
 }
 void interact(void) {find_context();interact_context(ui.contextKind,ui.contextIndex);}
 void interact_context(int kind,int target) {
@@ -1231,10 +1392,10 @@ void interact_context(int kind,int target) {
             return;
         }
         if (inventory_add_owned(a, b->item, b->qty, b->owner)) {
-            if (b->owner)
-                theft(a, b);
             b->remaining = 0;
             log_msg("Found %d %s.", b->qty, itemDefs[b->item].name);
+            if (b->owner)
+                witnessed_theft(a, b->owner, 6, 18);
         } else
             log_msg("Pack full.");
         return;
@@ -1330,7 +1491,7 @@ static void die(Actor *a) {
     if (a->squad)
         log_warn("%s has died. Their death is permanent.", a->name);
 }
-static void reveal(Actor *a) {
+void reveal_area(Actor *a) {
     int x = (int)a->x, y = (int)a->y;
     for (int yy = y - 6; yy <= y + 6; yy++)
         for (int xx = x - 6; xx <= x + 6; xx++)
@@ -1345,15 +1506,38 @@ static void reveal(Actor *a) {
             gain(a, PERCEPTION, 80);
         }
 }
-static void squad_job(Actor *a, float dt) {
-    if (a->taskKind||g.depth.actors[a-g.actors].paused)
+int automatic_work(const Actor *a) {
+    return a != &g.actors[g.selected] ||
+           (ui.playerIdle >= 5 && !a->autoattack && !a->attackPhase &&
+            a->target < 0 && g.living.command[g.selected] < 0 &&
+            !g.society.queueCount[g.selected] && !society_rescue_busy(g.selected));
+}
+void work_notice(const Actor *a, const char *action, const char *target) {
+    if (a != &g.actors[g.selected])
         return;
-    if(depth_group_job(a,dt))return;
-    if (a->job == JOB_FOLLOW) {
-        Actor *l = &g.actors[g.selected];
-        if (a != l && distance(a->x, a->y, l->x, l->y) > 2.2f)
-            route_toward(a, l->x + (a - g.actors) % 2, l->y + 1.4f, dt);
-    } else if (a->job == JOB_MINE) {
+    char next[80];
+    snprintf(next, sizeof(next), "%s is %s%s%s.", a->name, action, target ? " " : "", target ? target : "");
+    if (strcmp(ui.workNotice, next)) {
+        snprintf(ui.workNotice, sizeof(ui.workNotice), "%s", next);
+        log_msg("%s", next);
+    }
+}
+static void interrupt_work(void) {
+    ui.playerIdle = 0;
+    ui.workNotice[0] = 0;
+    if (ui.jobGather[g.selected]) {
+        g.actors[g.selected].taskKind = 0;
+        ui.jobGather[g.selected] = 0;
+    }
+}
+static void squad_job(Actor *a, float dt) {
+    int member = (int)(a - g.actors);
+    if (!automatic_work(a) || a->taskKind || g.depth.actors[member].paused)
+        return;
+    if (depth_group_job(a, dt))
+        return;
+    int job = assigned_job(a);
+    if (job == JOB_MINE) {
         int n = -1;
         float d = 12;
         for (int j = 0; j < g.nodeCount; j++)
@@ -1368,29 +1552,51 @@ static void squad_job(Actor *a, float dt) {
             Actor test = *a;
             if (!inventory_add(&test, g.nodes[n].type == NODE_ORE ? ORE : COPPER, 1))
                 return;
+            work_notice(a, "working the", g.nodes[n].type == NODE_ORE ? "iron deposit" : "copper deposit");
             if (d > WORK_REACH * .9f)
                 route_toward(a, g.nodes[n].x, g.nodes[n].y, dt);
             else {
                 a->taskKind = 1;
                 a->taskIndex = n;
                 a->action = 3;
+                ui.jobGather[member] = 1;
             }
         }
-    } else if (a->job == JOB_MEDIC) {
-        for (int j = 0; j < g.actorCount; j++)
-            if (g.actors[j].squad && !g.actors[j].dead && needs_aid(&g.actors[j]) &&
-                actor_inside(a) == actor_inside(&g.actors[j])) {
-                if (distance(a->x, a->y, g.actors[j].x, g.actors[j].y) > TALK_REACH * .9f)
-                    route_toward(a, g.actors[j].x, g.actors[j].y, dt);
-                else
-                    heal_actor((int)(a - g.actors), j);
-                break;
+    } else if (job == JOB_MEDIC && inventory_count(a, MEDKIT)) {
+        int patient = -1;
+        float best = -1;
+        for (int j = 0; j < g.actorCount; j++) {
+            Actor *b = &g.actors[j];
+            if (!b->squad || !needs_aid(b) || !wound_needs_dressing(b))
+                continue;
+            float d = depth_distance(a, b);
+            if (d > 18)
+                continue;
+            float urgency = (b->bleed > .01f ? 40 : 0) + (b->unconscious > 0 ? 20 : 0) + 18 - d;
+            if (urgency > best) {
+                best = urgency;
+                patient = j;
             }
-    } else if (a->job == JOB_FARM) {
+        }
+        if (patient >= 0) {
+            Actor *b = &g.actors[patient];
+            work_notice(a, "trying to bandage", b->name);
+            if (depth_distance(a, b) > TALK_REACH * .9f) {
+                if (actor_inside(a))
+                    depth_move_room(a, depth_x(b) - depth_x(a), depth_y(b) - depth_y(a), dt);
+                else
+                    route_toward(a, b->x, b->y, dt);
+            } else
+                heal_actor(member, patient);
+        }
+    } else if (job == JOB_FARM) {
         for (int j = 0; j < g.buildingCount; j++) {
             Building *b = &g.buildings[j];
             if (b->type != FARM || b->owner < 0 || distance(a->x, a->y, b->x, b->y) > 15)
                 continue;
+            if (b->progress < 100 && (b->stock || !inventory_count(a, WATER)))
+                continue;
+            work_notice(a, b->progress >= 100 ? "going to harvest the crop" : "going to water the crop", NULL);
             if (distance(a->x, a->y, b->x, b->y) > 2)
                 route_toward(a, b->x, b->y, dt);
             else if (b->progress >= 100 && inventory_add(a, GRAIN, harvest_yield(a))) {
@@ -1427,6 +1633,47 @@ static int take_ration(Actor *a) {
                 }
         }
     return 0;
+}
+int civilian_flees(const Actor *a) {
+    return !a->squad && (a->kind == SETTLER || a->kind == RECRUIT || a->kind == TRADER);
+}
+static int civilian_retreat(int n, int threat, float dt) {
+    Actor *a = &g.actors[n];
+    if (!civilian_flees(a))
+        return 0;
+    Retreat *r = &retreats[n];
+    if (threat >= 0 && (r->time <= 0 || r->stuck > .65f || distance(a->x, a->y, r->x, r->y) < 1)) {
+        Actor *b = &g.actors[threat];
+        float angle = atan2f(a->y - b->y, a->x - b->x);
+        const float turns[] = {0, .55f, -.55f, 1.1f, -1.1f, 1.55f, -1.55f};
+        r->x = a->x;
+        r->y = a->y;
+        r->stuck = 0;
+        r->time = 14;
+        for (unsigned i = 0; i < sizeof(turns) / sizeof(*turns); i++) {
+            float dx = cosf(angle + turns[i]), dy = sinf(angle + turns[i]);
+            if (!can_walk(a->x + dx, a->y + dy))
+                continue;
+            for (int d = 12; d >= 4; d -= 2) {
+                float x = a->x + dx * d, y = a->y + dy * d;
+                if (!can_walk(x, y))
+                    continue;
+                r->x = x;
+                r->y = y;
+                return 1;
+            }
+        }
+    }
+    if (r->time <= 0)
+        return 0;
+    r->time = threat >= 0 ? 14 : r->time - dt;
+    a->target = -1;
+    if (distance(a->x, a->y, r->x, r->y) > 1) {
+        float ox = a->x, oy = a->y;
+        route_toward(a, r->x, r->y, dt);
+        r->stuck = distance(ox, oy, a->x, a->y) < .005f ? r->stuck + dt : 0;
+    }
+    return 1;
 }
 void simulate(float dt) {
     memset(g.depth.groupTravel,0,sizeof(g.depth.groupTravel));
@@ -1528,6 +1775,7 @@ void simulate(float dt) {
             a->bleed = fmaxf(0, a->bleed - dt * .0015f);
         } else
             a->blood = fminf(100, a->blood + dt * .07f);
+        recover_dressed(a, dt);
         if (a->blood <= 0 || a->health[HEAD] < -70 || a->health[CHEST] < -70) {
             die(a);
             continue;
@@ -1546,7 +1794,7 @@ void simulate(float dt) {
                 a->unconscious = 10;
             continue;
         }
-        if(a->squad&&a->race==2)reveal(a);
+        if(a->squad&&a->race==2)reveal_area(a);
         if (a->squad && a->race!=2) {
             a->hunger = fmaxf(0, a->hunger - dt * .045f * species_food(a));
             a->fatigue = fminf(100, a->fatigue + dt * .008f);
@@ -1560,7 +1808,7 @@ void simulate(float dt) {
                 if (a->health[CHEST] <= 0)
                     a->unconscious = 30;
             }
-            reveal(a);
+            reveal_area(a);
         }
         if ((a->taskKind == 1 || a->taskKind == 2) &&
             (a->taskIndex < 0 || a->taskIndex >= g.nodeCount ||
@@ -1579,10 +1827,19 @@ void simulate(float dt) {
             if (a->action <= 0 && a->taskKind!=4)
                 complete_task(a);
         }
-        if (actor_inside(a) || !conscious(a) || a->prisonTime>0 || society_rescue_busy(i) || g.depth.actors[i].captive || (a->carrying>=0 && g.depth.actors[a->carrying].captive>=2))
+        if (!a->taskKind)
+            ui.jobGather[i] = 0;
+        if (!conscious(a) || a->prisonTime>0 || society_rescue_busy(i) || g.depth.actors[i].captive || (a->carrying>=0 && g.depth.actors[a->carrying].captive>=2))
             continue;
+        if (actor_inside(a)) {
+            int job = assigned_job(a);
+            if (a->squad && a->target < 0 && (job == JOB_FOLLOW || job == JOB_MEDIC))
+                squad_job(a, dt);
+            continue;
+        }
         if(field_aid(i,dt))continue;
-        if(population_tactics(i,dt))continue;
+        if (retreats[i].time <= 0 && population_tactics(i, dt))
+            continue;
         int target = -1;
         float best = weapon_ranged(a->gear[0]) ? itemDefs[a->gear[0]].range + 1 : 6.0f;
         if (a->kind == BEAST)
@@ -1627,11 +1884,8 @@ void simulate(float dt) {
                 strike(i, target);
             continue;
         }
-        if (target >= 0 && !a->squad && (npc_role(a) == ROLE_MERCHANT || npc_role(a) == ROLE_MEDIC || a->kind==SETTLER || a->kind==RECRUIT)) {
-            Actor *foe = &g.actors[target];
-            move_actor(a, a->x - foe->x, a->y - foe->y, dt);
+        if (civilian_retreat(i, target, dt))
             continue;
-        }
         a->target = -1;
         int hired = merc_slot(a);
         if (hired >= 0) {
@@ -1644,8 +1898,7 @@ void simulate(float dt) {
         } else if (civil_npc_job(i,dt)) {
         } else if (living_walk(i,dt)) {
         } else if (a->squad) {
-            if (i != g.selected || a->job != JOB_FOLLOW || g.depth.groupTravel[g.depth.actors[i].group])
-                squad_job(a, dt);
+            squad_job(a, dt);
         } else if (depth_named(i)>=0 && (depth_named(i)<=NPC_TAMSIN || depth_named(i)==NPC_CONVOY)) {
             /* Authored residents and rescue movement are controlled by the expedition. */
         } else if (npc_role(a) == ROLE_MERCENARY || a->kind == GUARD || (npc_role(a)==ROLE_MEDIC && a->homeTown>=0 && g.life.towns[a->homeTown].stage==2)) {
@@ -1709,7 +1962,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 18 };
+enum { SAVE_VERSION = 19 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -1919,7 +2172,8 @@ static int migrate_legacy(const LegacyGame *old) {
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
-    return ((version==17||version==SAVE_VERSION) && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return ((version==17 || version==18) && size==offsetof(Game,theftWarnings)) ||
+      (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -1969,7 +2223,7 @@ static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t si
         read_save_span(&reader, &out->war);
         if (reader.left) return 0;
     }
-    if (!validate_game(out))
+    if (out->theftWarnings >= (1u << FACTIONS) || !validate_game(out))
         return 0;
     if (version < 16)
         weapon_xp_migrate(out);
@@ -2116,14 +2370,36 @@ static void open_screen(int s) {
     ui.screen = s == SCREEN_ORDERS ? SCREEN_SQUAD : s == SCREEN_CARE ? SCREEN_HEALTH : s;
     ui.selection = ui.scroll = 0;
 }
+void select_squad_member(int n) {
+    if (n == g.selected || n < 0 || n >= g.actorCount || !g.actors[n].squad)
+        return;
+    interrupt_work();
+    if (g.interiorBuilding) {
+        DepthActor *next = &g.depth.actors[n];
+        if (next->room == g.interiorBuilding) {
+            DepthActor *prev = &g.depth.actors[g.interiorActor];
+            prev->room = g.interiorBuilding;
+            prev->rx = g.interiorX;
+            prev->ry = g.interiorY;
+            g.interiorX = next->rx;
+            g.interiorY = next->ry;
+            g.interiorActor = n;
+            next->room = 0;
+        } else
+            interior_leave();
+    }
+    g.selected = n;
+    interrupt_work();
+    ui.waypoint = ui.contextChoice = 0;
+    find_context();
+}
 void cycle_squad(int direction) {
     int n=g.selected;
     for(int i=0;i<g.actorCount;i++) {
         n=(n+direction+g.actorCount)%g.actorCount;
         if(g.actors[n].squad && (!g.actors[n].dead || ui.screen!=SCREEN_WORLD)) {
-            if(n==g.selected)return;
-            if(g.interiorBuilding)interior_leave();
-            g.selected=n;ui.waypoint=0;return;
+            select_squad_member(n);
+            return;
         }
     }
 }
@@ -2174,6 +2450,13 @@ static void pause_menu_open(void) {
 }
 void game_tick(float dt, Input in) {
     dt = clamp(dt, 0, .1f);
+    if (ui.screen != SCREEN_WORLD || ui.paused || in.held || in.pressed ||
+        fabsf(in.ax) + fabsf(in.ay) > .15f)
+        interrupt_work();
+    else
+        ui.playerIdle = fminf(5, ui.playerIdle + dt);
+    if (g.actorCount && g.actors[g.selected].autoattack && ui.jobGather[g.selected])
+        interrupt_work();
     ui.noticeTime = fmaxf(0, ui.noticeTime - dt);
     log_tick(dt);
     int p = in.pressed;
@@ -2191,7 +2474,9 @@ void game_tick(float dt, Input in) {
         ui.squadCyclePending = 0;
     if (ui.screen == SCREEN_WORLD) ui.menuReturn = 0;
     if (ui.menuReturn && ui.screen != SCREEN_MENU && ui.screen != SCREEN_HELP &&
-        ui.screen != SCREEN_CONFIRM && ui.screen != SCREEN_SAVES && (p & (KEY_CIRCLE | KEY_START))) {
+        ui.screen != SCREEN_CONFIRM && ui.screen != SCREEN_SAVES && ui.screen != SCREEN_PASS &&
+        ui.screen != SCREEN_SCENARIOS && ui.screen != SCREEN_CREATE && ui.screen != SCREEN_NAME &&
+        (p & (KEY_CIRCLE | KEY_START))) {
         open_screen(p & KEY_START ? SCREEN_WORLD : SCREEN_MENU);
         ui.selection = ui.menuRow;
         if (p & KEY_START) ui.menuReturn = 0;
@@ -2235,7 +2520,7 @@ void game_tick(float dt, Input in) {
             ui.selection = (ui.selection + 1) % 4;
         if (p & KEY_CROSS) {
             if (ui.selection == 0 || ui.selection == 1) {
-                character_begin(ui.selection == 1 ? 4 : 0);
+                scenario_menu(ui.selection == 1 ? 4 : 0, SCREEN_TITLE);
             } else if (ui.selection == 2) {
                 ui.saveMode = 0;
                 ui.saveReturn = SCREEN_TITLE;
@@ -2256,7 +2541,7 @@ void game_tick(float dt, Input in) {
         }
         if (p & KEY_CROSS) {
             if (ui.confirmAction == 1) {
-                character_begin(0);
+                scenario_menu(0, SCREEN_MENU);
             } else if (ui.confirmAction == 2) {
                 if (!load_slot(ui.slot)) {
                     open_screen(SCREEN_SAVES);
@@ -2322,25 +2607,9 @@ void game_tick(float dt, Input in) {
         if (ui.screen == SCREEN_PACK) {
             if (p & KEY_CROSS)
                 use_item(ui.selection);
-            if (p & KEY_SQUARE) {
-                Stack *s = &a->pack[ui.selection];
-                if (s->item) {
-                    int recipient = -1;
-                    for (int j = 1; j <= g.actorCount; j++) {
-                        int n = (g.selected + j) % g.actorCount;
-                        if (n != g.selected && g.actors[n].squad && !g.actors[n].dead &&
-                            actor_inside(a) == actor_inside(&g.actors[n]) &&
-                            distance(a->x, a->y, g.actors[n].x, g.actors[n].y) < 3) {
-                            recipient = n;
-                            break;
-                        }
-                    }
-                    int item = s->item;
-                    if (recipient >= 0 && inventory_transfer(a, &g.actors[recipient], ui.selection, 1)) {
-                        log_msg("Passed %s to %s.", itemDefs[item].name, g.actors[recipient].name);
-                    } else
-                        log_msg("No nearby ally can take this item.");
-                }
+            if ((p & KEY_SQUARE) && a->pack[ui.selection].item) {
+                ui.passSlot = ui.selection;
+                open_screen(SCREEN_PASS);
             }
         } else if (ui.screen == SCREEN_HEALTH && (p & KEY_CROSS))
             heal_actor(g.selected, g.selected);
@@ -2356,15 +2625,14 @@ void game_tick(float dt, Input in) {
                 log_msg("%s: %s.", a->name, jobNames[a->job]);
             }
         } else if (ui.screen == SCREEN_MAP) {
-            float sp = (ui.mapZoom ? 384 : WORLD) * .17f * dt;
-            if (ui.mapZoom && (in.held & KEY_LEFT))
-                ui.mapX -= sp;
-            if (ui.mapZoom && (in.held & KEY_RIGHT))
-                ui.mapX += sp;
-            if (ui.mapZoom && (in.held & KEY_UP))
-                ui.mapY -= sp;
-            if (ui.mapZoom && (in.held & KEY_DOWN))
-                ui.mapY += sp;
+            if (ui.mapZoom) {
+                float horizontal = ((in.held & KEY_RIGHT) != 0) - ((in.held & KEY_LEFT) != 0);
+                float vertical = ((in.held & KEY_DOWN) != 0) - ((in.held & KEY_UP) != 0);
+                float dx, dy;
+                view_to_world(horizontal * 80 * dt, vertical * 160 * dt, &dx, &dy);
+                ui.mapX += dx;
+                ui.mapY += dy;
+            }
             ui.mapX = clamp(ui.mapX, 3, WORLD - 4);
             ui.mapY = clamp(ui.mapY, 3, WORLD - 4);
             if (p & KEY_CROSS) {
@@ -2436,6 +2704,8 @@ void game_tick(float dt, Input in) {
     }
     if (p & KEY_SQUARE) {
         a->autoattack = !a->autoattack;
+        if (a->autoattack && g.depth.actors[g.selected].order == ORDER_HOLD_FIRE)
+            g.depth.actors[g.selected].order = ORDER_BALANCED;
         if(!a->autoattack){g.living.command[g.selected]=-1;a->target=-1;a->attackPhase=0;a->cooldown=fmaxf(.6f,a->cooldown);}
         log_msg(a->autoattack ? "Combat stance: attack nearby hostiles."
                               : "Passive stance: flee or move freely.");
@@ -2472,7 +2742,9 @@ void game_tick(float dt, Input in) {
     if (fabsf(dx) + fabsf(dy) > .15f) {
         ui.contextChoice = 0;
         a->taskKind = 0;
-        move_actor(a, (dx + dy) * .7071f, (dy - dx) * .7071f, step);
+        float wx, wy;
+        view_to_world(dx, dy, &wx, &wy);
+        move_actor(a, wx * 1.414214f, wy * 1.414214f, step);
     }
 
     simulate(step);

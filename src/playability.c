@@ -127,6 +127,11 @@ const char *context_name(void) {
     if (ui.contextKind == 1) {
         static const char *s[] = {"IRON DEPOSIT",  "COPPER DEPOSIT", "DEADWOOD",
                                   "SALVAGE CHEST", "LOCKED CHEST",   "OLD RUINS"};
+        if (g.nodes[n].owner && g.nodes[n].type >= NODE_LOOT) {
+            static char owned[64];
+            snprintf(owned, sizeof(owned), "%s (%s)", s[g.nodes[n].type], factionNames[g.nodes[n].owner]);
+            return owned;
+        }
         return s[g.nodes[n].type];
     }
     static const char *s[] = {"FRONTIER HOME",  "TRADING POST", "INN",     "WATCH HOUSE", "WINDPUMP",
@@ -651,12 +656,13 @@ int needs_aid(const Actor *a) {
     return 0;
 }
 const char *job_status(const Actor *a) {
+    int job = assigned_job(a);
     if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + MAX_ACTORS)) {
         int i = a - g.actors;
         if (g.depth.actors[i].captive)
             return "CAPTIVE - escape or send a rescuer";
         if (g.depth.actors[i].paused)
-            return "PAUSED - resume queue in Orders";
+            return "PAUSED - resume on the Priorities tab";
     }
     if (a->dead)
         return "DEAD - recover equipment or dismiss";
@@ -664,19 +670,23 @@ const char *job_status(const Actor *a) {
         return "IN CUSTODY - settle bail or escape";
     if (a->unconscious > 0)
         return "UNCONSCIOUS - needs rescue";
-    if (actor_inside(a))
-        return "INDOORS - jobs resume outside";
+    if (actor_inside(a) && job != JOB_FOLLOW && job != JOB_MEDIC)
+        return "INDOORS - this job resumes outside";
     if (a->target >= 0 && a->autoattack)
         return "FIGHTING - work waits for safety";
     if (a->taskKind == 3)
         return "RESTING - move to wake";
     if (a->taskKind)
         return "WORKING - moving cancels this task";
-    if (a->job == JOB_HOLD)
+    if (job == JOB_HOLD)
         return "HOLDING - defends if combat stance is on";
-    if (a->job == JOB_FOLLOW)
-        return a == &g.actors[g.selected] ? "LEADING - direct movement" : "FOLLOWING this group leader";
-    if (a->job == JOB_MEDIC) {
+    if (job == JOB_FOLLOW)
+        return a == &g.actors[g.selected] ? "LEADING - direct movement" : "FOLLOWING the controlled member";
+    if (a == &g.actors[g.selected] && a->autoattack)
+        return "MANUAL - jobs wait for passive stance";
+    if (a == &g.actors[g.selected] && ui.workNotice[0])
+        return ui.workNotice;
+    if (job == JOB_MEDIC) {
         if (!inventory_count(a, MEDKIT))
             return "BLOCKED - no field dressings";
         for (int j = 0; j < g.actorCount; j++) {
@@ -686,7 +696,7 @@ const char *job_status(const Actor *a) {
         }
         return "READY - watching for serious injuries";
     }
-    if (a->job == JOB_MINE) {
+    if (job == JOB_MINE) {
         for (int i = 0; i < g.nodeCount; i++)
             if (g.nodes[i].type <= NODE_COPPER && g.nodes[i].remaining &&
                 distance(a->x, a->y, g.nodes[i].x, g.nodes[i].y) < 12) {
@@ -697,9 +707,9 @@ const char *job_status(const Actor *a) {
             }
         return "BLOCKED - no ore within 12 paces";
     }
-    int type = a->job == JOB_FARM    ? FARM
-               : a->job == JOB_SMELT ? FORGE
-               : a->job == JOB_COOK  ? CAMPFIRE
+    int type = job == JOB_FARM    ? FARM
+               : job == JOB_SMELT ? FORGE
+               : job == JOB_COOK  ? CAMPFIRE
                                      : STORE;
     int found = 0;
     for (int i = 0; i < g.buildingCount; i++)
@@ -707,16 +717,16 @@ const char *job_status(const Actor *a) {
             found = 1;
     if (!found)
         return "BLOCKED - no required station within 15 paces";
-    if (a->job == JOB_FARM)
+    if (job == JOB_FARM)
         return inventory_count(a, WATER) ? "TENDING nearby farm; waiting for harvest"
                                          : "NEEDS WATER unless rain irrigates the field";
-    if (a->job == JOB_HAUL)
+    if (job == JOB_HAUL)
         return "HAULING raw materials; supplies stay in pack";
-    if (a->job == JOB_SMELT && inventory_count(a, ORE) < 3)
+    if (job == JOB_SMELT && inventory_count(a, ORE) < 3)
         return "FETCHING 3 ore; stock the nearby depot";
-    if (a->job == JOB_COOK && inventory_count(a, WATER) < 1)
+    if (job == JOB_COOK && inventory_count(a, WATER) < 1)
         return "FETCHING water; stock the nearby depot";
-    if (a->job == JOB_COOK && inventory_count(a, GRAIN) < 3 && inventory_count(a, MEAT) < 2)
+    if (job == JOB_COOK && inventory_count(a, GRAIN) < 3 && inventory_count(a, MEAT) < 2)
         return "FETCHING grain or meat; stock the depot";
     return "WORKING at station; unload finished goods";
 }

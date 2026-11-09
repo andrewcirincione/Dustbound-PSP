@@ -63,7 +63,7 @@ void weapon_xp_migrate(Game *save) {
     }
 }
 int weapon_class_level(const Actor*a,int c){int n=actor_no(a);if(c<0||c>=WEAPON_CLASSES||n<0)return 1;if(!a->squad)return level(a,c>=WC_ARCHERY?CROSSBOWS:MELEE);return (int)bound(1+sqrtf(S.weaponXP[n][c]/12),1,100);}
-void weapon_class_gain(Actor*a,int w,float amount){int n=actor_no(a),c=weapon_class(w);if(n<0||c<0||!a->squad)return;int before=weapon_class_level(a,c);S.weaponXP[n][c]=bound(S.weaponXP[n][c]+amount,0,117612);if(n==g.selected&&weapon_class_level(a,c)>before)log_progress("%s: %s %d",a->name,weaponClassNames[c],weapon_class_level(a,c));}
+void weapon_class_gain(Actor*a,int w,float amount){int n=actor_no(a),c=weapon_class(w);if(n<0||c<0||!a->squad)return;int before=weapon_class_level(a,c);S.weaponXP[n][c]=bound(S.weaponXP[n][c]+amount,0,117612);if(weapon_class_level(a,c)>before)log_level("%s reached %s %d.",a->name,weaponClassNames[c],weapon_class_level(a,c));}
 float weapon_cut_ratio(int it) {
     if (!it) return 1;
     if (it == STAFF || gear_family(it) == 16) return .05f;
@@ -350,7 +350,12 @@ int living_local_count(void){int n=0;Actor*a=&g.actors[g.selected];for(int e=0;e
 int living_local_slot(int row){Actor*a=&g.actors[g.selected];for(int e=0;e<EVENTS;e++)if(!g.living.events[e].status&&distance(a->x,a->y,g.living.events[e].x,g.living.events[e].y)<8&&row--==0)return e;return -1;}
 int nearby_actions(void){
  actionCount=0;Actor*a=&g.actors[g.selected];int room=depth_room(a);
- if(a->bleed>.01f&&a->race!=2&&(inventory_count(a,CLOTH)>=2||a->gear[1]==RAGS))add_action(ACTION_EMERGENCY,0,g.selected);
+ if (wound_needs_dressing(a))
+     add_action(ACTION_SELF_AID, 0, g.selected);
+ if (depth_needs_repair(a))
+     add_action(ACTION_SELF_REPAIR, 0, g.selected);
+ if (a->bleed > .01f && a->race != 2)
+     add_action(ACTION_EMERGENCY, 0, g.selected);
  if(g.depth.actors[g.selected].captive||a->prisonTime>0)add_action(ACTION_RESCUE,0,g.selected);
  for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(n==g.selected||!b->active||population_hidden(n)||depth_room(b)!=room||depth_distance(a,b)>TALK_REACH||b->carriedBy>=0)continue;
   if(!b->dead&&(g.depth.actors[n].captive||b->prisonTime>0))add_action(ACTION_RESCUE,0,n);
@@ -378,7 +383,16 @@ int nearby_actions(void){
 }
 const NearbyAction *nearby_action(int row){return row>=0&&row<actionCount?&actions[row]:NULL;}
 void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_action(row);if(!x){snprintf(out,size,"Nothing within reach");return;}
- if(x->type==ACTION_EMERGENCY){snprintf(out,size,inventory_count(&g.actors[g.selected],CLOTH)>=2?"Use 2 cloth: stop bleeding, no healing":"Destroy worn rags: stop bleeding");return;}
+ if (x->type == ACTION_SELF_AID || x->type == ACTION_SELF_REPAIR) {
+     snprintf(out, size, "%s", x->type == ACTION_SELF_AID
+         ? "Bandage yourself (1 field dressing)" : "Repair yourself (1 spare part)");
+     return;
+ }
+ if (x->type == ACTION_EMERGENCY) {
+     snprintf(out, size, "%s", inventory_count(&g.actors[g.selected], CLOTH) < 2 &&
+              g.actors[g.selected].gear[1] == RAGS ? "Tear worn rags to stop bleeding" : "Stop bleeding (2 cloth)");
+     return;
+ }
  if(x->type==ACTION_POLITICS){snprintf(out,size,"Council at %s",towns[x->target].name);return;}
  if(x->type==ACTION_POPULATION){population_action_label(x->target,x->kind,out,size);return;}
  if(x->type==ACTION_EVENT){char name[70];living_title(x->target,name,sizeof(name));snprintf(out,size,"Investigate %s",name);return;}
@@ -386,10 +400,14 @@ void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_
  if(x->kind==5){snprintf(out,size,"%s",interior_prompt());return;}
  if(x->type==ACTION_ATTACK||x->type==ACTION_CARRY||x->type==ACTION_RESCUE||x->type==ACTION_STEAL){snprintf(out,size,"%s %s",x->type==ACTION_ATTACK?"Attack":x->type==ACTION_CARRY?"Carry":x->type==ACTION_RESCUE?(g.actors[x->target].prisonTime>0?"Free prisoner:":"Free from shackles:"):"Pickpocket",g.actors[x->target].name);return;}
  int kind=ui.contextKind,index=ui.contextIndex;ui.contextKind=x->kind;ui.contextIndex=x->target;
- snprintf(out,size,"%s %s",x->type==ACTION_UNLOCK?"Pick lock":x->type==ACTION_OPEN?"Open after unlocking":context_action(),context_name());ui.contextKind=kind;ui.contextIndex=index;
+ const char *verb = context_action();
+ if (x->type == ACTION_OPEN)
+     verb = g.nodes[x->target].owner ? "STEAL" : "TAKE";
+ snprintf(out,size,"%s %s",verb,context_name());ui.contextKind=kind;ui.contextIndex=index;
 }
 static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!conscious(a)||depth_room(a)!=x->room)return 0;int n=x->target;
- if(x->type==ACTION_EMERGENCY)return n==g.selected&&a->bleed>.01f&&a->race!=2;
+ if (x->type == ACTION_SELF_AID || x->type == ACTION_SELF_REPAIR || x->type == ACTION_EMERGENCY)
+     return n == g.selected;
  if(x->type==ACTION_POLITICS)return n>=0&&n<TOWNS&&distance(a->x,a->y,towns[n].x,towns[n].y)<=24;
  if(x->type==ACTION_POPULATION)return population_action_valid(n,x->kind);
  if(x->type==ACTION_EVENT)return n>=0&&n<EVENTS&&!g.living.events[n].status&&distance(a->x,a->y,g.living.events[n].x,g.living.events[n].y)<=8;
@@ -399,10 +417,83 @@ static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!
  if(x->kind==5)return g.interiorBuilding==n+1;
  return n>=0&&n<g.buildingCount&&distance(a->x,a->y,g.buildings[n].x+(x->kind==3?1.45f:0),g.buildings[n].y+(x->kind==3?.65f:0))<=1.7f;
 }
-static void perform_action(const NearbyAction*x){Actor*a=&g.actors[g.selected];int n=x->target;if(!action_valid(x)){log_msg("Queued target is no longer within reach.");return;}
- if(x->type==ACTION_EMERGENCY){
-  if(inventory_count(a,CLOTH)>=2)inventory_remove(a,CLOTH,2);else if(a->gear[1]==RAGS){a->gear[1]=0;a->gearStolen[1]=0;}else {log_msg("Need 2 cloth or worn rags.");return;}
-  a->bleed=0;log_warn("Pressure dressing applied. Bleeding stopped; wounds still need rest.");return;
+static const char *action_reason(const NearbyAction *x, int queueing) {
+    Actor *a = &g.actors[g.selected];
+    int n = x->target;
+    if (!conscious(a))
+        return "Select a conscious member";
+    if (!action_valid(x))
+        return "Out of reach";
+    if (x->type == ACTION_SELF_AID)
+        return !wound_needs_dressing(a) ? "No wound needs dressing" :
+               !inventory_count(a, MEDKIT) ? "Need a field dressing" : NULL;
+    if (x->type == ACTION_SELF_REPAIR)
+        return !depth_needs_repair(a) ? "No mechanical damage" :
+               !inventory_count(a, PARTS) ? "Need a spare part" : NULL;
+    if (x->type == ACTION_EMERGENCY)
+        return a->bleed <= .01f ? "Bleeding already stopped" :
+               inventory_count(a, CLOTH) < 2 && a->gear[1] != RAGS ? "Need 2 cloth or worn rags" : NULL;
+    if (x->type == ACTION_POPULATION)
+        return population_action_reason(n, x->kind);
+    if (x->kind == 1) {
+        Node *node = &g.nodes[n];
+        if (x->type == ACTION_OPEN && node->locked) {
+            if (queueing)
+                for (int q = 0; q < S.queueCount[g.selected]; q++)
+                    if (S.queue[g.selected][q].type == ACTION_UNLOCK && S.queue[g.selected][q].target == n)
+                        return NULL;
+            return "Pick the lock first";
+        }
+        if (x->type == ACTION_UNLOCK && !node->locked)
+            return "Already unlocked";
+        if (node->locked && !inventory_count(a, TOOLS))
+            return "Need lock tools";
+        if (!node->locked && node->type >= NODE_LOOT) {
+            Actor test = *a;
+            if (!inventory_add_owned(&test, node->item, node->qty, node->owner))
+                return "Pack full";
+        }
+    }
+    if (x->kind == 2 && depth_build_ready(n)) {
+        Building *b = &g.buildings[n];
+        if (b->type == FARM && b->progress < 100 && !inventory_count(a, WATER))
+            return "Need water";
+        if (b->type == BED && b->owner < 0 && !trail_bed(n)) {
+            int town = town_near(a->x, a->y, 12);
+            if (town < 0 || g.money < regional_bed_cost(town))
+                return "Cannot pay for the bed";
+        }
+    }
+    if (x->kind == 5 && g.buildings[n].owner < 0 && g.money < 25) {
+        InteriorProp props[8];
+        interior_props(n, props);
+        int c = interior_context();
+        if (c >= 0 && props[c].action == ROOM_REST)
+            return "Need 25 silver";
+    }
+    return NULL;
+}
+const char *nearby_action_reason(int row) {
+    const NearbyAction *x = nearby_action(row);
+    return x ? action_reason(x, ui.paused) : "Out of reach";
+}
+static void perform_action(const NearbyAction *x) {
+ Actor *a = &g.actors[g.selected];
+ int n = x->target;
+ const char *reason = action_reason(x, 0);
+ if (reason) { log_msg("%s.", reason); return; }
+ if (x->type == ACTION_SELF_AID) { heal_actor(n, n); return; }
+ if (x->type == ACTION_SELF_REPAIR) { depth_repair(n, n); return; }
+ if (x->type == ACTION_EMERGENCY) {
+     if (inventory_count(a, CLOTH) >= 2)
+         inventory_remove(a, CLOTH, 2);
+     else {
+         a->gear[1] = 0;
+         a->gearStolen[1] = 0;
+     }
+     dress_wounds(a);
+     log_warn("%s stopped bleeding. Dressed wounds will heal slowly.", a->name);
+     return;
  }
  if(x->type==ACTION_POLITICS){politics_open(n);return;}
  if(x->type==ACTION_POPULATION){population_action(n,x->kind);return;}
@@ -412,12 +503,14 @@ static void perform_action(const NearbyAction*x){Actor*a=&g.actors[g.selected];i
  if(x->type>=ACTION_RESCUED_FOLLOW){society_rescue_order(n,x->type);return;}
  if(x->type==ACTION_CARRY){Actor*b=&g.actors[n];if(a->carrying<0&&b->carriedBy<0&&!g.depth.actors[n].captive&&(b->dead||b->unconscious>0)){a->carrying=n;b->carriedBy=g.selected;b->x=a->x;b->y=a->y;log_msg("Carrying %s.",b->name);}return;}
  if(x->type==ACTION_STEAL){if(a->sneaking&&conscious(&g.actors[n])){ui.lootActor=n;ui.selection=0;ui.screen=SCREEN_THEFT;}return;}
- if(x->type==ACTION_OPEN&&g.nodes[n].locked){log_msg("The chest is still locked.");return;}
  if(x->kind==5){interior_interact();return;}
  interact_context(x->kind,n);
 }
 void action_menu_open(void){nearby_actions();if(!actionCount){log_msg("No actions within reach.");return;}ui.screen=SCREEN_ACTIONS;ui.selection=0;ui.menuReturn=0;}
-void nearby_action_choose(int row){const NearbyAction*p=nearby_action(row);if(!p)return;NearbyAction a=*p;int n=g.selected;ui.screen=ui.paused?SCREEN_ACTIONS:SCREEN_WORLD;
+void nearby_action_choose(int row){const NearbyAction*p=nearby_action(row);if(!p)return;
+ const char *reason = nearby_action_reason(row);
+ if (reason) { log_msg("%s.", reason); return; }
+ NearbyAction a=*p;int n=g.selected;ui.screen=ui.paused?SCREEN_ACTIONS:SCREEN_WORLD;
  if(ui.paused){int q=S.queueCount[n];if(q>=ACTION_QUEUE){log_msg("Four actions queued. Clear or resume first.");return;}S.queue[n][q]=a;S.queueCount[n]++;log_msg("Action queued. R resumes; movement cancels queued actions.");}
  else perform_action(&a);
 }
@@ -426,8 +519,8 @@ int society_validate(const Game*v){const Society*s=&v->society;if(!s->version)re
  for(int t=0;t<TOWNS;t++)if(s->crisis[t]<0||s->crisis[t]>2)return 0;
  for(int n=0;n<MAX_ACTORS;n++){if(s->rescueHelper[n]<0||s->rescueHelper[n]>v->actorCount||s->freed[n]<0||s->freed[n]>3||s->captorFaction[n]<0||s->captorFaction[n]>=FACTIONS)return 0;for(int c=0;c<WEAPON_XP_SLOTS;c++)if(!isfinite(s->weaponXP[n][c])||s->weaponXP[n][c]<0||s->weaponXP[n][c]>117612)return 0;if(s->queueCount[n]<0||s->queueCount[n]>ACTION_QUEUE||s->cannibal[n]<0||s->cannibal[n]>2||!isfinite(s->eating[n])||!isfinite(s->suspicion[n])||!isfinite(s->gateMessage[n]))return 0;
   for(int f=0;f<FACTIONS;f++)if(s->wanted[n][f]<0||s->wanted[n][f]>100000||!isfinite(s->recognized[n][f]))return 0;
-  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_EMERGENCY||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
-   if(a->type==ACTION_EMERGENCY){if(a->target>=v->actorCount||a->kind!=0)return 0;continue;}
+  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_SELF_REPAIR||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
+   if(a->type>=ACTION_EMERGENCY){if(a->target!=n||a->target>=v->actorCount||a->kind!=0)return 0;continue;}
    if(a->type==ACTION_POLITICS){if(a->target>=TOWNS||a->kind!=0)return 0;continue;}
    if(a->type==ACTION_POPULATION){if(a->target>=POP_GROUPS||!(a->kind==0||a->kind==1||(a->kind>=11&&a->kind<=13)||a->kind==20||(a->kind>=30&&a->kind<=32)))return 0;continue;}
    if(a->kind>6)return 0;

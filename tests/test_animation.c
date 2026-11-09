@@ -115,7 +115,7 @@ static void attack_sequence(void) {
  puts("PASS: 12 live strikes cycle through all three motions without adjacent repeats or mid-strike changes.");
 }
 static void movement(void){
- Actor*a=fresh();float before=a->anim,x=a->x;move_actor(a,.4f,0,.1f);float delta=a->anim-before,moved=a->x-x;assert(moved>0&&fabsf(delta-moved*2.2f)<.001f);
+ Actor*a=fresh();float before=a->anim,x=a->x;move_actor(a,.4f,0,.1f);float delta=a->anim-before,moved=a->x-x;assert(moved>0&&fabsf(delta-moved*5.2f)<.001f);
  g.interiorBuilding=1;g.interiorActor=0;g.interiorX=.4f;g.interiorY=5.5f;a->movedTimer=0;before=a->anim;
  depth_move_room(a,-1,0,.1f);assert(a->anim==before&&a->movedTimer==0);
  a->attackPhase=2;g.interiorX=3;g.interiorY=5.5f;depth_move_room(a,1,0,.1f);assert(g.interiorX==3);g.interiorBuilding=0;

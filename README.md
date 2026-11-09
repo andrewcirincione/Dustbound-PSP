@@ -1,6 +1,6 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.17.1 — Three Banners
+## 0.17.2 — Fieldwork
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
@@ -14,7 +14,11 @@ There is no map or group auto-travel. Cross on the map places a reference pin; w
 
 Starving bandits carry poor weapons and wear incomplete clothing. Soldiers wear coordinated armor and move in three-wide formations. Elite duelists wear complete superior equipment. Nearby labels show a broad role in faction colors, with a red **!** for hostility. Enemy combat bars show knockout reserve from head, chest and blood. Nearby characters do not expose skill values or encounter tiers. Start > World > Factions shows the color key, reputation and wanted standing.
 
-The world activity ledger records where and when you actually saw a group. A report can be located on the map, but does not track the group after it leaves. Councils show named claimants and the price policy each would implement. Beds beside NPCs now perform the selected rest action reliably. Characters retain a visible silhouette through foreground scenery, successful autosaves are silent, and routine skill gains cannot fill an existing message queue.
+New expeditions start in one of five settlements with different equipment, companions, and difficulty. The atlas and local map share the walking view's orientation. Nearby Actions lists self-treatment and shows why unavailable actions are disabled. Dressed wounds recover on the trail, and beds speed up recovery.
+
+The thin control strip shows common menu shortcuts. Squad management separates direct assignments from job priorities. Follow tracks the controlled member, and the active character's assigned work waits for five idle seconds in Passive stance. The scrolling news bar includes squad skill gains and urgent injury alerts.
+
+The world activity ledger records where and when you actually saw a group. A report can be located on the map, but does not track the group after it leaves. Councils show named claimants and the price policy each would implement. Beds beside NPCs now perform the selected rest action reliably. Characters retain a visible silhouette through foreground scenery, and successful autosaves are silent.
 
 Fighting now has clearer windups, outlined knockout bars and staggered AI melee attacks. Passive stance cancels your attack so you can retreat. Six roadside rock passes offer cover and alternate routes; free wayfarer beds provide finite supplies and recovery stops. Emergency dressings can consume cloth or worn rags, and friendly medics can approach and stabilize you when safe. Government changes reposition surviving guards, civilians and relief medics.
 
@@ -33,7 +37,7 @@ Weapon handling now changes the actual strike speed. Relaxed carry and combat gu
 
 ## Install
 
-Extract `Dustbound-0.17.1-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v18 reads prior expeditions and adds the new capitals and armies. Existing equipment, training and town control carry over.
+Extract `Dustbound-0.17.2-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v19 reads prior expeditions and remembers treatment and theft warnings. Existing equipment, training and town control carry over.
 
 ## Controls
 

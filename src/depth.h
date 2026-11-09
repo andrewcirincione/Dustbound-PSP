@@ -28,6 +28,7 @@ int depth_coverage(int item, int limb);
 void depth_wound(Actor *a, int limb, float damage);
 int depth_organic(const Actor *a, int limb);
 int depth_repair(int medic, int patient);
+int depth_needs_repair(const Actor *actor);
 int depth_can_heal(const Actor *a, int limb);
 int depth_room(const Actor *a);
 float depth_x(const Actor *a);
@@ -45,6 +46,7 @@ void combat_impact(int attacker, int defender, int weapon);
 int depth_tactics(Actor *a, int target, float dt);
 int depth_group_job(Actor *a, float dt);
 void depth_queue(Actor *a);
+int assigned_job(const Actor *a);
 int depth_trade_open(int town);
 int depth_capture_action(int actor);
 #endif

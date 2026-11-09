@@ -22,6 +22,61 @@ void open_help(int topic) {
     ui.selection = topic;
     ui.scroll=ui.helpTopic=0;
 }
+const StartScenario startScenarios[START_SCENARIOS] = {
+    {3, "Standard", "Start alone in the Dry Market, a Scavenger trading town. You have field dressings, lock tools, and enough silver to buy supplies or hire help."},
+    {11, "Hard", "Start at Shogun's Rest with a soldier's blade, armor, and combat training. There is little silver to spare, and the Iron Throne's war runs through this region."},
+    {16, "Standard", "Start at Brass Junction with metal, coal, and a heavy pack. Labour and smithing give you a head start. Work the nearby deposits or trade your stock."},
+    {8, "Hardest", "Start outside Black Mesa with 180 silver and a Union bounty. You know how to sneak and steal. Union patrols will look for you beyond the enclave."},
+    {10, "Easy", "Start at Cinder Port with Reed and Vale. You have more silver, a crossbow, and a second set of dressings. Three people need food and care."}
+};
+void scenario_menu(int origin, int from) {
+    ui.scenarioReturn = from;
+    open_view(SCREEN_SCENARIOS);
+    ui.selection = origin;
+}
+static void place_starting_squad(int origin) {
+    int town = startScenarios[origin].town, row = 0;
+    const Town *start = &towns[town];
+    float cx = start->x, cy = start->y + (origin == 3 ? 12 : 3);
+    for (int n = 0; n < g.actorCount; n++) {
+        Actor *a = &g.actors[n];
+        if (!a->squad)
+            continue;
+        float ox = cx + (row ? (row == 1 ? -1.8f : 1.8f) : 0), oy = cy + (row ? 1.5f : 0);
+        float best = 1e9f;
+        for (int dy = -10; dy <= 10; dy++)
+            for (int dx = -10; dx <= 10; dx++) {
+                float x = ox + dx * .75f, y = oy + dy * .75f, score = dx * dx + dy * dy;
+                if (score >= best || !can_walk(x, y) || !can_walk(x + .35f, y + .35f))
+                    continue;
+                int clear = 1;
+                for (int j = 0; j < g.actorCount && clear; j++) {
+                    Actor *b = &g.actors[j];
+                    if (b == a || !b->active || b->dead || (b->squad && j > n))
+                        continue;
+                    float reach = b->squad ? 1.25f : hostile(a, b) ? 9 : 1;
+                    clear = distance(x, y, b->x, b->y) >= reach;
+                }
+                if (!clear)
+                    continue;
+                a->x = x;
+                a->y = y;
+                best = score;
+            }
+        a->homeX = a->tx = a->x;
+        a->homeY = a->ty = a->y;
+        a->homeTown = town;
+        row++;
+    }
+    Actor *a = &g.actors[g.selected];
+    ui.mapX = ui.camX = a->x;
+    ui.mapY = ui.camY = a->y;
+    ui.contextChoice = ui.feedCount = ui.logCount = 0;
+    g.discovered[town] = 1;
+    reveal_area(a);
+    find_context();
+    log_msg("%s near %s. Dusk Haven is marked on the atlas.", originNames[origin], start->name);
+}
 void character_begin(int origin) {
     Actor *a = &g.actors[g.selected];
     ui.titleChoice = origin < 0 ? 1 : 0;
@@ -31,14 +86,13 @@ void character_begin(int origin) {
     ui.createHair = origin < 0 ? a->hair : 2;
     ui.createHairColor = origin < 0 ? a->hairColor : 1;
     ui.createBeard = origin < 0 ? a->beard : 0;
-    ui.createScar = origin < 0 ? a->scar : 1;
     ui.createRace = origin < 0 ? a->race : 0;
     snprintf(ui.createName, sizeof(ui.createName), "%s", origin < 0 ? a->name : "ASH");
     open_view(SCREEN_CREATE);
 }
 void character_finish(void) {
     int origin = ui.createOrigin, body = ui.createBody, skin = ui.createSkin, hair = ui.createHair,
-        color = ui.createHairColor, beard = ui.createBeard, scar = ui.createScar, race = ui.createRace,
+        color = ui.createHairColor, beard = ui.createBeard, race = ui.createRace,
         editing = ui.titleChoice;
     char name[16];
     snprintf(name, sizeof(name), "%s", ui.createName[0] ? ui.createName : "ASH");
@@ -51,14 +105,9 @@ void character_finish(void) {
     a->hair = hair;
     a->hairColor = color;
     a->beard = beard;
-    a->scar = scar;
     a->race = race;
     a->origin = origin;
     if (!editing) {
-        /* Starting loadouts should leave room for supplies instead of applying
-           an unexplained movement penalty on the first step. */
-        const int strength[5] = {8, 11, 15, 2, 6};
-        a->xp[STRENGTH] = 12 * strength[origin] * strength[origin];
         const int weapons[5] = {8, 0, 12, 9, 24}, torsos[5] = {32, 34, 35, 46, 45},
                   heads[5] = {49, 48, 56, 51, 54};
         a->gear[0] = gear_id(weapons[origin], origin == 1 ? 1 : 0, 1);
@@ -69,30 +118,30 @@ void character_finish(void) {
         a->gear[5] = gear_id(origin == 2 ? 79 : 76, 0, 0);
         if (origin == 1) {
             g.money = 420;
-            a->xp[MELEE] = 588;
-            a->xp[DEFENCE] = 432;
         }
         if (origin == 2) {
             g.money = 800;
-            a->xp[LABOUR] = 1452;
-            a->xp[SMITHING] = 588;
             inventory_add(a, IRONBAR, 5);
             inventory_add(a, COAL, 3);
         }
         if (origin == 3) {
             g.money = 180;
-            a->xp[STEALTH] = 1452;
-            a->xp[THEFT] = 972;
             crime_add(a,UNION,160);
             g.rep[UNION] = -20;
         }
         if (origin == 4)
             inventory_add(a, BOLTS, 50);
+        if (race == 2) {
+            inventory_remove(a, MEDKIT, inventory_count(a, MEDKIT));
+            inventory_add(a, PARTS, 4);
+        }
+        a->scar = 0;
         species_start(a,origin,race);
         g.playOrigin = origin;
+        place_starting_squad(origin);
     }
     open_view(SCREEN_WORLD);
-    log_msg(editing ? "Appearance updated." : "Find work, gather allies, and make the frontier yours.");
+    if (editing) log_msg("Appearance updated.");
 }
 static int guide_for(int s) {
     switch (s) {
@@ -135,30 +184,22 @@ static int guide_for(int s) {
 static void adjust_creator(int d) {
     switch (ui.selection) {
     case 1:
-        if (!ui.titleChoice)
-            ui.createOrigin = wrapi(ui.createOrigin + d, 5);
+        if (!ui.titleChoice) ui.createRace = wrapi(ui.createRace + d, SPECIES);
         break;
     case 2:
-        if (!ui.titleChoice)
-            ui.createRace = wrapi(ui.createRace + d, SPECIES);
-        break;
-    case 3:
         ui.createBody = wrapi(ui.createBody + d, 3);
         break;
-    case 4:
+    case 3:
         ui.createSkin = wrapi(ui.createSkin + d, 8);
         break;
+    case 4:
+        if (ui.createRace != 2) ui.createHair = wrapi(ui.createHair + d, 7);
+        break;
     case 5:
-        ui.createHair = wrapi(ui.createHair + d, 7);
+        if (ui.createRace != 2) ui.createHairColor = wrapi(ui.createHairColor + d, 6);
         break;
     case 6:
-        ui.createHairColor = wrapi(ui.createHairColor + d, 6);
-        break;
-    case 7:
-        ui.createBeard = wrapi(ui.createBeard + d, 4);
-        break;
-    case 8:
-        ui.createScar = wrapi(ui.createScar + d, 5);
+        if (ui.createRace != 2) ui.createBeard = wrapi(ui.createBeard + d, 4);
         break;
     }
 }
@@ -182,6 +223,35 @@ int expansion_input(float dt, Input in) {
         if (p & (KEY_UP | KEY_L)){ui.selection = wrapi(ui.selection - 1, GUIDE_PAGES);ui.scroll=0;}
         if(p&KEY_RIGHT)ui.scroll=(int)fminf(ui.helpTopic,ui.scroll+110);
         if(p&KEY_LEFT)ui.scroll=(int)fmaxf(0,ui.scroll-110);
+        return 1;
+    }
+    if (ui.screen == SCREEN_PASS) {
+        int count = 0;
+        while (pass_recipient(count) >= 0)
+            count++;
+        int done = p & (KEY_CIRCLE | KEY_START);
+        if (count) {
+            if (p & KEY_UP) ui.selection = wrapi(ui.selection - 1, count);
+            if (p & KEY_DOWN) ui.selection = wrapi(ui.selection + 1, count);
+            if (p & KEY_CROSS) {
+                int n = pass_recipient(ui.selection);
+                const char *blocked = pass_blocked(n);
+                if (blocked)
+                    log_msg("%s.", blocked);
+                else {
+                    int item = a->pack[ui.passSlot].item;
+                    if (inventory_transfer(a, &g.actors[n], ui.passSlot, 1)) {
+                        log_msg("Passed %s to %s.", itemDefs[item].name, g.actors[n].name);
+                        done = 1;
+                    }
+                }
+            }
+        }
+        if (done) {
+            open_view(SCREEN_PACK);
+            ui.selection = ui.passSlot;
+            item_view_normalize();
+        }
         return 1;
     }
     if(ui.screen==SCREEN_ACTIONS){
@@ -213,22 +283,40 @@ int expansion_input(float dt, Input in) {
     }
     if(ui.screen==SCREEN_SQUAD && !(p&KEY_SQUARE)) {
         if(p&(KEY_CIRCLE|KEY_START)){open_view(SCREEN_WORLD);return 1;}
-        if(p&KEY_TRIANGLE){open_view(SCREEN_PACK);return 1;}
+        if (p & KEY_TRIANGLE) {
+            ui.squadPage = !ui.squadPage;
+            ui.selection = 0;
+            return 1;
+        }
         if(p&KEY_L)cycle_squad(-1);
         if(p&KEY_R)cycle_squad(1);
         a=&g.actors[g.selected];DepthActor *z=&g.depth.actors[g.selected];
-        if(p&KEY_UP)ui.selection=wrapi(ui.selection-1,9);
-        if(p&KEY_DOWN)ui.selection=wrapi(ui.selection+1,9);
+        int rows = ui.squadPage ? 5 : 3;
+        if (p & KEY_UP) ui.selection = wrapi(ui.selection - 1, rows);
+        if (p & KEY_DOWN) ui.selection = wrapi(ui.selection + 1, rows);
         if(p&(KEY_LEFT|KEY_RIGHT|KEY_CROSS)) {
             int d=p&KEY_LEFT?-1:1;
-            switch(ui.selection) {
-            case 0:a->job=wrapi(a->job+d,8);z->queued=0;z->paused=0;a->taskKind=0;break;
-            case 1:z->order=wrapi(z->order+d,4);a->autoattack=z->order!=ORDER_HOLD_FIRE;break;
-            case 2:z->group=wrapi(z->group+d,3);break;
-            case 3:g.depth.groupLeader[z->group]=g.selected;break;
-            case 4:{int mode=!z->queued?0:z->paused?2:1;mode=wrapi(mode+d,3);z->queued=mode!=0;z->paused=mode==2;a->taskKind=0;break;}
-            default:z->queue[ui.selection-5]=wrapi(z->queue[ui.selection-5]+d,8);break;
-            }
+            if (ui.squadPage) {
+                if (ui.selection == 0) {
+                    int mode = wrapi((!z->queued ? 0 : z->paused ? 2 : 1) + d, 3);
+                    z->queued = mode != 0;
+                    z->paused = mode == 2;
+                    a->taskKind = 0;
+                } else
+                    z->queue[ui.selection - 1] = wrapi(z->queue[ui.selection - 1] + d, 8);
+            } else if (ui.selection == 0) {
+                a->job = wrapi(a->job + d, 8);
+                z->queued = z->paused = a->taskKind = 0;
+            } else if (ui.selection == 1) {
+                z->order = wrapi(z->order + d, 4);
+                a->autoattack = z->order != ORDER_HOLD_FIRE;
+                if (!a->autoattack) {
+                    g.living.command[g.selected] = -1;
+                    a->target = -1;
+                    a->attackPhase = 0;
+                }
+            } else
+                z->group = wrapi(z->group + d, 3);
         }
         return 1;
     }
@@ -241,15 +329,25 @@ int expansion_input(float dt, Input in) {
         }
         return 1;
     }
+    if (ui.screen == SCREEN_SCENARIOS) {
+        if (p & KEY_CIRCLE)
+            open_view(ui.scenarioReturn);
+        else if (p & KEY_CROSS)
+            character_begin(ui.selection);
+        else if (p & (KEY_UP | KEY_DOWN))
+            ui.selection = wrapi(ui.selection + (p & KEY_UP ? -1 : 1), START_SCENARIOS);
+        return 1;
+    }
     if (ui.screen == SCREEN_CREATE) {
         if (p & KEY_CIRCLE) {
-            open_view(ui.titleChoice ? SCREEN_WORLD : SCREEN_TITLE);
+            if (ui.titleChoice) open_view(SCREEN_WORLD);
+            else scenario_menu(ui.createOrigin, ui.scenarioReturn);
             return 1;
         }
         if (p & KEY_UP)
-            ui.selection = wrapi(ui.selection - 1, 10);
+            ui.selection = wrapi(ui.selection - 1, 8);
         if (p & KEY_DOWN)
-            ui.selection = wrapi(ui.selection + 1, 10);
+            ui.selection = wrapi(ui.selection + 1, 8);
         if (p & KEY_LEFT)
             adjust_creator(-1);
         if (p & KEY_RIGHT)
@@ -258,7 +356,7 @@ int expansion_input(float dt, Input in) {
             if (ui.selection == 0) {
                 ui.nameCell = 0;
                 open_view(SCREEN_NAME);
-            } else if (ui.selection == 9)
+            } else if (ui.selection == 7)
                 character_finish();
             else
                 adjust_creator(1);
@@ -576,13 +674,15 @@ int expansion_input(float dt, Input in) {
                 else
                     open_view(SCREEN_LOOT);
             } else {
-                g.selected = n;
+                select_squad_member(n);
                 open_view(SCREEN_WORLD);
             }
         }
         return 1;
     }
     if (ui.screen == SCREEN_LOG) {
+        if (p & KEY_UP && ui.scroll > 0) ui.scroll--;
+        if (p & KEY_DOWN && ui.scroll + 6 < ui.logCount && ui.scroll + 6 < LOGS) ui.scroll++;
         if (p & (KEY_CIRCLE | KEY_START))
             open_view(SCREEN_WORLD);
         return 1;

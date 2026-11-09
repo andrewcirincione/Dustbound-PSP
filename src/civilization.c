@@ -9,11 +9,16 @@ extern void init_actor(int,const char*,int,int,float,float,int);
 #define C (g.civil)
 const char *raceNames[SPECIES]={"LOWLANDER","ASHLANDER","CLOCKWORK","REEDKIN","STONEKIN"};
 const SpeciesDef speciesDefs[SPECIES]={
- {"Lowlander","Adaptable flesh; food and bandages.",100,0,1,1,{0}},
- {"Ashlander","Lean ashfolk; hardy, quiet, modest appetite.",95,0,1.03f,.85f,{[STRENGTH]=-1,[DEXTERITY]=2,[TOUGHNESS]=3,[STEALTH]=2}},
- {"Clockwork","Machine; no food or bleeding. Parts repair.",115,6,.90f,0,{[STRENGTH]=5,[TOUGHNESS]=4,[ENGINEERING]=6,[ATHLETICS]=-2}},
- {"Reedkin","Light marshfolk; fast, elusive, fragile.",80,-5,1.12f,.65f,{[STRENGTH]=-3,[DEXTERITY]=4,[TOUGHNESS]=-2,[ATHLETICS]=4,[DODGE]=4,[STEALTH]=3}},
- {"Stonekin","Stone-plated kin; strong, slow, hungry.",130,12,.88f,1.35f,{[STRENGTH]=6,[TOUGHNESS]=5,[LABOUR]=3,[DEXTERITY]=-2,[ATHLETICS]=-2,[STEALTH]=-3}}
+ {"Lowlander","Balanced traveler. Starts with better medicine and perception.",100,0,1,1,
+  {[MEDICINE]=5,[PERCEPTION]=3}},
+ {"Ashlander","Survives on little food. Tough and observant, with a lighter load.",105,-4,.98f,.58f,
+  {[STRENGTH]=-2,[DEXTERITY]=2,[TOUGHNESS]=8,[STEALTH]=4,[PERCEPTION]=6}},
+ {"Clockwork","Immune to hunger and bleeding. Repairs with parts instead of bandages.",120,9,.88f,0,
+  {[STRENGTH]=5,[TOUGHNESS]=5,[ENGINEERING]=12,[SCIENCE]=7,[ATHLETICS]=-2,[STEALTH]=-2}},
+ {"Reedkin","Fast, quiet, and hard to hit. Fragile and carries less.",74,-9,1.23f,.80f,
+  {[STRENGTH]=-4,[DEXTERITY]=6,[TOUGHNESS]=-2,[ATHLETICS]=8,[DODGE]=10,[STEALTH]=8}},
+ {"Stonekin","Powerful hauler with thick skin. Slow and needs more food.",145,16,.79f,1.48f,
+  {[STRENGTH]=9,[TOUGHNESS]=9,[LABOUR]=7,[DEXTERITY]=-2,[ATHLETICS]=-2,[STEALTH]=-3}}
 };
 int species_index(const Actor*a){return a->race>=0&&a->race<SPECIES?a->race:0;}
 float species_health(const Actor*a){return a->kind==BEAST?100:speciesDefs[species_index(a)].health;}

@@ -541,7 +541,7 @@ int doctor_heal(int town) {
     }
     if(a->race==2){log_msg("Mechanical bodies need spare parts, not a doctor.");return 0;}
     g.money -= 80;
-    a->bleed = 0;
+    dress_wounds(a);
     a->blood = 100;
     a->exposure = 0;
     for (int i = 0; i < LIMBS; i++)
@@ -874,21 +874,23 @@ static int worker_walk(Actor *a, int building, float dt) {
     return 1;
 }
 static void worker_production(Actor *a, float dt) {
-    if (g.depth.actors[a-g.actors].paused || society_rescue_busy((int)(a-g.actors)) || g.depth.actors[a-g.actors].captive || actor_inside(a) || a->job < JOB_SMELT || a->taskKind || !conscious(a) || a->prisonTime > 0 ||
+    int job = assigned_job(a);
+    if (!automatic_work(a) || g.depth.actors[a-g.actors].paused || society_rescue_busy((int)(a-g.actors)) || g.depth.actors[a-g.actors].captive || actor_inside(a) || job < JOB_SMELT || a->taskKind || !conscious(a) || a->prisonTime > 0 ||
         a->carriedBy >= 0 || a->target >= 0)
         return;
     int depot = worker_building(a, STORE),
-        station = worker_building(a, a->job == JOB_SMELT ? FORGE : CAMPFIRE);
+        station = worker_building(a, job == JOB_SMELT ? FORGE : CAMPFIRE);
     int old = g.selected;
-    g.selected = (int)(a - g.actors);
-    int output = a->job == JOB_SMELT ? IRONBAR : RATION;
+    int output = job == JOB_SMELT ? IRONBAR : RATION;
     /* Finish one trip before seeking another task: unload production and raw haul cargo. */
     for (int i = 0; i < PACK; i++) {
         int it = a->pack[i].item;
         int haul =
-            a->job == JOB_HAUL && (it == ORE || it == COPPER || it == WOOD || it == GRAIN || it == IRONBAR);
+            job == JOB_HAUL && (it == ORE || it == COPPER || it == WOOD || it == GRAIN || it == IRONBAR);
         if (depot >= 0 && !a->stolen[i] &&
-            (haul || (a->job != JOB_HAUL && it == output && a->pack[i].qty > (output == RATION ? 2 : 0)))) {
+            (haul || (job != JOB_HAUL && it == output && a->pack[i].qty > (output == RATION ? 2 : 0)))) {
+            work_notice(a, "hauling supplies to the depot", NULL);
+            g.selected = (int)(a - g.actors);
             if (!worker_walk(a, depot, dt)) {
                 a->action -= dt;
                 if (a->action <= 0) {
@@ -900,12 +902,12 @@ static void worker_production(Actor *a, float dt) {
             return;
         }
     }
-    if (a->job == JOB_HAUL || station < 0) {
+    if (job == JOB_HAUL || station < 0) {
         g.selected = old;
         return;
     }
     int ingredient = ORE, need = 3;
-    if (a->job == JOB_COOK) {
+    if (job == JOB_COOK) {
         ingredient = GRAIN;
         if (inventory_count(a, GRAIN) < 3 && inventory_count(a, GRAIN) + depot_has(depot, GRAIN) < 3 &&
             inventory_count(a, MEAT) + depot_has(depot, MEAT) >= 2) {
@@ -914,9 +916,12 @@ static void worker_production(Actor *a, float dt) {
         }
     }
     int missing = inventory_count(a, ingredient) < need              ? ingredient
-                  : a->job == JOB_COOK && !inventory_count(a, WATER) ? WATER
+                  : job == JOB_COOK && !inventory_count(a, WATER) ? WATER
                                                                      : 0;
     if (missing) {
+        if (depot >= 0 && depot_has(depot, missing))
+            work_notice(a, "fetching", itemDefs[missing].name);
+        g.selected = (int)(a - g.actors);
         if (depot >= 0 && depot_has(depot, missing) && !worker_walk(a, depot, dt)) {
             for (int j = 0; j < 16; j++)
                 if (g.buildings[depot].storage[j].item == missing) {
@@ -927,6 +932,8 @@ static void worker_production(Actor *a, float dt) {
         g.selected = old;
         return;
     }
+    work_notice(a, job == JOB_SMELT ? "working at the forge" : "going to cook rations", NULL);
+    g.selected = (int)(a - g.actors);
     if(g.buildings[station].owner>=0&&g.depth.buildings[station].fuel<1) {
         int fuel=inventory_count(a,COAL)?COAL:inventory_count(a,WOOD)?WOOD:0;
         if(fuel){if(!worker_walk(a,station,dt))depth_fuel(station);}
@@ -936,7 +943,7 @@ static void worker_production(Actor *a, float dt) {
     if (!worker_walk(a, station, dt)) {
         a->action -= dt;
         if (a->action <= 0) {
-            craft_item(a->job == JOB_SMELT ? 0 : 1);
+            craft_item(job == JOB_SMELT ? 0 : 1);
             a->action = 5;
         }
     }
@@ -1109,6 +1116,7 @@ void recovery_hint(char*out,int size){
  if(a->bleed>.01f){snprintf(out,size,a->unconscious>0?"BLEEDING: switch ally for first aid; medics help when safe.":"BLEEDING: field dressing, or Nearby > tear rags / use cloth.");return;}
  if(a->unconscious>0){snprintf(out,size,"STABILIZED: recovering consciousness; allies can carry you.");return;}
  if(a->health[HEAD]>60&&a->health[CHEST]>60&&a->fatigue<70)return;
+ if(a->treatedMask){snprintf(out,size,"RECOVER: dressed wounds heal slowly on the trail. A bed is faster.");return;}
  int b=-1;float near=1e9f;for(int k=0;k<6;k++)if(g.trails.bed[k]&&(g.trails.seen&(1<<k))){int n=g.trails.bed[k]-1;float d=distance(a->x,a->y,g.buildings[n].x,g.buildings[n].y);if(d<near){near=d;b=n;}}
  if(b>=0){float dx=g.buildings[b].x-a->x,dy=g.buildings[b].y-a->y;snprintf(out,size,"RECOVER: known roadside shelter %.0fm %s",near,fabsf(dx)>fabsf(dy)?(dx<0?"W":"E"):(dy<0?"N":"S"));}
  else snprintf(out,size,"RECOVER: bandage, find a safe bed, then rest. Medics help nearby.");

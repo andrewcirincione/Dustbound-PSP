@@ -33,6 +33,7 @@ int bounty_contract_active(int actor);
 int nearby_actions(void);
 const NearbyAction *nearby_action(int row);
 void nearby_action_label(int row,char*out,int size);
+const char *nearby_action_reason(int row);
 void nearby_action_choose(int row);
 void action_menu_open(void);
 void interact_context(int kind,int target);

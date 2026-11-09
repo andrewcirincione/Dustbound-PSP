@@ -594,8 +594,19 @@ void depth_wound(Actor *a, int limb, float damage) {
     int n = member(a);
     if (n < 0)
         return;
+    a->treatedMask &= ~(1 << limb);
     D.actors[n].trauma[limb] = fminf(80, D.actors[n].trauma[limb] + damage * .18f);
     D.actors[n].upkeep = fmaxf(20, D.actors[n].upkeep - damage * .025f);
+}
+int depth_needs_repair(const Actor *a) {
+    int n = member(a);
+    if (n < 0 || a->dead)
+        return 0;
+    for (int j = 0; j < LIMBS; j++)
+        if (!limb_missing(a, j) && !depth_organic(a, j) &&
+            (a->health[j] < limb_max_health(a, j) - 1 || D.actors[n].trauma[j] > 0))
+            return 1;
+    return 0;
 }
 int depth_repair(int mi, int pi) {
     if (mi < 0 || pi < 0 || mi >= g.actorCount || pi >= g.actorCount)
@@ -603,11 +614,7 @@ int depth_repair(int mi, int pi) {
     Actor *m = &g.actors[mi], *a = &g.actors[pi];
     if (!conscious(m) || a->dead || depth_distance(m, a) > TALK_REACH)
         return 0;
-    int hurt = 0;
-    for (int j = 0; j < LIMBS; j++)
-        if (!limb_missing(a,j) && !depth_organic(a, j) && (a->health[j] < limb_max_health(a,j)-1 || D.actors[pi].trauma[j] > 0))
-            hurt = 1;
-    if (!hurt) {
+    if (!depth_needs_repair(a)) {
         log_msg("No mechanical damage to repair.");
         return 0;
     }
@@ -770,18 +777,19 @@ static int ready_job(const Actor *a, int job) {
         if (!inventory_count(a, MEDKIT))
             return 0;
         for (int j = 0; j < g.actorCount; j++)
-            if (g.actors[j].squad && needs_aid(&g.actors[j]) && depth_distance(a, &g.actors[j]) < 18)
+            if (g.actors[j].squad && needs_aid(&g.actors[j]) && wound_needs_dressing(&g.actors[j]) &&
+                depth_distance(a, &g.actors[j]) < 18)
                 return 1;
         return 0;
     }
     if (job == JOB_MINE) {
-        Actor test = *a;
-        if (!inventory_add(&test, ORE, 1))
-            return 0;
         for (int j = 0; j < g.nodeCount; j++)
             if (g.nodes[j].remaining && g.nodes[j].type <= NODE_COPPER &&
-                distance(a->x, a->y, g.nodes[j].x, g.nodes[j].y) < 12)
-                return 1;
+                distance(a->x, a->y, g.nodes[j].x, g.nodes[j].y) < 12) {
+                Actor test = *a;
+                if (inventory_add(&test, g.nodes[j].type == NODE_ORE ? ORE : COPPER, 1))
+                    return 1;
+            }
         return 0;
     }
     if (job == JOB_FARM)
@@ -799,18 +807,25 @@ static int ready_job(const Actor *a, int job) {
         inventory_count(a, job == JOB_SMELT ? IRONBAR : RATION) > (job == JOB_SMELT ? 0 : 2))
         return 1;
     int input = job == JOB_SMELT ? ORE : GRAIN;
-    if (inventory_count(a, input) + stock_has(STORE, input, a) < 3)
+    if (inventory_count(a, input) + stock_has(STORE, input, a) < 3 &&
+        !(job == JOB_COOK && inventory_count(a, MEAT) + stock_has(STORE, MEAT, a) >= 2))
         return 0;
     return job == JOB_SMELT || inventory_count(a, WATER) + stock_has(STORE, WATER, a) > 0;
 }
+int assigned_job(const Actor *a) {
+    int n = member(a);
+    if (n < 0 || !D.actors[n].queued)
+        return a->job;
+    return ui.priorityJob[n] ? ui.priorityJob[n] - 1 : JOB_HOLD;
+}
 void depth_queue(Actor *a) {
     int n = member(a);
-    if (n < 0 || !D.actors[n].queued || D.actors[n].paused || a->taskKind || a->target >= 0)
+    if (n < 0 || !automatic_work(a) || !D.actors[n].queued || D.actors[n].paused || a->taskKind || a->target >= 0)
         return;
-    a->job = JOB_HOLD;
+    ui.priorityJob[n] = JOB_HOLD + 1;
     for (int j = 0; j < 4; j++)
         if (ready_job(a, D.actors[n].queue[j])) {
-            a->job = D.actors[n].queue[j];
+            ui.priorityJob[n] = D.actors[n].queue[j] + 1;
             break;
         }
 }
@@ -821,27 +836,28 @@ int depth_group_job(Actor *a, float dt) {
     DepthActor *z = &D.actors[n];
     if (z->paused)
         return 1;
-    int group = z->group, leader = D.groupLeader[group];
-    if (!alive(leader) || !g.actors[leader].squad || D.actors[leader].group != group) {
-        leader = -1;
-        for (int i = 0; i < g.actorCount; i++)
-            if (g.actors[i].squad && !g.actors[i].dead && D.actors[i].group == group) {
-                leader = i;
-                break;
-            }
-        D.groupLeader[group] = leader;
-    }
-    if (a->job != JOB_FOLLOW)
+    if (assigned_job(a) != JOB_FOLLOW)
         return 0;
-    if (leader < 0)
+    Actor *lead = &g.actors[g.selected];
+    if (a == lead || !conscious(lead))
         return 1;
-    if (n == leader) {
-        D.groupTravel[group] = 0;
-        return 1;
+    int room = depth_room(a), leadRoom = depth_room(lead);
+    if (room && room == leadRoom) {
+        if (depth_distance(a, lead) > 2.2f)
+            depth_move_room(a, depth_x(lead) - depth_x(a), depth_y(lead) - depth_y(a), dt);
+    } else if (!room && leadRoom) {
+        Building *door = &g.buildings[leadRoom - 1];
+        float x = door->x + 1.45f, y = door->y + .65f;
+        if (distance(a->x, a->y, x, y) > 1.7f)
+            route_toward(a, x, y, dt);
+        else {
+            z->room = leadRoom;
+            z->rx = 2.6f + (n % 3) * .65f;
+            z->ry = 5.8f;
+        }
+    } else if (!room && distance(a->x, a->y, lead->x, lead->y) > 2.4f + z->group * .35f) {
+        route_toward(a, lead->x + (n % 3 - 1) * .75f, lead->y + .8f + z->group * .45f, dt);
     }
-    Actor *b = &g.actors[leader];
-    if (!actor_inside(a) && !actor_inside(b) && distance(a->x, a->y, b->x, b->y) > 2.2f)
-        route_toward(a, b->x, b->y + 1, dt);
     return 1;
 }
 static void world_consequences(float dt) {

@@ -314,7 +314,6 @@ int population_action_valid(int k,int action){
     if(!conscious(a))return 0;if(!action)return distance(a->x,a->y,e->x,e->y)<=8;
     int object=action>=11&&action<=13?action-10:action==20?(camp_type(e->type)?P.state[k].beds+1:0):0;
     if(!population_object(k,object,&x,&y))return 0;
-    if(!e->spawned&&standing(k)&&!population_materialize(k))return 0;
     if(action>=30&&(e->type!=POP_MERCHANTS&&e->type!=POP_SMUGGLERS))return 0;
     return distance(a->x,a->y,x,y)<=1.7f;
 }
@@ -322,20 +321,114 @@ void population_detail(int k,char*out,int size){
     if(k<0||k>=POP_GROUPS){snprintf(out,size,"No travelers here.");return;}WorldEvent*e=&P.groups[k];PopulationState*m=&P.state[k];int live=0,down=0;for(int i=0;i<e->count;i++){Actor*a=member(k,i);if(a&&!a->dead){live++;down+=a->unconscious>0;}}
     snprintf(out,size,"%s: %d alive, %d down; %s. %s",names[e->type],live,down,g.life.version?life_goal_name(g.life.groups[k].goal):phases[m->phase],m->beds?"Camp beds can be used when safe. Supplies are finite.":e->type==POP_PRISONERS?"Prisoners can be freed after evading or defeating guards.":e->type==POP_WOUNDED?"Dressings may save the wounded.":e->type==POP_BATTLEFIELD?"The survivors and fallen carry their actual equipment.":"These travelers follow their own route.");
 }
+static int cache_owner(const WorldEvent *e) {
+    return e->type == POP_BATTLEFIELD || e->faction == HOSTILE ? FREE : e->faction;
+}
+static const int traderItems[] = {RATION, MEDKIT, PARTS}, traderPrices[] = {40, 80, 100};
+const char *population_action_reason(int k, int action) {
+    if (!population_action_valid(k, action))
+        return "Out of reach";
+    Actor *a = &g.actors[g.selected];
+    WorldEvent *e = &P.groups[k];
+    PopulationState *m = &P.state[k];
+    if (action == 1) {
+        if (inventory_count(a, MEAT) < 2)
+            return "Need 2 meat";
+        if (!safe_at(a))
+            return "Enemies nearby";
+        Actor test = *a;
+        int owner = inventory_input_owner(&test, MEAT, 2);
+        inventory_remove(&test, MEAT, 2);
+        if (!inventory_add_owned(&test, RATION, 1, owner))
+            return "Pack full";
+    } else if (action >= 11 && action <= 13) {
+        if (!safe_at(a))
+            return "Enemies nearby";
+        float x, y;
+        population_object(k, action - 10, &x, &y);
+        for (int n = 0; n < g.actorCount; n++)
+            if (n != g.selected && conscious(&g.actors[n]) && g.actors[n].taskKind == 3 &&
+                distance(x, y, g.actors[n].x, g.actors[n].y) < 1)
+                return "Bed occupied";
+    } else if (action == 20) {
+        if (!m->cacheQty)
+            return "Supplies already taken";
+        Actor test = *a;
+        if (!inventory_add_owned(&test, m->cacheItem, m->cacheQty, cache_owner(e)))
+            return "Pack full";
+    } else if (action >= 30 && action <= 32) {
+        int i = action - 30;
+        if (!safe_at(a) || g.rep[e->faction] < -25 || !standing(k))
+            return "No willing trader";
+        if (!m->stock[i])
+            return "Out of stock";
+        if (g.money < traderPrices[i])
+            return "Not enough silver";
+        Actor test = *a;
+        if (!inventory_add(&test, traderItems[i], 1))
+            return "Pack full";
+    }
+    return NULL;
+}
 void population_action_label(int k,int action,char*out,int size){
     if(!action)snprintf(out,size,"Observe %s",population_name(k));
     else if(action>=11&&action<=13)snprintf(out,size,"Rest in camp bed %d (free)",action-10);
     else if(action==1)snprintf(out,size,"Cook at fire: 2 meat > 1 ration");
-    else if(action==20)snprintf(out,size,"Search camp supplies: %s",P.state[k].cacheQty?itemDefs[P.state[k].cacheItem].name:"empty");
-    else {static const int items[]={RATION,MEDKIT,PARTS},price[]={40,80,100};int i=bounded(action-30,0,2);snprintf(out,size,"Buy %s: %d silver (%d left)",itemDefs[items[i]].name,price[i],P.state[k].stock[i]);}
+    else if (action == 20) {
+        int owner = cache_owner(&P.groups[k]);
+        snprintf(out, size, owner ? "Steal %s camp supplies" : "Search abandoned camp supplies",
+                 factionNames[owner]);
+    } else {
+        int i = bounded(action - 30, 0, 2);
+        snprintf(out, size, "Buy %s: %d silver (%d left)", itemDefs[traderItems[i]].name,
+                 traderPrices[i], P.state[k].stock[i]);
+    }
 }
-int population_action(int k,int action){
-    if(!population_action_valid(k,action))return 0;Actor*a=&g.actors[g.selected];WorldEvent*e=&P.groups[k];PopulationState*m=&P.state[k];
-    if(!action){log_msg("%s: %d standing / %s / %d beds.",names[e->type],standing(k),g.life.version?life_goal_name(g.life.groups[k].goal):phases[m->phase],m->beds);return 1;}
-    if(action>=11&&action<=13){float x,y;population_object(k,action-10,&x,&y);if(!safe_at(a)){log_msg("Cannot rest with enemies nearby.");return 0;}for(int n=0;n<g.actorCount;n++)if(n!=g.selected&&conscious(&g.actors[n])&&g.actors[n].taskKind==3&&distance(x,y,g.actors[n].x,g.actors[n].y)<1){log_msg("That bed is occupied.");return 0;}a->taskKind=3;a->taskIndex=-1000-k*4-(action-11);a->action=180;a->autoattack=0;log_msg("Resting in a camp bed. Bandage bleeding first; move to wake.");return 1;}
-    if(action==1){if(!safe_at(a)||inventory_count(a,MEAT)<2){log_msg("Cooking needs a safe fire and 2 meat.");return 0;}Actor backup=*a;int owner=inventory_input_owner(a,MEAT,2);inventory_remove(a,MEAT,2);if(!inventory_add_owned(a,RATION,1,owner)){*a=backup;log_msg("Make room for the cooked ration.");return 0;}gain(a,COOKING,12);log_msg("Cooked 1 ration from 2 meat.");return 1;}
-    if(action==20){if(!m->cacheQty){log_msg("These supplies have already been taken.");return 0;}int owner=e->type==POP_BATTLEFIELD||e->faction==HOSTILE?0:e->faction;if(!inventory_add_owned(a,m->cacheItem,m->cacheQty,owner)){log_msg("Make pack room for the supplies.");return 0;}m->cacheQty=0;if(owner){for(int i=0;i<e->count;i++){Actor*b=member(k,i);if(b&&!b->dead&&b->unconscious<=0&&distance(a->x,a->y,b->x,b->y)<7){crime_add(a,owner,80);g.rep[owner]-=12;if(e->spawned&&e->members[i]>=0)population_anger(e->members[i]);log_warn("The camp saw you steal their supplies.");return 1;}}}log_msg("Took the remaining camp supplies.");return 1;}
-    if(action>=30&&action<=32){static const int items[]={RATION,MEDKIT,PARTS},price[]={40,80,100};int i=action-30;if(!safe_at(a)||g.rep[e->faction]<-25||!standing(k)){log_msg("No safe, willing trader here.");return 0;}if(m->stock[i]<=0||g.money<price[i]){log_msg("Not enough silver or trader stock.");return 0;}if(!inventory_add(a,items[i],1)){log_msg("Make pack room first.");return 0;}g.money-=price[i];m->stock[i]--;log_msg("Bought %s for %d silver.",itemDefs[items[i]].name,price[i]);return 1;}return 0;
+int population_action(int k, int action) {
+    const char *reason = population_action_reason(k, action);
+    if (reason) {
+        log_msg("%s.", reason);
+        return 0;
+    }
+    Actor *a = &g.actors[g.selected];
+    WorldEvent *e = &P.groups[k];
+    PopulationState *m = &P.state[k];
+    if (action && !e->spawned && standing(k) && !population_materialize(k)) {
+        log_msg("Camp activity is unavailable.");
+        return 0;
+    }
+    if (!action) {
+        log_msg("%s: %d standing / %s / %d beds.", names[e->type], standing(k),
+                g.life.version ? life_goal_name(g.life.groups[k].goal) : phases[m->phase], m->beds);
+    } else if (action >= 11 && action <= 13) {
+        a->taskKind = 3;
+        a->taskIndex = -1000 - k * 4 - (action - 11);
+        a->action = 180;
+        a->autoattack = 0;
+        log_msg("Resting in a camp bed. Move to wake.");
+    } else if (action == 1) {
+        int owner = inventory_input_owner(a, MEAT, 2);
+        inventory_remove(a, MEAT, 2);
+        inventory_add_owned(a, RATION, 1, owner);
+        gain(a, COOKING, 12);
+        log_msg("Cooked 1 ration from 2 meat.");
+    } else if (action == 20) {
+        int owner = cache_owner(e);
+        inventory_add_owned(a, m->cacheItem, m->cacheQty, owner);
+        m->cacheQty = 0;
+        if (owner)
+            witnessed_theft(a, owner, 7, 12);
+        else
+            log_msg("Took the remaining camp supplies.");
+    } else if (action >= 30 && action <= 32) {
+        int i = action - 30;
+        inventory_add(a, traderItems[i], 1);
+        g.money -= traderPrices[i];
+        m->stock[i]--;
+        log_msg("Bought %s for %d silver.", itemDefs[traderItems[i]].name, traderPrices[i]);
+    } else
+        return 0;
+    return 1;
 }
 const char *population_actor_role(int n){
  static const char *roles[POP_TYPES]={"SCAVENGER","REFUGEE","HUNTER","SMUGGLER","TRADER","PATROL SOLDIER","BANDIT","BEAST","PILGRIM","WOUNDED TRAVELER","FALLEN SOLDIER","SOLDIER","BANDIT","SALVAGER","CONVOY GUARD","ELITE DUELIST"};

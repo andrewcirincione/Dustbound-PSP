@@ -1,3 +1,12 @@
+# 0.17.2 — Fieldwork
+
+- Followers track the controlled squad member, including inside buildings. Separate assignment and priority tabs preserve direct jobs. The controlled member only begins automatic work after five idle seconds in Passive stance.
+- The HUD shows menu shortcuts and scrolling news, including squad level-ups and urgent injuries. Bleeding turns squad health bars red. NPC role labels appear at close range.
+- Pass items to a chosen ally. Nearby Actions offers self-treatment and explains unavailable actions. Dressed wounds recover slowly without a bed.
+- Owned containers identify their faction before looting. Some witnesses warn on the first offense. Fleeing civilians keep to an escape route and wait for danger to pass.
+- Scenery stays visible near actors and varies across regions. Walking uses distance-driven strides. Character creation includes larger previews and independent hair and beard styles.
+- Five scenarios start at different inland settlements. The atlas, local map, and minimap use the walking view's orientation.
+
 # 0.17.1 — Succession
 
 - The deaths of capital leaders, named settlement chiefs and their successors can open new councils.

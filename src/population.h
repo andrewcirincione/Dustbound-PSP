@@ -14,6 +14,7 @@ int population_store(int group);
 int population_object(int group,int object,float *x,float *y);
 int population_object_count(int group);
 int population_action_valid(int group,int action);
+const char *population_action_reason(int group, int action);
 int population_action(int group,int action);
 void population_action_label(int group,int action,char *out,int size);
 void population_detail(int group,char *out,int size);

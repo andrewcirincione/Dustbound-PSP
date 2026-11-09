@@ -257,6 +257,12 @@ static void button_icon(int x, int y, unsigned k, int sc, uint32_t color) {
         BL(4, 0, 7, 3, c);
         BL(4, 6, 1, 3, c);
         BL(4, 6, 7, 3, c);
+    } else if (k == 10 || k == 11 || k == 14 || k == 15) {
+        int dx = k == 14 ? -1 : k == 15 ? 1 : 0, dy = k == 10 ? -1 : k == 11 ? 1 : 0;
+        int tx = 4 + dx * 3, ty = 3 + dy * 3;
+        BL(4 - dx * 3, 3 - dy * 3, tx, ty, c);
+        BL(tx, ty, tx - dx * 3 + dy * 3, ty - dy * 3 + dx * 3, c);
+        BL(tx, ty, tx - dx * 3 - dy * 3, ty - dy * 3 - dx * 3, c);
     } else {
         rect(BX(3), BY(0), 3 * sc, 7 * sc, c);
         rect(BX(1), BY(2), 7 * sc, 3 * sc, c);
@@ -330,10 +336,10 @@ static void bar(int x, int y, int w, int h, float value, uint32_t c) {
 }
 static int projectionX, projectionY;
 static inline int project_x(float x, float y) {
-    return 240 + projectionX + (int)((x - y - ui.camX + ui.camY) * 22);
+    return 240 + projectionX + (int)(view_horizontal(x - ui.camX, y - ui.camY) * 22);
 }
 static inline int project_y(float x, float y) {
-    return 126 + projectionY + (int)((x + y - ui.camX - ui.camY) * 11) - terrain_height(x, y);
+    return 126 + projectionY + (int)(view_vertical(x - ui.camX, y - ui.camY) * 11) - terrain_height(x, y);
 }
 static void project(float x, float y, int *sx, int *sy) {
     *sx = project_x(x, y);
@@ -561,25 +567,26 @@ static int compare_obj(const void *a, const void *b) {
     float d = ((Object *)a)->depth - ((Object *)b)->depth;
     return d < 0 ? -1 : d > 0 ? 1 : 0;
 }
+static void squad_health_bar(const Actor *a, int x, int y) {
+    float hp = a->dead || a->unconscious > 0 ? 0 :
+        fminf(a->health[HEAD], a->health[CHEST]) * 100 / species_health(a);
+    bar(x - 10, y - 43, 21, 3, hp, a->bleed > .01f ? RED : TEAL);
+    if (a->bleed > .01f)
+        rect(x - 10, y - 43, 2, 3, RED);
+}
 static void objects_draw(void) {
-    int clearIds[MAX_ACTORS], clearCount = 0;
-    unsigned char squadTargets[MAX_ACTORS] = {0};
-    for (int i = 0; i < g.actorCount; i++) {
-        const Actor *a = &g.actors[i];
-        if (!a->active || !a->squad) continue;
-        int target = a->target, command = g.living.command[i];
-        if (target >= 0 && target < g.actorCount) squadTargets[target] = 1;
-        if (command >= 0 && command < g.actorCount) squadTargets[command] = 1;
-    }
-    for (int i = 0; i < g.actorCount; i++) {
-        const Actor *a = &g.actors[i];
-        if (!a->active) continue;
-        int target = a->target;
-        int targetsSquad = target >= 0 && target < g.actorCount &&
-                           g.actors[target].active && g.actors[target].squad;
-        if (a->squad || (!a->dead && (squadTargets[i] || targetsSquad)))
-            clearIds[clearCount++] = i;
-    }
+    static const unsigned char decor[9][8] = {
+        {12,12,12,9,9,8,12,8},     /* cinder scrub */
+        {9,9,11,9,12,12,9,8},      /* copper outcrops */
+        {9,12,9,12,9,9,12,9},      /* sparse salt flats */
+        {13,13,13,12,13,10,13,9},  /* fens */
+        {8,12,8,9,8,8,9,12},      /* deadwood and ash */
+        {11,9,11,12,9,11,9,12},    /* mesa */
+        {14,14,10,14,9,12,14,10},  /* snowy highlands */
+        {10,10,10,13,10,9,10,8},   /* pines with an understory */
+        {11,11,9,11,12,9,11,8}     /* canyons */
+    };
+    static const unsigned char spacing[] = {12, 13, 22, 8, 13, 13, 14, 8, 15};
     int n = 0;
     for (int i = 0; i < g.nodeCount; i++) {
         Node *b = &g.nodes[i];
@@ -599,7 +606,7 @@ static void objects_draw(void) {
         if (x <= -30 || x >= 510)
             continue;
         int y = project_y(a->x, a->y);
-        if (y > -20 && y < 250)
+        if (y > -20 && y < 296)
             objects[n++] = (Object){a->x + a->y, 2, i, x, y};
     }
     int cx = ui.camX, cy = ui.camY;
@@ -621,10 +628,24 @@ static void objects_draw(void) {
         }
     }
     for(int k=0;k<6;k++)for(int r=0;r<4;r++){float x,y;if(!trail_rock(k,r,&x,&y)||fabsf(x-ui.camX)>20||fabsf(y-ui.camY)>20)continue;int sx,sy;project(x,y,&sx,&sy);objects[n++]=(Object){x+y,5,k*4+r,sx,sy};}
-    for (int y = cy - 16; y < cy + 16; y++)
-        for (int x = cx - 16; x < cx + 16; x++) {
+    for (int y = cy - 20; y <= cy + 20; y++)
+        for (int x = cx - 20; x <= cx + 20; x++) {
+            if (x < 2 || y < 2 || x >= WORLD - 2 || y >= WORLD - 2)
+                continue;
             unsigned h = hash(x, y);
-            if (h % 13 || town_near(x, y, 8) >= 0 || road(x, y))
+            if (h % 8)
+                continue;
+            int sx, sy;
+            float wx = x + .18f + ((h >> 4) & 7) * .07f, wy = y + .18f + ((h >> 12) & 7) * .07f;
+            sx = project_x(wx, wy);
+            if (sx < -90 || sx > 570)
+                continue;
+            sy = project_y(wx, wy);
+            if (sy < -30 || sy > 360)
+                continue;
+            int region = biome(x, y);
+            if ((h >> 8) % spacing[region] >= 8 || town_near(x, y, 8) >= 0 ||
+                road(x, y) || terrain_water(x, y))
                 continue;
             int campGround = 0;
             for (int k = 0; k < campCount; k++) {
@@ -635,13 +656,14 @@ static void objects_draw(void) {
                 }
             }
             if (campGround) continue;
-            int clear=0;for(int j=0;j<clearCount;j++){Actor*a=&g.actors[clearIds[j]];if(distance(x,y,a->x,a->y)<2.3f){clear=1;break;}}if(clear)continue;
-            if(trail_blocked(x,y))continue;
-            int sx, sy;
-            project(x + .3f, y + .4f, &sx, &sy);
-            if (sx < 0 || sx > 480 || sy < 0 || sy > 252)
+            if (trail_blocked(x, y))
                 continue;
-            objects[n++] = (Object){x + y + .7f, 3, biome(x, y) * 4 + (int)(h % 4), sx, sy};
+            int id = decor[region][(h >> 20) & 7];
+            const ArtSprite *s = &artSprites[id];
+            if (sx - s->ax > 480 || sx - s->ax + s->w < 0 || sy + 4 - s->ay > 252 ||
+                sy + 4 - s->ay + s->h < 0)
+                continue;
+            objects[n++] = (Object){wx + wy, 3, id, sx, sy};
         }
     for (int i = 0; i < n; i++) {
         Object *o = &objects[i];
@@ -658,16 +680,8 @@ static void objects_draw(void) {
             art_shadow(id, x, y + (id < 24 ? 5 : 0));
         }
         if(o->kind==4){if(!population_prop_style(o->index/POP_PROPS,o->index%POP_PROPS))art_shadow(population_prop_art(o->index/POP_PROPS,o->index%POP_PROPS),x,y);}
-        if (o->kind == 3) {
-            int region = o->index / 4, variant = o->index % 4;
-            int id = region == 7                    ? 10
-                     : region == 3                  ? 13
-                     : region == 6                  ? 14
-                     : (region == 8 || region == 5) ? 11
-                     : variant < 2                  ? 9
-                                                    : 12;
-            art_shadow(id, x, y + 4);
-        }
+        if (o->kind == 3)
+            art_shadow(o->index, x, y + 4);
     }
     if (ui.screen == SCREEN_WORLD && ui.contextIndex >= 0 && !g.interiorBuilding && context_distance() <= context_reach()) {
         int x, y;
@@ -699,10 +713,7 @@ static void objects_draw(void) {
         else if (o->kind == 2) {
             Actor *a = &g.actors[o->index];
             person(a, o->x, o->y, 1, o->index == g.selected);
-            if (a->squad) {float hp=(a->health[HEAD]+a->health[CHEST])*50/species_health(a);bar(o->x-10,o->y-43,21,2,hp,TEAL);}
-            if (a->squad && o->index == g.selected) {
-                triangle(o->x - 3, o->y - 49, o->x + 3, o->y - 49, o->x, o->y - 45, TEAL);
-            }
+
         } else if(o->kind==5){art(11,o->x,o->y,light(),0);art(9,o->x+10,o->y+4,light(),0);
         } else if(o->kind==4){
             float wx,wy;int t=population_object(o->index/POP_PROPS,o->index%POP_PROPS,&wx,&wy),id=population_prop_art(o->index/POP_PROPS,o->index%POP_PROPS),style=population_prop_style(o->index/POP_PROPS,o->index%POP_PROPS);int x=o->x,y=o->y;
@@ -712,18 +723,24 @@ static void objects_draw(void) {
             else art(id,x,y,light(),0);
             if(t==1){int flicker=(int)(g.time*8)%3;diamond(o->x,o->y-6,2+flicker,4+flicker,0xe0a24b);}
         } else {
-            int x = o->x, y = o->y;
-            int region = o->index / 4, variant = o->index % 4;
-            int sprite = region == 7                    ? 10
-                         : region == 3                  ? 13
-                         : region == 6                  ? 14
-                         : (region == 8 || region == 5) ? 11
-                         : variant < 2                  ? 9
-                                                        : 12;
-            art(sprite, x, y + 4, light(), 0);
+            art(o->index, o->x, o->y + 4, light(), 0);
         }
     }
-    for(int i=0;i<n;i++)if(objects[i].kind==2){int id=objects[i].index;Actor*a=&g.actors[id];if(a->squad||((a->target==g.selected||g.actors[g.selected].target==id)&&distance(a->x,a->y,ui.camX,ui.camY)<9))actor_outline(a,objects[i].x,objects[i].y,id==g.selected);}
+    for (int i = 0; i < n; i++) {
+        Object *o = &objects[i];
+        if (o->kind != 2)
+            continue;
+        int id = o->index;
+        Actor *a = &g.actors[id];
+        if (a->squad || ((a->target == g.selected || g.actors[g.selected].target == id) &&
+                         distance(a->x, a->y, ui.camX, ui.camY) < 9))
+            actor_outline(a, o->x, o->y, id == g.selected);
+        if (a->squad) {
+            squad_health_bar(a, o->x, o->y);
+            if (id == g.selected)
+                triangle(o->x - 3, o->y - 50, o->x + 3, o->y - 50, o->x, o->y - 46, TEAL);
+        }
+    }
 }
 static void room_project(float x, float y, int *sx, int *sy);
 static uint32_t label_color(int faction){uint32_t c=factionColors[faction];return (((c>>16)*3+255)/4<<16)|((((c>>8&255)*3+255)/4)<<8)|(((c&255)*3+255)/4);}
@@ -748,11 +765,11 @@ static void nearby_labels(int indoors){
  int boxes[8][4],used=0;
  int fighting=0;for(int i=0;i<count;i++)if(squad_combatant(ids[i]))fighting=1;
  if(fighting)for(int i=1;i<count;i++)if(ids[i]==p->target){int swap=ids[0];ids[0]=ids[i];ids[i]=swap;break;}
- for(int i=0;i<count&&used<(fighting?1:8);i++){Actor*a=&g.actors[ids[i]];int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);
-  char label[48];snprintf(label,sizeof(label),"%.20s%s",npc_role_name(a),a->dead?" / DEAD":a->unconscious>0?" / DOWN":actor_relation(ids[i])<0?" !":"");int w=text_width(label)+8,l=x-w/2,t=fighting?y+17:y-(a->dead||a->unconscious>0?24:56);if(l<4)l=4;if(l+w>476)l=476-w;if(t<26)t=26;
+ for(int i=0;i<count&&used<(fighting?1:8);i++){Actor*a=&g.actors[ids[i]];if(depth_distance(p,a)>4)continue;int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);
+  char label[48];snprintf(label,sizeof(label),"%.20s%s",npc_role_name(a),a->dead?" / DEAD":a->unconscious>0?" / DOWN":actor_relation(ids[i])<0?" !":"");int w=text_width(label)+8,l=x-w/2,t=fighting?y+17:y-(a->dead||a->unconscious>0?24:56);if(l<4)l=4;if(l+w>476)l=476-w;if(t<39)t=39;
   for(int attempt=0;attempt<5;attempt++){int hit=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])hit=1;if(!hit)break;t-=13;}
   int overlaps=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])overlaps=1;
-  if(overlaps||t<25||t>221||x<0||x>480||(l+w>398&&t<100))continue;
+  if(overlaps||t<38||t>219||x<0||x>480||(l+w>398&&t<100))continue;
   boxes[used][0]=l;boxes[used][1]=t;boxes[used][2]=w;used++;
   if(!fighting)line(x,y-(a->dead||a->unconscious>0?8:35),l+w/2,t+10,shade(factionColors[a->faction],.65f));
   rect(l,t,w,11,INK);rect(l,t,2,11,factionColors[a->faction]);text(l+5,t+2,label,label_color(a->faction),1);
@@ -919,7 +936,7 @@ static void interior_draw(void) {
     }
     for (int k = 0; k < count; k++) {
         int i = order[k];
-        if(roomActor[i]>=0){Actor *resident=&g.actors[roomActor[i]];room_project(depth_x(resident),depth_y(resident),&x,&y);person(resident,x,y,1,0);}
+        if(roomActor[i]>=0){Actor *resident=&g.actors[roomActor[i]];room_project(depth_x(resident),depth_y(resident),&x,&y);person(resident,x,y,1,0);if(resident->squad)squad_health_bar(resident,x,y);}
         else if (i == player) {
             if (sleepProp >= 0) {
                 room_project(props[sleepProp].x, props[sleepProp].y, &x, &y);
@@ -927,6 +944,7 @@ static void interior_draw(void) {
             } else
                 room_project(g.interiorX, g.interiorY, &x, &y);
             person(&g.actors[g.selected], x, y, 1, sleepProp < 0);
+            squad_health_bar(&g.actors[g.selected], x, y);
         } else if (i == keeper) {
             Actor resident = g.actors[g.selected];
             resident.attackPhase = resident.movedTimer = resident.hitFlash = 0;
@@ -955,42 +973,75 @@ static void interior_draw(void) {
                                           : "FRONTIER HOME / INTERIOR";
     text(12, 32, name, GOLD, 1);
 }
+/* Map views share the walking camera's axes. North is up-right. */
+typedef struct { float wx, wy; int x, y; float sx, sy; } MapView;
+static int map_x(MapView v, float x, float y) {
+    return v.x + (int)roundf(view_horizontal(x - v.wx, y - v.wy) * v.sx);
+}
+static int map_y(MapView v, float x, float y) {
+    return v.y + (int)roundf(view_vertical(x - v.wx, y - v.wy) * v.sy);
+}
+static void map_sample(MapView v, int x, int y, float *wx, float *wy) {
+    view_to_world((x - v.x) / v.sx, (y - v.y) / v.sy, wx, wy);
+    *wx += v.wx;
+    *wy += v.wy;
+}
+static int in_world(float x, float y) { return x >= 0 && y >= 0 && x < WORLD && y < WORLD; }
+static int map_known(float x, float y) {
+    if (!in_world(x, y))
+        return 0;
+    int k = ((int)y / 4) * FOG_SIZE + (int)x / 4;
+    return g.seen[k >> 3] & (1 << (k & 7));
+}
+static const uint32_t mapTerrain[] = {
+    0x697060, 0x80715b, 0x777a70, 0x4d6c62, 0x64645c, 0x77735e, 0xa9b0ad, 0x465d51, 0x79665d
+};
+static void map_north(int x, int y) {
+    line(x, y + 9, x + 13, y + 2, MUTED);
+    line(x + 13, y + 2, x + 8, y + 2, MUTED);
+    line(x + 13, y + 2, x + 11, y + 7, MUTED);
+    text(x + 17, y, "N", TEXT, 1);
+}
 static void mini_map(void) {
-    int ox = 402, oy = 31;
-    rect(ox - 3, oy - 3, 72, 67, PANEL);
-    for (int y = 0; y < 60; y += 3)
-        for (int x = 0; x < 66; x += 3) {
-            float wx = ui.camX + (x - 33) * .4f, wy = ui.camY + (y - 30) * .4f;
-            static const uint32_t terrain[]={0x606553,0x72634e,0x858477,0x4d655a,0x54534c,0x69675b,0x979c99,0x405349,0x71534c};
-                uint32_t c = terrain[biome(wx, wy)];
-                if(terrain_height(wx,wy)/4!=terrain_height(wx+1,wy)/4)c=shade(c,.8f);
-            rect(ox + x, oy + y, 3, 3, shade(c, .55f));
+    int ox = 402, oy = 40;
+    MapView view = {ui.camX, ui.camY, ox + 33, oy + 30, 2.5f, 1.25f};
+    rect(ox - 3, oy - 3, 72, 66, PANEL);
+    for (int y = oy; y < oy + 60; y += 3)
+        for (int x = ox; x < ox + 66; x += 3) {
+            float wx, wy;
+            map_sample(view, x + 1, y + 1, &wx, &wy);
+            uint32_t c = !in_world(wx, wy) ? INK : terrain_water(wx, wy) ? 0x426e80 : mapTerrain[biome(wx, wy)];
+            rect(x, y, 3, 3, shade(c, .63f));
         }
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
-        int x = ox + 33 + (b->x - ui.camX) * 2.5f, y = oy + 30 + (b->y - ui.camY) * 2.5f;
-        if (x >= ox && x < ox + 66 && y >= oy && y < oy + 60)
-            rect(x, y, 3, 2, 0xb5aa86);
+        if (fabsf(b->x - ui.camX) > 20 || fabsf(b->y - ui.camY) > 20)
+            continue;
+        int x = map_x(view, b->x, b->y), y = map_y(view, b->x, b->y);
+        if (x >= ox && x < ox + 65 && y >= oy && y < oy + 59)
+            rect(x, y, 2, 2, 0xb5aa86);
     }
     for (int i = 0; i < g.actorCount; i++) {
         Actor *a = &g.actors[i];
-        int x = ox + 33 + (a->x - ui.camX) * 2.5f, y = oy + 30 + (a->y - ui.camY) * 2.5f;
-        if (x >= ox && x < ox + 66 && y >= oy && y < oy + 60 && a->active && !a->dead && !population_hidden(i))
+        if (!a->active || a->dead || fabsf(a->x - ui.camX) > 20 || fabsf(a->y - ui.camY) > 20)
+            continue;
+        int x = map_x(view, a->x, a->y), y = map_y(view, a->x, a->y);
+        if (x >= ox && x < ox + 65 && y >= oy && y < oy + 59 && !population_hidden(i))
             rect(x, y, 2, 2, a->squad ? TEAL : a->faction == HOSTILE ? RED : GOLD);
     }
-    frame(ox - 3, oy - 3, 72, 67, EDGE);
-    text(ox + 28, oy - 1, "N", TEXT, 1);
+    frame(ox - 3, oy - 3, 72, 66, EDGE);
+    map_north(ox + 40, oy + 2);
 }
 static void detailed_status(void) {
     Actor *a = &g.actors[g.selected];
     char value[64];
-    panel(8, 44, 198, 186);
+    panel(8, 44, 198, 165);
     snprintf(value, sizeof(value), "%.16s", a->name);
     text(16, 53, value, TEAL, 1);
     text(160, 53, "STATUS", GOLD, 1);
     line(16, 66, 198, 66, EDGE);
     for (int i = 0; i < LIMBS; i++) {
-        int y = 74 + i * 12;
+        int y = 74 + i * 11;
         int missing = (a->lostMask & (1 << i)) && !(a->prostheticMask & (1 << i));
         uint32_t color = missing || a->health[i] < 30 ? RED : a->health[i] < 75 ? GOLD : TEAL;
         text(16, y, limbNames[i], MUTED, 1);
@@ -1002,7 +1053,7 @@ static void detailed_status(void) {
     const char *labels[] = {"BLOOD", "FOOD", "FATIGUE"};
     float values[] = {a->blood, a->hunger, a->fatigue};
     for (int i = 0; i < 3; i++) {
-        int y = 151 + i * 13;
+        int y = 142 + i * 10;
         uint32_t color = i == 0 ? (a->bleed > .01f || a->blood < 50 ? RED : TEAL)
                          : i == 1 ? (a->hunger < 25 ? RED : GOLD)
                          : a->fatigue > 85 ? RED : MUTED;
@@ -1014,10 +1065,10 @@ static void detailed_status(void) {
     int capacity = actor_capacity(a);
     float load = encumbrance(a);
     snprintf(value, sizeof(value), "LOAD %.0f / %d", load, capacity);
-    text(16, 196, value, load > capacity ? RED : MUTED, 1);
+    text(16, 176, value, load > capacity ? RED : MUTED, 1);
     snprintf(value, sizeof(value), "BLEED %.1f", a->bleed);
-    text(16, 208, value, a->bleed > .01f ? RED : MUTED, 1);
-    text(16, 221, "D-PAD UP: HIDE", GOLD, 1);
+    text(16, 187, value, a->bleed > .01f ? RED : MUTED, 1);
+    text(16, 198, "D-PAD UP: HIDE", GOLD, 1);
 }
 static void hud(void) {
     Actor *a = &g.actors[g.selected];
@@ -1034,15 +1085,17 @@ static void hud(void) {
         return;
     if (!g.interiorBuilding)
         mini_map();
-    if(ui.waypoint&&!g.interiorBuilding){float dx=ui.travelX-a->x,dy=ui.travelY-a->y;const char*d=fabsf(dx)>fabsf(dy)?(dx<0?"W":"E"):(dy<0?"N":"S");snprintf(b,sizeof(b),"PIN %.0fm %s",distance(a->x,a->y,ui.travelX,ui.travelY),d);text(350,104,b,GOLD,1);}
-    recovery_hint(b,sizeof(b));if(b[0]){rect(4,222,472,12,INK);b[77]=0;text(8,224,b,TEAL,1);}
+    if(ui.waypoint&&!g.interiorBuilding){float dx=ui.travelX-a->x,dy=ui.travelY-a->y;const char*d=fabsf(dx)>fabsf(dy)?(dx<0?"W":"E"):(dy<0?"N":"S");snprintf(b,sizeof(b),"PIN %.0fm %s",distance(a->x,a->y,ui.travelX,ui.travelY),d);text(350,107,b,GOLD,1);}
+    recovery_hint(b,sizeof(b));if(b[0]){rect(4,211,472,12,INK);b[77]=0;text(8,213,b,TEAL,1);}
     if (ui.paused) {
         panel(192, 43, 94, 18);
         center(239, 49, "PAUSED", GOLD, 1);
     } else if (ui.speed == 2)
         text(370, 44, "2X", GOLD, 1);
 
-    /* A single status strip; portraits, load details and controls live in menus. */
+    rect(0, 239, 480, 13, 0x252b29);
+    line(0, 239, 479, 239, EDGE);
+    center(240, 242, "\001 ACTIONS  \004 PACK  \010 MAP  \007 MENU  \016 GEAR \017 SQUAD  \012 STATUS \013 SKILLS", TEXT, 1);
     rect(0, 252, 480, 20, INK);
     line(0, 252, 480, 252, EDGE);
     int member = 0, total = 0;
@@ -1061,7 +1114,8 @@ static void hud(void) {
             char name[9];
             snprintf(name, sizeof(name), "%.8s", m->name);
             text(x, 258, name, m->dead || m->unconscious > 0 ? RED : i == g.selected ? TEAL : MUTED, 1);
-            bar(x, 268, 48, 2, (m->health[HEAD] + m->health[CHEST]) * 50 / species_health(m), m->bleed > 0 ? RED : TEAL);
+            bar(x, 268, 48, 2, (m->health[HEAD] + m->health[CHEST]) * 50 / species_health(m), m->bleed > .01f ? RED : TEAL);
+            if (m->bleed > .01f) rect(x, 268, 2, 2, RED);
         }
     if (total == 1) {
         snprintf(b, sizeof(b), "LOAD %.0f/%d", encumbrance(a), actor_capacity(a));
@@ -1079,11 +1133,16 @@ static void hud(void) {
     text(472 - (int)strlen(status) * 6, 259, status, a->bleed > .01f || a->dead || a->unconscious > 0 ? RED : TEAL, 1);
 
     if(a->carrying>=0)snprintf(b,sizeof(b),"\001 PUT DOWN %.24s",g.actors[a->carrying].name);
+    else if (ui.contextKind == 1 && ui.contextIndex >= 0 && g.nodes[ui.contextIndex].owner)
+        snprintf(b, sizeof(b), "\001 %s %s", context_action(), context_name());
     else if(nearby_actions())snprintf(b,sizeof(b),"\001 NEARBY ACTIONS%s",a->sneaking?" / SNEAKING":"");
     else b[0]=0;
-    if(b[0]){rect(4,233,(int)strlen(b)*6+16,15,PANEL);text(12,237,b,TEXT,1);}
+    if (b[0]) {
+        rect(4, 223, text_width(b) + 16, 13, PANEL);
+        text(12, 226, b, TEXT, 1);
+    }
     if (a->taskKind)
-        bar(180, 249, 120, 2,
+        bar(180, 236, 120, 2,
             (1 - fminf(1, a->action / (a->taskKind == 3 ? 180 : a->taskKind == 2 ? 4.5f : 2.8f))) * 100, GOLD);
     if (ui.statusPanel)
         detailed_status();
@@ -1103,7 +1162,7 @@ static void title(void) {
     text(29, 61, "DUSTBOUND", GOLD, 3);
     text(31, 93, "A WASTELAND WITHOUT HEROES", TEXT, 1);
     text(31, 112, "SQUAD SURVIVAL RPG / PSP", MUTED, 1);
-    const char *opts[] = {"WANDERER - ONE DRIFTER", "CARAVAN - THREE SURVIVORS", "CONTINUE EXPEDITION",
+    const char *opts[] = {"NEW EXPEDITION", "CARAVAN START", "CONTINUE EXPEDITION",
                           "FIELD GUIDE"};
     for (int i = 0; i < 4; i++) {
         int y = 148 + i * 23;
@@ -1359,22 +1418,62 @@ static void life_screen(void){
 }
 
 static void squad_screen(void) {
-    Actor *a=&g.actors[g.selected];DepthActor *z=&g.depth.actors[g.selected];char b[120];
-    overlay_header("SQUAD MANAGEMENT","\005/\006 MEMBER   \014 CHANGE   \001 SET   \004 PACK");
-    snprintf(b,sizeof(b),"%.16s / %s",a->name,job_status(a));clipped(31,83,b,68,TEAL);
-    const char *labels[]={"Immediate job","Combat stance","Travel group","Group leader","Priority queue","Priority 1","Priority 2","Priority 3","Priority 4"};
-    for(int i=0;i<9;i++) {
-        const char *value="";
-        if(i==0)value=jobNames[a->job];
-        if(i==1)value=orderNames[z->order];
-        if(i==2){snprintf(b,sizeof(b),"%d / 3",z->group+1);value=b;}
-        if(i==3)value=g.depth.groupLeader[z->group]==g.selected?"THIS MEMBER":"\001 SET THIS MEMBER";
-        if(i==4)value=!z->queued?"OFF / IMMEDIATE JOB":z->paused?"PAUSED":"RUNNING";
-        if(i>=5)value=jobNames[z->queue[i-5]];
-        row(101+i*14,i==ui.selection,labels[i],value);
+    Actor *a = &g.actors[g.selected];
+    DepthActor *z = &g.depth.actors[g.selected];
+    char b[120];
+    overlay_header("SQUAD", "\005/\006 MEMBER   \004 SWITCH TAB   \014 CHANGE");
+    rect(ui.squadPage ? 155 : 29, 79, 121, 15, 0x464438);
+    text(35, 83, "1 / ASSIGNMENT", ui.squadPage ? MUTED : GOLD, 1);
+    text(161, 83, "2 / PRIORITIES", ui.squadPage ? GOLD : MUTED, 1);
+    snprintf(b, sizeof(b), "%.16s / %s", a->name, job_status(a));
+    clipped(31, 103, b, 68, TEAL);
+    if (ui.squadPage) {
+        row(121, ui.selection == 0, "Job list", !z->queued ? "OFF" : z->paused ? "PAUSED" : "ACTIVE");
+        for (int i = 0; i < 4; i++) {
+            snprintf(b, sizeof(b), "Priority %d", i + 1);
+            row(139 + i * 15, ui.selection == i + 1, b, jobNames[z->queue[i]]);
+        }
+        text(31, 208, "First available job runs. Put Follow or Hold last.", MUTED, 1);
+    } else {
+        row(121, ui.selection == 0, "Direct job", jobNames[a->job]);
+        row(139, ui.selection == 1, "Combat orders", orderNames[z->order]);
+        snprintf(b, sizeof(b), "%d / 3", z->group + 1);
+        row(157, ui.selection == 2, "Follow spacing", b);
+        if (z->queued) {
+            snprintf(b, sizeof(b), "Priority assignment: %s. Changing the direct job turns priorities off.",
+                     jobNames[assigned_job(a)]);
+            clipped(31, 182, b, 69, MUTED);
+        } else
+            text(31, 182, "Follow tracks the member you control.", MUTED, 1);
+        text(31, 196, "The controlled member works after 5 idle seconds in Passive stance.", MUTED, 1);
     }
-    rect(25,233,425,15,PANEL);
-    text(31,237,a->dead?"\002 BACK   \003 DISMISS FALLEN   \010 GUIDE":"\002 BACK   \010 GUIDE   L/R CHANGES MEMBER",MUTED,1);
+    if (a->dead)
+        text(31, 222, "\003 DISMISS FALLEN", GOLD, 1);
+}
+static void pass_screen(void) {
+    const Actor *a = &g.actors[g.selected];
+    char title[96], detail[48];
+    int item = a->pack[ui.passSlot].item;
+    overlay_header("PASS TO ALLY", "\015 RECIPIENT   \001 HAND OVER ONE   \002 CANCEL");
+    snprintf(title, sizeof(title), "%s is passing 1 %s", a->name, itemDefs[item].name);
+    clipped(31, 84, title, 68, GOLD);
+    int first = start_row(ui.selection, g.squadCount - 1, 6);
+    for (int i = 0; i < 6; i++) {
+        int rowIndex = first + i, n = pass_recipient(rowIndex);
+        if (n < 0)
+            break;
+        const Actor *b = &g.actors[n];
+        const char *why = pass_blocked(n);
+        int y = 103 + i * 19;
+        if (rowIndex == ui.selection)
+            rect(26, y - 3, 425, 15, 0x413b33);
+        text(31, y, b->name, why ? MUTED : TEXT, 1);
+        snprintf(detail, sizeof(detail), "%s", why ? why : "Within reach");
+        text(442 - text_width(detail), y, detail, why ? MUTED : TEAL, 1);
+    }
+    if (pass_recipient(0) < 0)
+        text(31, 108, "No other squad members.", MUTED, 1);
+    text(31, 226, "Recipients must be within 3m and in the same room.", MUTED, 1);
 }
 /* World overview: geography + a named destination browser, not a tiny free cursor. */
 static void atlas_name(int id,char *out,int size) {
@@ -1382,61 +1481,79 @@ static void atlas_name(int id,char *out,int size) {
     else if(id<TOWNS)snprintf(out,size,"%s",towns[id].name);
     else living_title(id-TOWNS,out,size);
 }
-static void world_atlas(void) {
-    ui.mapCategory=0;
-    const int ox=14,oy=42,size=206;
-    Actor *a=&g.actors[g.selected];
-    int count=atlas_count();if(ui.mapChoice>=count)atlas_select(0);
-    int selected=atlas_item(ui.mapChoice);
-    rect(0,0,480,272,PANEL);
-    text(14,6,"WORLD ATLAS",TEXT,2);
-    text(341,8,"\003 USE CHART",MUTED,1);
-    static uint32_t pixels[206*206],cacheKey;static int ready;
-    uint32_t key=g.seed;
-    for(unsigned i=0;i<sizeof(g.seen);i++)key=(key^g.seen[i])*16777619u;
-    if(!ready||key!=cacheKey){
-        static const uint32_t terrain[]={0x697060,0x80715b,0x777a70,0x4d6c62,0x64645c,0x77735e,0xa9b0ad,0x465d51,0x79665d};
-        for(int y=0;y<size;y++)for(int x=0;x<size;x++){
-            float wx=x*(float)WORLD/size,wy=y*(float)WORLD/size;int q=((int)wy/4)*FOG_SIZE+(int)wx/4;
-            uint32_t c=0x242d2e;
-            if(g.seen[q>>3]&(1<<(q&7))){
-                unsigned r=0,gc=0,b=0;
-                for(int dy=-1;dy<=1;dy++)for(int dx=-1;dx<=1;dx++){uint32_t t=terrain[biome(wx+dx*26,wy+dy*26)];r+=(t>>16)&255;gc+=(t>>8)&255;b+=t&255;}
-                c=((r/9)<<16)|((gc/9)<<8)|(b/9);
-                if(terrain_water(wx,wy))c=0x427384;
+static void map_roads(MapView view) {
+    for (int t = 1; t < TOWNS; t++) {
+        const Town *a = &towns[t], *b = &towns[0];
+        float best = 1e9f;
+        for (int j = 0; j < t; j++) {
+            float d = distance(a->x, a->y, towns[j].x, towns[j].y);
+            if (d < best) {
+                best = d;
+                b = &towns[j];
             }
-            pixels[y*size+x]=abgr(c);
         }
-        cacheKey=key;ready=1;
+        int steps = (int)best / 2 + 1;
+        float dx = (b->x - a->x) / steps, dy = (b->y - a->y) / steps;
+        for (int k = 0; k < steps; k++) {
+            float x = a->x + dx * k, y = a->y + dy * k;
+            if (map_known(x, y))
+                line(map_x(view, x, y), map_y(view, x, y), map_x(view, x + dx, y + dy),
+                     map_y(view, x + dx, y + dy), 0xc1b08a);
+        }
     }
-    for(int y=0;y<size;y++)memcpy(fb+(oy+y)*pitch+ox,pixels+y*size,size*sizeof(uint32_t));
-#define AX(v) (ox+(int)((v)*size/WORLD))
-#define AY(v) (oy+(int)((v)*size/WORLD))
+}
+static void world_atlas(void) {
+    ui.mapCategory = 0;
+    enum { size = 206 };
+    const int ox = 14, oy = 42;
+    const float scale = (size - 8) / (2.f * WORLD);
+    MapView view = {WORLD * .5f, WORLD * .5f, ox + size / 2, oy + size / 2, scale, scale * .68f};
+    Actor *a = &g.actors[g.selected];
+    int count = atlas_count();
+    if (ui.mapChoice >= count) atlas_select(0);
+    int selected = atlas_item(ui.mapChoice);
+    rect(0, 0, 480, 272, PANEL);
+    text(14, 6, "WORLD ATLAS", TEXT, 2);
+    text(341, 8, "\003 USE CHART", MUTED, 1);
+    static uint32_t pixels[size * size], cacheKey;
+    static int ready;
+    uint32_t key = g.seed;
+    for (unsigned i = 0; i < sizeof(g.seen); i++) key = (key ^ g.seen[i]) * 16777619u;
+    if (!ready || key != cacheKey) {
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++) {
+                float wx, wy;
+                map_sample(view, ox + x, oy + y, &wx, &wy);
+                uint32_t c = INK;
+                if (in_world(wx, wy)) {
+                    c = 0x343e3b;
+                    if (map_known(wx, wy))
+                        c = terrain_water(wx, wy) ? 0x427384 : mapTerrain[biome(wx, wy)];
+                }
+                pixels[y * size + x] = abgr(c);
+            }
+        cacheKey = key;
+        ready = 1;
+    }
+    for (int y = 0; y < size; y++)
+        memcpy(fb + (oy + y) * pitch + ox, pixels + y * size, size * sizeof(uint32_t));
+#define AX(x, y) map_x(view, x, y)
+#define AY(x, y) map_y(view, x, y)
     int oldL=clipLeft,oldR=clipRight,oldT=clipTop,oldB=clipBottom;
     clipLeft=ox;clipRight=ox+size;clipTop=oy;clipBottom=oy+size;
-    /* Same road graph as traversal, only through surveyed terrain. */
-    for(int t=1;t<TOWNS;t++){
-        int near=0;float best=1e9f;
-        for(int j=0;j<t;j++){float d=distance(towns[t].x,towns[t].y,towns[j].x,towns[j].y);if(d<best){best=d;near=j;}}
-        int steps=(int)best+1;
-        for(int k=0;k<steps;k++){
-            float u=k/(float)steps,v=(k+1)/(float)steps,wx=towns[t].x+(towns[near].x-towns[t].x)*u,wy=towns[t].y+(towns[near].y-towns[t].y)*u;
-            int q=((int)wy/4)*FOG_SIZE+(int)wx/4;
-            if(g.seen[q>>3]&(1<<(q&7)))line(AX(wx),AY(wy),AX(towns[t].x+(towns[near].x-towns[t].x)*v),AY(towns[t].y+(towns[near].y-towns[t].y)*v),0xc1b08a);
-        }
-    }
+    map_roads(view);
     if(ui.waypoint){
-        float x=AX(a->x),y=AY(a->y),dx=AX(ui.travelX)-x,dy=AY(ui.travelY)-y,steps=fmaxf(fabsf(dx),fabsf(dy));
+        float x=AX(a->x, a->y),y=AY(a->x, a->y),dx=AX(ui.travelX, ui.travelY)-x,dy=AY(ui.travelX, ui.travelY)-y,steps=fmaxf(fabsf(dx),fabsf(dy));
         for(int k=0;k<steps;k+=6)line(x+dx*k/fmaxf(1,steps),y+dy*k/fmaxf(1,steps),x+dx*fminf(k+3,steps)/fmaxf(1,steps),y+dy*fminf(k+3,steps)/fmaxf(1,steps),0x72cfd2);
     }
     for(int t=0;t<TOWNS;t++)if(g.discovered[t]){
-        int x=AX(towns[t].x),y=AY(towns[t].y);
+        int x=AX(towns[t].x, towns[t].y),y=AY(towns[t].x, towns[t].y);
         if(t>=OLD_TOWNS){diamond(x,y,5,5,INK);diamond(x,y,3,3,label_color(g.townOwner[t]));}
         else{rect(x-3,y-3,7,7,INK);frame(x-2,y-2,5,5,label_color(g.townOwner[t]));}
     }
-    int px=AX(a->x),py=AY(a->y);
+    int px=AX(a->x, a->y),py=AY(a->x, a->y);
     triangle(px,py-6,px-5,py+4,px+5,py+4,TEXT);triangle(px,py-4,px-3,py+3,px+3,py+3,0x72cfd2);
-    int sx=AX(ui.mapX),sy=AY(ui.mapY);
+    int sx=AX(ui.mapX, ui.mapY),sy=AY(ui.mapX, ui.mapY);
     frame(sx-6,sy-6,13,13,GOLD);
     /* One named callout, bounded within the map. No numeric lookup or overlapping labels. */
     char name[80];atlas_name(selected,name,sizeof(name));
@@ -1446,10 +1563,10 @@ static void world_atlas(void) {
     line(sx,sy+(ly>sy?7:-7),sx,ly+(ly>sy?0:13),GOLD);
     rect(lx,ly,width,13,INK);clipped(lx+4,ly+3,name,31,selected==-1?0x72cfd2:GOLD);
 
-    rect(18,230,51,15,INK);line(22,233,55,233,MUTED);text(22,237,"250m",MUTED,1);
+    text(20, 236, "ALIGNED TO WALKING VIEW", MUTED, 1);
     clipLeft=oldL;clipRight=oldR;clipTop=oldT;clipBottom=oldB;
     frame(ox-1,oy-1,size+2,size+2,EDGE);
-    text(198,8,"N",MUTED,1);line(211,5,211,20,MUTED);line(211,5,208,9,MUTED);line(211,5,214,9,MUTED);
+    map_north(187, 47);
     text(235,35,"KNOWN TOWNS",GOLD,1);text(332,35,"\005/\006 PAGE",MUTED,1);
     char info[100];snprintf(info,sizeof(info),"%d/%d",ui.mapChoice+1,count);text(470-text_width(info),35,info,MUTED,1);
     int first=ui.mapChoice<7?0:ui.mapChoice-6;
@@ -1484,98 +1601,79 @@ static void world_atlas(void) {
 }
 static void map_screen(void) {
     if(!ui.mapZoom){world_atlas();return;}
-    overlay_header(ui.mapZoom ? "LOCAL MAP / BEARINGS" : "WORLD ATLAS / FRONTIER",
-                   "\011 CURSOR  \001 PIN  \005/\006 TOWNS  \004 ZOOM  \003 CHART");
-    float nearest=1e9f;
-    for(int t=0;t<TOWNS;t++){float d=distance(ui.mapX,ui.mapY,towns[t].x,towns[t].y);if(d<nearest){nearest=d;ui.mapTown=t;}}
-    int ox = ui.mapZoom?29:105, oy = 82, mw = ui.mapZoom?288:136, mh = 136;
-    rect(29,82,288,136,0x252e2c);
-    int spanX = ui.mapZoom ? 384 : WORLD, spanY = ui.mapZoom ? 181 : WORLD;
-    int left = ui.mapZoom ? (int)ui.mapX - spanX / 2 : 0, top = ui.mapZoom ? (int)ui.mapY - spanY / 2 : 0;
-    if (left < 0)
-        left = 0;
-    if (top < 0)
-        top = 0;
-    if (left > WORLD - spanX)
-        left = WORLD - spanX;
-    if (top > WORLD - spanY)
-        top = WORLD - spanY;
-#define MAPX(wx) (ox + (int)(((wx) - left) * mw / spanX))
-#define MAPY(wy) (oy + (int)(((wy) - top) * mh / spanY))
-#define INMAP(wx, wy) ((wx) >= left && (wx) < left + spanX && (wy) >= top && (wy) < top + spanY)
-    static uint32_t atlas[288 * 136], cachedHash;
+    overlay_header("LOCAL MAP / BEARINGS", "\011 MOVE  \001 PIN  \005/\006 TOWNS  \004 ATLAS  \003 CHART");
+    float nearest = 1e9f;
+    for (int t = 0; t < TOWNS; t++) {
+        float d = distance(ui.mapX, ui.mapY, towns[t].x, towns[t].y);
+        if (d < nearest) {
+            nearest = d;
+            ui.mapTown = t;
+        }
+    }
+    enum { ox = 29, oy = 82, mw = 288, mh = 136 };
+    MapView view = {(int)ui.mapX, (int)ui.mapY, ox + mw / 2, oy + mh / 2, 1.05f, .525f};
+#define MAPX(x, y) map_x(view, x, y)
+#define MAPY(x, y) map_y(view, x, y)
+#define INMAP(x, y) (MAPX(x, y) >= ox && MAPX(x, y) < ox + mw && MAPY(x, y) >= oy && MAPY(x, y) < oy + mh)
+    static uint32_t atlas[mw * mh], cachedHash;
     static int ready;
-    uint32_t h = g.seed;
-    h = (h ^ (unsigned)left) * 16777619u;
-    h = (h ^ (unsigned)top) * 16777619u;
-    h = (h ^ (unsigned)spanX) * 16777619u;
+    uint32_t h = (g.seed ^ (unsigned)view.wx) * 16777619u;
+    h = (h ^ (unsigned)view.wy) * 16777619u;
     for (unsigned i = 0; i < sizeof(g.seen); i++)
         h = (h ^ g.seen[i]) * 16777619u;
     if (!ready || h != cachedHash) {
         for (int y = 0; y < mh; y++)
             for (int x = 0; x < mw; x++) {
-                int wx = left + x * spanX / mw, wy = top + y * spanY / mh, k = (wy / 4) * FOG_SIZE + wx / 4,
-                    known = g.seen[k >> 3] & (1 << (k & 7));
-                static const uint32_t terrain[]={0x606553,0x72634e,0x858477,0x4d655a,0x54534c,0x69675b,0x979c99,0x405349,0x71534c};
-                uint32_t c = terrain[biome(wx, wy)];
-                unsigned rr=0,gg=0,bb=0;
-                for(int sy=-1;sy<=1;sy++)for(int sx=-1;sx<=1;sx++){uint32_t z=terrain[biome(wx+sx*18,wy+sy*18)];rr+=(z>>16)&255;gg+=(z>>8)&255;bb+=z&255;}
-                c=((rr/9)<<16)|((gg/9)<<8)|(bb/9);
-                if(ui.mapZoom && terrain_height(wx,wy)/4!=terrain_height(wx+spanX/mw+1,wy)/4)c=shade(c,.8f);
-                if (terrain_water(wx, wy))
-                    c = 0x426e80;
-                else if (terrain_road(wx, wy))
-                    c = shade(c, 1.3f);
-                atlas[y * mw + x] = abgr(shade(c, known ? 1 : .38f));
+                float wx, wy;
+                map_sample(view, ox + x, oy + y, &wx, &wy);
+                uint32_t c = INK;
+                if (in_world(wx, wy)) {
+                    c = mapTerrain[biome(wx, wy)];
+                    if (terrain_water(wx, wy))
+                        c = 0x426e80;
+                    else if (terrain_height(wx, wy) / 4 != terrain_height(wx + 2, wy) / 4)
+                        c = shade(c, .8f);
+                    if (!map_known(wx, wy))
+                        c = shade(c, .40f);
+                }
+                atlas[y * mw + x] = abgr(c);
             }
         cachedHash = h;
         ready = 1;
     }
     for (int y = 0; y < mh; y++)
         memcpy(fb + (oy + y) * pitch + ox, atlas + y * mw, mw * sizeof(uint32_t));
-    int oldL=clipLeft,oldR=clipRight,oldT=clipTop,oldB=clipBottom;
-    clipLeft=ox;clipRight=ox+mw;clipTop=oy;clipBottom=oy+mh;
-    for(int t=1;t<TOWNS;t++) {
-        int near=0;float best=1e9f;
-        for(int j=0;j<t;j++){float d=distance(towns[t].x,towns[t].y,towns[j].x,towns[j].y);if(d<best){best=d;near=j;}}
-        int steps=(int)best+1;
-        for(int k=0;k<steps;k++) {
-            float u=k/(float)steps,v=(k+1)/(float)steps;
-            float wx=towns[t].x+(towns[near].x-towns[t].x)*u,wy=towns[t].y+(towns[near].y-towns[t].y)*u;
-            int q=((int)wy/4)*FOG_SIZE+(int)wx/4;
-            if(INMAP(wx,wy) && (g.seen[q>>3]&(1<<(q&7))))
-                line(MAPX(wx),MAPY(wy),MAPX(towns[t].x+(towns[near].x-towns[t].x)*v),
-                     MAPY(towns[t].y+(towns[near].y-towns[t].y)*v),0xa29670);
-        }
-    }
+    int oldL = clipLeft, oldR = clipRight, oldT = clipTop, oldB = clipBottom;
+    clipLeft = ox; clipRight = ox + mw; clipTop = oy; clipBottom = oy + mh;
+    map_roads(view);
     for (int t = 0; t < TOWNS; t++)
         if (g.discovered[t] && INMAP(towns[t].x, towns[t].y)) {
-            int x = MAPX(towns[t].x), y = MAPY(towns[t].y);
+            int x = MAPX(towns[t].x, towns[t].y), y = MAPY(towns[t].x, towns[t].y);
             if(t>=OLD_TOWNS){diamond(x,y,5,5,INK);diamond(x,y,3,3,label_color(g.townOwner[t]));}
             else{rect(x - 2, y - 2, 5, 5, factionColors[g.townOwner[t]]);frame(x - 2, y - 2, 5, 5, GOLD);}
             char label[28];snprintf(label,sizeof(label),"%02d",t+1);
-            if(ui.mapZoom||t==ui.mapTown)text(x+4,y-6,label,t==ui.mapTown?TEXT:GOLD,1);
+            if(t==ui.mapTown || distance(towns[t].x, towns[t].y, ui.mapX, ui.mapY) < 70)text(x+4,y-6,label,t==ui.mapTown?TEXT:GOLD,1);
             if(t==ui.mapTown)frame(x-4,y-4,9,9,TEXT);
         }
     for (int i = 0; i < g.actorCount; i++)
         if (g.actors[i].squad && !g.actors[i].dead && INMAP(g.actors[i].x, g.actors[i].y))
-            rect(MAPX(g.actors[i].x) - 1, MAPY(g.actors[i].y) - 1, 3, 3, TEAL);
+            rect(MAPX(g.actors[i].x, g.actors[i].y) - 1, MAPY(g.actors[i].x, g.actors[i].y) - 1, 3, 3, TEAL);
     for(int i=0;i<LANDMARKS;i++)if(INMAP(g.depth.siteX[i],g.depth.siteY[i])) {
-        int x=MAPX(g.depth.siteX[i]),y=MAPY(g.depth.siteY[i]);diamond(x,y,4,3,0x151b19);diamond(x,y,2,2,GOLD);
-        if(ui.mapZoom && distance(ui.mapX,ui.mapY,g.depth.siteX[i],g.depth.siteY[i])<12)
+        int x=MAPX(g.depth.siteX[i], g.depth.siteY[i]),y=MAPY(g.depth.siteX[i], g.depth.siteY[i]);diamond(x,y,4,3,0x151b19);diamond(x,y,2,2,GOLD);
+        if(distance(ui.mapX,ui.mapY,g.depth.siteX[i],g.depth.siteY[i])<12)
             clipped(x>ox+120?x-110:x+6,y+5,landmarkNames[i],18,GOLD);
     }
     for(int i=0;i<3;i++) {int t=regional_town(i);if(g.discovered[t] && INMAP(towns[t].x,towns[t].y))
-        text(MAPX(towns[t].x)+5,MAPY(towns[t].y)-8,g.regions.outcome[i]?"+":"!",g.regions.outcome[i]?TEAL:RED,1); }
+        text(MAPX(towns[t].x, towns[t].y)+5,MAPY(towns[t].x, towns[t].y)-8,g.regions.outcome[i]?"+":"!",g.regions.outcome[i]?TEAL:RED,1); }
     if(INMAP(g.regions.campX,g.regions.campY) && (ui.mapTown==8 || g.discovered[8])) {
-        int cx=MAPX(g.regions.campX),cy=MAPY(g.regions.campY);diamond(cx,cy,4,3,g.regions.outcome[1]?TEAL:RED);
-        if(ui.mapZoom)clipped(cx+6,cy-9,g.regions.outcome[1]?"TOLL AGREEMENT":"TOLL CAMP",18,TEXT);
+        int cx=MAPX(g.regions.campX, g.regions.campY),cy=MAPY(g.regions.campX, g.regions.campY);diamond(cx,cy,4,3,g.regions.outcome[1]?TEAL:RED);
+        clipped(cx+6,cy-9,g.regions.outcome[1]?"TOLL AGREEMENT":"TOLL CAMP",18,TEXT);
     }
     if (g.baseExists && INMAP(g.baseX, g.baseY))
-        frame(MAPX(g.baseX) - 3, MAPY(g.baseY) - 3, 7, 7, TEAL);
+        frame(MAPX(g.baseX, g.baseY) - 3, MAPY(g.baseX, g.baseY) - 3, 7, 7, TEAL);
     Actor *leader = &g.actors[g.selected];
-    int youx = MAPX(leader->x), youy = MAPY(leader->y);
-    int x = MAPX(ui.mapX), y = MAPY(ui.mapY);
+    int youx = MAPX(leader->x, leader->y), youy = MAPY(leader->x, leader->y);
+    int x = MAPX(ui.mapX, ui.mapY), y = MAPY(ui.mapX, ui.mapY);
     if (INMAP(leader->x, leader->y)) {
         if(!ui.waypoint) {
             float dx=x-youx,dy=y-youy,steps=fmaxf(fabsf(dx),fabsf(dy));
@@ -1583,7 +1681,7 @@ static void map_screen(void) {
                 youx+dx*fminf(k+3,steps)/fmaxf(1,steps),youy+dy*fminf(k+3,steps)/fmaxf(1,steps),GOLD);
         }
         if (ui.waypoint) {
-            int dx = MAPX(ui.travelX), dy = MAPY(ui.travelY);
+            int dx = MAPX(ui.travelX, ui.travelY), dy = MAPY(ui.travelX, ui.travelY);
             /* Clip the route to the visible map rectangle. */
             float vx = dx - youx, vy = dy - youy, t = 1;
             if (vx > 0)
@@ -1610,7 +1708,7 @@ static void map_screen(void) {
     text(328,187,"01 TOWN / + PIN",GOLD,1);
     text(328,198,"PALE: ROAD",MUTED,1);
     text(328,209,"TEAL: YOU",TEAL,1);
-    if(!ui.mapZoom){text(38,89,"N",TEXT,1);line(41,103,41,116,TEXT);line(41,103,37,108,TEXT);line(41,103,45,108,TEXT);}
+    map_north(287, 87);
     char b[90];
     snprintf(b, 90, "%s %.0fm  / %s", ui.waypoint ? "MAP PIN" : "BEARING",
              distance(leader->x, leader->y, ui.waypoint ? ui.travelX : ui.mapX,
@@ -1760,70 +1858,95 @@ static void help_screen(void) {
     clipTop=oldT;clipBottom=oldB;
     if(ui.helpTopic){snprintf(b,sizeof(b),"TEXT %d / %d    \014 CONTINUE",1+(ui.scroll+109)/110,1+(ui.helpTopic+109)/110);text(31,226,b,GOLD,1);}
 }
+static void scenarios_screen(void) {
+    overlay_header("STARTING SCENARIO", "\015 BROWSE   \001 CREATE CHARACTER   \002 BACK");
+    for (int i = 0; i < START_SCENARIOS; i++) {
+        const StartScenario *start = &startScenarios[i];
+        char b[64];
+        snprintf(b, sizeof(b), "%s / %s", towns[start->town].name, start->difficulty);
+        row(84 + i * 16, ui.selection == i, originNames[i], b);
+    }
+    line(30, 159, 449, 159, EDGE);
+    const StartScenario *start = &startScenarios[ui.selection];
+    wrap(31, 172, 67, start->description, TEXT);
+    text(31, 224, "Every scenario plays in the same frontier.", MUTED, 1);
+}
 static void creator_screen(void) {
-    overlay_header(ui.titleChoice ? "THE BARBER" : "A NAME IN THE DUST",
-                   "\014 CHANGE   \001 CHOOSE   \010 GUIDE");
+    overlay_header(ui.titleChoice ? "THE BARBER" : "CREATE CHARACTER", "\014 CHANGE   \001 CHOOSE   \002 BACK");
     Actor a = preview_actor();
     a.body = ui.createBody;
     a.skin = ui.createSkin;
     a.hair = ui.createHair;
     a.hairColor = ui.createHairColor;
     a.beard = ui.createBeard;
-    a.scar = ui.createScar;
+    a.scar = 0;
     a.race = ui.createRace;
     if (!ui.titleChoice) {
         const int w[] = {8, 0, 12, 9, 24}, t[] = {32, 34, 35, 46, 45}, h[] = {49, 48, 56, 51, 54};
-        a.gear[0] = gear_id(w[ui.createOrigin], ui.createOrigin==1?1:0, 1);
-        a.gear[1] = gear_id(t[ui.createOrigin], ui.createOrigin==1?1:0, 0);
-        a.gear[2] = gear_id(h[ui.createOrigin], 0, 1);
-        a.gear[3] = gear_id(ui.createOrigin==1?63:60, 0, 0);
-        a.gear[4] = gear_id(ui.createOrigin==1?68:69, 0, 0);
-        a.gear[5] = gear_id(ui.createOrigin==2?79:76, 0, 0);
-        species_start(&a,ui.createOrigin,ui.createRace);
+        int origin = ui.createOrigin;
+        a.gear[0] = gear_id(w[origin], origin == 1 ? 1 : 0, 1);
+        a.gear[1] = gear_id(t[origin], origin == 1 ? 1 : 0, 0);
+        a.gear[2] = gear_id(h[origin], 0, 1);
+        a.gear[3] = gear_id(origin == 1 ? 63 : 60, 0, 0);
+        a.gear[4] = gear_id(origin == 1 ? 68 : 69, 0, 0);
+        a.gear[5] = gear_id(origin == 2 ? 79 : 76, 0, 0);
+        species_start(&a, origin, ui.createRace);
+    } else {
+        const Actor *current = &g.actors[g.selected];
+        memcpy(a.gear, current->gear, sizeof(a.gear));
+        memcpy(a.xp, current->xp, sizeof(a.xp));
     }
-    int bareHead=ui.selection>=2&&ui.selection<=8;
-    if(bareHead)a.gear[2]=0;
-    portrait_scale(&a, 156, 89, 30, 80, 1);
-    center(108, 173, bareHead?"HEADWEAR HIDDEN":ui.createName, TEAL, 1);
-    char stats[100];const SpeciesDef *species=&speciesDefs[species_index(&a)];
-    snprintf(stats,sizeof(stats),"HP %d  LOAD %d",species->health,actor_capacity(&a));text(30,186,stats,TEAL,1);
-    snprintf(stats,sizeof(stats),"BASE MOVE %d%% FOOD %d%%",(int)roundf(species->move*100),(int)roundf(species->food*100));text(30,198,stats,MUTED,1);
-    const char *labels[] = {
-        "NAME", "ORIGIN",    "SPECIES", "BUILD", "SKIN",
-        "HAIR", "HAIR TONE", "BEARD",    "SCARS", ui.titleChoice ? "KEEP CHANGES" : "ENTER THE FRONTIER"};
-    for (int i = 0; i < 10; i++) {
-        int y = 82 + i * 13;
-        char b[40];
+    int bareHead = ui.selection == 1 || (ui.selection >= 3 && ui.selection <= 6);
+    rect(27, 78, 163, 123, 0x222b28);
+    if (bareHead) {
+        a.gear[2] = 0;
+        portrait_scale(&a, 95, 115, 28, 82, 1.8f);
+        panel(126, 88, 61, 79);
+        paintHair = actor_hair(&a);
+        painted_head(&a, 157, 109, 157, 147, a.race == 3 ? 27 : 31, actor_skin(&a), 1, 1);
+        center(156, 156, "BARE HEAD", MUTED, 1);
+    } else
+        portrait_scale(&a, 158, 118, 29, 80, 1.9f);
+    const SpeciesDef *species = &speciesDefs[species_index(&a)];
+    static const char *labels[] = {"NAME", "SPECIES", "BUILD", "SKIN", "HAIR", "HAIR TONE", "BEARD"};
+    static const char *builds[] = {"Regular", "Broad", "Lean"};
+    static const char *hair[] = {"Bald", "Cropped", "Side part", "Topknot", "Long", "Crest", "Ponytail"};
+    static const char *beard[] = {"Shaven", "Stubble", "Goatee", "Full"};
+    static const char *tones[] = {"Black", "Brown", "Ash brown", "Sandy", "Grey", "Red"};
+    if (!ui.titleChoice) {
+        char scenario[56];
+        snprintf(scenario, sizeof(scenario), "%s / %s", originNames[ui.createOrigin],
+                 towns[startScenarios[ui.createOrigin].town].name);
+        clipped(205, 81, scenario, 40, GOLD);
+    }
+    char skin[20];
+    snprintf(skin, sizeof(skin), "Tone %d", ui.createSkin + 1);
+    const char *values[] = {ui.createName, raceNames[ui.createRace], builds[ui.createBody], skin,
+                            hair[ui.createHair], tones[ui.createHairColor], beard[ui.createBeard]};
+    for (int i = 0; i < 8; i++) {
+        int y = 96 + i * 13;
         if (i == ui.selection) {
-            rect(203, y - 3, 245, 13, 0x3c4034);
-            rect(203, y - 3, 2, 13, GOLD);
+            rect(201, y - 2, 249, 12, 0x464438);
+            rect(201, y - 2, 2, 12, GOLD);
         }
-        text(211, y, labels[i], i == 9 ? GOLD : MUTED, 1);
-        if (i == 0)
-            snprintf(b, 40, "%.15s", ui.createName);
-        else if (i == 1)
-            snprintf(b, 40, "%s", originNames[ui.createOrigin]);
-        else if (i == 2)
-            snprintf(b, 40, "%s", raceNames[ui.createRace]);
-        else if (i == 9)
-            b[0] = 0;
-        else {
-            int vals[] = {0,
-                          0,
-                          0,
-                          ui.createBody,
-                          ui.createSkin,
-                          ui.createHair,
-                          ui.createHairColor,
-                          ui.createBeard,
-                          ui.createScar};
-            snprintf(b, 40, "< %02d >", vals[i] + 1);
+        int off = (i == 1 && ui.titleChoice) || (i >= 4 && i <= 6 && ui.createRace == 2);
+        text(208, y, i < 7 ? labels[i] : ui.titleChoice ? "KEEP CHANGES" : "BEGIN EXPEDITION",
+             i == 7 ? GOLD : MUTED, 1);
+        if (i < 7) {
+            const char *v = i >= 4 && ui.createRace == 2 ? "--" : values[i];
+            text(441 - text_width(v), y, v, off ? MUTED : TEXT, 1);
         }
-        text(442 - (int)strlen(b) * 6, y, b, TEXT, 1);
     }
-    snprintf(stats,sizeof(stats),"STR %d  DEX %d  TOUGH %d  DODGE %d  ATH %d  SNEAK %d  ENG %d",level(&a,STRENGTH),level(&a,DEXTERITY),level(&a,TOUGHNESS),level(&a,DODGE),level(&a,ATHLETICS),level(&a,STEALTH),level(&a,ENGINEERING));
-    text(30,213,stats,TEAL,1);
-    clipped(30,225,species->trait,69,TEXT);
+    char stats[100];
+    snprintf(stats, sizeof(stats), "HP %d  LOAD %d  BASE MOVE %d%%  FOOD %d%%",
+             species->health, actor_capacity(&a), (int)roundf(species->move * 100),
+             (int)roundf(species->food * 100));
+    text(30, 207, stats, TEAL, 1);
+    snprintf(stats, sizeof(stats), "STR %d  DEX %d  TOUGH %d  DODGE %d  ATH %d  SNEAK %d  ENG %d",
+             level(&a, STRENGTH), level(&a, DEXTERITY), level(&a, TOUGHNESS), level(&a, DODGE),
+             level(&a, ATHLETICS), level(&a, STEALTH), level(&a, ENGINEERING));
+    text(30, 217, stats, MUTED, 1);
+    clipped(30, 227, species->trait, 69, TEXT);
 }
 static void name_screen(void) {
     overlay_header("NAME YOUR DRIFTER", "\011 SELECT   \001 LETTER   \003 ERASE   \007 DONE");
@@ -1928,12 +2051,26 @@ static void regional_screen(void) {
     rect(25,233,425,15,PANEL);
     snprintf(b,sizeof(b),"\002 BACK   %s",g.regions.outcome[r]?"THIS AGREEMENT IS PERMANENT":"\001 COMMIT AT TOWN (PERMANENT)");text(31,237,b,GOLD,1);
 }
-static void actions_screen(void){
-    int count=nearby_actions(),first=start_row(ui.selection,count,5);char b[100];
-    int height=43+13*(count<5?count:5),top=250-height;
-    panel(14,top,286,height);text(25,top+9,ui.paused?"NEARBY / QUEUE WHILE PAUSED":"NEARBY ACTIONS",GOLD,1);
-    for(int j=0;j<5&&first+j<count;j++){int k=first+j,y=top+26+j*13;if(k==ui.selection)rect(21,y-2,272,12,0x4a4030);nearby_action_label(k,b,sizeof(b));clipped(25,y,b,44,k==ui.selection?TEXT:MUTED);}
-    snprintf(b,sizeof(b),"\001 %s  \006 %s  \003 CLEAR (%d)",ui.paused?"QUEUE":"DO",ui.paused?"RESUME":"PAUSE",g.society.queueCount[g.selected]);text(25,237,b,MUTED,1);
+static void actions_screen(void) {
+    int count = nearby_actions(), first = start_row(ui.selection, count, 6);
+    int rows = count < 6 ? count : 6, top = 232 - (48 + 14 * rows);
+    char b[120];
+    panel(14, top, 348, 48 + 14 * rows);
+    text(25, top + 9, ui.paused ? "NEARBY / QUEUE WHILE PAUSED" : "NEARBY ACTIONS", GOLD, 1);
+    for (int j = 0; j < rows; j++) {
+        int k = first + j, y = top + 23 + j * 14;
+        const char *why = nearby_action_reason(k);
+        if (k == ui.selection)
+            rect(21, y - 2, 334, 12, why ? 0x343331 : 0x4a4030);
+        nearby_action_label(k, b, sizeof(b));
+        clipped(25, y, b, 54, why ? 0x827d71 : k == ui.selection ? TEXT : 0xc0b5a2);
+    }
+    const char *why = nearby_action_reason(ui.selection);
+    if (count && why)
+        clipped(25, 206, why, 54, GOLD);
+    snprintf(b, sizeof(b), "\001 %s  \006 %s  \003 CLEAR (%d)  \002 BACK",
+             ui.paused ? "QUEUE" : "DO", ui.paused ? "RESUME" : "PAUSE", g.society.queueCount[g.selected]);
+    text(25, 220, b, MUTED, 1);
 }
 static void engage_screen(void){
     overlay_header("CHOOSE OPPONENT","\015 SELECT   \001 ATTACK   \002 CANCEL");char v[40];int count=combat_candidates(),first=start_row(ui.selection,count,7);
@@ -2045,8 +2182,9 @@ static void assist_screen(void) {
 }
 static void log_screen(void) {
     overlay_header("RECENT MESSAGES", "NEWEST FIRST - CURRENT SESSION");
-    for (int i = 0; i < LOGS && i < ui.logCount; i++)
-        wrap(31, 85 + i * 24, 68, ui.logs[i], i ? MUTED : TEXT);
+    for (int i = 0; i < 6 && i + ui.scroll < LOGS && i + ui.scroll < ui.logCount; i++)
+        wrap(31, 85 + i * 24, 68, ui.logs[i + ui.scroll], i ? MUTED : TEXT);
+    text(31, 235, "\015 SCROLL  \002 BACK", MUTED, 1);
 }
 void render_title_art(uint32_t *pixels, int stride) {
     fb = pixels;
@@ -2106,6 +2244,9 @@ void render_game(uint32_t *pixels, int stride) {
     switch (ui.screen) {
     case SCREEN_EXPEDITION:case SCREEN_ORDERS:case SCREEN_CAMP:case SCREEN_CARE:case SCREEN_ENCOUNTER:case SCREEN_LAYERS:
         depth_screen();break;
+    case SCREEN_SCENARIOS:
+        scenarios_screen();
+        break;
     case SCREEN_CREATE:
         creator_screen();
         break;
@@ -2162,6 +2303,9 @@ void render_game(uint32_t *pixels, int stride) {
     case SCREEN_SQUAD:
         squad_screen();
         break;
+    case SCREEN_PASS:
+        pass_screen();
+        break;
     case SCREEN_MAP:
         map_screen();
         break;
@@ -2215,10 +2359,26 @@ void render_game(uint32_t *pixels, int stride) {
     default:
         break;
     }
-    if(ui.screen!=SCREEN_TITLE&&ui.screen!=SCREEN_CREATE&&ui.screen!=SCREEN_NAME){
-        int priority,offset;const char*entry=log_current(&priority,&offset);
-        if(entry){char lineText[76];snprintf(lineText,sizeof(lineText),"%.75s",entry+offset);
-            rect(0,0,480,23,INK);rect(0,0,3,23,priority?RED:TEAL);text(9,8,lineText,priority?GOLD:TEXT,1);}
+    if (ui.screen != SCREEN_CREATE && ui.screen != SCREEN_NAME && ui.screen != SCREEN_SCENARIOS) {
+        int priority, offset;
+        const char *entry = log_current(&priority, &offset);
+        if (entry) {
+            int y = 23;
+            rect(0, y, 480, 13, INK);
+            int left = clipLeft, right = clipRight;
+            clipLeft = 7;
+            clipRight = 476;
+            int x = 9 - offset;
+            text(x, y + 3, entry, priority >= 2 ? GOLD : priority ? TEAL : TEXT, 1);
+            if (offset && ui.feedCount > 1) {
+                int next = x + text_width(entry);
+                rect(next + 13, y + 5, 3, 3, EDGE);
+                text(next + 30, y + 3, ui.feed[1], ui.feedPriority[1] >= 2 ? GOLD : ui.feedPriority[1] ? TEAL : TEXT, 1);
+            }
+            clipLeft = left;
+            clipRight = right;
+            rect(0, y, 3, 13, priority >= 2 ? RED : TEAL);
+        }
     }
 }
 
