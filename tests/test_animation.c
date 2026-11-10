@@ -24,12 +24,13 @@ static void reach_catalog(void){
   for(int body=0;body<3;body++)for(int dir=0;dir<16;dir++)for(int phase=0;phase<4;phase++)for(int t=0;t<=12;t++)for(int primary=0;primary<2;primary++){
    CombatPose p=phase?combat_pose(w,phase,t/12.f,v):combat_idle(w);
    float bw=body==0?3.1f:body==1?4.4f:5.9f,aim=dir*6.2831853f/16,face=cosf(aim)>=0?1:-1;
-   float sx[2]={(-bw+1)*face*(1+p.twist),(bw-1)*face*(1+p.twist)};
+   float sx[2]={(-bw+1)*(1+p.twist),(bw-1)*(1+p.twist)};
+   float sy[2]={face<0?-23:-24.8f,face>0?-23:-24.8f};
    float hy=p.handY+sinf(aim)*p.handX*.4f;
    WeaponGrip g0=weapon_grip(cosf(aim)*p.handX*(1+p.twist),hy,aim+face*p.blade,1);
-   g0=reachable_grip(g0,sx[primary],-24,sx[1-primary],-24,weapon_support_distance(w),combat_two_hands(w),13.5f);
-   float x,y;weapon_hand(g0,w,0,&x,&y);assert(isfinite(x)&&isfinite(y)&&hypotf(x-sx[primary],y+24)<13.501f);
-   if(combat_two_hands(w)){weapon_hand(g0,w,1,&x,&y);assert(hypotf(x-sx[1-primary],y+24)<13.501f);}
+   g0=reachable_grip(g0,sx[primary],sy[primary],sx[1-primary],sy[1-primary],weapon_support_distance(w),combat_two_hands(w),13.5f);
+   float x,y;weapon_hand(g0,w,0,&x,&y);assert(isfinite(x)&&isfinite(y)&&hypotf(x-sx[primary],y-sy[primary])<13.501f);
+   if(combat_two_hands(w)){weapon_hand(g0,w,1,&x,&y);assert(hypotf(x-sx[1-primary],y-sy[1-primary])<13.501f);}
    combinations++;
   }
  }
@@ -153,7 +154,7 @@ static void sprite_cache_bounds(void) {
    clipLeft = clipTop = 0;
    clipRight = ACT_SCRATCH_STRIDE;
    clipBottom = ACT_H * 2;
-   actor_painted_stance(&a, ACT_W, ACT_ANCHOR, 2, 1, 1, variant);
+   actor_painted_stance(&a, ACT_W, ACT_ANCHOR, 2, 1, 1, variant, 0);
    paint_cached_actor(&cached, &a, 1, 1, variant);
    assert(!memcmp(full, actorScratch, sizeof(full)));
    for (int y = 0; y < ACT_H; y++) {
@@ -219,7 +220,7 @@ static void sheets(void){
    for(int j=0;j<8;j++){
     int x=60+(j%4)*120,y=135+(j/4)*131;b.facing=j!=7;b.attackAngle=j==7?3.14159265f:0;b.attackPhase=j==2?1:j==3||j==4||j==7?2:j==5?3:0;
     b.attackDuration=1;b.attackClock=j==3||j==7?1-STRIKE_CONTACT:j==5?.5f:0;b.movedTimer=j==6?.12f:0;b.anim=.5f;
-    actor_painted_stance(&b,x,y,2,1,j==0||j==6?0:1,v);text(x-53,y-130,names[j],TEXT,1);
+    actor_painted_stance(&b,x,y,2,1,j==0||j==6?0:1,v,0);text(x-53,y-130,names[j],TEXT,1);
    }
    char name[64];snprintf(name,sizeof(name),"family-%02d-%d",i,v);write_ppm(name);
   }

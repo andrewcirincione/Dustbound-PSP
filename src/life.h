@@ -8,6 +8,7 @@ int population_hidden(int actor);
 int population_tactics(int actor,float dt);
 int population_prop_art(int group,int object);
 int population_prop_style(int group,int object);
+int population_sleep_position(const Actor *a, float *x, float *y);
 void politics_tick(float dt);
 const char *politics_leader_title(int actor);
 int politics_protected(int actor);

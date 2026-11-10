@@ -441,7 +441,11 @@ int item_price(int town, int it, int selling) {
         return 0;
     float mod = 1 + regional_price(town,it) + (town==1&&g.depth.route==ROUTE_TRUCE?.12f:0) + (60 - g.prosperity[town]) * .004f + limit(g.rep[g.townOwner[town]]*.001f,-.15f,.1f)*(selling?.5f:-1);
     mod = limit(mod, .65f, 1.6f);
-    return (int)fmaxf(1, itemDefs[it].price * (selling ? .75f : itemDefs[it].slot >= 0 ? 1.52f : 1.38f) * mod * market_factor(town,it) * politics_price(town,it));
+    const ItemDef *item = &itemDefs[it];
+    float rate = selling ? .75f : item->slot >= 0 ? 1.52f : 1.38f;
+    if (!selling && g.frontier.venue[town][it] == TRADE_SMITH && item->quality >= 2)
+        rate *= item->quality == 3 ? 1.65f : 1.4f;
+    return (int)fmaxf(1, item->price * rate * mod * market_factor(town,it) * politics_price(town,it));
 }
 int *market_stock(int town, int item) {
     if (item < TOWN_STOCK_ITEMS)
@@ -1432,21 +1436,22 @@ const char *contract_title(int kind) {
     return kind >= 0 && kind < CONTRACT_TYPES ? titles[kind] : "Work";
 }
 #define HUNT_REACH 96.f
+#define HUNT_QUOTA 3
 static int quarry(const Actor *a) {
     return !a->squad && (a->kind == BEAST || (a->kind == RAIDER && a->faction == HOSTILE));
 }
-static int hunt_report(int town, float *x, float *y) {
-    float closest = HUNT_REACH;
+static int hunt_report(int town, float fromX, float fromY, float *x, float *y) {
+    float closest = WORLD * 2.f;
     int count = 0;
     for (int i = 0; i < g.actorCount; i++) {
         const Actor *a = &g.actors[i];
         if (!quarry(a) || !conscious(a) || a->defeatCredited || actor_inside(a) ||
             g.depth.actors[i].captive || population_hidden(i))
             continue;
-        float d = distance(a->x, a->y, towns[town].x, towns[town].y);
-        if (d >= HUNT_REACH)
+        if (distance(a->x, a->y, towns[town].x, towns[town].y) >= HUNT_REACH)
             continue;
         count++;
+        float d = distance(a->x, a->y, fromX, fromY);
         if (d < closest) {
             closest = d;
             *x = a->x;
@@ -1457,8 +1462,7 @@ static int hunt_report(int town, float *x, float *y) {
         const WorldEvent *e = &g.population.groups[i];
         if (e->spawned || (e->type != POP_RAIDERS && e->type != POP_BEASTS))
             continue;
-        float d = distance(e->x, e->y, towns[town].x, towns[town].y);
-        if (d >= HUNT_REACH)
+        if (distance(e->x, e->y, towns[town].x, towns[town].y) >= HUNT_REACH)
             continue;
         int standing = 0;
         for (int j = 0; j < e->count; j++)
@@ -1466,13 +1470,14 @@ static int hunt_report(int town, float *x, float *y) {
                 e->reserve[j].unconscious <= 0 && !e->reserve[j].defeatCredited)
                 standing++;
         count += standing;
+        float d = distance(e->x, e->y, fromX, fromY);
         if (standing && d < closest) {
             closest = d;
             *x = e->x;
             *y = e->y;
         }
     }
-    return count >= 3;
+    return count;
 }
 static int posting_cycle(int town) { return 1 + (g.day + town % 2) / 2; }
 int contract_offer(int town, int row) {
@@ -1495,7 +1500,8 @@ int contract_offer(int town, int row) {
                 g.contracts[i].type == kind)
                 already = 1;
         float x, y;
-        if (already || (kind == CONTRACT_HUNT && !hunt_report(town, &x, &y)) ||
+        if (already || (kind == CONTRACT_HUNT &&
+            hunt_report(town, towns[town].x, towns[town].y, &x, &y) < HUNT_QUOTA) ||
             (kind >= CONTRACT_ESCORT && !society_job_available(town, kind)))
             continue;
         if (row-- == 0)
@@ -1822,10 +1828,15 @@ int contract_location(int slot, float *x, float *y) {
         }
         if (c->type == CONTRACT_DISPATCH)
             town = c->target;
-        if (c->type == CONTRACT_HUNT && g.townLife.huntX[slot] > 0) {
-            *x = g.townLife.huntX[slot];
-            *y = g.townLife.huntY[slot];
-            return town;
+        if (c->type == CONTRACT_HUNT) {
+            const Actor *a = &g.actors[g.selected];
+            if (hunt_report(town, a->x, a->y, x, y))
+                return town;
+            if (g.townLife.huntX[slot] > 0) {
+                *x = g.townLife.huntX[slot];
+                *y = g.townLife.huntY[slot];
+                return town;
+            }
         }
         if (c->type == CONTRACT_BOUNTY) {
             int who = g.society.jobActor[slot] - 1;
@@ -1872,7 +1883,7 @@ int accept_contract(int town, int kind) {
         return 0;
     }
     float x = 0, y = 0;
-    if (kind == CONTRACT_HUNT && !hunt_report(town, &x, &y)) {
+    if (kind == CONTRACT_HUNT && hunt_report(town, towns[town].x, towns[town].y, &x, &y) < HUNT_QUOTA) {
         log_msg("The roads are quiet. Check the board later.");
         return 0;
     }
@@ -1882,7 +1893,7 @@ int accept_contract(int town, int kind) {
     c.town = town;
     c.target = contract_destination(town, g.townOwner[town]);
     c.item = kind == CONTRACT_ORE ? ORE : kind == CONTRACT_RELIC ? RELIC : NONE;
-    c.needed = kind == CONTRACT_ORE ? 8 : kind == CONTRACT_HUNT ? 3 : 1;
+    c.needed = kind == CONTRACT_ORE ? 8 : kind == CONTRACT_HUNT ? HUNT_QUOTA : 1;
     c.reward = contract_reward(town, kind);
     c.baseline = -1; /* Earlier hunt postings allowed encounters anywhere. */
     g.contracts[n] = c;

@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.18.7"
+#define VERSION "0.18.8"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -167,7 +167,7 @@ enum {
     SCREEN_LOG, SCREEN_EXPEDITION, SCREEN_ORDERS, SCREEN_CAMP, SCREEN_CARE, SCREEN_ENCOUNTER, SCREEN_LAYERS,
     SCREEN_THEFT, SCREEN_ENGAGE, SCREEN_ACTIONS, SCREEN_LIMBS, SCREEN_LIMBFIT, SCREEN_SURGERY, SCREEN_LIMBCONFIRM, SCREEN_LIFE, SCREEN_POLITICS,
     SCREEN_PASS, SCREEN_SCENARIOS, SCREEN_CHEST, SCREEN_HOME, SCREEN_WARRANTS,
-    SCREEN_DROP, SCREEN_STAGECOACH, SCREEN_CONTRACT_NOTE
+    SCREEN_DROP, SCREEN_STAGECOACH, SCREEN_CONTRACT_NOTE, SCREEN_INSPECT_HEALTH, SCREEN_EXECUTE
 };
 enum {
     KEY_UP = 1,
@@ -510,6 +510,8 @@ typedef struct {
     int journalTab,regionChoice,attackFocus;
     int homeSite, homeBay, warrantTown, warrantClosed;
     int dropSlot, coachTown, contractNote, noteMaxScroll, noteReturn;
+    int nearbyTarget;
+    float dialogHover;
     int mapCategory,mapChoice,skillPage;
     int limbTarget, limbSourceSlot, limbReturn, limbConfirm;
     float travelStall, travelLastX, travelLastY;
@@ -568,6 +570,8 @@ void living_action(int slot);
 int combat_candidate(int row);
 int combat_candidates(void);
 void command_attack(int n);
+int can_execute(int n);
+int execute_opponent(int n);
 int actor_relation(int n);
 void frontier_restock(int town);
 int regional_town(int region);

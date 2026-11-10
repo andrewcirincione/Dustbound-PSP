@@ -698,14 +698,25 @@ void restock_town(int t) {
     offer_stock(t, HERBAL_TEA, 2 + plan->beds / 3, TRADE_INN);
     offer_stock(t, portion_item(t % 2 ? JERKY : OATCAKE, 65 + roll % 21), 2, TRADE_INN);
     if (plan->smith) {
-        for (int n = 0; n < 3 + tier; n++) {
-            int family = (roll / 17 + t * 3 + n * 7) % WEAPON_FAMILIES;
-            int quality = roll % 19 == (unsigned)n ? 2 : (n + tier) % 3 == 0;
-            offer_stock(t, gear_id(family, (t + n) % (2 + tier), quality), 1, TRADE_SMITH);
+        int remote = !starter_country(towns[t].x, towns[t].y);
+        for (int n = 0; n < 4 + tier; n++) {
+            int family = weapon_family_index((roll / 17 + t * 3 + n * 7) % WEAPON_FAMILIES);
+            int quality = n < 2 + tier ? 2 : 1;
+            int material = n == 0 ? 2 + (tier > 0) + (tier == 2 && remote) : 1 + n % 2;
+            if (remote && tier == 2 && n < 3) {
+                material = n == 1 ? 3 : 4;
+                if (n == 0 && roll % 7 == 0)
+                    quality = 3;
+            }
+            offer_stock(t, gear_id(family, material, quality), 1, TRADE_SMITH);
         }
-        for (int n = 0; n < 2 + tier; n++)
-            offer_stock(t, gear_id(32 + (roll / 7 + n * 5 + t) % 36, 1 + n % 2,
-                                   n ? n % 2 : tier > 0), 1, TRADE_SMITH);
+        for (int n = 0; n < 3 + tier; n++) {
+            int family = 32 + (roll / 7 + n * 5 + t) % 36;
+            int quality = n < 1 + tier ? 2 : 1;
+            int material = 1 + n % 2;
+            if (tier && !n) material = remote && tier == 2 ? 4 : 3;
+            offer_stock(t, gear_id(family, material, quality), 1, TRADE_SMITH);
+        }
     }
     if (tier == 2 && t != 8 && t != 18)
         for (int n = 0; n < 5; n++)
@@ -2107,6 +2118,36 @@ static void die(Actor *a) {
     a->woundFlags = 0;
     if (a->squad)
         log_warn("%s died from %s.", a->name, a->blood <= 0 ? "blood loss" : "head trauma");
+}
+int can_execute(int n) {
+    if (n < 0 || n >= g.actorCount)
+        return 0;
+    const Actor *a = &g.actors[g.selected], *b = &g.actors[n];
+    return conscious(a) && a->carriedBy < 0 && a->carrying < 0 && a->prisonTime <= 0 &&
+           !g.depth.actors[g.selected].captive && b->active && !b->squad && !b->dead &&
+           b->unconscious > 0 && b->carriedBy < 0 && !population_hidden(n) &&
+           b->prisonTime <= 0 && !g.depth.actors[n].captive && !g.war.prisonTown[n] &&
+           depth_room(a) == depth_room(b) && depth_distance(a, b) <= TALK_REACH &&
+           (hostile(a, b) || warrant_authorizes(n));
+}
+int execute_opponent(int n) {
+    if (!can_execute(n))
+        return 0;
+    Actor *a = &g.actors[g.selected], *b = &g.actors[n];
+    a->taskKind = 0;
+    a->movedTimer = 0;
+    g.field.playingDead[g.selected] = 0;
+    if (b->carrying >= 0)
+        put_down(b);
+    if (!b->defeatCredited) {
+        g.townLife.squadHitAt[n] = g.time + 1;
+        credit_squad_defeat(b);
+    }
+    b->health[HEAD] = fminf(b->health[HEAD], -species_health(b));
+    die(b);
+    audio_event(SFX_HIT);
+    log_warn("%s executed %s.", a->name, b->name);
+    return 1;
 }
 void reveal_area(Actor *a) {
     int x = (int)a->x, y = (int)a->y;
@@ -3663,7 +3704,13 @@ static void tick_input(float dt, Input in) {
 void game_tick(float dt, Input in) {
     int screen = ui.screen, selection = ui.selection, selected = g.selected;
     int fight = g.actors[selected].autoattack;
+    int speaker = ui.dialogActor, page = ui.dialogPage;
     tick_input(dt, in);
+    if (ui.screen == SCREEN_DIALOG && screen == ui.screen && selection == ui.selection &&
+        speaker == ui.dialogActor && page == ui.dialogPage)
+        ui.dialogHover += dt;
+    else
+        ui.dialogHover = 0;
     if (screen == SCREEN_WORLD && ui.screen == SCREEN_WORLD && selected == g.selected &&
         (in.pressed & KEY_SQUARE) && fight != g.actors[selected].autoattack)
         audio_event(fight ? SFX_SHEATHE : SFX_DRAW);

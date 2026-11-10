@@ -1,3 +1,10 @@
+# 0.18.8 — Nearby actions and road work
+
+- Left and Right cycle between nearby people and the environment. Check limb health and bleeding, or execute a downed opponent after confirming.
+- Long posting titles scroll on selection. A hunt's Journal pin finds a current target in the area, and roads roll more encounters between groups.
+- Camps and outdoor shelters use painted bedrolls. Indoor beds are smaller, and sleepers lie on the mattress. Fixed arm and weapon layers across facings and mounted melee weapons with the hilt up.
+- House deeds start at 5,200 silver. Smithies stock more Fine gear, with better and more expensive equipment at the larger smithies farther from the starting towns.
+
 # 0.18.7 — Hired escorts
 
 - Contract guards follow their employer after being hired. Town jailkeepers have separate posts. Existing hires keep their contracts when loading an earlier save.

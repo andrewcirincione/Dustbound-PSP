@@ -268,6 +268,13 @@ static void contracts(void) {
     for (int i = 1; i <= 4; i++)
         init_actor(i, "Road predator", BEAST, WILDLIFE, towns[town].x + (i == 4 ? 112 : 25 + i), towns[town].y, 7);
     assert(accept_contract(town, CONTRACT_HUNT));
+    float leadX, leadY;
+    assert(contract_location(0, &leadX, &leadY) == town);
+    assert(leadX == g.actors[1].x && leadY == g.actors[1].y);
+    g.actors[1].unconscious = 30;
+    assert(contract_location(0, &leadX, &leadY) == town);
+    assert(leadX == g.actors[2].x && leadY == g.actors[2].y);
+    g.actors[1].unconscious = 0;
     int money = g.money;
     a->x = g.actors[4].x;
     a->y = g.actors[4].y;
@@ -370,8 +377,28 @@ static void settlement_layouts(void) {
         ui.tradeSmith = TRADE_INN;
         assert(shop_count() >= 2 && shop_count() <= 4);
         ui.tradeSmith = TRADE_SMITH;
-        forges += shop_count() > 0;
-        noForges += shop_count() == 0;
+        int stock = shop_count();
+        forges += stock > 0;
+        noForges += stock == 0;
+        if (plan->smith) {
+            int fine = 0, bestWeaponMaterial = 0;
+            assert(stock >= 7 && stock <= 11);
+            for (int row = 0; row < stock; row++) {
+                int item = shop_item(row);
+                if (itemDefs[item].quality < 2)
+                    continue;
+                fine++;
+                int expensive = item_price(town, item, 0);
+                g.frontier.venue[town][item] = TRADE_GENERAL;
+                assert(expensive > item_price(town, item, 0));
+                g.frontier.venue[town][item] = TRADE_SMITH;
+                if (itemDefs[item].slot == 0 && itemDefs[item].material > bestWeaponMaterial)
+                    bestWeaponMaterial = itemDefs[item].material;
+            }
+            assert(fine >= 3);
+            if (plan->marketTier == 2 && !starter_country(towns[town].x, towns[town].y))
+                assert(bestWeaponMaterial >= 4);
+        }
         int ore = nearest_ore(towns[town].x, towns[town].y, 33, NODE_ORE);
         assert(ore >= 0 && town_near(g.nodes[ore].x, g.nodes[ore].y, 16) < 0);
         for (int b = 0; b < g.buildingCount; b++) {
@@ -460,10 +487,65 @@ static void lodging_and_bounties(void) {
     puts("PASS: shared lodge access, skill caps, placement on a bed and a single bounty payout through the jailkeeper.");
 }
 
+static void nearby_tabs_and_health(void) {
+    Actor *a = fresh();
+    init_actor(1, "Witness", SETTLER, FREE, a->x, a->y + .8f, 5);
+    init_actor(2, "Downed bandit", RAIDER, HOSTILE, a->x, a->y - .8f, 5);
+    Actor *bandit = &g.actors[2];
+    bandit->health[CHEST] = -10;
+    bandit->bleed = 2;
+    bandit->unconscious = 30;
+    add_build(a->x + 1, a->y, BED, FREE, 0);
+    g.contracts[0] = (Contract){.active = 1, .type = CONTRACT_HUNT, .town = 0,
+                                .needed = 3, .baseline = -1};
+    ui.screen = SCREEN_WORLD;
+    press(KEY_CROSS);
+    assert(ui.screen == SCREEN_ACTIONS);
+    NearbyTabs tabs;
+    nearby_action_tabs(&tabs);
+    assert(tabs.tabCount == 3 && tabs.actors[tabs.activeTab] == 1);
+    press(KEY_RIGHT);
+    nearby_action_tabs(&tabs);
+    assert(tabs.actors[tabs.activeTab] == 2);
+    press(KEY_RIGHT);
+    nearby_action_tabs(&tabs);
+    assert(tabs.actors[tabs.activeTab] == -1);
+    press(KEY_LEFT);
+    nearby_action_tabs(&tabs);
+    assert(tabs.actors[tabs.activeTab] == 2);
+    int health = -1;
+    for (int row = 0; row < tabs.rowCount; row++)
+        if (nearby_action(tabs.rows[row])->type == ACTION_INSPECT_HEALTH)
+            health = tabs.rows[row];
+    assert(health >= 0);
+    ui.selection = health;
+    press(KEY_CROSS);
+    assert(ui.screen == SCREEN_INSPECT_HEALTH && ui.nearbyTarget == 2 && g.selected == 0);
+    float time = g.time;
+    press(KEY_CROSS);
+    assert(bandit->bleed == 2 && g.time == time && ui.screen == SCREEN_INSPECT_HEALTH);
+    press(KEY_CIRCLE);
+    assert(ui.screen == SCREEN_ACTIONS && ui.selection == health);
+    ui.selection = fixture_action(ACTION_EXECUTE);
+    assert(ui.selection >= 0);
+    press(KEY_CROSS);
+    assert(ui.screen == SCREEN_EXECUTE && !bandit->dead);
+    press(KEY_CIRCLE);
+    assert(ui.screen == SCREEN_ACTIONS && !bandit->dead);
+    press(KEY_CROSS);
+    int kills = g.kills;
+    press(KEY_CROSS);
+    assert(ui.screen == SCREEN_WORLD && bandit->dead && bandit->defeatCredited &&
+           g.kills == kills + 1 && g.contracts[0].progress == 1);
+    assert(!execute_opponent(2) && !can_execute(1));
+    assert(fixture_action(ACTION_EXECUTE) < 0);
+    puts("PASS: per-person tabs, read-only limb health, cancel and confirm execution, and single hunt credit.");
+}
 int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     settlement_layouts();
     lodging_and_bounties();
+    nearby_tabs_and_health();
     shops_and_theft();
     homes();
     inn_traffic();

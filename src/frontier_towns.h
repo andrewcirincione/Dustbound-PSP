@@ -55,7 +55,7 @@ int building_sprite(int id) {
     const TownDesign *plan = town_design(town);
     if (g.frontier.variant[id] == BUILD_LODGE) return ART_DUSTWARD;
     if (g.frontier.variant[id] == BUILD_ARMORER) return ART_ARMORER;
-    static const int base[] = {0, 1, 2, 3, 24, 25, 27, 26, 28, 6, 29, 30, 7, 3, 31};
+    static const int base[] = {0, 1, 2, 3, 24, 25, 27, ART_BEDROLL, 28, 6, 29, 30, 7, 3, 31};
     if (b->type == BENCH) return ART_RESEARCH_TABLE;
     if (town == 3) {
         switch (b->type) {

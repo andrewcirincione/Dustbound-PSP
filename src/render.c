@@ -761,7 +761,7 @@ static void objects_draw(void) {
         } else {
             objects[n++] = (Object){b->x + b->y, 1, i, 0, 0};
         }
-        if (building_has_interior(b->type) || b->type == WINDMILL || b->type == WELL ||
+        if (building_has_interior(b->type) || b->type == WINDMILL || b->type == WELL || b->type == BED ||
             b->type == WALL || b->type == SLAVE_YARD) {
             int height;
             BuildingYard *yard = &yards[yardCount++];
@@ -773,13 +773,29 @@ static void objects_draw(void) {
         Actor *a = &g.actors[i];
         if (!a->active || a->carriedBy >= 0 || actor_inside(a) || population_hidden(i))
             continue;
-        int x = project_x(a->x, a->y);
+        float wx = a->x, wy = a->y;
+        int roll = 0;
+        if (actor_in_bed(a)) {
+            int bed = a->taskIndex;
+            if (bed >= 0 && g.buildings[bed].type == BED) {
+                wx = g.buildings[bed].x;
+                wy = g.buildings[bed].y;
+                roll = 1;
+            } else {
+                float bx, by;
+                if (population_sleep_position(a, &bx, &by)) {
+                    wx = bx;
+                    wy = by;
+                    roll = 1;
+                }
+            }
+        }
+        int x = project_x(wx, wy);
         if (x <= -30 || x >= 510)
             continue;
-        int y = project_y(a->x, a->y);
-        int bed = actor_in_bed(a);
+        int y = project_y(wx, wy);
         if (y > -20 && y < 296)
-            objects[n++] = (Object){a->x + a->y + (bed ? .05f : 0), 2, i, x, y - (bed ? 8 : 0)};
+            objects[n++] = (Object){wx + wy + (roll ? .05f : 0), 2, i, x, y + (roll ? 1 : 0)};
     }
     int cx = ui.camX, cy = ui.camY;
     float campX[POP_GROUPS + 6], campY[POP_GROUPS + 6];
@@ -899,7 +915,7 @@ static void objects_draw(void) {
             building(o->index);
         else if (o->kind == 2) {
             Actor *a = &g.actors[o->index];
-            person(a, o->x, o->y, 1, o->index == g.selected);
+            person(a, o->x, o->y, 1, o->index == g.selected && !actor_in_bed(a));
 
         } else if (o->kind == 6) {
             wall(o->index,o->x);
@@ -907,7 +923,7 @@ static void objects_draw(void) {
         } else if (o->kind == 4) {
             int group = o->index / POP_PROPS, prop = o->index % POP_PROPS;
             int style = population_prop_style(group, prop);
-            int id = style == 1 ? 26 : style == 2 ? 30 : population_prop_art(group, prop);
+            int id = style == 2 ? 30 : population_prop_art(group, prop);
             art(id, o->x, o->y, light(), 0);
         } else {
             art(o->index, o->x, o->y + 4, light(), 0);
@@ -1186,12 +1202,15 @@ static void room_project(float x, float y, int *sx, int *sy) {
     *sx = 240 + (int)((x - y) * roomScale);
     *sy = (int)(roomBase + (x + y) * roomScale * .5f);
 }
+static float room_furniture_scale(const InteriorProp *p) {
+    return 2 * roomScale * (p->w + p->d) / furnitureModels[furniture_art_index(p->art)].span;
+}
 static void room_furniture(const InteriorProp *p) {
     int model = furniture_art_index(p->art), x, y;
     room_project(p->x, p->y, &x, &y);
     int flip = furniture_is_bed(p->art) && p->d > p->w;
     const ArtSprite *sprite = &furnitureSprites[model];
-    float scale = 2*roomScale*(p->w + p->d)/furnitureModels[model].span;
+    float scale = room_furniture_scale(p);
     int width = (int)roundf(sprite->w * scale), height = (int)roundf(sprite->h * scale);
     int anchorX = flip ? sprite->w-1-sprite->ax : sprite->ax;
     scaled_art(FURNITURE_ART_FIRST + model,x-(int)roundf(anchorX*scale),
@@ -1272,19 +1291,11 @@ static void interior_draw(void) {
         roomActor[count] = -2;
         depth[count++] = 12;
     }
-    int player = count;
     Actor *controlled = &g.actors[g.selected];
     if (controlled->carriedBy < 0) {
         roomActor[count] = g.selected;
         order[count] = count;
-        depth[count++] = room_depth(g.interiorX,g.interiorY,jail);
-        if (actor_in_bed(controlled))
-            for (int i = 0; i < furniture; i++)
-                if (props[i].action == ROOM_REST &&
-                    distance(props[i].x, props[i].y, g.interiorX, g.interiorY) < .35f) {
-                    depth[player] = room_depth(props[i].x,props[i].y,jail) + .01f;
-                    break;
-                }
+        depth[count++] = room_depth(g.interiorX, g.interiorY, jail) + (actor_in_bed(controlled) ? .01f : 0);
     }
     for (int i = 0; i < g.actorCount; i++) {
         Actor *resident = &g.actors[i];
@@ -1293,7 +1304,7 @@ static void interior_draw(void) {
             continue;
         roomActor[count] = i;
         order[count] = count;
-        depth[count++] = room_depth(depth_x(resident),depth_y(resident),jail);
+        depth[count++] = room_depth(depth_x(resident), depth_y(resident), jail) + (actor_in_bed(resident) ? .01f : 0);
     }
     for (int i = 1; i < count; i++) {
         int a = order[i], j = i;
@@ -1307,9 +1318,20 @@ static void interior_draw(void) {
         int i = order[k];
         if (roomActor[i] >= 0) {
             Actor *resident = &g.actors[roomActor[i]];
-            room_project(depth_x(resident), depth_y(resident), &x, &y);
+            float rx = depth_x(resident), ry = depth_y(resident);
+            room_project(rx, ry, &x, &y);
             int sleeping = actor_in_bed(resident);
-            if (sleeping) y -= 9;
+            if (sleeping)
+                for (int bed = 0; bed < furniture; bed++) {
+                    const InteriorProp *p = &props[bed];
+                    if (p->action != ROOM_REST || distance(rx, ry, p->x, p->y) >= .4f)
+                        continue;
+                    float scale = room_furniture_scale(p);
+                    /* The painted mattress center is above and beside the floor anchor. */
+                    x += (p->d > p->w ? -1 : 1) * (int)roundf(3 * scale);
+                    y -= (int)roundf(12 * scale) - 2;
+                    break;
+                }
             person(resident, x, y, 1, roomActor[i] == g.selected && !sleeping);
             if (resident->squad) squad_health_bar(resident, x, y);
         } else if (roomActor[i] == -2) {
@@ -1880,17 +1902,23 @@ static void skills_screen(void) {
     wrap(31, 218, 68, skill_training(skill), TEXT);
     clipBottom = previous_clip;
 }
-static void health_screen(void) {
-    Actor *a=&g.actors[g.selected];DepthActor *z=&g.depth.actors[g.selected];char b[110];
-    overlay_header("HEALTH & RECOVERY",z->captive?"\001 ESCAPE   \003 REPAIR LIMBS   \004 MAINTAIN GEAR":"\001 BANDAGE   \003 REPAIR LIMBS   \004 MAINTAIN GEAR");
+static void health_screen(int actor, int inspect) {
+    if (actor < 0 || actor >= g.actorCount)
+        return;
+    Actor *a = &g.actors[actor];
+    DepthActor *z = &g.depth.actors[actor];
+    char b[110];
+    overlay_header(inspect ? "HEALTH" : "HEALTH & RECOVERY", inspect ? "\002 BACK" :
+        z->captive ? "\001 ESCAPE   \003 REPAIR LIMBS   \004 MAINTAIN GEAR" :
+                     "\001 BANDAGE   \003 REPAIR LIMBS   \004 MAINTAIN GEAR");
     snprintf(b, sizeof(b), "%.16s / %s", a->name, a->dead ? "DEAD" : recovery_coma(a) ? "RECOVERY COMA" :
              a->unconscious > 0 ? "KNOCKED OUT" : "AWAKE");
     text(31, 83, b, a->unconscious > 0 ? GOLD : TEAL, 1);
     text(177,98,"HEALTH",MUTED,1);text(323,98,"WOUND / TRAUMA",MUTED,1);
     for(int i=0;i<LIMBS;i++) {
         int y=111+i*13,missing=(a->lostMask&(1<<i))&&!(a->prostheticMask&(1<<i));
-        if(i==ui.selection)rect(25,y-2,425,12,0x4a4030);
-        text(31,y,limbNames[i],i==ui.selection?TEXT:MUTED,1);
+        if(!inspect && i==ui.selection)rect(25,y-2,425,12,0x4a4030);
+        text(31,y,limbNames[i],!inspect && i==ui.selection?TEXT:MUTED,1);
         limb_health_bar(a, i, 157, y + 2, 91, 4);
         if(missing)snprintf(b,sizeof(b),"LOST");else snprintf(b,sizeof(b),"%.0f/%.0f",a->health[i],limb_max_health(a,i)-z->trauma[i]);
         text(261,y,b,missing?RED:TEXT,1);
@@ -1906,6 +1934,8 @@ static void health_screen(void) {
     snprintf(b, sizeof(b), "BLOOD %.0f   FOOD %.0f   FATIGUE %.0f", a->blood, a->hunger, a->fatigue);
     text(31, 194, b, a->bleed > .01f ? RED : MUTED, 1);
     if (a->bleed > .01f) text(323, 194, "BLEEDING", RED, 1);
+    if (inspect)
+        return;
     snprintf(b, sizeof(b), "DRESSINGS %d  GEAR %.0f%%  COMA THRESHOLD %.0f", inventory_count(a,MEDKIT),
              z->upkeep, coma_threshold(a));
     text(31,207,b,GOLD,1);
@@ -2545,6 +2575,22 @@ static void forge_screen(void) {
     char b[120],reason[90];int ready=craft_readiness(&r,reason,sizeof(reason));
     snprintf(b,sizeof(b),"FORGE %s / %s",station>=0?"IN REACH":"TOO FAR",reason);clipped(29,226,b,69,ready?TEAL:RED);
 }
+static void dialogue_row_text(int y, const char *option, int selected) {
+    enum { LEFT = 137, RIGHT = 441 };
+    int overflow = text_width(option) - (RIGHT - LEFT);
+    int shift = 0;
+    if (selected && overflow > 0) {
+        const float speed = 32, start = .65f, end = 1.1f;
+        float elapsed = fmodf(ui.dialogHover, start + overflow / speed + end);
+        shift = (int)fminf(overflow, fmaxf(0, (elapsed - start) * speed));
+    }
+    int savedLeft = clipLeft, savedRight = clipRight;
+    clipLeft = LEFT;
+    clipRight = RIGHT;
+    text(LEFT - shift, y, option, selected ? GOLD : MUTED, 1);
+    clipLeft = savedLeft;
+    clipRight = savedRight;
+}
 static void dialogue_screen(void) {
     int n = ui.dialogActor;
     if (n < 0 || n >= g.actorCount)
@@ -2589,9 +2635,9 @@ static void dialogue_screen(void) {
                 offset++;
             int kind = n == work_contact(town) && k >= offset ? contract_offer(town, k - offset) : -1;
             if (turnIn >= 0)
-                snprintf(posting, sizeof(posting), "Turn in %.26s", contract_title(g.contracts[turnIn].type));
+                snprintf(posting, sizeof(posting), "Turn in %s", contract_title(g.contracts[turnIn].type));
             else if (kind >= 0)
-                snprintf(posting, sizeof(posting), "%d silver / %.34s", contract_reward(town, kind), work[kind]);
+                snprintf(posting, sizeof(posting), "%d silver / %s", contract_reward(town, kind), work[kind]);
             else
                 snprintf(posting, sizeof(posting), "Back");
             option = posting;
@@ -2601,7 +2647,7 @@ static void dialogue_screen(void) {
         else if (ui.dialogPage == DIALOG_DISMISS) option = "Leave";
         else if (ui.dialogPage == DIALOG_WORK_HINT) option = "Back";
         else option = dialogue_option(n, k);
-        clipped(137, y, option, 50, k == ui.selection ? GOLD : MUTED);
+        dialogue_row_text(y, option, k == ui.selection);
     }
 }
 static void save_screen(void) {
@@ -2618,25 +2664,54 @@ static void save_screen(void) {
     text(31, 221, "AUTOSAVE IS SEPARATE FROM YOUR MANUAL SLOTS.", TEAL, 1);
 }
 static void actions_screen(void) {
-    int count = nearby_actions(), first = start_row(ui.selection, count, 6);
-    int rows = count < 6 ? count : 6, top = 232 - (48 + 14 * rows);
+    nearby_actions();
+    NearbyTabs tabs;
+    nearby_action_tabs(&tabs);
+    int first = start_row(tabs.activeRow, tabs.rowCount, 6);
+    int rows = tabs.rowCount < 6 ? tabs.rowCount : 6, top = 234 - (66 + 14 * rows);
     char b[120];
-    panel(14, top, 348, 48 + 14 * rows);
-    text(25, top + 9, ui.paused ? "NEARBY / QUEUE WHILE PAUSED" : "NEARBY ACTIONS", GOLD, 1);
+    panel(14, top, 348, 66 + 14 * rows);
+    text(25, top + 8, "NEARBY ACTIONS", GOLD, 1);
+    if (tabs.tabCount) {
+        int actor = tabs.actors[tabs.activeTab];
+        const char *state = actor >= 0 && g.actors[actor].dead ? "DEAD   " :
+            actor >= 0 && g.actors[actor].unconscious > 0 ? "DOWNED   " : "";
+        snprintf(b, sizeof(b), "%s%d/%d", state, tabs.activeTab + 1, tabs.tabCount);
+        text(351 - text_width(b), top + 8, b, MUTED, 1);
+    }
+    int firstTab = start_row(tabs.activeTab, tabs.tabCount, 3);
+    for (int j = 0; j < 3 && firstTab + j < tabs.tabCount; j++) {
+        int tab = firstTab + j, x = 23 + 111 * j, actor = tabs.actors[tab];
+        int active = tab == tabs.activeTab;
+        rect(x, top + 20, 108, 14, active ? 0x58472e : INK);
+        frame(x, top + 20, 108, 14, active ? GOLD : EDGE);
+        clipped(x + 4, top + 24, actor < 0 ? "ENVIRONMENT" : actor == g.selected ? "SELF" :
+            g.actors[actor].name, 16, active ? TEXT : MUTED);
+    }
+    if (!tabs.rowCount)
+        text(25, top + 26, "Nothing within reach.", MUTED, 1);
     for (int j = 0; j < rows; j++) {
-        int k = first + j, y = top + 23 + j * 14;
+        int k = tabs.rows[first + j], y = top + 40 + j * 14;
         const char *why = nearby_action_reason(k);
         if (k == ui.selection)
             rect(21, y - 2, 334, 12, why ? 0x343331 : 0x4a4030);
         nearby_action_label(k, b, sizeof(b));
         clipped(25, y, b, 54, why ? 0x827d71 : k == ui.selection ? TEXT : 0xc0b5a2);
     }
-    const char *why = nearby_action_reason(ui.selection);
-    if (count && why)
-        clipped(25, 206, why, 54, GOLD);
-    snprintf(b, sizeof(b), "\001 %s  \006 %s  \003 CLEAR (%d)  \002 BACK",
+    const char *why = tabs.rowCount ? nearby_action_reason(tabs.rows[tabs.activeRow]) : NULL;
+    if (why)
+        clipped(25, 210, why, 54, GOLD);
+    snprintf(b, sizeof(b), "\014 TAB  \001 %s  \006 %s  \003 CLEAR (%d)  \002 BACK",
              ui.paused ? "QUEUE" : "DO", ui.paused ? "RESUME" : "PAUSE", g.society.queueCount[g.selected]);
-    text(25, 220, b, MUTED, 1);
+    text(25, 222, b, MUTED, 1);
+}
+static void execute_screen(void) {
+    overlay_header("EXECUTE OPPONENT", "\001 CONFIRM   \002 BACK");
+    if (ui.nearbyTarget >= 0 && ui.nearbyTarget < g.actorCount) {
+        char name[48];
+        snprintf(name, sizeof(name), "Execute %s?", g.actors[ui.nearbyTarget].name);
+        text(31, 102, name, RED, 1);
+    }
 }
 static void engage_screen(void){
     overlay_header("CHOOSE OPPONENT","\015 SELECT   \001 ATTACK   \002 CANCEL");char v[40];int count=combat_candidates(),first=start_row(ui.selection,count,7);
@@ -3049,6 +3124,8 @@ void render_game(uint32_t *pixels, int stride) {
     case SCREEN_ENGAGE: engage_screen();break;
     case SCREEN_LIFE:case SCREEN_POLITICS:life_screen();break;
     case SCREEN_ACTIONS: actions_screen();break;
+    case SCREEN_INSPECT_HEALTH: health_screen(ui.nearbyTarget, 1);break;
+    case SCREEN_EXECUTE: execute_screen();break;
     case SCREEN_THEFT:
         theft_screen();
         break;
@@ -3103,7 +3180,7 @@ void render_game(uint32_t *pixels, int stride) {
     case SCREEN_LIMBS:case SCREEN_LIMBFIT:case SCREEN_SURGERY:case SCREEN_LIMBCONFIRM:
         limbs_screen();break;
     case SCREEN_HEALTH:
-        health_screen();
+        health_screen(g.selected, 0);
         break;
     case SCREEN_SQUAD:
         squad_screen();

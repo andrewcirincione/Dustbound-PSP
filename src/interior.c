@@ -55,8 +55,8 @@ void homes_init(void) {
 }
 int home_price(int building) {
     int town = building_town(building);
-    return 1250 + town_design(town)->marketTier * 725 + (town >= OLD_TOWNS ? 650 : 0) +
-           (building % 5) * 125;
+    return 5200 + town_design(town)->marketTier * 2250 + (town >= OLD_TOWNS ? 1250 : 0) +
+           (building % 5) * 250;
 }
 void home_open(int building) {
     ui.homeSite = building;
@@ -544,7 +544,7 @@ int rest_at(Actor *a, int bed, float x, float y, int room, int price) {
     g.money -= price;
     place_in_bed(a, bed, x, y, room);
     ui.screen = SCREEN_WORLD;
-    log_msg("Resting in bed.");
+    log_msg(room ? "Resting in bed." : "Resting on a bedroll.");
     return 1;
 }
 int lay_carried_in_bed(Actor *carrier, int place) {
@@ -609,7 +609,7 @@ int lay_carried_in_bed(Actor *carrier, int place) {
         patient->y = carrier->y;
         g.innFloor[patient - g.actors] = actor_floor(carrier);
         place_in_bed(patient, bed, x, y, room);
-        log_msg("%s laid %s in bed.", carrier->name, patient->name);
+        log_msg(room ? "%s laid %s in bed." : "%s laid %s on a bedroll.", carrier->name, patient->name);
     }
     return 1;
 }
@@ -620,6 +620,10 @@ int actor_inside(const Actor *a) { return depth_room(a); }
 enum { LODGE_FEE = 280 };
 
 static void put_prop(InteriorProp *p, int *count, float x, float y, float w, float d, int art, int action) {
+    if (action == ROOM_REST) {
+        w *= .86f;
+        d *= .86f;
+    }
     p[(*count)++] = (InteriorProp){x,y,w,d,art,action};
 }
 static int room_layout(int building, int t, int style, int floor, InteriorProp *p) {

@@ -1,4 +1,5 @@
 #include "game.h"
+#include "settlement_art_ids.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -434,7 +435,7 @@ static void single_encounter(int slot,EncounterSite site) {
     generate_population(slot,type,&site);
 }
 
-static int quiet_route(const Actor *lead,float dx,float dy) {
+static int quiet_route(const Actor *lead,float dx,float dy,int road) {
     int nearby=0;
     for(int k=0;k<POP_GROUPS+EVENTS;k++){
         const WorldEvent *e=k<POP_GROUPS?&P.groups[k]:&g.living.events[k-POP_GROUPS];
@@ -442,7 +443,8 @@ static int quiet_route(const Actor *lead,float dx,float dy) {
         if(fabsf(x)>140||fabsf(y)>140||x*x+y*y>140*140)continue;
         if(k<POP_GROUPS?!life_alive(k):e->status||!e->count)continue;
         float forward=x*dx+y*dy,side=x*dy-y*dx;
-        if(++nearby>=3||(forward>=-10&&fabsf(side)<33))return 0;
+        if (++nearby >= 3 || (forward >= -10 && fabsf(side) < (road ? 25 : 33)))
+            return 0;
     }
     return 1;
 }
@@ -535,9 +537,9 @@ static int encounter_pair(int first,int second,EncounterSite site,unsigned roll)
     }
     return 1;
 }
-static void roll_encounter(int first,EncounterSite site,const float *near) {
+static void roll_encounter(int first,EncounterSite site,const float *near,int road) {
     unsigned roll=random_step(&P.rng);
-    if (roll%100<36) {
+    if (roll % 100 < (road ? 46 : 36)) {
         int second=encounter_partner(near,first);
         if (second>=0&&encounter_pair(first,second,site,roll))
             return;
@@ -567,7 +569,8 @@ static void refresh_encounters(const float *near) {
         float len=sqrtf(dx*dx+dy*dy);
         if(len>.01f){
             dx/=len;dy/=len;
-            if(quiet_route(lead,dx,dy)){
+            int road = terrain_road(lead->x, lead->y);
+            if(quiet_route(lead,dx,dy,road)){
                 for(int tries=0;tries<10;tries++){
                     float ahead=76+random_step(&P.rng)%33;
                     float side=(int)(random_step(&P.rng)%37)-18;
@@ -581,7 +584,7 @@ static void refresh_encounters(const float *near) {
                         }
                     }
                     if(reachable){
-                        roll_encounter(slot,site,near);
+                        roll_encounter(slot,site,near,road);
                         return;
                     }
                 }
@@ -596,7 +599,7 @@ static void refresh_encounters(const float *near) {
         float angle=(random_step(&P.rng)%628)*.01f,r=46+random_step(&P.rng)%50;
         EncounterSite site={x+cosf(angle)*r,y+sinf(angle)*r};
         if(open_encounter_site(site,cleared)){
-            roll_encounter(cleared,site,near);
+            roll_encounter(cleared,site,near,0);
             return;
         }
     }
@@ -630,7 +633,15 @@ int population_walk(int n,float dt){
     if(e->type==POP_ARMY||e->type==POP_PATROL){float dx=m->targetX-e->x,dy=m->targetY-e->y,d=fmaxf(1,sqrtf(dx*dx+dy*dy));float side=(i%3-1)*2.2f,back=(i/3)*2.3f;x=e->x-dy/d*side-dx/d*back;y=e->y+dx/d*side-dy/d*back;}
     else {float angle=i*2.39996f+e->serial;x=e->x+cosf(angle)*(2+i%3);y=e->y+sinf(angle)*(2+i%3);}
     if(camp_type(k)&&g.life.groups[k].goal==LIFE_ROAM&&g.life.groups[k].camp==CAMP_READY){
-        if(m->phase==POP_REST&&i<m->beds-1){x=m->siteX+m->offsetX[i+1];y=m->siteY+m->offsetY[i+1];if(distance(a->x,a->y,x,y)<.8f){a->taskKind=3;a->taskIndex=-1000-k*4-i;a->action=180;return 1;}}
+        if (m->phase == POP_REST && i < m->beds - 1) {
+            x = m->siteX + m->offsetX[i + 1];
+            y = m->siteY + m->offsetY[i + 1];
+            if (distance(a->x, a->y, x, y) < .8f && room_bed_free(a, x, y, 0, 0)) {
+                place_in_bed(a, -1000 - k * 4 - i, x, y, 0);
+                a->action = 180;
+                return 1;
+            }
+        }
         else if(m->phase==POP_FORAGE){float angle=(i*1.7f+e->serial);x=e->x+cosf(angle)*(8+i%3*3);y=e->y+sinf(angle)*(8+i%3*3);
             if(i<2&&(e->type==POP_SCAVENGERS||e->type==POP_SALVAGE)){int node=forage_node(k);if(node>=0){x=g.nodes[node].x;y=g.nodes[node].y;if(distance(a->x,a->y,x,y)<=WORK_REACH){if(a->taskKind!=1){a->taskKind=1;a->taskIndex=node;a->action=2;}return 1;}}}
         }
@@ -677,12 +688,22 @@ int population_object(int k,int object,float*x,float*y){
  if(object==m->beds+2){*x=m->siteX-4;*y=m->siteY-2;return 4;}
  *x=m->siteX+(object==m->beds+3?5:-5);*y=m->siteY+(style==1?2:-3);return object==m->beds+3?5:6;
 }
-int population_prop_art(int k,int object){float x,y;int type=population_object(k,object,&x,&y);return type==1?27:type==2?16:type==4?26:type==5?(P.groups[k].type==POP_HUNTERS?18:P.groups[k].type==POP_SALVAGE?17:20):31;}
-int population_prop_style(int k,int object){float x,y;int type=population_object(k,object,&x,&y);if(type==2&&(P.groups[k].type==POP_SCAVENGERS||P.groups[k].type==POP_SMUGGLERS||P.groups[k].type==POP_SALVAGE||P.groups[k].type==POP_REFUGEES||P.groups[k].type==POP_WOUNDED||P.groups[k].type==POP_HUNTERS||P.groups[k].type==POP_AMBUSH))return 1;if(type==6)return military(P.groups[k].type)?2:3;return 0;}
+int population_prop_art(int k,int object){float x,y;int type=population_object(k,object,&x,&y);return type==1?27:type==2?ART_BEDROLL:type==4?26:type==5?(P.groups[k].type==POP_HUNTERS?18:P.groups[k].type==POP_SALVAGE?17:20):31;}
+int population_prop_style(int k,int object){float x,y;return population_object(k,object,&x,&y)==6?(military(P.groups[k].type)?2:3):0;}
 static int safe_at(const Actor*a){
     for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(b!=a&&b->active&&conscious(b)&&hostile(a,b)&&distance(a->x,a->y,b->x,b->y)<12)return 0;}return 1;
 }
-int population_sleep_valid(const Actor*a){int raw=-1000-a->taskIndex,k=raw/4,bed=raw%4+1;float x,y;return k>=0&&k<POP_GROUPS&&bed<=P.state[k].beds&&population_object(k,bed,&x,&y)==2&&distance(a->x,a->y,x,y)<2;}
+int population_sleep_position(const Actor *a, float *x, float *y) {
+    if (a->taskIndex > -1000)
+        return 0;
+    int raw = -1000 - a->taskIndex, k = raw / 4, bed = raw % 4 + 1;
+    return k < POP_GROUPS && bed <= P.state[k].beds &&
+        population_object(k, bed, x, y) == 2 && distance(a->x, a->y, *x, *y) < 2;
+}
+int population_sleep_valid(const Actor *a) {
+    float x, y;
+    return population_sleep_position(a, &x, &y);
+}
 int population_action_valid(int k,int action){
     if(k<0||k>=POP_GROUPS||!P.version||depth_room(&g.actors[g.selected]))return 0;Actor*a=&g.actors[g.selected];WorldEvent*e=&P.groups[k];float x=e->x,y=e->y;
     if(!conscious(a))return 0;if(!action)return distance(a->x,a->y,e->x,e->y)<=8;
@@ -718,10 +739,8 @@ const char *population_action_reason(int k, int action) {
     } else if (action >= 11 && action <= 13) {
         float x, y;
         population_object(k, action - 10, &x, &y);
-        for (int n = 0; n < g.actorCount; n++)
-            if (n != g.selected && conscious(&g.actors[n]) && g.actors[n].taskKind == 3 &&
-                distance(x, y, g.actors[n].x, g.actors[n].y) < 1)
-                return "Bed occupied";
+        if (!room_bed_free(a, x, y, 0, 0))
+            return "Bedroll occupied";
     } else if (action == 20) {
         if (!m->cacheQty)
             return "Supplies already taken";
@@ -744,7 +763,7 @@ const char *population_action_reason(int k, int action) {
 }
 void population_action_label(int k,int action,char*out,int size){
     if (!action) snprintf(out,size,"Observe %s",P.groups[k].type == POP_SMUGGLERS ? "smugglers" : population_name(k));
-    else if(action>=11&&action<=13)snprintf(out,size,"Rest in camp bed %d (free)",action-10);
+    else if(action>=11&&action<=13)snprintf(out,size,"Rest on camp bedroll %d",action-10);
     else if(action==1)snprintf(out,size,"Cook at fire: 2 meat > 1 ration");
     else if (action == 20) {
         int owner = cache_owner(&P.groups[k]);

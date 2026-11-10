@@ -39,6 +39,11 @@ int escort_contact(int slot);
 int escorting_actor(int actor);
 int bounty_contract_active(int actor);
 int nearby_actions(void);
+typedef struct {
+    int tabCount, activeTab, rowCount, activeRow;
+    int actors[ACTION_LIMIT], first[ACTION_LIMIT], rows[ACTION_LIMIT];
+} NearbyTabs;
+void nearby_action_tabs(NearbyTabs *tabs);
 const NearbyAction *nearby_action(int row);
 void nearby_action_label(int row,char*out,int size);
 const char *nearby_action_reason(int row);

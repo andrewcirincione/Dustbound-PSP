@@ -713,6 +713,7 @@ int nearby_actions(void){
              add_action(ACTION_BOUNTY_TURN_IN, 0, n);
      if (lay_carried_in_bed(a, 0)) add_action(ACTION_LAY_IN_BED, 0, a->carrying);
      add_action(ACTION_PUT_DOWN, 0, a->carrying);
+     add_action(ACTION_INSPECT_HEALTH, 0, a->carrying);
  }
  if (wound_needs_dressing(a))
      add_action(ACTION_SELF_AID, 0, g.selected);
@@ -725,9 +726,10 @@ int nearby_actions(void){
   if(!b->dead&&(g.depth.actors[n].captive||b->prisonTime>0))add_action(ACTION_RESCUE,0,n);
   if (!b->squad && wound_needs_dressing(b)) add_action(ACTION_TREAT_OTHER, 0, n);
   if(S.freed[n]&&!b->squad&&!b->dead){add_action(S.freed[n]==1?ACTION_RESCUED_LEAVE:ACTION_RESCUED_FOLLOW,0,n);add_action(ACTION_RESCUED_RECRUIT,0,n);}
-  if(b->dead||b->unconscious>0){add_action(ACTION_CONTEXT,0,n);if(a->carrying<0&&!g.depth.actors[n].captive)add_action(ACTION_CARRY,0,n);}
+  if(b->dead||b->unconscious>0){add_action(ACTION_CONTEXT,0,n);if(a->carrying<0&&!g.depth.actors[n].captive)add_action(ACTION_CARRY,0,n);if(can_execute(n))add_action(ACTION_EXECUTE,0,n);}
   else if(!b->squad){if(!hostile(a,b)||b->target<0){add_action(ACTION_CONTEXT,0,n);if(a->sneaking)add_action(ACTION_STEAL,0,n);}if(a->autoattack)add_action(ACTION_ATTACK,0,n);}
   else add_action(ACTION_CONTEXT,0,n);
+  add_action(ACTION_INSPECT_HEALTH,0,n);
  }
  for (int n = 0; n < g.nodeCount; n++)
      if (g.nodes[n].remaining && node_distance(a, n) <= WORK_REACH) {
@@ -775,8 +777,40 @@ int nearby_actions(void){
  int town=town_near(a->x,a->y,24);if(town>=0&&g.life.version&&g.life.towns[town].stage)add_action(ACTION_POLITICS,0,town);
  return actionCount;
 }
+static int action_tab_actor(const NearbyAction *action) {
+    if (action->kind != 0 || action->type == ACTION_POPULATION || action->type == ACTION_POLITICS)
+        return -1;
+    return action->target;
+}
+void nearby_action_tabs(NearbyTabs *tabs) {
+    tabs->tabCount = tabs->activeTab = tabs->rowCount = tabs->activeRow = 0;
+    if (!actionCount)
+        return;
+    int selection = ui.selection >= 0 && ui.selection < actionCount ? ui.selection : 0;
+    int selectedActor = action_tab_actor(&actions[selection]);
+    for (int row = 0; row < actionCount; row++) {
+        int actor = action_tab_actor(&actions[row]), tab = 0;
+        while (tab < tabs->tabCount && tabs->actors[tab] != actor)
+            tab++;
+        if (tab == tabs->tabCount) {
+            tabs->actors[tab] = actor;
+            tabs->first[tab] = row;
+            tabs->tabCount++;
+        }
+        if (actor == selectedActor) {
+            tabs->activeTab = tab;
+            if (row == selection)
+                tabs->activeRow = tabs->rowCount;
+            tabs->rows[tabs->rowCount++] = row;
+        }
+    }
+}
 const NearbyAction *nearby_action(int row){return row>=0&&row<actionCount?&actions[row]:NULL;}
 void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_action(row);if(!x){snprintf(out,size,"Nothing within reach");return;}
+ if (x->type == ACTION_INSPECT_HEALTH || x->type == ACTION_EXECUTE) {
+     snprintf(out, size, "%s", x->type == ACTION_INSPECT_HEALTH ? "Check health" : "Execute");
+     return;
+ }
  if (x->type == ACTION_BOUNTY_TURN_IN) {
      snprintf(out, size, "Turn in %s to the jailkeeper", g.actors[g.selected].carrying >= 0 ?
               g.actors[g.actors[g.selected].carrying].name : "bounty");
@@ -791,7 +825,8 @@ void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_
      return;
  }
  if (x->type == ACTION_LAY_IN_BED || x->type == ACTION_PUT_DOWN) {
-     snprintf(out, size, x->type == ACTION_LAY_IN_BED ? "Lay %s in bed" : "Put down %s", g.actors[x->target].name);
+     snprintf(out, size, x->type == ACTION_PUT_DOWN ? "Put down %s" : x->room ? "Lay %s in bed" :
+              "Lay %s on bedroll", g.actors[x->target].name);
      return;
  }
  if (x->type == ACTION_SELF_AID || x->type == ACTION_SELF_REPAIR) {
@@ -842,6 +877,8 @@ static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!
      return x->room == n + 1 && home_state(n) == HOME_OWNED;
  if (x->type == ACTION_PUT_DOWN || x->type == ACTION_LAY_IN_BED)
      return n >= 0 && a->carrying == n && (x->type == ACTION_PUT_DOWN || lay_carried_in_bed(a, 0));
+ if (x->type == ACTION_INSPECT_HEALTH && n >= 0 && n < g.actorCount && a->carrying == n)
+     return g.actors[n].active && g.actors[n].carriedBy == g.selected;
  if(x->type==ACTION_POLITICS)return n>=0&&n<TOWNS&&distance(a->x,a->y,towns[n].x,towns[n].y)<=24;
  if(x->type==ACTION_POPULATION)return population_action_valid(n,x->kind);
  if(x->type==ACTION_EVENT)return n>=0&&n<EVENTS&&!g.living.events[n].status&&distance(a->x,a->y,g.living.events[n].x,g.living.events[n].y)<=8;
@@ -864,6 +901,8 @@ static const char *action_reason(const NearbyAction *x, int queueing) {
         return "Action unavailable";
     if (x->type == ACTION_ATTACK && !a->autoattack)
         return "Switch to Fight stance";
+    if (x->type == ACTION_EXECUTE)
+        return can_execute(n) ? NULL : "Target must be down";
     if (x->type == ACTION_PACK_BEDROLL)
         return portable_bedroll(n) > 0 ? NULL : "Already packed";
     if (x->type == ACTION_PROPERTY)
@@ -962,6 +1001,11 @@ void action_menu_open(void){nearby_actions();if(!actionCount){log_msg("No action
 void nearby_action_choose(int row){const NearbyAction*p=nearby_action(row);if(!p)return;
  const char *reason = nearby_action_reason(row);
  if (reason) { log_msg("%s.", reason); return; }
+ if (p->type == ACTION_INSPECT_HEALTH || p->type == ACTION_EXECUTE) {
+     ui.nearbyTarget = p->target;
+     ui.screen = p->type == ACTION_INSPECT_HEALTH ? SCREEN_INSPECT_HEALTH : SCREEN_EXECUTE;
+     return;
+ }
  NearbyAction a=*p;int n=g.selected;ui.screen=ui.paused?SCREEN_ACTIONS:SCREEN_WORLD;
  if(ui.paused){int q=S.queueCount[n];if(q>=ACTION_QUEUE){log_msg("Four actions queued. Clear or resume first.");return;}S.queue[n][q]=a;S.queueCount[n]++;log_msg("Action queued. R resumes; movement cancels queued actions.");}
  else perform_action(&a);

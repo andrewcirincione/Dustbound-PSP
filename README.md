@@ -1,6 +1,6 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.18.7 — Hired escorts
+## 0.18.8 — Nearby actions and road work
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
@@ -53,7 +53,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dustbound-0.18.7-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v27 reads earlier expeditions. Existing equipment, training and town control carry over.
+Extract `Dustbound-0.18.8-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v27 reads earlier expeditions. Existing equipment, training and town control carry over.
 
 ## Controls
 

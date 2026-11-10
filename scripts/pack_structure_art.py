@@ -66,6 +66,7 @@ INN_FURNITURE = [
     ((.025,.678),(.848,.983),(.977,.895), 79,65), # bar
     ((.065,.745),(.61,.984),(.922,.815), 45,35),  # research table
 ]
+BEDROLL = ((.067,.719),(.263,.942),(.932,.379), 40,25)
 
 
 def tile(sheet, index, columns):
@@ -170,11 +171,12 @@ def pack_furniture():
         ("furniture.png",range(8),FURNITURE),
         ("settlement-rooms.png",(0,1,2,3,4,5,7),ROOM_FURNITURE),
         ("inn-furniture.png",(1,2,3),INN_FURNITURE[1:]),
+        ("bedroll.png",(0,),(BEDROLL,)),
     ):
         sheet = Image.open(ART/filename).convert("RGBA")
         for i, spec in zip(indices,specs):
-            im = tile(sheet,i,2 if filename == "inn-furniture.png" else 4)
-            if filename == "inn-furniture.png":
+            im = sheet if filename == "bedroll.png" else tile(sheet,i,2 if filename == "inn-furniture.png" else 4)
+            if filename in ("inn-furniture.png", "bedroll.png"):
                 spec = tuple((x*im.width,y*im.height) for x,y in spec[:3]) + spec[3:]
             if filename == "furniture.png" and i == 0:
                 im = tile(Image.open(ART/"inn-furniture.png").convert("RGBA"),0,2)

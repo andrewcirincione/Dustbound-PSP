@@ -53,7 +53,11 @@ static void test_homes(void) {
     int first=sites[0],second=sites[1];
     assert(building_town(first)!=building_town(second));
     assert(!home_buy(second));
-    g.money=10000;
+    assert(home_price(first) >= 5200 && home_price(second) >= 5200);
+    building_door(first, &a->x, &a->y);
+    g.money = home_price(first) - 1;
+    assert(!home_buy(first) && home_state(first) == HOME_FOR_SALE);
+    g.money = home_price(first) + home_price(second) + 1200;
     purchase(first);
     choose(ACTION_FURNISH,5,first);
     assert(ui.screen==SCREEN_HOME);

@@ -266,7 +266,34 @@ int expansion_input(float dt, Input in) {
         if(p&(KEY_CIRCLE|KEY_START)){open_view(SCREEN_WORLD);return 1;}
         if(p&KEY_R){ui.paused=!ui.paused;if(!ui.paused){open_view(SCREEN_WORLD);return 1;}}
         if(p&KEY_SQUARE){g.society.queueCount[g.selected]=0;log_msg("Queued actions cleared.");}
-        if(count){if(p&KEY_UP)ui.selection=wrapi(ui.selection-1,count);if(p&KEY_DOWN)ui.selection=wrapi(ui.selection+1,count);if(ui.selection>=count)ui.selection=count-1;if(p&KEY_CROSS)nearby_action_choose(ui.selection);}
+        if (count) {
+            NearbyTabs tabs;
+            nearby_action_tabs(&tabs);
+            if (p & (KEY_LEFT | KEY_RIGHT)) {
+                int step = p & KEY_RIGHT ? 1 : -1;
+                ui.selection = tabs.first[wrapi(tabs.activeTab + step, tabs.tabCount)];
+            } else {
+                int step = ((p & KEY_DOWN) != 0) - ((p & KEY_UP) != 0);
+                ui.selection = tabs.rows[wrapi(tabs.activeRow + step, tabs.rowCount)];
+            }
+            if (p & KEY_CROSS)
+                nearby_action_choose(ui.selection);
+        }
+        return 1;
+    }
+    if (ui.screen == SCREEN_INSPECT_HEALTH || ui.screen == SCREEN_EXECUTE) {
+        if (p & KEY_START)
+            open_view(SCREEN_WORLD);
+        else if (p & KEY_CIRCLE)
+            ui.screen = SCREEN_ACTIONS;
+        else if (ui.screen == SCREEN_EXECUTE && (p & KEY_CROSS)) {
+            if (execute_opponent(ui.nearbyTarget))
+                open_view(SCREEN_WORLD);
+            else {
+                log_msg("Cannot execute this opponent.");
+                ui.screen = SCREEN_ACTIONS;
+            }
+        }
         return 1;
     }
     if(ui.screen==SCREEN_ENGAGE) {
