@@ -14,7 +14,7 @@ assert data[offsets[1]:offsets[1]+8]==b'\x89PNG\r\n\x1a\n', 'Missing icon'
 assert data[offsets[6]:offsets[6]+4] in (b'\x7fELF',b'~PSP'), 'Missing PSP executable'
 if args.assets:
     ends = offsets[1:] + [len(data)]
-    for index, name in ((1, "ICON0.png"), (4, "PIC1.png"), (7, "Dust.mp3")):
+    for index, name in ((1, "ICON0.png"), (4, "PIC1.png"), (7, "DustAmbient.mp3")):
         assert data[offsets[index]:ends[index]] == (args.assets / name).read_bytes(), f"Incorrect {name} section"
     assert struct.unpack_from(">II", data, offsets[4] + 16) == (480, 272), "Incorrect wallpaper dimensions"
 print('PBP valid:', len(data), 'bytes')

@@ -44,12 +44,18 @@ static void test_homes(void) {
     game_new(73819,0);
     Actor *a=&g.actors[g.selected];
     int sites[2],count=0;
+    int prices[TOWNS] = {0};
     for (int b=0;b<g.buildingCount;b++)
         if (home_state(b)==HOME_FOR_SALE) {
             if (count<2) sites[count]=b;
             count++;
+            int town = building_town(b);
+            assert(town >= 0 && town < TOWNS);
+            prices[town] = home_price(b);
         }
     assert(count>=8);
+    assert(prices[1] >= 5200 && prices[3] > prices[1]);
+    assert(prices[OLD_TOWNS] > prices[3] && prices[OLD_TOWNS] >= 22000);
     int first=sites[0],second=sites[1];
     assert(building_town(first)!=building_town(second));
     assert(!home_buy(second));

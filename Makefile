@@ -6,10 +6,10 @@ INCDIR = src
 CFLAGS = -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation
 LIBS = -lm -lpsppower -lpspaudio
 EXTRA_TARGETS = EBOOT.PBP
-PSP_EBOOT_TITLE = Dustbound 0.18.8
+PSP_EBOOT_TITLE = Dustbound 0.18.9
 PSP_EBOOT_ICON = assets/ICON0.png
 PSP_EBOOT_PIC1 = assets/PIC1.png
-PSP_EBOOT_PSAR = assets/Dust.mp3
+PSP_EBOOT_PSAR = assets/DustAmbient.mp3
 PSP_LARGE_MEMORY = 0
 BUILD_PRX = 1
 PSP_FW_VERSION = 660

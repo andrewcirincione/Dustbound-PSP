@@ -55,8 +55,10 @@ void homes_init(void) {
 }
 int home_price(int building) {
     int town = building_town(building);
-    return 5200 + town_design(town)->marketTier * 2250 + (town >= OLD_TOWNS ? 1250 : 0) +
-           (building % 5) * 250;
+    const TownDesign *plan = town_design(town);
+    int sizePremium = plan->beds > 2 ? (plan->beds - 2) * 1200 : 0;
+    int capitalPremium = town >= OLD_TOWNS ? 8000 : 0;
+    return 5200 + sizePremium + plan->marketTier * 2600 + capitalPremium + (building % 5) * 250;
 }
 void home_open(int building) {
     ui.homeSite = building;

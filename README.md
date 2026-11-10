@@ -1,10 +1,10 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.18.8 — Nearby actions and road work
+## 0.18.9 — Settlement deeds and ambient music
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
-Dust.mp3 loops across the title screen, gameplay and menus. The full soundtrack is built into the EBOOT and decoded ahead of playback.
+DustAmbient.mp3 loops across the title screen, gameplay and menus. The full soundtrack is built into the EBOOT and decoded ahead of playback.
 
 [Three Banners design](docs/FRONTIER_WAR.md) · [Field guide](docs/FIELD_GUIDE.md)
 
@@ -53,7 +53,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dustbound-0.18.8-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v27 reads earlier expeditions. Existing equipment, training and town control carry over.
+Extract `Dustbound-0.18.9-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v27 reads earlier expeditions. Existing equipment, training and town control carry over.
 
 ## Controls
 

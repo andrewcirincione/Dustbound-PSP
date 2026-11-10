@@ -1,3 +1,8 @@
+# 0.18.9 — Settlement deeds and ambient music
+
+- Deed prices rise with settlement size and market tier. Faction capitals carry the highest prices.
+- DustAmbient.mp3 plays on a loop from the title screen through gameplay and menus.
+
 # 0.18.8 — Nearby actions and road work
 
 - Left and Right cycle between nearby people and the environment. Check limb health and bleeding, or execute a downed opponent after confirming.
