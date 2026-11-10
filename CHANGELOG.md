@@ -1,3 +1,7 @@
+# 0.18.7 — Hired escorts
+
+- Contract guards follow their employer after being hired. Town jailkeepers have separate posts. Existing hires keep their contracts when loading an earlier save.
+
 # 0.18.6 — Inns and stagecoaches
 
 - Large inns have upstairs bedrooms. Small inns have one or two beds and room around the bar. New generated beds, bars, stairs and research benches fit the isometric grid. Dry Market uses frontier storefronts and homes. Night and interiors are brighter, rain is shorter and rarer, and foliage clears roadside camps.

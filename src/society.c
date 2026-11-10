@@ -191,7 +191,8 @@ void crime_description(const Actor *a, int f, char *out, int size) {
 }
 int watch_town(const Actor *guard) {
     int t = guard->homeTown;
-    return !guard->squad && guard->kind == GUARD && t >= 0 && t < TOWNS &&
+    return !guard->squad && guard->kind == GUARD && guard->voice != ROLE_MERCENARY &&
+           t >= 0 && t < TOWNS &&
            guard->faction == g.townOwner[t] && g.field.jail[t] ? t : -1;
 }
 int disguise_faction(const Actor*a){

@@ -10,8 +10,10 @@ int main(void) {
     ui.screen = SCREEN_WORLD;
     int guards[4], count = 0;
     for (int i = 0; i < g.actorCount; i++)
-        if (npc_role(&g.actors[i]) == ROLE_MERCENARY)
+        if (npc_role(&g.actors[i]) == ROLE_MERCENARY) {
+            assert(count < 4 && watch_town(&g.actors[i]) < 0);
             guards[count++] = i;
+        }
     printf("World actors %d, contract guards %d\n", g.actorCount, count);
     assert(count == 4);
     for (int i = 0; i < g.actorCount; i++)
@@ -27,6 +29,11 @@ int main(void) {
         assert(itemDefs[it].slot == 0 && !weapon_ranged(it));
     }
     Actor *p = &g.actors[0], *m = &g.actors[guards[0]];
+    int keeper = -1;
+    for (int i = 0; i < g.actorCount; i++)
+        if (watch_town(&g.actors[i]) == m->homeTown && !strcmp(g.actors[i].name, "Jailkeeper"))
+            keeper = i;
+    assert(keeper >= 0 && keeper != guards[0]);
     int it = gear_id(84, 1, 1);
     float slow = weapon_handling(p, it);
     p->xp[STRENGTH] = 12 * 80 * 80;
@@ -47,6 +54,7 @@ int main(void) {
         if (i != guards[0])
             g.actors[i].active = 0;
     p->x += 7;
+    assert(can_walk(p->x, p->y));
     float before = distance(p->x, p->y, m->x, m->y);
     for (int i = 0; i < 150; i++)
         simulate(1.f / 30);
@@ -59,12 +67,18 @@ int main(void) {
     assert(m->taskKind == TASK_TREAT && p->bleed > 0);
     for (int i = 0; i < 150; i++) simulate(1.f / 30);
     assert(p->bleed == 0);
+    /* Recreate a saved guard from before jail duty was separated from hiring. */
+    snprintf(m->name, sizeof(m->name), "Jailkeeper");
+    m->faction = g.townOwner[m->homeTown];
+    actor_enter_room(guards[0], g.field.jail[m->homeTown] - 1);
     assert(save_game("build/v050-contract.sav"));
     float until = g.mercUntil[slot];
     g.mercUntil[slot] = 0;
     assert(load_game("build/v050-contract.sav"));
     m = &g.actors[guards[0]];
     assert(merc_slot(m) == slot && g.mercUntil[slot] == until);
+    assert(!strcmp(m->name, "Contract guard") && m->faction == FREE && !depth_room(m));
+    assert(watch_town(&g.actors[keeper]) == m->homeTown);
     g.time = until + .1f;
     frontier_tick(.1f);
     assert(merc_slot(m) < 0 && !g.mercActor[slot]);

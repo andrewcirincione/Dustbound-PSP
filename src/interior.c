@@ -408,7 +408,8 @@ static TownStop town_stop(int n, int town, int role) {
 int town_npc_routine(int n, float dt) {
     Actor *a = &g.actors[n];
     int town = a->homeTown, room = depth_room(a);
-    if (a->squad || a->taskKind == TASK_TREAT || actor_in_bed(a) || a->kind == BEAST || town < 0 || town >= TOWNS || !conscious(a) || a->target >= 0 || a->attackPhase ||
+    if (a->squad || a->voice == ROLE_MERCENARY || a->taskKind == TASK_TREAT || actor_in_bed(a) ||
+        a->kind == BEAST || town < 0 || town >= TOWNS || !conscious(a) || a->target >= 0 || a->attackPhase ||
         a->carrying >= 0 || a->prisonTime > 0 || g.depth.actors[n].captive || population_owned(n) ||
         a->faction != g.townOwner[town])
         return 0;

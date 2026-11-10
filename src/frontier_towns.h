@@ -354,7 +354,8 @@ static void settlement_rebuild(void) {
             continue;
         }
         int role = npc_role(a), type = role == ROLE_MERCHANT ? SHOP : role == ROLE_INNKEEPER ? BAR :
-            role == ROLE_SMITH ? FORGE : a->kind == GUARD && g.field.jail[t] ? JAIL : -1;
+            role == ROLE_SMITH ? FORGE :
+            a->kind == GUARD && role != ROLE_MERCENARY && g.field.jail[t] ? JAIL : -1;
         int best = -1;
         for (int i = 0; i < g.buildingCount; i++)
             if (g.buildings[i].type == type && building_town(i) == t && !g.frontier.variant[i]) {
@@ -532,6 +533,56 @@ static void place_roadside_ore(void) {
         g.nodes[node].y = oy;
     }
 }
+/* Early town layouts could turn a hireable guard into a jailkeeper. */
+static void separate_contract_guards(void) {
+    unsigned char staffed[TOWNS] = {0};
+    int count = g.actorCount;
+    for (int n = 0; n < count; n++) {
+        const Actor *a = &g.actors[n];
+        int t = a->homeTown;
+        if (t >= 0 && t < TOWNS && a->kind == GUARD && a->voice != ROLE_MERCENARY &&
+            !a->squad && !strcmp(a->name, "Jailkeeper"))
+            staffed[t] = 1;
+    }
+    for (int n = 0; n < count; n++) {
+        Actor *a = &g.actors[n];
+        int t = a->homeTown;
+        if (a->voice != ROLE_MERCENARY || t < 0 || t >= TOWNS || !g.field.jail[t])
+            continue;
+        if (!strcmp(a->name, "Jailkeeper")) {
+            snprintf(a->name, sizeof(a->name), "Contract guard");
+            a->faction = FREE;
+            if (depth_room(a) == g.field.jail[t] && conscious(a) && a->prisonTime <= 0 &&
+                !g.depth.actors[n].captive && a->carrying < 0)
+                actor_leave_room(n);
+            a->homeX = towns[t].x + 4;
+            a->homeY = towns[t].y + 7;
+            civil_clear_position(&a->homeX, &a->homeY);
+            a->routeLen = a->routePos = 0;
+            a->routeClock = 0;
+        }
+        if (staffed[t])
+            continue;
+        float x, y;
+        building_door(g.field.jail[t] - 1, &x, &y);
+        int keeper = add_actor("Jailkeeper", GUARD, g.townOwner[t], x, y, 18);
+        if (keeper < 0) {
+            for (int slot = 0; slot < count; slot++) {
+                if (g.living.owned[slot] >= 0)
+                    continue;
+                init_actor(slot, "Jailkeeper", GUARD, g.townOwner[t], x, y, 18);
+                g.living.owned[slot] = g.living.anger[slot] = 0;
+                g.living.command[slot] = -1;
+                keeper = slot;
+                break;
+            }
+        }
+        if (keeper >= 0) {
+            g.actors[keeper].homeTown = t;
+            staffed[t] = 1;
+        }
+    }
+}
 void frontier_world_init(void) {
     building_geometry_reset();
     if (!g.frontier.version) {
@@ -573,5 +624,6 @@ void frontier_world_init(void) {
     }
     population_add_roaming_bandits();
     homes_init();
+    separate_contract_guards();
     warrants_init();
 }
