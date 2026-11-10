@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
     a->y = 43;
     C(build_structure(0));
     int b = g.buildingCount - 1;
-    C(!depth_build_ready(b));
+    C(depth_build_ready(b));
     C(!craft_item(1));
     step(25);
     C(depth_build_ready(b));
@@ -119,9 +119,10 @@ int main(int argc, char **argv) {
     inventory_add(a, GRAIN, 3);
     inventory_add(a, WATER, 1);
     Actor before = *a;
+    inventory_remove(a,WATER,1); before=*a;
     C(!craft_item(1) && !memcmp(&before, a, sizeof(*a)));
-    C(depth_fuel(b));
-    C(craft_item(1) && D.buildings[b].fuel == 3);
+    inventory_add(a,WATER,1);
+    C(craft_item(1) && D.buildings[b].fuel == 12);
     /* Formations follow the active member, even if another member was the leader in an old save. */
     fresh();
     isolate();
@@ -340,7 +341,7 @@ int main(int argc, char **argv) {
     C(!depth_validate(&g));
     fresh();
     g.dayTime = 23;
-    C(!depth_trade_open(0));
+    C(depth_trade_open(0));
     g.dayTime = 8;
     C(depth_trade_open(0));
     /* Seven simulated days: bounded state; exhaustive buy/resell spread across

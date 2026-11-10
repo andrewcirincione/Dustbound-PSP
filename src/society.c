@@ -741,6 +741,8 @@ int nearby_actions(void){
          }
      }
  if(room){
+  if(g.buildings[room-1].type==JAIL && bounty_board(room-1)>=0 && a->carrying>=0)
+      add_action(ACTION_BOUNTY_TURN_IN,5,room-1);
   int context=interior_context();
   if(context!=-2)add_action(ACTION_CONTEXT,5,room-1);
   if(context!=-3&&home_state(room-1)==HOME_OWNED)add_action(ACTION_FURNISH,5,room-1);
@@ -769,7 +771,7 @@ int nearby_actions(void){
   if(distance(a->x,a->y,g.population.groups[k].x,g.population.groups[k].y)<8)add_action(ACTION_POPULATION,0,k);
   int count=population_object_count(k);
   for(int j=0;j<count;j++){float x,y;int type=population_object(k,j,&x,&y);if(distance(a->x,a->y,x,y)>1.7f)continue;
-   if(type==1){add_action(ACTION_POPULATION,1,k);if(g.population.groups[k].type==POP_MERCHANTS||g.population.groups[k].type==POP_SMUGGLERS)for(int v=0;v<3;v++)add_action(ACTION_POPULATION,30+v,k);}
+   if(type==1)add_action(ACTION_POPULATION,1,k);
    else if(type==2)add_action(ACTION_POPULATION,10+j,k);
    else if(type==3)add_action(ACTION_POPULATION,20,k);
   }
@@ -808,8 +810,11 @@ void nearby_action_tabs(NearbyTabs *tabs) {
 const NearbyAction *nearby_action(int row){return row>=0&&row<actionCount?&actions[row]:NULL;}
 void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_action(row);if(!x){snprintf(out,size,"Nothing within reach");return;}
  if (x->type == ACTION_INSPECT_HEALTH || x->type == ACTION_EXECUTE) {
-     snprintf(out, size, "%s", x->type == ACTION_INSPECT_HEALTH ? "Check health" : "Execute");
+     snprintf(out, size, "%s", x->type == ACTION_INSPECT_HEALTH ? "Check Health / Stats" : "Execute");
      return;
+ }
+ if (x->type == ACTION_BOUNTY_TURN_IN && x->kind==5) {
+     snprintf(out,size,"Turn in carried bounty");return;
  }
  if (x->type == ACTION_BOUNTY_TURN_IN) {
      snprintf(out, size, "Turn in %s to the jailkeeper", g.actors[g.selected].carrying >= 0 ?
@@ -870,7 +875,7 @@ static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!
  if (x->type == ACTION_SELF_AID || x->type == ACTION_SELF_REPAIR || x->type == ACTION_EMERGENCY || x->type == ACTION_PLAY_DEAD)
      return n == g.selected;
  if (x->type == ACTION_BOUNTY_TURN_IN)
-     return bounty_guard(n, a->carrying);
+     return x->kind==5 ? x->room==n+1 && bounty_board(n)>=0 && a->carrying>=0 : bounty_guard(n, a->carrying);
  if (x->type == ACTION_WARRANTS)
      return !x->room && bounty_board(n) >= 0 && building_door_distance(n,a->x,a->y) <= DOOR_REACH;
  if (x->type == ACTION_FURNISH)
@@ -899,6 +904,10 @@ static const char *action_reason(const NearbyAction *x, int queueing) {
         return "Out of reach";
     if (x->type == ACTION_PLAY_DEAD)
         return "Action unavailable";
+    if(x->type==ACTION_BOUNTY_TURN_IN && x->kind==5){
+        int carried=a->carrying,town=bounty_board(n);
+        if(carried<0||town<0||!(bounty_payers(carried)&(1u<<g.townOwner[town])))return "No bounty accepted by this watch";
+    }
     if (x->type == ACTION_ATTACK && !a->autoattack)
         return "Switch to Fight stance";
     if (x->type == ACTION_EXECUTE)
@@ -965,7 +974,7 @@ static void perform_action(const NearbyAction *x) {
  if (reason) { log_msg("%s.", reason); return; }
  if (x->type != ACTION_SELF_AID && x->type != ACTION_SELF_REPAIR && x->type != ACTION_EMERGENCY)
      g.field.playingDead[g.selected] = 0;
- if (x->type == ACTION_BOUNTY_TURN_IN) { bounty_turn_in(n); return; }
+ if (x->type == ACTION_BOUNTY_TURN_IN) { if(x->kind==5)bounty_turn_in_jail(n);else bounty_turn_in(n); return; }
  if (x->type == ACTION_WARRANTS) {
      ui.warrantTown = bounty_board(n);
      ui.warrantClosed = 0;
@@ -1003,6 +1012,7 @@ void nearby_action_choose(int row){const NearbyAction*p=nearby_action(row);if(!p
  if (reason) { log_msg("%s.", reason); return; }
  if (p->type == ACTION_INSPECT_HEALTH || p->type == ACTION_EXECUTE) {
      ui.nearbyTarget = p->target;
+     ui.inspectTab=0;
      ui.screen = p->type == ACTION_INSPECT_HEALTH ? SCREEN_INSPECT_HEALTH : SCREEN_EXECUTE;
      return;
  }
@@ -1015,8 +1025,10 @@ int society_validate(const Game*v){const Society*s=&v->society;if(!s->version)re
  for(int t=0;t<TOWNS;t++)if(s->crisis[t]<0||s->crisis[t]>2)return 0;
  for(int n=0;n<MAX_ACTORS;n++){if(s->rescueHelper[n]<0||s->rescueHelper[n]>v->actorCount||s->freed[n]<0||s->freed[n]>3||s->captorFaction[n]<0||s->captorFaction[n]>=FACTIONS)return 0;for(int c=0;c<WEAPON_XP_SLOTS;c++)if(!isfinite(s->weaponXP[n][c])||s->weaponXP[n][c]<0||s->weaponXP[n][c]>SKILL_XP_CAP)return 0;if(s->queueCount[n]<0||s->queueCount[n]>ACTION_QUEUE||s->cannibal[n]<0||s->cannibal[n]>2||!isfinite(s->eating[n])||!isfinite(s->suspicion[n])||!isfinite(s->gateMessage[n]))return 0;
   for(int f=0;f<FACTIONS;f++)if(s->wanted[n][f]<0||s->wanted[n][f]>100000||!isfinite(s->recognized[n][f]))return 0;
-  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_FURNISH||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
+  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_EXECUTE||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
    if(a->type==ACTION_WARRANTS||a->type==ACTION_FURNISH){if(a->target>=v->buildingCount||a->kind!=(a->type==ACTION_WARRANTS?3:5))return 0;continue;}
+   if(a->type==ACTION_BOUNTY_TURN_IN && a->kind==5){if(a->target>=v->buildingCount||a->room!=a->target+1)return 0;continue;}
+   if(a->type==ACTION_INSPECT_HEALTH||a->type==ACTION_EXECUTE){if(a->kind||a->target>=v->actorCount)return 0;continue;}
    if(a->type==ACTION_BOUNTY_TURN_IN||a->type==ACTION_PUT_DOWN||a->type==ACTION_LAY_IN_BED){if(a->kind||a->target>=v->actorCount)return 0;continue;}
    if(a->type==ACTION_PACK_BEDROLL||a->type==ACTION_PROPERTY){if(a->kind!=2||a->target>=v->buildingCount)return 0;continue;}
    if(a->type==ACTION_TREAT_OTHER){if(a->kind!=0||a->target>=v->actorCount)return 0;continue;}

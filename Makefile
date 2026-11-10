@@ -6,7 +6,7 @@ INCDIR = src
 CFLAGS = -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation
 LIBS = -lm -lpsppower -lpspaudio
 EXTRA_TARGETS = EBOOT.PBP
-PSP_EBOOT_TITLE = Dust 0.19.0
+PSP_EBOOT_TITLE = Dust 1.0.0
 PSP_EBOOT_ICON = assets/ICON0.png
 PSP_EBOOT_PIC1 = assets/PIC1.png
 PSP_EBOOT_PSAR = assets/DustAmbient.mp3
@@ -22,8 +22,8 @@ EBOOT.PBP: assets/ICON0.png assets/PIC1.png $(PSP_EBOOT_PSAR)
 
 PARAM.SFO: Makefile
 
-src/render.o: src/art_data.h src/settlement_art.h src/structure_art.h src/furniture_art.h src/furniture_models.h src/settlement_art_ids.h src/painted_actor.h src/depth_render.h
-src/interior.o: src/settlement_art_ids.h src/furniture_models.h
+src/render.o: src/menu_art.h src/art_data.h src/settlement_art.h src/structure_art.h src/furniture_art.h src/furniture_models.h src/settlement_art_ids.h src/painted_actor.h src/depth_render.h
+src/interior.o: src/settlement_art_ids.h src/furniture_models.h src/placement.inc
 
 src/world.o: src/regional.h
 

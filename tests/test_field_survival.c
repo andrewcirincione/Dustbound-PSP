@@ -72,6 +72,13 @@ static void gear_and_chests(void) {
     assert(weapon_handling(a, heavy) < 1.05f && actor_capacity(a) > capacity);
     assert(buy_item(3, BEDROLL_ITEM));
     use_item(pack_slot(a, BEDROLL_ITEM));
+    assert(ui.screen==SCREEN_PLACE);
+    int placed=0;
+    for(int i=0;i<16;i++){
+        float angle=i*.39269908f,x=a->x+1.6f*cosf(angle),y=a->y+1.6f*sinf(angle);
+        if(placement_valid(1,-1,x,y)){ui.placeX=x;ui.placeY=y;game_tick(.033f,(Input){.pressed=KEY_CROSS});placed=1;break;}
+    }
+    assert(placed&&ui.screen==SCREEN_WORLD);
     int bed = 0;
     while (bed < g.buildingCount && portable_bedroll(bed) <= 0) bed++;
     assert(bed < g.buildingCount && portable_bedroll(bed) > 0 && depth_build_ready(bed) && !g.baseExists);
@@ -89,7 +96,13 @@ static void gear_and_chests(void) {
     assert(inventory_count(a, BEDROLL_ITEM) == 1 && portable_bedroll(bed) < 0);
     int before = g.buildingCount;
     use_item(pack_slot(a, BEDROLL_ITEM));
-    assert(g.buildingCount == before && portable_bedroll(bed) > 0);
+    assert(ui.screen==SCREEN_PLACE);
+    placed=0;
+    for(int i=0;i<16;i++){
+        float angle=i*.39269908f,x=a->x+1.6f*cosf(angle),y=a->y+1.6f*sinf(angle);
+        if(placement_valid(1,-1,x,y)){ui.placeX=x;ui.placeY=y;game_tick(.033f,(Input){.pressed=KEY_CROSS});placed=1;break;}
+    }
+    assert(placed && g.buildingCount == before && portable_bedroll(bed) > 0);
 
     add_node(a->x, a->y, NODE_LOCKED, SCAVENGERS, CLOTH, 3);
     int n = g.nodeCount - 1;

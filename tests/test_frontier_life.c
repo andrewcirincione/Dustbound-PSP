@@ -67,13 +67,12 @@ static void test_homes(void) {
     purchase(first);
     choose(ACTION_FURNISH,5,first);
     assert(ui.screen==SCREEN_HOME);
-    button(KEY_CROSS);
+    button(KEY_CROSS);assert(ui.screen==SCREEN_PLACE);
+    ui.placeX=homeBays[0][0];ui.placeY=homeBays[0][1];button(KEY_CROSS);
     assert(g.homes.furniture[first][0]==FURN_BED);
-    button(KEY_RIGHT);
-    button(KEY_DOWN);
-    button(KEY_CROSS);
+    choose(ACTION_FURNISH,5,first);button(KEY_DOWN);button(KEY_CROSS);assert(ui.screen==SCREEN_PLACE);
+    ui.placeX=homeBays[1][0];ui.placeY=homeBays[1][1];button(KEY_CROSS);
     assert(g.homes.furniture[first][1]==FURN_CHEST);
-    button(KEY_CIRCLE);
     room_spot(2.55f,1.55f);
     int money=g.money;
     interior_interact();

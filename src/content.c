@@ -263,6 +263,7 @@ void content_init(void) {
     civil_content();
     limbs_content();
     portion_content();
+    itemDefs[DISPATCH_ITEM] = (ItemDef){"Sealed dispatch", "Road reports for the destination watch.", 0, 0, -1, 0, 0, 0xd5bb87, .family=-1, .effect=-1};
     for(int i=BASE_ITEMS;i<ITEMS;i++)if(itemDefs[i].slot==0){
         WeaponDesign d=weapon_design(i);
         if(!weapon_ranged(i))itemDefs[i].range*=1+(d.length-1)*.6f;

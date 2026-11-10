@@ -296,11 +296,11 @@ int main(void) {
     /* Profession perks are bounded, and UI uses the same calculations. */
     fresh();
     a = &g.actors[0];
-    int wood = build_wood_cost(3), price = research_cost();
+    int price = research_cost();
     a->xp[ENGINEERING] = 117612;
     a->xp[SCIENCE] = 117612;
     a->xp[FARMING] = 117612;
-    CHECK(build_wood_cost(3) == wood - 3 && build_wood_cost(0) == 1);
+    CHECK(buildCount == 2 && build_wood_cost(3) == 0 && build_wood_cost(0) == 1);
     CHECK(research_cost() == price * 80 / 100 && harvest_yield(a) == 8);
     a->xp[COOKING] = 12 * 69 * 69;
     a->x = 42;

@@ -37,12 +37,13 @@ static void roaming_bandits(void) {
                 for (int slot = 0; slot < PACK; slot++) {
                     if (!a->pack[slot].item) continue;
                     int item = portion_base(a->pack[slot].item);
-                    assert(a->pack[slot].qty == 1);
+                    assert(a->pack[slot].qty >= 1 && a->pack[slot].qty <= (item==BOLTS?7:item==CLOTH?2:1));
                     if (item == CLOTH) cloth++;
-                    else if (item == JERKY || item == OATCAKE) food++;
+                    else if (food_capacity(item)) food++;
                     else {
-                        assert(item == MEDKIT && portion_percent(a->pack[slot].item) < 100);
-                        dressings++;
+                        if(item==MEDKIT){assert(portion_percent(a->pack[slot].item)<100);dressings++;}
+                        else assert(item==WATER||item==BOLTS||item==IRONBAR||item==COAL||
+                                    (itemDefs[item].slot>=0&&itemDefs[item].quality<=1));
                     }
                     supplies++;
                 }

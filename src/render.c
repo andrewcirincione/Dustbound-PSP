@@ -1,4 +1,5 @@
 #include "game.h"
+#include "menu_art.h"
 #include "combat_pose.h"
 #include "art_data.h"
 #include "settlement_art_ids.h"
@@ -762,7 +763,7 @@ static void objects_draw(void) {
             objects[n++] = (Object){b->x + b->y, 1, i, 0, 0};
         }
         if (building_has_interior(b->type) || b->type == WINDMILL || b->type == WELL || b->type == BED ||
-            b->type == WALL || b->type == SLAVE_YARD) {
+            b->type == WALL || b->type == SLAVE_YARD || b->type == CAMPFIRE) {
             int height;
             BuildingYard *yard = &yards[yardCount++];
             *yard = (BuildingYard){.x = b->x, .y = b->y};
@@ -806,6 +807,10 @@ static void objects_draw(void) {
             if (fabsf(bed->x - cx) < 27 && fabsf(bed->y - cy) < 27) {
                 campX[campCount] = bed->x;
                 campY[campCount++] = bed->y;
+                if(i%3!=1){
+                    float tx=bed->x-2.35f,ty=bed->y-1.6f;int sx,sy;
+                    if(can_walk(tx,ty)){project(tx,ty,&sx,&sy);objects[n++]=(Object){tx+ty,3,26,sx,sy};}
+                }
             }
         }
     for (int k = 0; k < POP_GROUPS; k++) {
@@ -1082,7 +1087,7 @@ static void nearby_labels(int indoors) {
         int enemy = actor_relation(id) < 0;
         const char *role = a->bountyReward ? a->name : escorting_actor(id) ? "Escort caravan" : npc_role_name(a);
         const char *status = a->dead ? " / DEAD" : a->unconscious > 0 ? " / DOWN" : enemy ? " !" : "";
-        snprintf(name,sizeof(name),"%.19s%s%s",role,a->bountyReward?" $":"",status);
+        snprintf(name,sizeof(name),"%.19s%s%s",role,"",status);
         world_label(x,fighting ? y+16 : y-(a->dead||a->unconscious>0 ? 24 : 48),
                     name,enemy&&!a->dead ? RED : label_color(a->faction),a->faction);
         if (fighting && a->hitFlash > 0 && a->impactKind) {
@@ -1635,16 +1640,12 @@ static void hud(void) {
         detailed_status();
 }
 static void title(void) {
-    ui.camX = 28;
-    ui.camY = 27;
-    terrain();
-    objects_draw();
-    for (int y = 0; y < 272; y++)
-        for (int x = 0; x < 290; x++) {
-            uint32_t c = fb[y * pitch + x];
-            uint32_t rgb = ((c & 255) << 16) | (c & 0xff00) | ((c >> 16) & 255);
-            fb[y * pitch + x] = abgr(blend(rgb, INK, .84f));
-        }
+    for(int y=0;y<272;y++)for(int x=0;x<480;x++) {
+        uint32_t c=menuColors[menuPixels[y*480+x]];
+        uint32_t rgb=((c&255)<<16)|(c&0xff00)|((c>>16)&255);
+        float shadeAmount = x < 275 ? .63f * (1-x/375.f) : .05f;
+        fb[y*pitch+x]=abgr(blend(rgb,INK,shadeAmount));
+    }
     line(30, 45, 205, 45, EDGE);
     text(29, 61, GAME_NAME, GOLD, 3);
     const char *opts[] = {"NEW EXPEDITION", "CONTINUE EXPEDITION", "FIELD GUIDE"};
@@ -1656,7 +1657,7 @@ static void title(void) {
         }
         text(47, y, opts[i], i == ui.selection ? TEXT : MUTED, 1);
     }
-    text(31, 251, "\001 BEGIN    VERSION " VERSION " / ALPHA", GOLD, 1);
+    text(31, 251, "\001 BEGIN    VERSION " VERSION, GOLD, 1);
 }
 static void overlay_header(const char *name, const char *sub) {
     panel(14, 28, 452, 224);
@@ -1795,11 +1796,11 @@ static void pack_screen(void) {
     if(wearable)preview.gear[itemDefs[it].slot]=it;
     portrait_scale(&preview,103,69,28,81,1);
     center(79,150,wearable?"PREVIEW":"WORN",wearable?GOLD:MUTED,1);
-    text(371,72,"QTY",MUTED,1);
-    text(406,72,"VAL/EA",MUTED,1);
+    text(371,82,"QTY",MUTED,1);
+    text(406,82,"VAL/EA",MUTED,1);
     int first=start_row(item_view_row(ui.selection),count,10);
     for(int j=0;j<10&&first+j<count;j++) {
-        int k=item_view_slot(first+j),y=82+j*10,id=a->pack[k].item;
+        int k=item_view_slot(first+j),y=94+j*9,id=a->pack[k].item;
         if(k==ui.selection){rect(139,y-1,310,10,0x4a4030);rect(139,y-1,2,10,TEAL);}
         if (a->stolen[k]) text(146,y,"!",RED,1);
         clipped(155,y,itemDefs[id].name,34,a->stolen[k]?RED:k==ui.selection?TEXT:MUTED);
@@ -1831,7 +1832,7 @@ static void pack_screen(void) {
 }
 static float skill_progress(float xp, int level) {
     float low = 12.f * (level - 1) * (level - 1), high = 12.f * level * level;
-    return level >= 100 ? 100 : fminf(100, fmaxf(0, 100 * (xp - low) / (high - low)));
+    return level >= SKILL_CAP ? 100 : fminf(100, fmaxf(0, 100 * (xp - low) / (high - low)));
 }
 static void skills_screen(void) {
     const Actor *a = &g.actors[g.selected];
@@ -1908,9 +1909,32 @@ static void health_screen(int actor, int inspect) {
     Actor *a = &g.actors[actor];
     DepthActor *z = &g.depth.actors[actor];
     char b[110];
-    overlay_header(inspect ? "HEALTH" : "HEALTH & RECOVERY", inspect ? "\002 BACK" :
+    overlay_header(inspect ? "CHECK HEALTH / STATS" : "HEALTH & RECOVERY", inspect ? "" :
         z->captive ? "\001 ESCAPE   \003 REPAIR LIMBS   \004 MAINTAIN GEAR" :
                      "\001 BANDAGE   \003 REPAIR LIMBS   \004 MAINTAIN GEAR");
+    if(inspect){
+        static const char*tab[]={"HEALTH","STATS","BOUNTY"};
+        for(int i=0;i<3;i++)text(31+i*138,61,tab[i],ui.inspectTab==i?TEAL:MUTED,1);
+        text(257,237,"\014 / \005 / \006 TAB",MUTED,1);
+        if(ui.inspectTab==1){
+            snprintf(b,sizeof(b),"%.16s / %s",a->name,factionNames[a->faction]);clipped(31,83,b,67,GOLD);
+            for(int i=0;i<SKILLS;i++){
+                int x=i<10?31:245,y=102+(i%10)*12;
+                text(x,y,skillNames[i],MUTED,1);snprintf(b,sizeof(b),"%d",level(a,i));text(x+162,y,b,TEXT,1);
+            }
+            int c=weapon_class(a->gear[0]);
+            if(c>=0){snprintf(b,sizeof(b),"%s %d / %.34s",weaponClassNames[c],weapon_class_level(a,c),itemDefs[a->gear[0]].name);clipped(31,224,b,68,TEAL);}
+            return;
+        }
+        if(ui.inspectTab==2){
+            text(31,85,a->name,GOLD,1);
+            if(!bounty_payers(actor)){text(31,110,"No known bounty.",MUTED,1);return;}
+            snprintf(b,sizeof(b),"ALIVE  %d SILVER",bounty_reward(actor,1));text(31,110,b,TEAL,1);
+            snprintf(b,sizeof(b),"DEAD   %d SILVER",bounty_reward(actor,0));text(31,128,b,MUTED,1);
+            text(31,154,"ACCEPTED BY",GOLD,1);bounty_details(actor,b,sizeof(b));wrap(31,169,66,b+6,TEXT);
+            return;
+        }
+    }
     snprintf(b, sizeof(b), "%.16s / %s", a->name, a->dead ? "DEAD" : recovery_coma(a) ? "RECOVERY COMA" :
              a->unconscious > 0 ? "KNOCKED OUT" : "AWAKE");
     text(31, 83, b, a->unconscious > 0 ? GOLD : TEAL, 1);
@@ -2329,17 +2353,12 @@ static void trade_screen(void) {
 }
 
 static void build_screen(void) {
-    char b[100];
-    overlay_header("BUILD AN OUTPOST", "\001 PLACE BESIDE SELECTED MEMBER. OUTSIDE VILLAGES ONLY.");
-    static const int iron[] = {0, 0, 0, 3, 1, 0, 0, 3};
-    for (int i = 0; i < buildCount; i++) {
-        snprintf(b, 100, "%d TIMBER  %d IRON", build_wood_cost(i), iron[i]);
-        row(86 + i * 17, i == ui.selection, buildNames[i], b);
-    }
-    Actor *a = &g.actors[g.selected];
-    snprintf(b, sizeof(b), "HELD: %d TIMBER / %d IRON / TIER %d / PLACE AT +2m EAST",
-             inventory_count(a, WOOD), inventory_count(a, IRONBAR), g.tech);
-    text(31, 225, b, MUTED, 1);
+    overlay_header("CAMP", "\001 CHOOSE A SPOT");
+    char value[40];Actor*a=&g.actors[g.selected];
+    snprintf(value,sizeof(value),"TIMBER %d/%d",inventory_count(a,WOOD),build_wood_cost(0));
+    row(101,ui.selection==0,"Campfire",value);
+    snprintf(value,sizeof(value),"BEDROLL %d/1",inventory_count(a,BEDROLL_ITEM));
+    row(127,ui.selection==1,"Bedroll",value);
 }
 static const char *craft_station_name(int type){return type==FORGE?"FORGE":type==CAMPFIRE?"CAMPFIRE":"RESEARCH BENCH";}
 static int craft_readiness(const CraftRequirements*r,char*out,int size){
@@ -2383,8 +2402,8 @@ static void craft_screen(void) {
 static void research_screen(void) {
     char b[100];
     overlay_header("OLD-WORLD RESEARCH", "A BENCH, SALVAGED RELICS, AND A LITTLE CURIOSITY.");
-    const char *tiers[] = {"I   METALWORK / SABRES / WIND PUMPS", "II  ARMOR FORGING / PLATE CUIRASS",
-                           "III PROSTHETICS / MECHANICAL LIMBS"};
+    const char *tiers[] = {"I   METALWORK / SABRES", "II  ARMOR FORGING / PLATE CUIRASS",
+                           "III MASTERWORK FORGING"};
     for (int i = 0; i < 3; i++) {
         text(33, 94 + i * 31, tiers[i], g.tech > i ? TEAL : TEXT, 1);
         text(379, 94 + i * 31, g.tech > i ? "DONE" : "LOCKED", g.tech > i ? TEAL : MUTED, 1);
@@ -2400,17 +2419,21 @@ static void research_screen(void) {
 }
 static void menu_screen(void) {
     overlay_header("PAUSED", "\005/\006 TAB   \015 CHOOSE   \001 OPEN   \007 RESUME");
-    static const char *tabs[] = {"PAUSE", "SQUAD", "WORLD"};
-    for (int i = 0; i < 3; i++) {
-        int x = 28 + i * 142;
-        if (i == ui.menuTab) rect(x, 80, 136, 17, 0x494132);
-        center(x + 68, 85, tabs[i], i == ui.menuTab ? TEAL : MUTED, 1);
+    static const char *tabs[] = {"PAUSE", "SQUAD", "WORLD", "CAMP & HOME"};
+    for (int i = 0; i < 4; i++) {
+        int x = 28 + i * 107;
+        if (i == ui.menuTab) rect(x, 80, 103, 17, 0x494132);
+        center(x + 51, 85, tabs[i], i == ui.menuTab ? TEAL : MUTED, 1);
     }
     int count = pause_menu_count();
     for (int i = 0; i < count; i++) {
         char value[24] = "";
         if (ui.menuTab == 0 && i == 3) snprintf(value, sizeof(value), "%dX", ui.speed);
         row(103 + i * 14, ui.selection == i, pause_menu_label(i), value);
+        if(ui.menuTab==3 && i==1 && (!g.interiorBuilding || home_state(g.interiorBuilding-1)!=HOME_OWNED)) {
+            rect(31,102+i*14,400,10,ui.selection==i?0x4a4030:INK);
+            text(32,103+i*14,pause_menu_label(i),0x68645b,1);
+        }
     }
 }
 static void theft_screen(void) {
@@ -2560,7 +2583,7 @@ static void requirement_cell(int cell,const char*label,int need,int have){
     int x=29+(cell%2)*211,y=177+(cell/2)*13;char b[60];clipped(x,y,label,22,TEXT);snprintf(b,sizeof(b),"%d/%d",have,need);text(x+138,y,b,have>=need?0x73c58b:RED,1);
 }
 static void forge_screen(void) {
-    overlay_header("EQUIPMENT FORGE", "\014 CONFIGURE   \001 CHOOSE   \003 RECIPES");
+    overlay_header("EQUIPMENT FORGE", "\014 CONFIGURE   \001 CHOOSE");
     int it=forge_selection_item();ItemDef*d=&itemDefs[it];Actor a=preview_actor();a.gear[d->slot]=it;
     portrait_scale(&a,150,68,30,80,1);
     char summary[60];snprintf(summary,sizeof(summary),"%s %d / WEIGHT %d",d->slot?"ARMOR":"DAMAGE",d->slot?d->armor:d->power,d->weight);text(30,152,summary,TEXT,1);
@@ -2839,6 +2862,9 @@ static void factions_screen(void) {
                 townsHeld++;
         snprintf(b, 100, "%d TOWNS  %+d REP  %d WANTED", townsHeld, g.rep[f], wanted_amount(&g.actors[g.selected],f));
         row(80 + f * 12, ui.selection == f, factionNames[f], b);
+        int outsider=f==HOSTILE||f==WILDLIFE||g.rep[f]<-25;
+        for(int t=0;t<TOWNS;t++)if((t==7||t==11||t==14||t==OLD_TOWNS+1)&&g.townOwner[t]==towns[t].faction&&g.townOwner[t]==f)outsider=1;
+        if(outsider)text(32,80+f*12,factionNames[f],RED,1);
         rect(19,80+f*12,7,7,factionColors[f]);
     }
     const Actor *a = &g.actors[g.selected];
@@ -2884,6 +2910,40 @@ static void storage_screen(void) {
             clipped(44,y,itemDefs[st->item].name,55,RED);
         }
     }
+    if(depot_public(ui.storageIndex)){
+        int fee=depot_fee(ui.storageIndex,ui.storageSide,ui.selection);
+        const Stack*stack=ui.storageSide?storage_stack(ui.storageIndex,ui.selection):&a->pack[ui.selection];
+        char terms[100];snprintf(terms,sizeof(terms),"FEE %d / ITEM   STACK %d   PURSE %d",fee,fee*(stack?stack->qty:0),g.money);
+        text(31,224,terms,g.money>=fee?GOLD:RED,1);
+    }
+}
+static void placement_draw(void) {
+    int indoors=ui.placeBuilding>=0,x,y;
+    float w=.65f,d=.65f;
+    if(indoors)room_project(ui.placeX,ui.placeY,&x,&y);else project(ui.placeX,ui.placeY,&x,&y);
+    if(indoors && ui.placeType){
+        const HomeFurniture*f=&homeFurniture[ui.placeType];
+        const FurnitureModel*m=&furnitureModels[furniture_art_index(f->art)];
+        float span=fminf((f->w+f->d)*(f->action==ROOM_REST?.86f:1),m->span/(2*ROOM_MAX_SCALE));
+        float share=furniture_is_bed(f->art)&&f->d>f->w?1-m->xShare:m->xShare;
+        InteriorProp p={ui.placeX,ui.placeY,span*share,span*(1-share),f->art,f->action};
+        w=p.w;d=p.d;room_furniture(&p);
+    } else if(!indoors)art(ui.placeType==1?ART_BEDROLL:27,x,y,1.08f,0);
+    int valid=indoors&&!ui.placeType?1:placement_valid(ui.placeType,ui.placeBuilding,ui.placeX,ui.placeY);
+    uint32_t color=valid?TEAL:RED;int px[4],py[4];
+    const float corners[4][2]={{-1,-1},{1,-1},{1,1},{-1,1}};
+    for(int i=0;i<4;i++){
+        float xx=ui.placeX+corners[i][0]*w,yy=ui.placeY+corners[i][1]*d;
+        if(indoors)room_project(xx,yy,&px[i],&py[i]);else project(xx,yy,&px[i],&py[i]);
+    }
+    for(int i=0;i<4;i++)line(px[i],py[i],px[(i+1)%4],py[(i+1)%4],color);
+    line(x-4,y,x+4,y,color);line(x,y-3,x,y+3,color);
+    rect(0,0,480,34,INK);
+    rect(0,237,480,35,INK);
+    const char*name=indoors?(ui.placeType?homeFurniture[ui.placeType].name:"Move / remove furniture"):ui.placeType?"Bedroll":"Campfire";
+    text(18,11,name,GOLD,1);
+    text(18,249,indoors&&!ui.placeType?"\011 MOVE   \001 PICK UP   \003 REMOVE   \002 BACK":"\011 MOVE   \001 PLACE   \002 BACK",TEXT,1);
+    if(!valid){rect(158,215,164,15,INK);center(240,220,"SPACE OBSTRUCTED",RED,1);}
 }
 static void home_screen(void) {
     int id = ui.homeSite, town = building_town(id);
@@ -2900,40 +2960,15 @@ static void home_screen(void) {
         text(190,179,"VACANT",TEAL,1);
         return;
     }
-    overlay_header("FURNISH HOUSE", "\014 SPOT   \015 FURNITURE   \001 PLACE   \003 REMOVE");
-    const int cx = 126, cy = 112, scale = 13;
-    texture_plane(104,cx,cy,7*scale,7*scale/2,-7*scale,7*scale/2,2,2,.9f);
-    for (int bay = 0; bay < HOME_BAYS; bay++) {
-        float u = homeBays[bay][0], v = homeBays[bay][1];
-        int x = cx + (u-v)*scale, y = cy + (u+v)*scale*.5f;
-        int placed = g.homes.furniture[id][bay];
-        int preview = placed ? placed : bay == ui.homeBay ? ui.selection : FURN_EMPTY;
-        if (bay == ui.homeBay)
-            rect(x-12,y-3,24,7,TEAL);
-        if (preview) {
-            int art = FURNITURE_ART_FIRST + furniture_art_index(homeFurniture[preview].art);
-            const ArtSprite *s = scene_sprite(art);
-            scaled_art(art,x-s->ax/2,y-s->ay/2,s->w/2,s->h/2,placed ? 1.02f : .58f,0,0);
-        }
-        if (!placed || bay == ui.homeBay) {
-            snprintf(buf,sizeof(buf),"%d",bay+1);
-            text(x-3,y+7,buf,bay==ui.homeBay ? TEXT : MUTED,1);
-        }
+    overlay_header("PLACE FURNITURE", "\015 CHOOSE   \001 PLACE");
+    for(int f=1;f<=FURN_TYPES;f++){
+        char price[24]="";
+        if(f<FURN_TYPES)snprintf(price,sizeof(price),"%d SILVER",homeFurniture[f].price);
+        row(90+(f-1)*20,f==ui.selection,f==FURN_TYPES?"Move / remove furniture":homeFurniture[f].name,price);
     }
-    text(253,87,"FURNITURE",MUTED,1);
-    for (int f = 1; f < FURN_TYPES; f++) {
-        int y = 103 + (f-1)*17;
-        if (f == ui.selection) rect(245,y-3,198,14,0x4a4030);
-        text(253,y,homeFurniture[f].name,f == ui.selection ? TEXT : MUTED,1);
-        snprintf(buf,sizeof(buf),"%d",homeFurniture[f].price);
-        text(432-text_width(buf),y,buf,g.money >= homeFurniture[f].price ? GOLD : RED,1);
-    }
-    int placed = g.homes.furniture[id][ui.homeBay];
-    snprintf(buf,sizeof(buf),"SPOT %d  /  %s",ui.homeBay+1,placed ? homeFurniture[placed].name : "Empty");
-    text(253,193,buf,TEAL,1);
-    snprintf(buf,sizeof(buf),"PURSE  %d SILVER",g.money);
-    text(253,212,buf,MUTED,1);
+    snprintf(buf,sizeof(buf),"PURSE %d SILVER",g.money);text(31,220,buf,GOLD,1);
 }
+
 static void warrants_screen(void) {
     int ids[WARRANT_ROWS];
     int count = ui.warrantClosed ? warrant_receipt_count() : warrant_list(ui.warrantTown,ids);
@@ -2991,32 +3026,24 @@ static void loot_screen(void) {
     Actor *a=&g.actors[ui.lootActor];int count=item_view_count();char b[100];
     int theft=!a->squad&&a->faction>FREE&&a->faction!=HOSTILE&&a->faction!=WILDLIFE;
     overlay_header("LOOT",theft?"\001 STEAL ONE   \003 STEAL STACK   \015 CHOOSE":"\001 TAKE ONE   \003 TAKE STACK   \015 CHOOSE");
-    text(368,73,"QTY",MUTED,1);
-    text(405,73,"VAL/EA",MUTED,1);
+    text(368,82,"QTY",MUTED,1);
+    text(405,82,"VAL/EA",MUTED,1);
     int first=start_row(item_view_row(ui.selection),count,6);
     for(int j=0;j<6&&first+j<count;j++) {
-        int k=item_view_slot(first+j),id=limb_loot_item(a,k),y=84+j*13;
+        int k=item_view_slot(first+j),id=limb_loot_item(a,k),y=94+j*12;
         if(k==ui.selection)rect(25,y-3,425,13,0x4a4030);
         int stolen = theft || (k < PACK ? a->stolen[k] : k < PACK + GEARS ? a->gearStolen[k-PACK] :
-                               limb_owner(a, LARM + k - PACK - GEARS));
+                               k == LOOT_LAYER_SLOT ? g.depth.actors[ui.lootActor].layerOwner : limb_owner(a, LARM + k - PACK - GEARS));
         if (stolen) text(31,y,"!",RED,1);
-        snprintf(b,sizeof(b),"%s%.48s",k>=PACK+GEARS?"FITTED: ":k>=PACK?"EQUIPPED: ":"",itemDefs[id].name);
+        snprintf(b,sizeof(b),"%s%.48s",k==LOOT_LAYER_SLOT?"UNDERLAYER: ":k>=PACK+GEARS?"FITTED: ":k>=PACK?"EQUIPPED: ":"",itemDefs[id].name);
         clipped(42,y,b,52,stolen?RED:k==ui.selection?TEXT:MUTED);
         snprintf(b,sizeof(b),"%d",k<PACK?a->pack[k].qty:1);text(386-text_width(b),y,b,GOLD,1);
         snprintf(b,sizeof(b),"%d",itemDefs[id].price);text(442-text_width(b),y,b,TEXT,1);
     }
     int it=!count?0:limb_loot_item(a,ui.selection);
-    if (a->bountyReward > 0) {
-        char payers[110];
-        bounty_details(ui.lootActor, payers, sizeof(payers));
-        snprintf(b, sizeof(b), "BOUNTY  %d ALIVE / %d DEAD", bounty_reward(ui.lootActor, 1), bounty_reward(ui.lootActor, 0));
-        text(31, 73, b, GOLD, 1);
-        clipped(31, 160, payers, 68, TEXT);
-    } else {
-        snprintf(b,sizeof(b),"%d ITEMS / %.30s",count,a->name);
-        text(31,160,b,MUTED,1);
-    }
-    equipment_comparison(it,173);
+    snprintf(b,sizeof(b),"%d ITEMS / %.30s",count,a->name);
+    text(31,167,b,MUTED,1);
+    equipment_comparison(it,179);
 }
 static void assist_screen(void) {
     Actor *a = &g.actors[ui.lootActor];
@@ -3066,6 +3093,7 @@ void render_game(uint32_t *pixels, int stride) {
     Actor *a = &g.actors[g.selected];
     ui.camX = a->x + (g.shake > 0 ? sinf(g.time * 97) * g.shake * .12f : 0);
     ui.camY = a->y + (g.shake > 0 ? cosf(g.time * 83) * g.shake * .12f : 0);
+    if(ui.screen==SCREEN_PLACE && !g.interiorBuilding){ui.camX=(a->x+ui.placeX)*.5f;ui.camY=(a->y+ui.placeY)*.5f;}
     if (g.interiorBuilding)
         interior_draw();
     else {
@@ -3125,6 +3153,7 @@ void render_game(uint32_t *pixels, int stride) {
     case SCREEN_ENGAGE: engage_screen();break;
     case SCREEN_LIFE:case SCREEN_POLITICS:life_screen();break;
     case SCREEN_ACTIONS: actions_screen();break;
+    case SCREEN_PLACE: placement_draw();break;
     case SCREEN_INSPECT_HEALTH: health_screen(ui.nearbyTarget, 1);break;
     case SCREEN_EXECUTE: execute_screen();break;
     case SCREEN_THEFT:

@@ -174,7 +174,8 @@ static void shop_and_inn(void) {
     assert(actor_inside(&g.actors[1]) == shop + 1);
     g.dayTime = 23;
     for (int i = 0; i < 220; i++) town_npc_routine(1, .05f);
-    assert(!actor_inside(&g.actors[1]));
+    assert(actor_inside(&g.actors[1])==shop+1 || building_door_distance(shop,g.actors[1].x,g.actors[1].y)<4);
+    assert(depth_trade_open(town));
     assert(!building_has_interior(BENCH));
     at_door(a, bench);
     assert(!interior_enter(bench));

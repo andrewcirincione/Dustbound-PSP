@@ -111,7 +111,7 @@ int limb_surgery(int sn,int pn,int l){
  if(g.money<400){log_msg("Removal surgery costs 400 silver.");return 0;}
  g.money-=400;limb_sever(a,l,1);dress_wounds(a);log_msg("Venn removed %s and closed the wound. Fit a replacement.",limbNames[l]);return 1;
 }
-int limb_loot_item(const Actor*a,int slot){return slot<0?0:slot<PACK?a->pack[slot].item:slot<PACK+GEARS?a->gear[slot-PACK]:slot<PACK+GEARS+4?limb_installed(a,LARM+slot-PACK-GEARS):0;}
+int limb_loot_item(const Actor*a,int slot){return slot<0?0:slot<PACK?a->pack[slot].item:slot<PACK+GEARS?a->gear[slot-PACK]:slot<PACK+GEARS+4?limb_installed(a,LARM+slot-PACK-GEARS):slot==LOOT_LAYER_SLOT&&a>=g.actors&&a<g.actors+g.actorCount?g.depth.actors[a-g.actors].layer:0;}
 void limb_open(int screen){ui.screen=screen;ui.selection=0;ui.scroll=0;}
 int limb_fit_slot(int row){Actor*a=&g.actors[g.selected];for(int i=0;i<PACK;i++)if(limb_item_grade(a->pack[i].item)>=0&&limb_item_leg(a->pack[i].item)==(ui.limbTarget>=LLEG)&&row--==0)return i;return -1;}
 int limb_fit_count(void){int n=0;while(limb_fit_slot(n)>=0)n++;return n;}

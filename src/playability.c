@@ -4,6 +4,7 @@
 #include <string.h>
 
 int npc_role(const Actor *a) {
+    if (a->voice == ROLE_DEPOT) return ROLE_DEPOT;
     if (a->voice == ROLE_MERCENARY)
         return ROLE_MERCENARY;
     uintptr_t addr = (uintptr_t)a, start = (uintptr_t)g.actors;
@@ -42,12 +43,12 @@ const char *npc_role_name(const Actor *a) {
     if (a->kind == BEAST)
         return "BEAST";
     static const char *names[] = {"RESIDENT", "MERCHANT", "RECRUIT", "MARSHAL", "INNKEEPER",
-                                  "MEDIC",    "SMITH",    "BARBER",  "SCOUT",   "CONTRACT GUARD"};
+                                  "MEDIC",    "SMITH",    "BARBER",  "SCOUT",   "CONTRACT GUARD", "LEADER", "DEPOT CLERK"};
     return names[npc_role(a)];
 }
 static const int services[][8] = {
  {6,12,8,-1}, {0,14,1,6,12,8,-1}, {6,12,18,8,-1}, {1,4,6,8,-1}, {0,2,1,20,6,12,8,-1},
- {3,6,12,8,-1}, {0,1,6,12,8,-1}, {5,6,12,8,-1}, {1,14,6,12,8,-1}, {9,10,6,12,8,-1}};
+ {3,6,12,8,-1}, {0,1,6,12,8,-1}, {5,6,12,8,-1}, {1,14,6,12,8,-1}, {9,10,6,12,8,-1}, {6,12,8,-1}, {21,6,8,-1}};
 int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
         return 0;
@@ -85,6 +86,7 @@ const char *dialogue_option(int actor, int row) {
                                    "End contract. No refund.",
                                    "Tell me about your faction.","","Trade routes and prices."};
     int action = dialogue_action(actor, row);
+    if(action==21)return "Store or withdraw goods.";
     if(action==16)return "Removal surgery. 400 silver";
     if(action==17)return "Show me mechanical limbs.";
     if(action==18)return "What have you heard?";
@@ -539,7 +541,7 @@ int nearby_service(int role) {
 }
 int loot_take(int slot, int all) {
     Actor *a = &g.actors[g.selected];
-    if (ui.lootActor < 0 || ui.lootActor >= g.actorCount || slot < 0 || slot >= PACK + GEARS + 4)
+    if (ui.lootActor < 0 || ui.lootActor >= g.actorCount || slot < 0 || slot >= LOOT_SLOTS)
         return 0;
     Actor *b = &g.actors[ui.lootActor];
     if (!conscious(a) || (!b->dead && b->unconscious <= 0) || depth_distance(a, b) > TALK_REACH) {
@@ -548,7 +550,7 @@ int loot_take(int slot, int all) {
     }
     int it = limb_loot_item(b,slot);
     int qty = slot < PACK && all ? b->pack[slot].qty : 1;
-    int owner = slot < PACK ? b->stolen[slot] : slot<PACK+GEARS?b->gearStolen[slot-PACK]:limb_owner(b,LARM+slot-PACK-GEARS);
+    int owner = slot < PACK ? b->stolen[slot] : slot<PACK+GEARS?b->gearStolen[slot-PACK]:slot==LOOT_LAYER_SLOT?g.depth.actors[ui.lootActor].layerOwner:limb_owner(b,LARM+slot-PACK-GEARS);
     int theft = !b->squad && b->faction > FREE && b->faction != HOSTILE && b->faction != WILDLIFE;
     if (theft)
         owner = b->faction;
@@ -558,6 +560,7 @@ int loot_take(int slot, int all) {
     }
     if (slot < PACK)
         inventory_remove_slot(b, slot, qty);
+    else if(slot==LOOT_LAYER_SLOT){g.depth.actors[ui.lootActor].layer=0;g.depth.actors[ui.lootActor].layerOwner=0;}
     else if(slot>=PACK+GEARS){int l=LARM+slot-PACK-GEARS;limb_set(b,l,0,0);b->health[l]=0;g.depth.actors[ui.lootActor].trauma[l]=0;}
     else {
         b->gear[slot - PACK] = 0;
@@ -710,7 +713,7 @@ static int view_item(int slot) {
     return it;
 }
 static int view_limit(void) {
-    return ui.screen == SCREEN_LOOT ? PACK + GEARS + 4 :
+    return ui.screen == SCREEN_LOOT ? LOOT_SLOTS :
            ui.screen == SCREEN_STORAGE && ui.storageSide ? storage_slots(ui.storageIndex) : PACK;
 }
 int item_view_count(void) {

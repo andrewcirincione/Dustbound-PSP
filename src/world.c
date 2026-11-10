@@ -588,89 +588,108 @@ int forge_equipment(int it) {
     log_msg("Forged %s.", d->name);
     return 1;
 }
-int storage_slots(int building) {
-    if (home_state(building) == HOME_OWNED)
-        return HOME_STASH;
-    return building >= 0 && building < g.buildingCount && g.buildings[building].type == STORE ? 16 : 0;
+static int depotMap[MAX_BUILDINGS],depotMapCount,depotMapBuildings=-1;
+static uint32_t depotMapSeed;
+static float depotMapTime=-1;
+static void depot_map(void){
+    if(depotMapBuildings==g.buildingCount && depotMapSeed==g.seed && depotMapTime==g.time)return;
+    depotMapCount=0;
+    for(int b=0;b<g.buildingCount;b++)if(g.buildings[b].type==STORE&&g.buildings[b].owner<0)depotMap[depotMapCount++]=b;
+    depotMapBuildings=g.buildingCount;depotMapSeed=g.seed;depotMapTime=g.time;
 }
-const Stack *storage_stack(int building, int slot) {
-    if (slot < 0 || slot >= storage_slots(building))
-        return NULL;
-    return home_state(building) == HOME_OWNED ? &g.homes.stash[slot] : &g.buildings[building].storage[slot];
+int depot_public(int b) {
+    return b>=0 && b<g.buildingCount && g.buildings[b].type==STORE && g.buildings[b].owner<0;
 }
-int storage_owner(int building, int slot) {
-    return home_state(building) == HOME_OWNED && slot >= 0 && slot < HOME_STASH ? g.homes.stolen[slot] : FREE;
+int depot_clerk(int b) {
+    if(!depot_public(b))return -1;
+    int t=building_town(b),n=t>=0?g.plans.depotClerk[t]-1:-1;
+    return n>=0&&n<g.actorCount&&g.actors[n].active&&!g.actors[n].dead&&g.actors[n].voice==ROLE_DEPOT?n:-1;
 }
-int storage_transfer(int b, int from, int slot) {
-    int count = storage_slots(b);
-    if (!count)
-        return 0;
-    Actor *a = &g.actors[g.selected];
-    Building *z = &g.buildings[b];
-    int home = home_state(b) == HOME_OWNED;
-    if (!conscious(a))
-        return 0;
-    if (home) {
-        InteriorProp props[ROOM_PROPS];
-        int reach = 0;
-        if (actor_inside(a) == b + 1) {
-            int n = interior_props(b, props);
-            for (int i = 0; i < n; i++)
-                reach |= props[i].action == ROOM_HOME_STASH &&
-                         distance(depth_x(a), depth_y(a), props[i].x, props[i].y) < 2;
+int depot_site(int actor) {
+    if(actor<0||actor>=g.actorCount||npc_role(&g.actors[actor])!=ROLE_DEPOT)return -1;
+    int t=g.actors[actor].homeTown;
+    for(int b=0;b<g.buildingCount;b++)if(depot_public(b)&&building_town(b)==t)return b;
+    return -1;
+}
+void depot_init(void) {
+    depotMapBuildings=-1;
+    for(int b=0;b<g.buildingCount;b++)if(depot_public(b)){
+        int town=building_town(b);if(town<0||g.plans.depotClerk[town])continue;
+        int n=-1;
+        for(int i=0;i<g.actorCount;i++){
+            Actor*a=&g.actors[i];
+            if(a->active&&!a->dead&&!a->squad&&a->homeTown==town&&a->kind==SETTLER&&
+               npc_role(a)==ROLE_CITIZEN&&!politics_leader_title(i)&&civil_elite_index(i)<0&&
+               !living_owned(i)&&!regional_named(i)&&depth_named(i)<0){n=i;break;}
         }
-        if (!reach)
-            return 0;
-    } else if (actor_inside(a) ? nearby_station(STORE, 1.7f) != b :
-               distance(a->x, a->y, z->x, z->y) > 1.7f && building_door_distance(b, a->x, a->y) > DOOR_REACH) {
-        log_msg("Walk to the depot before transferring goods.");
-        return 0;
+        Building*z=&g.buildings[b];
+        if(n<0)for(int i=0;i<g.actorCount;i++)if(g.living.owned[i]<0){n=i;init_actor(n,"Depot clerk",SETTLER,g.townOwner[town],z->x,z->y,9);g.living.owned[n]=0;break;}
+        if(n<0&&g.actorCount<MAX_ACTORS-8)n=add_actor("Depot clerk",SETTLER,g.townOwner[town],z->x,z->y,9);
+        if(n<0)continue;
+        Actor*a=&g.actors[n];
+        a->voice=ROLE_DEPOT;a->homeTown=town;a->faction=g.townOwner[town];
+        a->homeX=z->x;a->homeY=z->y;g.residentHome[n]=0;
+        snprintf(a->name,sizeof(a->name),"Depot clerk");g.plans.depotClerk[town]=n+1;
+        if(g.time<1){actor_enter_room(n,b);g.depth.actors[n].rx=3.4f;g.depth.actors[n].ry=2.98f;}
     }
-    Stack *stacks = home ? g.homes.stash : z->storage;
-    if (from) {
-        if (slot < 0 || slot >= count || !stacks[slot].item)
-            return 0;
-        int it = stacks[slot].item;
-        if (!inventory_add_owned(a, it, 1, storage_owner(b, slot))) {
-            log_msg("Pack full.");
-            return 0;
-        }
-        if (--stacks[slot].qty == 0) {
-            stacks[slot].item = NONE;
-            if (home)
-                g.homes.stolen[slot] = FREE;
-        }
-        log_msg("Withdrew %s.", itemDefs[it].name);
+}
+static int depot_slot_building(int slot) {
+    depot_map();return slot>=0&&slot/16<depotMapCount?depotMap[slot/16]:-1;
+}
+int storage_slots(int building) {
+    if(home_state(building)==HOME_OWNED)return HOME_STASH;
+    if(depot_public(building)){
+        depot_map();return depotMapCount*16;
+    }
+    return building>=0&&building<g.buildingCount&&g.buildings[building].type==STORE?16:0;
+}
+const Stack *storage_stack(int building,int slot) {
+    if(slot<0||slot>=storage_slots(building))return NULL;
+    if(home_state(building)==HOME_OWNED)return &g.homes.stash[slot];
+    if(depot_public(building))return &g.buildings[depot_slot_building(slot)].storage[slot%16];
+    return &g.buildings[building].storage[slot];
+}
+int storage_owner(int building,int slot) {
+    return home_state(building)==HOME_OWNED&&slot>=0&&slot<HOME_STASH?g.homes.stolen[slot]:FREE;
+}
+int depot_fee(int b,int from,int slot) {
+    if(!depot_public(b))return 0;
+    const Stack*stack=from?storage_stack(b,slot):slot>=0&&slot<PACK?&g.actors[g.selected].pack[slot]:NULL;
+    return stack&&stack->item?5+(itemDefs[stack->item].price+49)/50:0;
+}
+int storage_transfer(int b,int from,int slot) {
+    int count=storage_slots(b);if(!count)return 0;
+    Actor*a=&g.actors[g.selected];Building*z=&g.buildings[b];int home=home_state(b)==HOME_OWNED;
+    if(!conscious(a))return 0;
+    if(home){
+        InteriorProp props[ROOM_PROPS];int reach=0;
+        if(actor_inside(a)==b+1){int n=interior_props(b,props);for(int i=0;i<n;i++)reach|=props[i].action==ROOM_HOME_STASH&&distance(depth_x(a),depth_y(a),props[i].x,props[i].y)<2;}
+        if(!reach)return 0;
+    }else if(actor_inside(a)?nearby_station(STORE,1.7f)!=b:
+             distance(a->x,a->y,z->x,z->y)>1.7f&&building_door_distance(b,a->x,a->y)>DOOR_REACH){
+        log_msg("Walk to the depot before transferring goods.");return 0;
+    }
+    int fee=depot_fee(b,from,slot);
+    if(g.money<fee){log_msg("The depot charges %d silver per item.",fee);return 0;}
+    if(from){
+        Stack*stack=(Stack*)storage_stack(b,slot);if(!stack||!stack->item)return 0;
+        int it=stack->item;
+        if(!inventory_add_owned(a,it,1,storage_owner(b,slot))){log_msg("Pack full.");return 0;}
+        if(--stack->qty==0){stack->item=NONE;if(home)g.homes.stolen[slot]=FREE;}
+        g.money-=fee;
+        if(fee)log_msg("Withdrew %s. Fee %d silver.",itemDefs[it].name,fee);else log_msg("Withdrew %s.",itemDefs[it].name);
         return 1;
     }
-    if (slot < 0 || slot >= PACK || !a->pack[slot].item)
-        return 0;
-    int dest = -1, it = a->pack[slot].item, owner = a->stolen[slot];
-    if (owner && !home) {
-        log_msg("Fence stolen goods before using a public depot.");
-        return 0;
-    }
-    for (int i = 0; i < count; i++)
-        if (stacks[i].item == it && stacks[i].qty < 999 && storage_owner(b, i) == owner) {
-            dest = i;
-            break;
-        }
-    if (dest < 0)
-        for (int i = 0; i < count; i++)
-            if (!stacks[i].item) {
-                dest = i;
-                break;
-            }
-    if (dest < 0) {
-        log_msg(home ? "Shared stash is full." : "Depot has no free stack.");
-        return 0;
-    }
-    stacks[dest].item = it;
-    stacks[dest].qty++;
-    if (home)
-        g.homes.stolen[dest] = owner;
-    inventory_remove_slot(a, slot, 1);
-    log_msg("Stored %s.", itemDefs[it].name);
+    if(slot<0||slot>=PACK||!a->pack[slot].item)return 0;
+    int it=a->pack[slot].item,owner=a->stolen[slot],dest=-1;
+    if(owner&&!home){log_msg("The depot won't accept stolen goods.");return 0;}
+    for(int i=0;i<count;i++){const Stack*stack=storage_stack(b,i);if(stack->item==it&&stack->qty<999&&storage_owner(b,i)==owner){dest=i;break;}}
+    if(dest<0)for(int i=0;i<count;i++)if(!storage_stack(b,i)->item){dest=i;break;}
+    if(dest<0){log_msg(home?"Shared stash is full.":"Depot has no free stack.");return 0;}
+    Stack*stack=(Stack*)storage_stack(b,dest);stack->item=it;stack->qty++;
+    if(home)g.homes.stolen[dest]=owner;
+    inventory_remove_slot(a,slot,1);g.money-=fee;
+    if(fee)log_msg("Stored %s. Fee %d silver.",itemDefs[it].name,fee);else log_msg("Stored %s.",itemDefs[it].name);
     return 1;
 }
 int start_sleep(int town) {
@@ -809,36 +828,11 @@ int portable_bedroll(int building) {
 }
 
 int deploy_bedroll(Actor *a, int slot) {
-    if (!conscious(a) || actor_inside(a) || a->prisonTime > 0 || a->carrying >= 0 ||
-        g.depth.actors[a - g.actors].captive || a->attackPhase == 1 || a->attackPhase == 2) {
-        log_msg("Find clear ground to lay out the bedroll.");
-        return 0;
-    }
-    for (int i = 0; i < 8; i++) {
-        float angle = i * .785398f;
-        float x = a->x + 1.4f * cosf(angle), y = a->y + 1.4f * sinf(angle);
-        if (!clear_structure_site(x, y, 1.7f))
-            continue;
-        int b = 0;
-        while (b < g.buildingCount && g.field.rolls[b] >= 0)
-            b++;
-        if (b == g.buildingCount)
-            b = add_build(x, y, BED, FREE, a - g.actors);
-        if (b < 0)
-            break;
-        int owner = a->stolen[slot];
-        if (!inventory_remove_slot(a, slot, 1))
-            return 0;
-        g.buildings[b] = (Building){.x = x, .y = y, .type = BED, .owner = a - g.actors};
-        g.depth.buildings[b] = (DepthBuilding){.condition = 100};
-        g.field.rolls[b] = owner + 1;
-        a->taskKind = 0;
-        depth_open(SCREEN_WORLD);
-        log_msg("Bedroll laid out.");
-        return 1;
-    }
-    log_msg("There is no room to lay out the bedroll here.");
-    return 0;
+    if (a != &g.actors[g.selected] || slot < 0 || slot >= PACK ||
+        a->pack[slot].item != BEDROLL_ITEM || !conscious(a) || actor_inside(a) ||
+        a->prisonTime > 0 || g.depth.actors[a-g.actors].captive) return 0;
+    placement_open(1, -1);
+    return 1;
 }
 
 void pack_bedroll(int b) {
@@ -1296,14 +1290,11 @@ int bounty_guard(int guard, int target) {
         return 0;
     return 1;
 }
-int bounty_turn_in(int guard) {
-    Actor *a = &g.actors[g.selected];
-    int n = a->carrying;
-    if (!conscious(a) || !bounty_guard(guard, n))
-        return 0;
-    Actor *p = &g.actors[n], *watch = &g.actors[guard];
-    int town = watch_town(watch), reward = bounty_reward(n, !p->dead);
-    warrant_paid(n, watch->faction, reward);
+static int bounty_deliver(int town, int faction, const char *clerk) {
+    Actor *a=&g.actors[g.selected];int n=a->carrying;
+    if(!conscious(a)||n<0||n>=g.actorCount)return 0;
+    Actor *p=&g.actors[n];int reward=bounty_reward(n,!p->dead);
+    warrant_paid(n, faction, reward);
     a->carrying = p->carriedBy = -1;
     p->bountyReward = 0;
     population_detain(n);
@@ -1328,10 +1319,23 @@ int bounty_turn_in(int guard) {
         }
     }
     g.money += reward;
-    faction_goodwill(watch->faction, 5);
-    log_warn("%s paid %d silver for %s.", watch->name, reward, p->name);
+    faction_goodwill(faction, 5);
+    log_warn("%s paid %d silver for %s.", clerk, reward, p->name);
     return 1;
 }
+int bounty_turn_in(int guard) {
+    if(!bounty_guard(guard,g.actors[g.selected].carrying))return 0;
+    return bounty_deliver(bounty_station(guard),g.actors[guard].faction,g.actors[guard].name);
+}
+int bounty_turn_in_jail(int building) {
+    Actor *a=&g.actors[g.selected];int town=bounty_board(building),n=a->carrying;
+    if(town<0||depth_room(a)!=building+1||n<0||n>=g.actorCount)return 0;
+    Actor*p=&g.actors[n];int faction=g.townOwner[town];
+    if(!p->active||p->squad||p->carriedBy!=g.selected||p->prisonTime>0||g.depth.actors[n].captive||
+       !(bounty_payers(n)&(1u<<faction))){log_msg("This watch isn't paying for that person.");return 0;}
+    return bounty_deliver(town,faction,"The jail watch");
+}
+
 void bounty_details(int target, char *out, int size) {
     unsigned mask = bounty_payers(target);
     if (!mask) { *out = 0; return; }
@@ -1488,7 +1492,7 @@ int contract_offer(int town, int row) {
         return -1;
     unsigned mix = (g.seed ^ (town + 1u) * 2654435761u) + cycle * 2246822519u;
     mix ^= mix >> 16;
-    int count = mix % 3;
+    int count = mix % 5 == 0 ? 0 : 1 + mix % 3;
     unsigned taken = g.townLife.boardCycle[town] == cycle ? g.townLife.boardTaken[town] : 0;
     for (int j = 0; j < count; j++) {
         int kind = ((mix >> 8) + j * 3) % CONTRACT_TYPES;
@@ -1645,7 +1649,15 @@ int contract_reward(int town, int kind) {
         int bounty = society_bounty_reward(town);
         if (bounty) return bounty;
     }
-    return kind >= 0 && kind < CONTRACT_TYPES ? silver[kind] : 0;
+    if(kind<0||kind>=CONTRACT_TYPES)return 0;
+    int reward=silver[kind];
+    if(kind==CONTRACT_DISPATCH||kind==CONTRACT_FREIGHT||kind==CONTRACT_ESCORT){
+        int target=contract_destination(town,g.townOwner[town]);
+        float trip=distance(towns[town].x,towns[town].y,towns[target].x,towns[target].y);
+        reward+=(int)(trip*(kind==CONTRACT_DISPATCH?.9f:1.35f));
+        if(biome(towns[target].x,towns[target].y)>=5)reward+=250;
+    }
+    return reward;
 }
 int contract_recipient(int slot) {
     if (slot < 0 || slot >= CONTRACTS) return -1;
@@ -1712,7 +1724,8 @@ const char *work_hint(int town, int speaker) {
     return text;
 }
 int contract_destination(int town, int faction) {
-    float best = WORLD * 2.f;
+    int longRoute=(g.seed+(unsigned)town*11u+posting_cycle(town))%4==0;
+    float best = longRoute ? -1 : WORLD * 2.f;
     int target = -1;
     for (int t = 0; t < TOWNS; t++) {
         int owner = g.townOwner[t];
@@ -1720,7 +1733,7 @@ int contract_destination(int town, int faction) {
             g.rep[owner] < -25 || war_rivals(faction, owner))
             continue;
         float d = distance(towns[town].x, towns[town].y, towns[t].x, towns[t].y);
-        if (d < best) {
+        if (longRoute ? d > best : d < best) {
             best = d;
             target = t;
         }
@@ -1794,8 +1807,11 @@ void contract_tick(void) {
             contract_update(c, (int)fminf(c->needed, contract_item_count(c->item, -1)));
         else if (c->type == CONTRACT_DISPATCH && c->progress < c->needed) {
             const Actor *a = &g.actors[g.selected];
-            if (conscious(a) && town_near(a->x, a->y, 12) == c->target)
-                contract_update(c, c->needed);
+            if (conscious(a) && town_near(a->x,a->y,12)==c->target && contract_item_count(DISPATCH_ITEM,c->target)>0 &&
+                contract_use_items(DISPATCH_ITEM,1,c->target)) {
+                log_msg("Delivered the sealed dispatch to %s's watch.",towns[c->target].name);
+                contract_update(c,c->needed);
+            }
         } else if (c->type == CONTRACT_BOUNTY)
             contract_update(c, contract_ready(i));
     }
@@ -1896,11 +1912,15 @@ int accept_contract(int town, int kind) {
     c.needed = kind == CONTRACT_ORE ? 8 : kind == CONTRACT_HUNT ? HUNT_QUOTA : 1;
     c.reward = contract_reward(town, kind);
     c.baseline = -1; /* Earlier hunt postings allowed encounters anywhere. */
+    if(kind==CONTRACT_DISPATCH && !inventory_add(&g.actors[g.selected],DISPATCH_ITEM,1)) {
+        log_msg("Make room for the sealed dispatch."); return 0;
+    }
     g.contracts[n] = c;
     g.frontier.giver[n] = (ui.screen == SCREEN_DIALOG ? ui.dialogActor : work_contact(town)) + 1;
     g.townLife.huntX[n] = x;
     g.townLife.huntY[n] = y;
     take_posting(town, kind);
+    if(kind==CONTRACT_DISPATCH) log_msg("Received a sealed dispatch for %s.",towns[c.target].name);
     log_level("%s added to the Journal.", contract_title(kind));
     contract_tick();
     return 1;
@@ -1928,7 +1948,7 @@ void contract_description(int n, char *out, int size) {
     }
     switch (c->type) {
     case CONTRACT_DISPATCH:
-        snprintf(out, size, "The watch needs to share its road reports. Deliver the dispatch to %s (0/1), then return to %s.",
+        snprintf(out, size, "Carry the sealed dispatch in your inventory to the watch at %s (0/1). Return to %s for payment.",
                  towns[c->target].name, towns[c->town].name);
         break;
     case CONTRACT_HUNT:
@@ -2092,6 +2112,7 @@ const char *dialogue_line(int n, int page) {
                  g.mercMode[s] ? "CAMP WATCH" : "ESCORT", (g.mercUntil[s] - g.time) / 60.f);
         return terms;
     }
+    if(npc_role(a)==ROLE_DEPOT)return "Your goods go on the next wagon. Keep your receipt; any of our depots can release them.";
     unsigned voice = (g.seed + n * 17u + g.day / 3) % 3;
     switch (npc_role(a)) {
     case ROLE_MERCHANT: {

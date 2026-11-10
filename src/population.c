@@ -90,9 +90,29 @@ static int pinned(int n){
     return 0;
 }
 static void release_slot(int n){
+    g.plans.corpseSince[n]=0;
     g.actors[n].active=0;g.living.owned[n]=-1;g.living.anger[n]=0;g.living.command[n]=-1;
     for(int j=0;j<g.actorCount;j++){if(g.actors[j].target==n)g.actors[j].target=-1;if(g.actors[j].attackTarget==n){g.actors[j].attackTarget=-1;g.actors[j].attackPhase=0;}if(g.living.command[j]==n)g.living.command[j]=-1;}
     if(ui.attackFocus==n)ui.attackFocus=-1;
+}
+void population_prune_corpses(void) {
+    for(int n=0;n<g.actorCount;n++){
+        Actor*a=&g.actors[n];
+        if(!a->active||!a->dead){g.plans.corpseSince[n]=0;continue;}
+        if(!g.plans.corpseSince[n])g.plans.corpseSince[n]=fmaxf(.001f,g.time);
+        if(a->squad||a->carriedBy>=0||a->carrying>=0||a->bountyReward>0||
+           g.time-g.plans.corpseSince[n]<180||observers(a->x,a->y)<32)continue;
+        int own=population_owned(n)-1;
+        if((living_owned(n)&&own<0)||depth_named(n)>=0||regional_named(n)||civil_elite_index(n)>=0||
+           politics_leader_title(n)||npc_role(a)==ROLE_DEPOT||npc_role(a)==ROLE_MERCENARY)continue;
+        a->target=-1;a->attackPhase=0;
+        if(pinned(n))continue;
+        if(own>=0){
+            WorldEvent*e=&P.groups[own];
+            for(int i=0;i<e->count;i++)if(e->members[i]==n){P.state[own].detached|=1u<<i;e->members[i]=-1;e->reserve[i].dead=1;}
+        }
+        release_slot(n);
+    }
 }
 static void set_destination(int k,int town){
     WorldEvent*e=&P.groups[k];PopulationState*m=&P.state[k];e->town=town;
@@ -417,7 +437,7 @@ static int open_encounter_site(EncounterSite site,int slot) {
 }
 
 static void single_encounter(int slot,EncounterSite site) {
-    static const int traffic[]={POP_RAIDERS,POP_RAIDERS,POP_RAIDERS,POP_RAIDERS,POP_BEASTS,POP_BEASTS,
+    static const int traffic[]={POP_RAIDERS,POP_RAIDERS,POP_RAIDERS,POP_RAIDERS,POP_BEASTS,POP_BEASTS,POP_RAIDERS,POP_BEASTS,
         POP_MERCHANTS,POP_MERCHANTS,POP_PILGRIMS,POP_PILGRIMS,POP_PATROL,POP_PATROL,POP_HUNTERS,
         POP_SCAVENGERS,POP_SMUGGLERS,POP_REFUGEES,POP_BATTLEFIELD,POP_PRISONERS,POP_DUELISTS,POP_ARMY};
     static const int camps[]={POP_SCAVENGERS,POP_REFUGEES,POP_HUNTERS,POP_HUNTERS,POP_SMUGGLERS,
@@ -443,7 +463,7 @@ static int quiet_route(const Actor *lead,float dx,float dy,int road) {
         if(fabsf(x)>140||fabsf(y)>140||x*x+y*y>140*140)continue;
         if(k<POP_GROUPS?!life_alive(k):e->status||!e->count)continue;
         float forward=x*dx+y*dy,side=x*dy-y*dx;
-        if (++nearby >= 3 || (forward >= -10 && fabsf(side) < (road ? 25 : 33)))
+        if (++nearby >= 4 || (forward >= -10 && forward < 105 && fabsf(side) < (road ? 25 : 33)))
             return 0;
     }
     return 1;
@@ -572,7 +592,7 @@ static void refresh_encounters(const float *near) {
             int road = terrain_road(lead->x, lead->y);
             if(quiet_route(lead,dx,dy,road)){
                 for(int tries=0;tries<10;tries++){
-                    float ahead=76+random_step(&P.rng)%33;
+                    float ahead=62+random_step(&P.rng)%29;
                     float side=(int)(random_step(&P.rng)%37)-18;
                     EncounterSite site={lead->x+dx*ahead-dy*side,lead->y+dy*ahead+dx*side};
                     if(!open_encounter_site(site,slot))continue;
@@ -690,9 +710,6 @@ int population_object(int k,int object,float*x,float*y){
 }
 int population_prop_art(int k,int object){float x,y;int type=population_object(k,object,&x,&y);return type==1?27:type==2?ART_BEDROLL:type==4?26:type==5?(P.groups[k].type==POP_HUNTERS?18:P.groups[k].type==POP_SALVAGE?17:20):31;}
 int population_prop_style(int k,int object){float x,y;return population_object(k,object,&x,&y)==6?(military(P.groups[k].type)?2:3):0;}
-static int safe_at(const Actor*a){
-    for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(b!=a&&b->active&&conscious(b)&&hostile(a,b)&&distance(a->x,a->y,b->x,b->y)<12)return 0;}return 1;
-}
 int population_sleep_position(const Actor *a, float *x, float *y) {
     if (a->taskIndex > -1000)
         return 0;
@@ -729,8 +746,6 @@ const char *population_action_reason(int k, int action) {
     if (action == 1) {
         if (inventory_count(a, MEAT) < 2)
             return "Need 2 meat";
-        if (!safe_at(a))
-            return "Enemies nearby";
         Actor test = *a;
         int owner = inventory_input_owner(&test, MEAT, 2);
         inventory_remove(&test, MEAT, 2);
@@ -749,7 +764,7 @@ const char *population_action_reason(int k, int action) {
             return "Pack full";
     } else if (action >= 30 && action <= 32) {
         int i = action - 30;
-        if (!safe_at(a) || g.rep[e->faction] < -25 || !standing(k))
+        if (g.rep[e->faction] < -25 || !standing(k))
             return "No willing trader";
         if (!m->stock[i])
             return "Out of stock";

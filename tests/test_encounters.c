@@ -53,7 +53,7 @@ static void test_clearance(int k) {
     walk_east(a);
     roll_tick();
     assert(e->serial!=serial&&!e->spawned);
-    assert(e->x>=a->x+75&&e->x<=a->x+110&&fabsf(e->y-a->y)<=18.1f);
+    assert(e->x>=a->x+61&&e->x<=a->x+92&&fabsf(e->y-a->y)<=18.1f&&distance(e->x,e->y,a->x,a->y)>=68);
     assert(distance(e->x,e->y,oldX,oldY)>105&&can_walk(e->x,e->y));
     assert(save_game("build/encounter-refresh.sav")&&load_game("build/encounter-refresh.sav"));
     assert(population_validate(&g)&&e->serial!=serial&&!e->spawned);
@@ -84,7 +84,7 @@ static void test_passing_traffic(void) {
         walk_east(a);
         roll_tick();
         assert(e->serial!=serial&&!e->spawned);
-        assert(e->x>=a->x+75&&e->x<=a->x+110&&fabsf(e->y-a->y)<=18.1f);
+        assert(e->x>=a->x+61&&e->x<=a->x+92&&fabsf(e->y-a->y)<=18.1f&&distance(e->x,e->y,a->x,a->y)>=68);
         assert(town_near(e->x,e->y,28)<0);
         if (g.population.state[k].beds)
             assert(population_object_count(k)>=7);

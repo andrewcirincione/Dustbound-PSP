@@ -78,11 +78,11 @@ const char *skillNames[SKILLS] = {
 const char *limbNames[LIMBS] = {"Head", "Chest", "Left arm", "Right arm", "Left leg", "Right leg"};
 const char *jobNames[] = {"Follow squad", "Hold position", "Mine nearest ore", "Tend camp farm",
                           "Field medic",  "Smelt iron",    "Cook rations",     "Haul to depot"};
-const char *buildNames[] = {"Campfire",       "Bedroll & shelter", "Farm plot",     "Iron forge",
+const char *buildNames[] = {"Campfire",       "Bedroll", "Farm plot",     "Iron forge",
                             "Research bench", "Palisade",          "Storage depot", "Wind pump"};
 const char *recipeNames[] = {"Iron bar",      "Cooked ration",  "Field dressing", "Iron sabre",
                              "Plate cuirass", "Mechanical arm", "Mechanical leg", "Crossbow bolts"};
-const int recipeCount = 8, buildCount = 8;
+const int recipeCount = 8, buildCount = 2;
 const ItemDef baseDefs[BASE_ITEMS] = {
     {"Empty", "", 0, 0, -1, 0, 0, 0},
     {"Trail ration", "Restores 48 hunger. Eaten automatically below 40.", 35, 1, -1, 0, 0, 0xc39e65},
@@ -562,17 +562,21 @@ void walk_heading(const Actor *a, float *x, float *y) {
     }
 }
 void raider_scraps(Actor *a, unsigned seed) {
-    unsigned roll = seed % 16;
-    if (roll < 3)
-        inventory_add(a,CLOTH,1);
-    else if (roll < 5)
-        inventory_add(a,seed & 16 ? JERKY : OATCAKE,1);
-    else if (roll < 7)
-        inventory_add(a,portion_item(MEDKIT,30+(seed>>4)%36),1);
+    unsigned roll=seed%32;
+    if(roll<6)inventory_add(a,CLOTH,1+(seed>>8)%2);
+    else if(roll<10){static const int food[]={JERKY,OATCAKE,RATION,STEW};int it=food[(seed>>6)%4];inventory_add(a,portion_item(it,30+(seed>>11)%61),1);}
+    else if(roll<14)inventory_add(a,portion_item(MEDKIT,20+(seed>>4)%51),1);
+    else if(roll==14)inventory_add(a,WATER,1);
+    else if(roll==15)inventory_add(a,BOLTS,3+(seed>>9)%5);
+    else if(roll==16)inventory_add(a,IRONBAR,1);
+    else if(roll==17)inventory_add(a,COAL,1);
+    else if(roll==18){static const int gear[]={1,3,8,9,10,13,16,19};inventory_add(a,gear_id(gear[(seed>>5)%8],1,1),1);}
+    else if(roll==19)inventory_add(a,gear_id(35+(seed>>9)%9,0,1),1);
 }
 
 void init_actor(int n, const char *name, int kind, int faction, float x, float y, int skill) {
     combatVisuals[n] = (CombatVisual){0};
+    g.plans.corpseSince[n]=0;
     g.innFloor[n] = 0;
     g.residentHome[n] = 0;
     pursuits[n] = (Pursuit){0};
@@ -637,13 +641,10 @@ int add_actor(const char *name, int kind, int faction, float x, float y, int ski
     init_actor(n, name, kind, faction, x, y, skill);
     return n;
 }
-static int available_building_slot(void) {
-    if (g.buildingCount < MAX_BUILDINGS)
-        return g.buildingCount;
+int available_building_slot(void) {
     for (int b = 0; b < g.buildingCount; b++)
-        if (portable_bedroll(b) < 0)
-            return b;
-    return -1;
+        if (portable_bedroll(b) < 0) return b;
+    return g.buildingCount < MAX_BUILDINGS ? g.buildingCount : -1;
 }
 int add_build(float x, float y, int type, int faction, int owner) {
     int n = available_building_slot();
@@ -655,7 +656,7 @@ int add_build(float x, float y, int type, int faction, int owner) {
     g.field.rolls[n] = 0;
     g.frontier.variant[n] = 0;
     g.buildings[n] = (Building){x, y, type, faction, owner, 1, 0, 0};
-    if (type == WALL) building_geometry_reset();
+    building_geometry_reset();
     return n;
 }
 void add_node(float x, float y, int type, int owner, int item, int qty) {
@@ -699,7 +700,7 @@ void restock_town(int t) {
     offer_stock(t, portion_item(t % 2 ? JERKY : OATCAKE, 65 + roll % 21), 2, TRADE_INN);
     if (plan->smith) {
         int remote = !starter_country(towns[t].x, towns[t].y);
-        for (int n = 0; n < 4 + tier; n++) {
+        for (int n = 0; n < 8 + 2 * tier; n++) {
             int family = weapon_family_index((roll / 17 + t * 3 + n * 7) % WEAPON_FAMILIES);
             int quality = n < 2 + tier ? 2 : 1;
             int material = n == 0 ? 2 + (tier > 0) + (tier == 2 && remote) : 1 + n % 2;
@@ -710,7 +711,7 @@ void restock_town(int t) {
             }
             offer_stock(t, gear_id(family, material, quality), 1, TRADE_SMITH);
         }
-        for (int n = 0; n < 3 + tier; n++) {
+        for (int n = 0; n < 6 + 2 * tier; n++) {
             int family = 32 + (roll / 7 + n * 5 + t) % 36;
             int quality = n < 1 + tier ? 2 : 1;
             int material = 1 + n % 2;
@@ -853,6 +854,7 @@ void game_new(uint32_t seed, int scenario) {
     new_world(seed, scenario);
     field_init();
     frontier_world_init();
+    placement_init();
     find_context();
 }
 
@@ -1578,6 +1580,7 @@ int sell_item(int town, int s) {
     if (town < 0 || town >= TOWNS || s < 0 || s >= PACK || !a->pack[s].item)
         return 0;
     int it = a->pack[s].item, price = item_price(town, it, 1);
+    if (it == DISPATCH_ITEM) { log_msg("The dispatch is for the destination watch."); return 0; }
     if (wanted_amount(a, g.townOwner[town]) >= SERIOUS_BOUNTY && disguise_score(a, g.townOwner[town]) < 40) {
         log_msg("This faction refuses to trade with you.");
         return 0;
@@ -1617,9 +1620,7 @@ int recruit_actor(int n) {
     return 1;
 }
 
-static const int buildTypes[] = {CAMPFIRE, BED, FARM, FORGE, BENCH, WALL, STORE, WINDMILL};
-static const int buildWood[] = {3, 5, 6, 8, 6, 3, 5, 8}, buildIron[] = {0, 0, 0, 3, 1, 0, 0, 3},
-                 buildTech[] = {0, 0, 0, 0, 0, 0, 0, 1};
+static const int buildWood[] = {3, 0};
 int build_wood_cost(int c) {
     return c >= 0 && c < buildCount
                ? (int)fmaxf(1, buildWood[c] - level(&g.actors[g.selected], ENGINEERING) / 30)
@@ -1630,54 +1631,11 @@ int research_cost(void) {
     return 150 * (g.tech + 1) * (100 - level(&g.actors[g.selected], SCIENCE) / 5) / 100;
 }
 int build_structure(int c) {
+    if (c < 0 || c >= buildCount) return 0;
     Actor *a = &g.actors[g.selected];
-    if (c < 0 || c >= buildCount)
-        return 0;
-    if (town_near(a->x, a->y, 10) >= 0) {
-        log_msg("Build outside settlement boundaries.");
-        return 0;
-    }
-    if (available_building_slot() < 0) {
-        log_msg("Structure limit reached.");
-        return 0;
-    }
-    if (g.tech < buildTech[c]) {
-        log_msg("Research level %d required.", buildTech[c]);
-        return 0;
-    }
-    if (inventory_count(a, WOOD) < build_wood_cost(c) || inventory_count(a, IRONBAR) < buildIron[c]) {
-        log_msg("Need %d timber and %d iron bars.", build_wood_cost(c), buildIron[c]);
-        return 0;
-    }
-    float x = a->x + 1.9f, y = a->y;
-    if (!can_walk(x, y) || !can_walk(x + 1, y)) {
-        log_msg("This space is obstructed.");
-        return 0;
-    }
-    for (int i = 0; i < g.buildingCount; i++)
-        if (portable_bedroll(i) >= 0 && distance(x, y, g.buildings[i].x, g.buildings[i].y) < 3) {
-            log_msg("Too close to another structure.");
-            return 0;
-        }
-    inventory_remove(a, WOOD, build_wood_cost(c));
-    if (buildIron[c])
-        inventory_remove(a, IRONBAR, buildIron[c]);
-    int b = add_build(x, y, buildTypes[c], FREE, g.selected);
-    if (!g.baseExists) {
-        g.baseExists = 1;
-        g.baseX = x;
-        g.baseY = y;
-        g.raidTimer = 420;
-    }
-    g.depth.buildings[b] = (DepthBuilding){.labor = buildTypes[c] == CAMPFIRE ? 12 : buildTypes[c] == BED ? 16 : 35,
-                                          .condition = 100};
-    a->taskKind = 4;
-    a->taskIndex = b;
-    a->action = g.depth.buildings[b].labor + 1;
-    gain(a, ENGINEERING, 10);
-    log_msg("%s placed. Stay nearby to finish construction.", buildNames[c]);
-    return 1;
+    return place_camp(c, a->x + 1.9f, a->y);
 }
+
 typedef struct {
     int output, qty, in1, n1, in2, n2, station, skill, tech;
 } Recipe;
@@ -1702,7 +1660,7 @@ int nearby_station(int type, float r) {
     Actor *a = &g.actors[g.selected];
     int room = depth_room(a);
     if (room) {
-        int action = type == FORGE ? ROOM_FORGE : type == BED ? ROOM_REST : type == STORE ? ROOM_STORAGE : ROOM_NONE;
+        int action = type == FORGE ? ROOM_FORGE : type == BED ? ROOM_REST : type == STORE ? ROOM_STORAGE : type == BENCH ? ROOM_RESEARCH : ROOM_NONE;
         if (!action) return -1;
         InteriorProp props[ROOM_PROPS];
         int count = interior_floor_props(room - 1, actor_floor(a), props);
@@ -1718,7 +1676,7 @@ int nearby_station(int type, float r) {
     return -1;
 }
 int craft_item(int c) {
-    if (c < 0 || c >= recipeCount)
+    if (c < 0 || c >= recipeCount || c == 5 || c == 6)
         return 0;
     Actor *a = &g.actors[g.selected];
     const Recipe *r = &recipes[c];
@@ -1856,6 +1814,7 @@ int inventory_drop(Actor *a, int slot, int qty) {
         return 0;
     }
     int item = a->pack[slot].item, owner = a->stolen[slot];
+    if (item == DISPATCH_ITEM) { log_msg("Keep the dispatch for its recipient."); return 0; }
     if (!inventory_remove_slot(a, slot, qty))
         return 0;
     if (n == g.nodeCount)
@@ -2370,6 +2329,7 @@ void simulate(float dt) {
     tick_expansion(dt);
     custody_tick(dt);
     population_tick(dt);
+    placement_tick(dt);
     ruined_village_guards(1);
     living_tick(dt);
     society_tick(dt);
@@ -2702,7 +2662,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 28, V27_BUILDINGS = 384 };
+enum { SAVE_VERSION = 29, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -3020,6 +2980,7 @@ static int save_shape(uint32_t version,uint32_t size) {
         if (version >= 24) buildingBytes += sizeof(g.frontier.variant[0]);
         if (version >= 26) buildingBytes += sizeof(g.homes.property[0]) + sizeof(g.homes.furniture[0]);
         size_t expansion = (MAX_BUILDINGS - V27_BUILDINGS) * buildingBytes;
+        if (version >= 24) expansion += sizeof(g.frontier) - V28_FRONTIER_BYTES;
         if (version <= 24) {
             const size_t groupSize = sizeof(g.population.groups[0]) + sizeof(g.population.state[0]) +
                 sizeof(g.population.social[0]) + sizeof(g.life.groups[0]) + sizeof(g.fieldNotes.group[0]);
@@ -3027,7 +2988,7 @@ static int save_shape(uint32_t version,uint32_t size) {
         }
         return size == ends[version - 17] - expansion;
     }
-    return (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version == 28 && size == offsetof(Game, plans) - (sizeof(g.frontier) - V28_FRONTIER_BYTES)) || (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -3056,8 +3017,10 @@ static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t si
         SaveReader reader = {data, (unsigned char *)out, size};
 #define WIDEN(field, count) read_save_array(&reader, out->field, (count) * sizeof(out->field[0]), sizeof(out->field))
         if (version >= 17) {
-            WIDEN(buildings, V27_BUILDINGS);
-            WIDEN(depth.buildings, V27_BUILDINGS);
+            if (version < 28) {
+                WIDEN(buildings, V27_BUILDINGS);
+                WIDEN(depth.buildings, V27_BUILDINGS);
+            }
             if (version <= 24) {
                 WIDEN(population.groups, WAR_POP_GROUPS);
                 WIDEN(population.state, WAR_POP_GROUPS);
@@ -3065,14 +3028,26 @@ static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t si
                 WIDEN(life.groups, WAR_POP_GROUPS);
                 WIDEN(fieldNotes.group, WAR_POP_GROUPS);
             }
-            if (version >= 21) WIDEN(townLife.chestRefresh, V27_BUILDINGS);
-            if (version >= 22) WIDEN(field.rolls, V27_BUILDINGS);
-            if (version >= 24) WIDEN(frontier.variant, V27_BUILDINGS);
-            if (version >= 26) {
+            if (version >= 21 && version < 28) WIDEN(townLife.chestRefresh, V27_BUILDINGS);
+            if (version >= 22 && version < 28) WIDEN(field.rolls, V27_BUILDINGS);
+            if (version >= 24) {
+                if (version < 28) WIDEN(frontier.variant, V27_BUILDINGS);
+                for (int t=0;t<TOWNS;t++)
+                    read_save_array(&reader,out->frontier.stock[t],(V28_ITEMS-V23_ITEMS)*sizeof(int),sizeof(out->frontier.stock[t]));
+                for (int t=0;t<TOWNS;t++)
+                    read_save_array(&reader,out->frontier.venue[t],V28_ITEMS,sizeof(out->frontier.venue[t]));
+                read_save_span(&reader,(unsigned char *)out->frontier.knownLodges+sizeof(out->frontier.knownLodges));
+                size_t oldEnd = offsetof(Game,frontier.knownLodges)+sizeof(out->frontier.knownLodges)-offsetof(Game,frontier)-TOWNS*5;
+                size_t padding=V28_FRONTIER_BYTES-oldEnd;
+                if (padding > reader.left) return 0;
+                reader.source+=padding;reader.left-=padding;
+                reader.dest=(unsigned char *)&out->homes;
+            }
+            if (version >= 26 && version < 28) {
                 WIDEN(homes.property, V27_BUILDINGS);
                 WIDEN(homes.furniture, V27_BUILDINGS);
             }
-            read_save_span(&reader, &out->residentHome);
+            read_save_span(&reader, version == 28 ? (void *)&out->plans : (void *)&out->residentHome);
         } else {
             int oldItems = version>=11 ? TOWN_STOCK_ITEMS : version==10 ? V100_ITEMS : version==9 ? V090_ITEMS :
                            version==8 ? OLD_ITEMS : version>=5 ? CATALOG_ITEMS : 2052;
@@ -3201,6 +3176,7 @@ int load_game(const char *path) {
         town_life_init();
         field_init();
     frontier_world_init();
+    placement_init();
         if (h.version < 27) {
             if (g.weather) g.weatherTimer = fminf(g.weatherTimer, 100);
             for (int t = 0; t < TOWNS; t++) {
@@ -3355,12 +3331,13 @@ void cycle_squad(int direction) {
         }
     }
 }
-static const char *pauseLabels[3][9] = {
+static const char *pauseLabels[4][9] = {
     {"Resume", "Save game", "Load game", "Game speed", "Controls & field guide", "Save and quit to title", "New wanderer"},
     {"Inventory & equipment", "Skills", "Health & recovery", "Squad management", "Armor layers", "Recent messages", "Choose opponent"},
-    {"Map & bearings", "Journal & contracts", "Factions", "Build a camp", "Camp upkeep", "Crafting recipes", "Research", "World activity"}
+    {"Map & bearings", "Journal & contracts", "Factions", "World activity"},
+    {"Build a camp", "Place furniture", "Research"}
 };
-int pause_menu_count(void) { return ui.menuTab == 0 ? 7 : ui.menuTab == 1 ? 7 : 8; }
+int pause_menu_count(void) { static const int count[] = {7,7,4,3}; return count[ui.menuTab]; }
 const char *pause_menu_label(int row) {
     return row >= 0 && row < pause_menu_count() ? pauseLabels[ui.menuTab][row] : "";
 }
@@ -3386,12 +3363,18 @@ static void pause_menu_open(void) {
         }
         return;
     }
-    static const int screens[2][9] = {
+    static const int screens[3][9] = {
         {SCREEN_PACK, SCREEN_SKILLS, SCREEN_HEALTH, SCREEN_SQUAD, SCREEN_LAYERS, SCREEN_LOG, SCREEN_ENGAGE},
-        {SCREEN_MAP, SCREEN_JOURNAL, SCREEN_FACTIONS, SCREEN_BUILD, SCREEN_CAMP, SCREEN_CRAFT, SCREEN_RESEARCH, SCREEN_LIFE}
+        {SCREEN_MAP, SCREEN_JOURNAL, SCREEN_FACTIONS, SCREEN_LIFE},
+        {SCREEN_BUILD, SCREEN_HOME, SCREEN_RESEARCH}
     };
     ui.menuReturn = 1;
     int target = screens[ui.menuTab - 1][row];
+    if (target == SCREEN_HOME) {
+        int room = depth_room(a);
+        if (!room || home_state(room-1) != HOME_OWNED) return;
+        home_open(room-1); return;
+    }
     if (target == SCREEN_MAP) {
         ui.mapX = a->x;
         ui.mapY = a->y;
@@ -3414,6 +3397,7 @@ static void tick_input(float dt, Input in) {
     int p = in.pressed;
     if (ui.screen != SCREEN_WORLD && ui.screen != SCREEN_TITLE)
         contract_tick();
+    if (placement_input(dt, in.held, p, in.ax, in.ay)) return;
     if(politics_input(in))return;
     if(limb_input(in))return;
     if(ui.screen==SCREEN_ORDERS)ui.screen=SCREEN_SQUAD;
@@ -3439,7 +3423,7 @@ static void tick_input(float dt, Input in) {
     }
     if(ui.screen==SCREEN_SKILLS&&(p&(KEY_LEFT|KEY_RIGHT))){ui.skillPage=!ui.skillPage;ui.selection=ui.skillPage?weapon_class(g.actors[g.selected].gear[0]):0;if(ui.selection<0)ui.selection=0;return;}
     if (ui.screen == SCREEN_MENU && (p & (KEY_L | KEY_R | KEY_LEFT | KEY_RIGHT))) {
-        ui.menuTab = (ui.menuTab + (p & (KEY_R | KEY_RIGHT) ? 1 : 2)) % 3;
+        ui.menuTab = (ui.menuTab + (p & (KEY_R | KEY_RIGHT) ? 1 : 3)) % 4;
         ui.selection = 0;
         return;
     }
@@ -3618,7 +3602,7 @@ static void tick_input(float dt, Input in) {
             if (recruit_actor(ui.selection))
                 open_screen(SCREEN_WORLD);
         } else if (ui.screen == SCREEN_BUILD && (p & KEY_CROSS))
-            build_structure(ui.selection);
+            placement_open(ui.selection, -1);
         else if (ui.screen == SCREEN_CRAFT && (p & KEY_CROSS))
             craft_item(ui.selection);
         else if (ui.screen == SCREEN_RESEARCH && (p & KEY_CROSS))
@@ -3809,6 +3793,11 @@ void debug_snapshot(const char *path) {
     VALUE("music", music, sizeof(music));
     VALUE("skillpage", &ui.skillPage, 4);
     VALUE("menutab", &ui.menuTab, 4);
+    VALUE("selection", &ui.selection, 4);
+    VALUE("inspecttab", &ui.inspectTab, 4);
+    VALUE("placepos", &ui.placeX, 8);
+    VALUE("placekind", &ui.placeType, 4);
+    VALUE("homesite", &ui.homeSite, 4);
     VALUE("creator_species", &ui.createRace, 4);
     VALUE("species", &a->race, 4);
     VALUE("elite_actors",g.civil.eliteActor,sizeof(g.civil.eliteActor));

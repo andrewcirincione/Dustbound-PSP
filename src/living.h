@@ -11,7 +11,8 @@ static int event_for(int n){return n>=0&&n<MAX_ACTORS&&LW.owned[n]>0&&LW.owned[n
 void living_gear(Actor*a,int role,int tier,int n){
     tier=(int)limit(tier,0,4);role%=8;
     if (a->kind == RAIDER && tier <= 1) {
-        a->gear[0] = gear_id(n % 2 ? 14 : 0, 0, 0);
+        static const int scraps[]={0,1,3,9,10,14,16,19,21,23};
+        a->gear[0] = gear_id(scraps[(unsigned)n%10],0,(unsigned)n%23==0?1:0);
         a->gear[1] = n % 3 ? RAGS : NONE;
         a->gear[2] = a->gear[5] = NONE;
         a->gear[3] = n % 4 ? NONE : SANDALS;

@@ -2,7 +2,7 @@
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
 #define GAME_NAME "Dust"
-#define VERSION "0.19.0"
+#define VERSION "1.0.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -37,11 +37,14 @@
 #define HERBAL_TEA (STEW+1)
 #define PORTION_ITEMS (HERBAL_TEA+1)
 #define PORTION_TYPES 6
-#define ITEMS (PORTION_ITEMS+PORTION_TYPES*99)
+#define V28_ITEMS (PORTION_ITEMS+PORTION_TYPES*99)
+#define DISPATCH_ITEM V28_ITEMS
+#define ITEMS (V28_ITEMS+1)
 #define LODGES 3
 #define COMPLETED_CONTRACTS 32
 #define HOME_BAYS 6
 #define HOME_STASH 64
+#define HOME_PLACES 12
 #define ELITE_WARRANTS 3
 #define WARRANT_RECEIPTS 16
 #define WARRANT_ROWS (ELITE_WARRANTS + 8)
@@ -54,6 +57,8 @@
 #define ELITES 18
 #define EVENTS 8
 #define GEARS 6
+#define LOOT_LAYER_SLOT (PACK+GEARS+4)
+#define LOOT_SLOTS (LOOT_LAYER_SLOT+1)
 #define FACTIONS 8
 #define CONTRACTS 24
 #define DAY_SECONDS 1800
@@ -169,7 +174,8 @@ enum {
     SCREEN_LOG, SCREEN_EXPEDITION, SCREEN_ORDERS, SCREEN_CAMP, SCREEN_CARE, SCREEN_ENCOUNTER, SCREEN_LAYERS,
     SCREEN_THEFT, SCREEN_ENGAGE, SCREEN_ACTIONS, SCREEN_LIMBS, SCREEN_LIMBFIT, SCREEN_SURGERY, SCREEN_LIMBCONFIRM, SCREEN_LIFE, SCREEN_POLITICS,
     SCREEN_PASS, SCREEN_SCENARIOS, SCREEN_CHEST, SCREEN_HOME, SCREEN_WARRANTS,
-    SCREEN_DROP, SCREEN_STAGECOACH, SCREEN_CONTRACT_NOTE, SCREEN_INSPECT_HEALTH, SCREEN_EXECUTE
+    SCREEN_DROP, SCREEN_STAGECOACH, SCREEN_CONTRACT_NOTE, SCREEN_INSPECT_HEALTH, SCREEN_EXECUTE,
+    SCREEN_PLACE
 };
 enum {
     KEY_UP = 1,
@@ -381,9 +387,18 @@ typedef struct {
     /* v28 extension. Building and actor references are one-based. */
     unsigned short residentHome[MAX_ACTORS], ruinedVillage[RUIN_VILLAGES];
     unsigned char ruinCrew[RUIN_VILLAGES];
+    /* v29: freely positioned home furnishings and temporary player camps. */
+    struct {
+        int version;
+        unsigned char furniture[MAX_BUILDINGS][HOME_PLACES];
+        float x[MAX_BUILDINGS][HOME_PLACES], y[MAX_BUILDINGS][HOME_PLACES];
+        float campLastNear[MAX_BUILDINGS], corpseSince[MAX_ACTORS];
+        unsigned short depotClerk[TOWNS];
+        unsigned char dispatchPending[CONTRACTS];
+    } plans;
 } Game;
 enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
-enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH, ROOM_STAIRS };
+enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH, ROOM_STAIRS, ROOM_RESEARCH };
 enum { ROOM_PROPS = 18 };
 #define DOOR_REACH 1.65f
 #define CELL_Y 3.65f
@@ -492,6 +507,23 @@ int home_state(int building);
 int home_price(int building);
 int home_buy(int building);
 int home_furnish(int building, int bay, int type);
+void placement_init(void);
+void placement_tick(float dt);
+void population_prune_corpses(void);
+int home_layout(int building, InteriorProp *props);
+int home_place(int building, int slot, int type, float x, float y);
+int placement_valid(int type, int building, float x, float y);
+void placement_open(int type, int building);
+int placement_input(float dt, int held, int pressed, float ax, float ay);
+int place_camp(int type, float x, float y);
+int available_building_slot(void);
+int add_build(float x, float y, int type, int faction, int owner);
+int depot_public(int building);
+int depot_fee(int building, int from, int slot);
+int depot_clerk(int building);
+int depot_site(int actor);
+void depot_init(void);
+int bounty_turn_in_jail(int building);
 void home_open(int building);
 extern const HomeFurniture homeFurniture[FURN_TYPES];
 extern const float homeBays[HOME_BAYS][2];
@@ -522,6 +554,8 @@ typedef struct {
     int homeSite, homeBay, warrantTown, warrantClosed;
     int dropSlot, coachTown, contractNote, noteMaxScroll, noteReturn;
     int nearbyTarget;
+    int inspectTab, placeType, placeBuilding, placeSlot, placeReturn;
+    float placeX, placeY;
     float dialogHover;
     int mapCategory,mapChoice,skillPage;
     int limbTarget, limbSourceSlot, limbReturn, limbConfirm;
@@ -559,7 +593,8 @@ enum {
     ROLE_BARBER,
     ROLE_SCOUT,
     ROLE_MERCENARY,
-    ROLE_SEATED_LEADER
+    ROLE_SEATED_LEADER,
+    ROLE_DEPOT
 };
 int npc_role(const Actor *a);
 int weapon_family_index(int i);

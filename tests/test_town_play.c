@@ -384,7 +384,7 @@ static void settlement_layouts(void) {
         noForges += stock == 0;
         if (plan->smith) {
             int fine = 0, bestWeaponMaterial = 0;
-            assert(stock >= 7 && stock <= 11);
+            assert(stock >= 14 && stock <= 22);
             for (int row = 0; row < stock; row++) {
                 int item = shop_item(row);
                 if (itemDefs[item].quality < 2)

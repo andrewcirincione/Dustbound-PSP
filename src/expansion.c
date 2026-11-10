@@ -282,6 +282,8 @@ int expansion_input(float dt, Input in) {
         return 1;
     }
     if (ui.screen == SCREEN_INSPECT_HEALTH || ui.screen == SCREEN_EXECUTE) {
+        if(ui.screen==SCREEN_INSPECT_HEALTH && (p&(KEY_LEFT|KEY_RIGHT|KEY_L|KEY_R)))
+            ui.inspectTab=wrapi(ui.inspectTab+(p&(KEY_LEFT|KEY_L)?-1:1),3);
         if (p & KEY_START)
             open_view(SCREEN_WORLD);
         else if (p & KEY_CIRCLE)
@@ -513,9 +515,9 @@ int expansion_input(float dt, Input in) {
         }
         return 1;
     }
-    if(ui.screen==SCREEN_CRAFT&&(p&KEY_SQUARE)){open_view(SCREEN_FORGE);return 1;}
+    
     if (ui.screen == SCREEN_FORGE) {
-        if(p&KEY_SQUARE){open_view(SCREEN_CRAFT);return 1;}
+        
         static const int first[GEARS] = {0, 32, 48, 60, 68, 76}, counts[GEARS] = {38, 20, 12, 8, 8, 8};
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(SCREEN_WORLD);
@@ -583,12 +585,9 @@ int expansion_input(float dt, Input in) {
                 open_view(SCREEN_WORLD);
             return 1;
         }
-        if (p & KEY_LEFT) ui.homeBay = wrapi(ui.homeBay - 1, HOME_BAYS);
-        if (p & KEY_RIGHT) ui.homeBay = wrapi(ui.homeBay + 1, HOME_BAYS);
-        if (p & KEY_UP) ui.selection = 1 + wrapi(ui.selection - 2, FURN_TYPES - 1);
-        if (p & KEY_DOWN) ui.selection = 1 + wrapi(ui.selection, FURN_TYPES - 1);
-        if (p & KEY_CROSS) home_furnish(site, ui.homeBay, ui.selection);
-        if (p & KEY_SQUARE) home_furnish(site, ui.homeBay, FURN_EMPTY);
+        if (p & KEY_UP) ui.selection = 1 + wrapi(ui.selection - 2, FURN_TYPES);
+        if (p & KEY_DOWN) ui.selection = 1 + wrapi(ui.selection, FURN_TYPES);
+        if (p & KEY_CROSS) placement_open(ui.selection == FURN_TYPES ? FURN_EMPTY : ui.selection, site);
         return 1;
     }
     if (ui.screen == SCREEN_SAVES) {
@@ -884,6 +883,13 @@ int expansion_input(float dt, Input in) {
                 }
             } else
                 switch (dialogue_action(n, choice)) {
+                case 21: {
+                    int site=depot_site(n);
+                    if(site>=0 && conscious(b) && depth_distance(a,b)<=TALK_REACH){
+                        ui.storageIndex=site;ui.storageSide=0;open_view(SCREEN_STORAGE);
+                    }
+                    break;
+                }
                 case 20:
                     if (town >= 0 && conscious(b) && depth_distance(a, b) <= TALK_REACH) {
                         ui.coachTown = town;

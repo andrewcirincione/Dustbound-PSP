@@ -137,10 +137,6 @@ int depth_trade_open(int town) {
     ui.tradeSmith = 0;
     if (town < 0)
         return 0;
-    if (g.dayTime < 6 || g.dayTime >= 22) {
-        log_msg("Markets open at 06:00. Find an inn until dawn.");
-        return 0;
-    }
     return 1;
 }
 int depth_camp_count(void) {
@@ -215,6 +211,7 @@ int depth_fuel(int b) {
     return 1;
 }
 int depth_use_fuel(int b, float amount) {
+    if(b>=0&&b<g.buildingCount&&g.buildings[b].type==CAMPFIRE)return 1;
     if (!depth_build_ready(b)) {
         log_msg("Finish construction or repair the station.");
         return 0;

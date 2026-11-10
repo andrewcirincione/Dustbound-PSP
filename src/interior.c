@@ -108,38 +108,26 @@ int home_buy(int building) {
     return 1;
 }
 int home_furnish(int building, int bay, int type) {
-    if (home_state(building) != HOME_OWNED || g.interiorBuilding != building + 1 ||
-        !conscious(&g.actors[g.selected]) || bay < 0 || bay >= HOME_BAYS ||
-        type < FURN_EMPTY || type >= FURN_TYPES)
-        return 0;
-    unsigned char *furniture = &g.homes.furniture[building][bay];
-    if (*furniture == type)
-        return 0;
-    if (*furniture && type) {
-        log_msg("Clear this spot first.");
-        return 0;
-    }
-    if (g.money < homeFurniture[type].price) {
-        log_msg("You need %d silver.", homeFurniture[type].price);
-        return 0;
-    }
-    float x = homeBays[bay][0], y = homeBays[bay][1];
-    const HomeFurniture *f = &homeFurniture[type ? type : *furniture];
-    for (int i = 0; i < g.actorCount; i++) {
-        const Actor *a = &g.actors[i];
-        if (a->active && a->carriedBy < 0 && depth_room(a) == building + 1 &&
-            fabsf(x-depth_x(a)) < f->w+.30f && fabsf(y-depth_y(a)) < f->d+.30f) {
-            log_msg("Someone is in that spot.");
-            return 0;
-        }
-    }
-    g.money -= homeFurniture[type].price;
-    *furniture = type;
-    log_msg("%s %s.", f->name, type ? "placed" : "removed");
-    return 1;
+    if (bay < 0 || bay >= HOME_BAYS) return 0;
+    placement_init();
+    return home_place(building, bay, type, homeBays[bay][0], homeBays[bay][1]);
 }
+
 int homes_validate(const Game *save) {
     const Homes *h = &save->homes;
+    if(save->plans.version<0||save->plans.version>1)return 0;
+    for(int b=0;b<MAX_BUILDINGS;b++){
+        if(!isfinite(save->plans.campLastNear[b])||save->plans.campLastNear[b]<0)return 0;
+        for(int i=0;i<HOME_PLACES;i++){
+            int type=save->plans.furniture[b][i];
+            if(type>=FURN_TYPES||!isfinite(save->plans.x[b][i])||!isfinite(save->plans.y[b][i])||
+               (type&&(b>=save->buildingCount||h->property[b]!=HOME_OWNED||!save->plans.version||
+                save->plans.x[b][i]<.35f||save->plans.x[b][i]>6.65f||save->plans.y[b][i]<.35f||save->plans.y[b][i]>6.65f)))return 0;
+        }
+    }
+    for(int n=0;n<MAX_ACTORS;n++)if(!isfinite(save->plans.corpseSince[n])||save->plans.corpseSince[n]<0)return 0;
+    for(int t=0;t<TOWNS;t++)if(save->plans.depotClerk[t]>save->actorCount)return 0;
+    for(int c=0;c<CONTRACTS;c++)if(save->plans.dispatchPending[c]>1)return 0;
     if (h->version < 0 || h->version > 1)
         return 0;
     for (int i = 0; i < MAX_BUILDINGS; i++) {
@@ -390,16 +378,16 @@ static TownStop town_stop(int n, int town, int role) {
     int hour = (int)g.dayTime;
     unsigned shift = (unsigned)(g.time / 35.f + n * .41f) + n * 17u + g.seed;
     TownStop next = {.hour = hour, .until = g.time + 28 + shift % 21};
-    int type = role == ROLE_MERCHANT ? SHOP : role == ROLE_INNKEEPER ? BAR : role == ROLE_SMITH ? FORGE : -1;
+    int type = role == ROLE_MERCHANT ? SHOP : role == ROLE_INNKEEPER ? BAR : role == ROLE_SMITH ? FORGE : role == ROLE_DEPOT ? STORE : -1;
     if (type >= 0) {
         int business = town_service_building(a, town, type);
         if (business >= 0) {
-            int working = hour >= (type == FORGE ? 7 : 6) && hour < (type == FORGE ? 19 : type == BAR ? 24 : 22);
+            int working = 1;
             if (working && (g.time < 35 || shift % 7 != 0)) {
                 next.room = business + 1;
                 next.x = 3.4f;
                 next.y = 2.6f;
-                service_post(business, type == FORGE ? ROOM_SMITH_TRADE : ROOM_TRADE, &next.x, &next.y);
+                service_post(business, type == FORGE ? ROOM_SMITH_TRADE : type == STORE ? ROOM_STORAGE : ROOM_TRADE, &next.x, &next.y);
                 if (open_stop(n,next.room,next.x,next.y,1.15f))
                     return next;
             }
@@ -459,7 +447,7 @@ int town_npc_routine(int n, float dt) {
                 }
         if (!room) return 0;
     } else if (role != ROLE_CITIZEN && role != ROLE_BARBER && role != ROLE_RECRUIT &&
-               role != ROLE_INNKEEPER && role != ROLE_MERCHANT && role != ROLE_SMITH)
+               role != ROLE_INNKEEPER && role != ROLE_MERCHANT && role != ROLE_SMITH && role != ROLE_DEPOT)
         return 0;
     TownStop *post = &townStops[n];
     if (post->until <= g.time || post->hour != (int)g.dayTime)
@@ -664,16 +652,7 @@ static int room_layout(int building, int t, int style, int floor, InteriorProp *
         put_prop(p,&n,1.15f,4.35f,.46f,.47f,ART_CARAVAN_BALES,ROOM_NONE);
         return n;
     }
-    if (home_state(building)) {
-        for (int bay = 0; bay < HOME_BAYS; bay++) {
-            int type = g.homes.furniture[building][bay];
-            if (!type)
-                continue;
-            const HomeFurniture *f = &homeFurniture[type];
-            put_prop(p,&n,homeBays[bay][0],homeBays[bay][1],f->w,f->d,f->art,f->action);
-        }
-        return n;
-    }
+    if (home_state(building)) return home_layout(building, p);
     if (variant == BUILD_LODGE) {
         put_prop(p,&n,1.1f,1.7f,.62f,.82f,16,ROOM_REST);
         put_prop(p,&n,1.1f,4.25f,.62f,.82f,16,ROOM_REST);
@@ -724,13 +703,14 @@ static int room_layout(int building, int t, int style, int floor, InteriorProp *
         for (int j = 0; j < 3 + plan->marketTier; j++) {
             float x = j & 1 ? 5.55f : 1.12f;
             float y = 1.30f + (j / 2) * 1.7f;
-            put_prop(p,&n,x,y,.48f+(j%3)*.10f,.44f,20,ROOM_STORAGE);
+            put_prop(p,&n,x,y,.48f+(j%3)*.10f,.44f,20,ROOM_NONE);
         }
         put_prop(p,&n,3.8f,1.1f,.62f,.38f,21,ROOM_NONE);
+        put_prop(p,&n,3.4f,2.05f,.80f,.31f,17,ROOM_STORAGE);
     } else if (b->type == BAR) {
         int upstairs = inn_has_upstairs(building);
         if (upstairs)
-            put_prop(p,&n,5.94f,5.88f,.46f,.76f,ART_INN_STAIRS,ROOM_STAIRS);
+            put_prop(p,&n,5.94f,5.88f,.46f,.76f,floor ? ART_STAIRS_DOWN : ART_INN_STAIRS,ROOM_STAIRS);
         if (floor) {
             for (int j = 0; j < plan->beds; j++) {
                 float x = j % 2 ? 5.61f : 1.39f;
@@ -919,7 +899,7 @@ const char *interior_prompt(void) {
     case ROOM_SMITH_TRADE:
         return "BROWSE WEAPONS & ARMOR";
     case ROOM_STORAGE:
-        return "OPEN DEPOT";
+        return "DEPOT SERVICES";
     case ROOM_HOME_STASH:
         return "OPEN SHARED STASH";
     case ROOM_CHEST:
@@ -1238,3 +1218,5 @@ void training_tick(Actor *a, float dt) {
     else gain(a, MARTIAL, points);
     a->action = 4;
 }
+
+#include "placement.inc"

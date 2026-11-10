@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-PSP_MODULE_INFO(GAME_NAME, 0, 0, 4);
+PSP_MODULE_INFO(GAME_NAME, 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU);
 PSP_HEAP_SIZE_KB(12 * 1024);
 static volatile int running = 1;
@@ -146,8 +146,10 @@ int main(int argc, char *argv[]) {
                             snprintf(path, sizeof(path), "DUST_CAPTURE_%u.json", sequence);
                             out = fopen(path, "w");
                             if (out) {
-                                fprintf(out, "{\"screen\":%d,\"frame\":%u}\n", ui.screen,
-                                        (unsigned)rendered_frames);
+                                const Actor *selected=&g.actors[g.selected];
+                                fprintf(out, "{\"screen\":%d,\"frame\":%u,\"attack\":%d,\"variant\":%d,\"place\":[%.3f,%.3f]}\n",
+                                        ui.screen,(unsigned)rendered_frames,selected->attackPhase,
+                                        combat_attack_variant(selected),ui.placeX,ui.placeY);
                                 fclose(out);
                             }
                         }

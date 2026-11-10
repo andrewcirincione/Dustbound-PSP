@@ -204,11 +204,11 @@ static int sound_thread(SceSize n, void *arg) {
                 case SFX_SWING: sample = noise / 3; break;
                 case SFX_HIT: sample = wave + noise / 2; break;
                 case SFX_BLOCK: sample = wave + noise / 4; break;
-                case SFX_MENU_MOVE: sample = wave / 7; break;
-                case SFX_MENU_PICK: sample = (wave + v->filtered) / 5; break;
+                case SFX_MENU_MOVE: sample = wave / 3; break;
+                case SFX_MENU_PICK: sample = (wave + v->filtered) / 2; break;
                 case SFX_DRAW: sample = (noise - v->filtered) / 6 + wave / 8; break;
                 case SFX_SHEATHE: sample = v->filtered / 2 + wave / 7; break;
-                case SFX_STEP: sample = v->filtered / 2 + wave / 11; break;
+                case SFX_STEP: sample = v->filtered / 8 + wave / 44; break;
                 case SFX_MINE: sample = wave / 4 + noise / 8; break;
                 default: sample = noise; break;
                 }

@@ -221,7 +221,8 @@ int main(void) {
     inventory_add(a, WOOD, 50);
     inventory_add(a, IRONBAR, 30);
     inventory_add(a, ORE, 6);
-    CHECK(build_structure(3), "forge can be constructed from timber and iron bars");
+    CHECK(!build_structure(3), "smithies are absent from the camp menu");
+    add_build(a->x+1.9f,a->y,FORGE,FREE,-1);
     a->x += .5f;
     finish_build();
     int forge = g.buildingCount - 1;
@@ -233,7 +234,8 @@ int main(void) {
     interior_leave();
     a->x = 66;
     a->y = 40;
-    CHECK(build_structure(4), "research bench can be built");
+    CHECK(!build_structure(4), "research benches are absent from the camp menu");
+    add_build(a->x+1.9f,a->y,BENCH,FREE,-1);
     inventory_add(a, RELIC, 3);
     g.money = 2000;
     a->x += .5f;
