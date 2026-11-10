@@ -3,6 +3,9 @@
 #include "art_data.h"
 #include "settlement_art_ids.h"
 #include "settlement_art.h"
+#include "structure_art.h"
+#include "furniture_art.h"
+#include "furniture_models.h"
 
 _Static_assert(ART_COUNT == SETTLEMENT_ART_FIRST, "Settlement sprite IDs must follow the base atlas");
 #include <ctype.h>
@@ -36,9 +39,13 @@ static uint32_t blend(uint32_t a, uint32_t b, float f) {
 }
 /* Indexed row spans skip transparent margins. Only edge texels need blending.
    A lighting change updates 256 palette entries, not every sprite pixel. */
-static uint32_t artPalette[SETTLEMENT_ART_END][256];
-static int artLight[SETTLEMENT_ART_END];
+static uint32_t artPalette[FURNITURE_ART_FIRST + FURNITURE_ART_COUNT][256];
+static int artLight[FURNITURE_ART_FIRST + FURNITURE_ART_COUNT];
 static const ArtSprite *scene_sprite(int id) {
+    if (id >= FURNITURE_ART_FIRST) return &furnitureSprites[id - FURNITURE_ART_FIRST];
+    int model = structure_art_index(id);
+    if (model >= 0) return &structureSprites[model];
+    if (id >= ART_IRON_GRILLE) return &barrierSprites[id - ART_IRON_GRILLE];
     return id < ART_COUNT ? &artSprites[id] : &settlementSprites[id - SETTLEMENT_ART_FIRST];
 }
 static uint32_t *sprite_palette(int id, const ArtSprite *s, float brightness) {
@@ -352,7 +359,7 @@ static int wrap(int x, int y, int cols, const char *s, uint32_t c) {
             n = 1;
         memcpy(b, s, n);
         b[n] = 0;
-        text(x, y, b, c, 1);
+        if (c) text(x, y, b, c, 1);
         s += n;
         y += 11;
         while (*s == ' ')
@@ -539,10 +546,48 @@ static void terrain(void) {
     for (int y = 0; y < 272; y++)
         memcpy(fb + y * pitch, groundCache + (y + 32 - dy) * 544 + 32 - dx, 480 * 4);
 }
-static void art_shadow(int id, int x, int y) {
-    if (id < 0 || id >= 32)
+/* Project an elevation texture between its ground endpoints. */
+enum { WALL_SLICES = 4 };
+static void elevation(int id, int x0, int y0, int x1, int y1, int height, float brightness, int slice) {
+    int flipped = x1 < x0;
+    if (flipped) {
+        int tmp = x0; x0 = x1; x1 = tmp;
+        tmp = y0; y0 = y1; y1 = tmp;
+    }
+    int width = x1 - x0;
+    if (!width || x1 < clipLeft || x0 >= clipRight)
         return;
-    const ArtShadow *s = &artShadows[id];
+    const ArtSprite *s = scene_sprite(id);
+    const uint32_t *palette = sprite_palette(id,s,brightness);
+    int left = x0, right = x1;
+    if (slice >= 0) {
+        int part = flipped ? WALL_SLICES-1-slice : slice;
+        left += width*part/WALL_SLICES;
+        if (part < WALL_SLICES-1) right = x0+width*(part+1)/WALL_SLICES-1;
+    }
+    if (left < clipLeft) left = clipLeft;
+    if (right >= clipRight) right = clipRight-1;
+    for (int x = left; x <= right; x++) {
+        int dx = x - x0;
+        int foot = y0 + (y1-y0)*dx/width;
+        int sx = dx*(s->w-1)/width;
+        if (flipped) sx = s->w-1-sx;
+        int top = foot - height + 1;
+        int from = top < clipTop ? clipTop : top, to = foot >= clipBottom ? clipBottom-1 : foot;
+        for (int y = from; y <= to; y++) {
+            const uint16_t *span = &s->rows[(y-top)*s->h/height*3];
+            if (sx < span[1] || sx >= span[2]) continue;
+            uint32_t c = palette[s->pixels[span[0]+sx-span[1]]];
+            if (c >> 24)
+                fb[y*pitch+x] = c | 0xff000000;
+        }
+    }
+}
+static void art_shadow(int id, int x, int y) {
+    int model = structure_art_index(id);
+    if (model < 0 && (id < 0 || id >= 32))
+        return;
+    const ArtShadow *s = model >= 0 ? &structureShadows[model] : &artShadows[id];
     x -= s->ax;
     y -= s->ay;
     for (int yy = 0; yy < s->h; yy++) {
@@ -562,48 +607,48 @@ static void art_shadow(int id, int x, int y) {
     }
 }
 typedef struct { int x, y; } ScreenPoint;
+static void wall(int id, int slice) {
+    const Building *b = &g.buildings[id];
+    WallRun run = building_wall_run(id);
+    float dx = !run.alongY, dy = run.alongY;
+    int x0, y0, x1, y1;
+    project(b->x+dx*run.low,b->y+dy*run.low,&x0,&y0);
+    project(b->x+dx*run.high,b->y+dy*run.high,&x1,&y1);
+    int town = building_town(id), court = town >= 0 && civil_style(town) == 1;
+    elevation(court ? ART_COURT_WALL : ART_STONE_WALL,x0,y0,x1,y1,court ? 36 : 27,
+              light()*(run.alongY ? .88f : 1),slice);
+}
 static void building(int id) {
-    Building *b = &g.buildings[id];
+    const Building *b = &g.buildings[id];
     int x, y;
     project(b->x, b->y, &x, &y);
-    if (x < -120 || x > 600 || y < -80 || y > 310)
+    if (x < -155 || x > 635 || y < -80 || y > 345)
         return;
-    int sprite = building_sprite(id), top;
-    float l = light();
-    if (building_has_interior(b->type)) {
-        const ArtSprite *s = scene_sprite(sprite);
-        float w, d, wx, wy;
-        int height, sx, sy, ax, ay;
-        building_footprint(id, &w, &d, &height);
-        building_threshold(id, &wx, &wy);
-        project(wx, wy, &sx, &sy);
-        int width = (int)roundf((w + d) * 46);
-        height = (width * s->h + s->w / 2) / s->w;
-        PaintedDoor door = painted_door(sprite);
-        int left = sx - (int)roundf(width * door.x);
-        top = sy - (int)roundf(height * door.y);
-        project(g.actors[g.selected].x, g.actors[g.selected].y, &ax, &ay);
-        int fade = ax > left && ax < left + width && ay < y && ay > top + 4;
-        scaled_art(sprite, left, top, width, height, l, 0, fade || g.depth.buildings[id].labor > 0);
-    } else {
-        top = y - scene_sprite(sprite)->ay;
-        art(sprite, x, y, l, g.depth.buildings[id].labor > 0);
+    float brightness = light();
+    if (b->type != WALL) {
+        int sprite = building_sprite(id), fade = g.depth.buildings[id].labor > 0;
+        if (building_has_interior(b->type)) {
+            const ArtSprite *s = scene_sprite(sprite);
+            const Actor *a = &g.actors[g.selected];
+            int ax, ay;
+            project(a->x,a->y,&ax,&ay);
+            float w, d;
+            int height;
+            building_footprint(id,&w,&d,&height);
+            int behind = (a->x < b->x-w || a->y < b->y-d) &&
+                         a->x < b->x+w && a->y < b->y+d;
+            fade |= behind && ax > x-s->ax && ax < x-s->ax+s->w && ay > y-s->ay && ay < y;
+        }
+        art(sprite,x,y,brightness,fade);
     }
     if (g.depth.buildings[id].labor > 0) {
         bar(x-20,y-8,40,3,100-g.depth.buildings[id].labor/35*100,GOLD);
         text(x-24,y+5,"BUILDING",GOLD,1);
     }
     if (b->type == SLAVE_YARD) {
-        art(30, x-26, y-4, l, 0);
-        art(26, x-12, y+6, l, 0);
-        art(27, x+23, y+9, l, 0);
-    }
-    if ((building_has_interior(b->type) || b->type == SLAVE_YARD) &&
-        distance(b->x,b->y,g.actors[g.selected].x,g.actors[g.selected].y) < 7) {
-        const char *label = building_name(id);
-        int bw = text_width(label) + 8;
-        rect(x - bw/2, top - 12, bw, 11, INK);
-        center(x, top - 10, label, GOLD, 1);
+        art(30, x-26, y-4, brightness, 0);
+        art(26, x-12, y+6, brightness, 0);
+        art(27, x+23, y+9, brightness, 0);
     }
 }
 #include "painted_actor.h"
@@ -632,7 +677,7 @@ typedef struct {
     float depth;
     int kind, index, x, y;
 } Object;
-static Object objects[MAX_NODES + MAX_BUILDINGS + MAX_ACTORS + 1200 + POP_GROUPS*POP_PROPS];
+static Object objects[MAX_NODES + MAX_BUILDINGS*(WALL_SLICES+1) + MAX_ACTORS + 1200 + POP_GROUPS*POP_PROPS];
 static int compare_obj(const void *a, const void *b) {
     float d = ((Object *)a)->depth - ((Object *)b)->depth;
     return d < 0 ? -1 : d > 0 ? 1 : 0;
@@ -688,7 +733,18 @@ static void objects_draw(void) {
         Building *b = &g.buildings[i];
         if (portable_bedroll(i) < 0 || fabsf(b->x - ui.camX) >= 20 || fabsf(b->y - ui.camY) >= 20)
             continue;
-        objects[n++] = (Object){b->x + b->y, 1, i, 0, 0};
+        if (b->type == WALL) {
+            /* Sort along each wall so actors standing behind a corner are covered by it. */
+            WallRun run = building_wall_run(i);
+            for (int part = 0; part < WALL_SLICES; part++) {
+                float depth = b->x+b->y+run.low+(run.high-run.low)*(part+.5f)/WALL_SLICES;
+                objects[n++] = (Object){depth, 6, i, part, 0};
+            }
+            if (g.depth.buildings[i].labor > 0)
+                objects[n++] = (Object){b->x + b->y, 1, i, 0, 0};
+        } else {
+            objects[n++] = (Object){b->x + b->y, 1, i, 0, 0};
+        }
         if (building_has_interior(b->type) || b->type == WINDMILL || b->type == WELL ||
             b->type == WALL || b->type == SLAVE_YARD) {
             int height;
@@ -773,7 +829,8 @@ static void objects_draw(void) {
         if (o->kind == 1) {
             Building *b = &g.buildings[o->index];
             project(b->x, b->y, &x, &y);
-            art_shadow(building_sprite(o->index), x, y);
+            if (b->type != WALL)
+                art_shadow(building_sprite(o->index), x, y);
         }
         if (o->kind == 0 && g.nodes[o->index].remaining) {
             Node *b = &g.nodes[o->index];
@@ -818,6 +875,8 @@ static void objects_draw(void) {
             Actor *a = &g.actors[o->index];
             person(a, o->x, o->y, 1, o->index == g.selected);
 
+        } else if (o->kind == 6) {
+            wall(o->index,o->x);
         } else if(o->kind==5){art(11,o->x,o->y,light(),0);art(9,o->x+10,o->y+4,light(),0);
         } else if (o->kind == 4) {
             int group = o->index / POP_PROPS, prop = o->index % POP_PROPS;
@@ -857,6 +916,52 @@ static int squad_combatant(int n){
  }
  return 0;
 }
+typedef struct { int x,y,w,h; } LabelBox;
+static LabelBox labelBoxes[48];
+static int labelCount;
+
+static void reserve_label(LabelBox box) {
+    if (labelCount < (int)(sizeof(labelBoxes)/sizeof(*labelBoxes)))
+        labelBoxes[labelCount++] = box;
+}
+static int place_label(int center, int top, int w, int h, LabelBox *out) {
+    static const int rows[] = {0,-1,1,-2,2,-3,3,-4,4};
+    static const int columns[] = {0,-30,30,-60,60};
+    int right = 476-w, bottom = 209-h;
+    for (unsigned r = 0; r < sizeof(rows)/sizeof(*rows); r++)
+        for (unsigned c = 0; c < sizeof(columns)/sizeof(*columns); c++) {
+            int x = center-w/2+columns[c], y = top+rows[r]*(h+3);
+            if (x < 4) x = 4;
+            if (x > right) x = right;
+            if (y < 39) y = 39;
+            if (y > bottom) y = bottom;
+            int blocked = 0;
+            for (int n = 0; n < labelCount; n++) {
+                const LabelBox *other = &labelBoxes[n];
+                if (x < other->x+other->w+2 && x+w+2 > other->x &&
+                    y < other->y+other->h+2 && y+h+2 > other->y) {
+                    blocked = 1;
+                    break;
+                }
+            }
+            if (blocked) continue;
+            *out = (LabelBox){x,y,w,h};
+            reserve_label(*out);
+            return 1;
+        }
+    return 0;
+}
+static void world_label(int x, int y, const char *title, uint32_t color, int faction) {
+    if (x < 0 || x >= 480 || y < -60 || y > 234)
+        return;
+    LabelBox box;
+    if (!place_label(x,y,text_width(title)+10,11,&box))
+        return;
+    rect(box.x,box.y,box.w,box.h,INK);
+    if (faction >= 0)
+        rect(box.x,box.y,2,box.h,factionColors[faction]);
+    text(box.x+5,box.y+2,title,color,1);
+}
 static void care_and_cooldown(int indoors) {
     Actor *selected = &g.actors[g.selected];
     for (int i = 0; i < g.actorCount; i++) {
@@ -869,6 +974,7 @@ static void care_and_cooldown(int indoors) {
         if (indoors) room_project(depth_x(medic), depth_y(medic), &x, &y);
         else project(medic->x, medic->y, &x, &y);
         if (x < 12 || x > 468 || y < 74 || y > 233) continue;
+        reserve_label((LabelBox){x-13,y-61,27,17});
         rect(x - 5, y - 61, 11, 11, INK);
         rect(x - 4, y - 57, 9, 3, 0x78bdea);
         rect(x - 1, y - 60, 3, 9, 0x78bdea);
@@ -880,30 +986,69 @@ static void care_and_cooldown(int indoors) {
         else project(selected->x, selected->y, &x, &y);
         CombatTiming timing = combat_timing(selected, selected->attackWeapon, combat_attack_variant(selected));
         float total = timing.windup + timing.stroke + timing.recovery;
+        reserve_label((LabelBox){x-13,y+5,27,3});
         bar(x - 13, y + 5, 27, 3, (1 - fminf(1, selected->cooldown / total)) * 100, 0xdc9d54);
     }
 }
-static void nearby_labels(int indoors){
- int ids[MAX_ACTORS],count=0;float ds[MAX_ACTORS];Actor*p=&g.actors[g.selected];
- for(int i=0;i<g.actorCount;i++){Actor*a=&g.actors[i];if(!a->active||a->squad||a->carriedBy>=0||population_hidden(i)||depth_room(a)!=depth_room(p))continue;float d=depth_distance(p,a);if(d>9)continue;ids[count]=i;ds[count++]=d;}
- for(int i=1;i<count;i++){int n=ids[i],j=i;float d=ds[i];while(j>0&&ds[j-1]>d){ids[j]=ids[j-1];ds[j]=ds[j-1];j--;}ids[j]=n;ds[j]=d;}
- int boxes[8][4],used=0;
- int fighting=0;for(int i=0;i<count;i++)if(squad_combatant(ids[i]))fighting=1;
- if(fighting)for(int i=1;i<count;i++)if(ids[i]==p->target){int swap=ids[0];ids[0]=ids[i];ids[i]=swap;break;}
- for(int i=0;i<count&&used<(fighting?1:8);i++){Actor*a=&g.actors[ids[i]];if(depth_distance(p,a)>4)continue;int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);
-  char label[48];snprintf(label,sizeof(label),"%.19s%s%s",a->bountyReward ? a->name : escorting_actor(ids[i]) ? "Escort caravan" : npc_role_name(a),
-    a->bountyReward ? " $" : "",a->dead?" / DEAD":a->unconscious>0?" / DOWN":actor_relation(ids[i])<0?" !":"");int w=text_width(label)+8,l=x-w/2,t=fighting?y+17:y-(a->dead||a->unconscious>0?24:56);if(l<4)l=4;if(l+w>476)l=476-w;if(t<39)t=39;
-  for(int attempt=0;attempt<5;attempt++){int hit=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])hit=1;if(!hit)break;t-=13;}
-  int overlaps=0;for(int b=0;b<used;b++)if(l<boxes[b][0]+boxes[b][2]+2&&l+w+2>boxes[b][0]&&t<boxes[b][1]+13&&t+13>boxes[b][1])overlaps=1;
-  if(overlaps||t<38||t>219||x<0||x>480||(l+w>398&&t<100))continue;
-  boxes[used][0]=l;boxes[used][1]=t;boxes[used][2]=w;used++;
-  if(!fighting)line(x,y-(a->dead||a->unconscious>0?8:35),l+w/2,t+10,shade(factionColors[a->faction],.65f));
-  rect(l,t,w,11,INK);rect(l,t,2,11,factionColors[a->faction]);text(l+5,t+2,label,label_color(a->faction),1);
-  if(!a->dead&&actor_relation(ids[i])<0)text(l+w-9,t+2,"!",RED,1);
- }
- for(int i=0;i<count;i++)if(squad_combatant(ids[i])){Actor*a=&g.actors[ids[i]];int x,y;if(indoors)room_project(depth_x(a),depth_y(a),&x,&y);else project(a->x,a->y,&x,&y);rect(x-14,y+1,29,7,0x14110e);bar(x-13,y+2,27,5,knockout_reserve(a),a->unconscious>0?MUTED:0xe36552);
- if(a->attackPhase==1){float q=1-a->attackClock/fmaxf(.01f,a->attackDuration);bar(x-12,y+8,25,3,q*100,GOLD);line(x,y+5,x+(int)(cosf(a->attackAngle)*18),y+5+(int)(sinf(a->attackAngle)*9),GOLD);}
- if(a->hitFlash>0&&a->impactKind){const char*hit=a->unconscious>0?"DOWN":a->impactKind==2?"BLOCK":a->impactKind==3?"DODGE":"HIT";text(x+17,y-12,hit,a->unconscious>0?GOLD:TEXT,1);}}
+static void nearby_labels(int indoors) {
+    int ids[MAX_ACTORS], count = 0, fighting = 0;
+    float range[MAX_ACTORS];
+    const Actor *p = &g.actors[g.selected];
+    for (int i = 0; i < g.actorCount; i++) {
+        Actor *a = &g.actors[i];
+        if (!a->active || a->squad || a->carriedBy >= 0 || population_hidden(i) ||
+            depth_room(a) != depth_room(p)) continue;
+        float d = depth_distance(p,a);
+        if (d > 9) continue;
+        int j = count++;
+        while (j > 0 && range[j-1] > d) {
+            ids[j] = ids[j-1];
+            range[j] = range[j-1];
+            j--;
+        }
+        ids[j] = i;
+        range[j] = d;
+    }
+    for (int i = 0; i < count; i++) {
+        if (!squad_combatant(ids[i])) continue;
+        Actor *a = &g.actors[ids[i]];
+        int x,y;
+        if (indoors) room_project(depth_x(a),depth_y(a),&x,&y);
+        else project(a->x,a->y,&x,&y);
+        fighting = 1;
+        reserve_label((LabelBox){x-14,y+1,29,11});
+        rect(x-14,y+1,29,7,0x14110e);
+        bar(x-13,y+2,27,5,knockout_reserve(a),a->unconscious>0?MUTED:0xe36552);
+        if (a->attackPhase == 1) {
+            float progress = 1-a->attackClock/fmaxf(.01f,a->attackDuration);
+            bar(x-12,y+8,25,3,progress*100,GOLD);
+            line(x,y+5,x+(int)(cosf(a->attackAngle)*18),y+5+(int)(sinf(a->attackAngle)*9),GOLD);
+        }
+    }
+    int focus = 0;
+    if (fighting)
+        for (int i = 0; i < count; i++)
+            if (ids[i] == p->target) { focus = i; break; }
+    for (int i = 0; i < (fighting ? 1 : count) && i < 8; i++) {
+        int row = fighting ? focus : i, id = ids[row];
+        Actor *a = &g.actors[id];
+        if (range[row] > (fighting ? 9 : 4)) continue;
+        int x,y;
+        if (indoors) room_project(depth_x(a),depth_y(a),&x,&y);
+        else project(a->x,a->y,&x,&y);
+        char name[48];
+        int enemy = actor_relation(id) < 0;
+        const char *role = a->bountyReward ? a->name : escorting_actor(id) ? "Escort caravan" : npc_role_name(a);
+        const char *status = a->dead ? " / DEAD" : a->unconscious > 0 ? " / DOWN" : enemy ? " !" : "";
+        snprintf(name,sizeof(name),"%.19s%s%s",role,a->bountyReward?" $":"",status);
+        world_label(x,fighting ? y+16 : y-(a->dead||a->unconscious>0 ? 24 : 48),
+                    name,enemy&&!a->dead ? RED : label_color(a->faction),a->faction);
+        if (fighting && a->hitFlash > 0 && a->impactKind) {
+            const char *hit = a->unconscious>0 ? "DOWN" : a->impactKind==2 ? "BLOCK" :
+                              a->impactKind==3 ? "DODGE" : "HIT";
+            world_label(x+30,y-12,hit,TEXT,-1);
+        }
+    }
 }
 static void speech_bubbles(void) {
     int best = -1;
@@ -926,24 +1071,39 @@ static void speech_bubbles(void) {
     int x, y;
     project(a->x, a->y, &x, &y);
     const char *words = ambient_line(best);
-    int w = text_width(words) + 16;
-    int h = w > 320 ? (w > 605 ? 36 : 25) : 17;
-    if (w > 320) w = 320;
-    x -= w / 2;
-    if (x < 8)
-        x = 8;
-    if (x + w > 392) x = 392 - w;
-    y -= 64;
-    if (y < 30)
-        y = 30;
-    if (y > 159)
-        y = 159;
-    rect(x, y, w, h, INK);
-    frame(x, y, w, h, EDGE);
-    triangle(x + w / 2 - 3, y + h - 1, x + w / 2 + 3, y + h - 1, x + w / 2, y + h + 4, EDGE);
-    wrap(x + 6, y + 4, (w - 9) / 6, words, a->speech>=24?GOLD:TEXT);
+    int w = (int)fminf(300,text_width(words)+16), cols = (w-12)/6;
+    int h = wrap(0,0,cols,words,0)+7;
+    LabelBox box;
+    if (!place_label(x,y-45-h,w,h+4,&box))
+        return;
+    rect(box.x,box.y,w,h,INK);
+    frame(box.x,box.y,w,h,EDGE);
+    int tail = x < box.x+7 ? box.x+7 : x > box.x+w-7 ? box.x+w-7 : x;
+    triangle(tail-3,box.y+h-1,tail+3,box.y+h-1,tail,box.y+h+3,EDGE);
+    wrap(box.x+6,box.y+4,cols,words,a->speech>=24?GOLD:TEXT);
 }
 
+static void structure_labels(void) {
+    const Actor *a = &g.actors[g.selected];
+    for (int i = 0; i < g.buildingCount; i++) {
+        const Building *b = &g.buildings[i];
+        if ((!building_has_interior(b->type) && b->type != SLAVE_YARD) ||
+            fabsf(b->x-a->x) >= 7 || fabsf(b->y-a->y) >= 7 ||
+            distance(b->x,b->y,a->x,a->y) >= 7)
+            continue;
+        int x,y;
+        project(b->x,b->y,&x,&y);
+        const ArtSprite *s = scene_sprite(building_sprite(i));
+        world_label(x,y-s->ay-13,building_name(i),GOLD,-1);
+    }
+    int ore = nearest_ore(a->x,a->y,5.5f,-1);
+    if (ore >= 0) {
+        const Node *node = &g.nodes[ore];
+        int x,y;
+        project(node->x,node->y,&x,&y);
+        world_label(x,y-21,node->type == NODE_ORE ? "Iron ore" : "Copper ore",GOLD,-1);
+    }
+}
 static void civic_flag(int t){
     int x,y,f=g.townOwner[t],side=war_faction_index(f);
     project(towns[t].x+1,towns[t].y+2,&x,&y);
@@ -1000,27 +1160,33 @@ static void room_project(float x, float y, int *sx, int *sy) {
     *sx = 240 + (int)((x - y) * roomScale);
     *sy = (int)(roomBase + (x + y) * roomScale * .5f);
 }
-static void room_furniture(const InteriorProp *p, int style) {
-    int id = p->art, flip = 0, x, y;
+static void room_furniture(const InteriorProp *p) {
+    int model = furniture_art_index(p->art), x, y;
     room_project(p->x, p->y, &x, &y);
-    if (id == 16) {
-        if (style == 1 || style == 2) id = ART_LOW_COT;
-        flip = p->d > p->w;
-    } else if (id == 17 && p->d > p->w) {
-        id = ART_SIDE_COUNTER;
-    }
-    const ArtSprite *sprite = scene_sprite(id);
-    int width = (int)roundf(roomScale * (p->w + p->d) * 2);
-    float heightScale = 1;
-    switch (id) {
-    case 17: case ART_SIDE_COUNTER: heightScale = .80f; break;
-    case 19: heightScale = .83f; break;
-    case 21: case ART_ARMOR_STAND: heightScale = .78f; break;
-    }
-    int height = (int)roundf(width * sprite->h * heightScale / sprite->w);
-    int base = (id >= SETTLEMENT_ART_FIRST || id == 23) ? sprite->ay :
-               sprite->h - (int)roundf(sprite->w * (id == 16 ? .23f : .19f));
-    scaled_art(id, x - width / 2, y - height * base / sprite->h, width, height, .94f, flip, 0);
+    int flip = furniture_is_bed(p->art) && p->d > p->w;
+    const ArtSprite *sprite = &furnitureSprites[model];
+    float scale = 2*roomScale*(p->w + p->d)/furnitureModels[model].span;
+    int width = (int)roundf(sprite->w * scale), height = (int)roundf(sprite->h * scale);
+    int anchorX = flip ? sprite->w-1-sprite->ax : sprite->ax;
+    scaled_art(FURNITURE_ART_FIRST + model,x-(int)roundf(anchorX*scale),
+               y-(int)roundf(sprite->ay*scale),width,height,.94f,flip,0);
+}
+static void cell_partition(int room) {
+    int leftX,leftY, hingeX,hingeY, latchX,latchY, rightX,rightY;
+    room_project(0,CELL_Y,&leftX,&leftY);
+    room_project(CELL_HINGE_X,CELL_Y,&hingeX,&hingeY);
+    room_project(CELL_LATCH_X,CELL_Y,&latchX,&latchY);
+    room_project(7,CELL_Y,&rightX,&rightY);
+    int open = jail_room_open(room);
+    int leafX = latchX, leafY = latchY;
+    if (open)
+        room_project(CELL_HINGE_X,CELL_Y-(CELL_LATCH_X-CELL_HINGE_X),&leafX,&leafY);
+    elevation(ART_CELL_GATE,hingeX,hingeY,leafX,leafY,36,open ? .76f : .95f,-1);
+    elevation(ART_IRON_GRILLE,leftX,leftY,hingeX,hingeY,38,.92f,-1);
+    elevation(ART_IRON_GRILLE,latchX,latchY,rightX,rightY,38,.92f,-1);
+}
+static float room_depth(float x, float y, int jail) {
+    return x + y + (jail && y >= CELL_Y ? 14 : 0);
 }
 static void interior_draw(void) {
     int id = g.interiorBuilding - 1;
@@ -1056,26 +1222,32 @@ static void interior_draw(void) {
     texture_plane(104, x, y - 8, 15, 8, -15, 8, .8f, .8f, 1.11f);
     text(x - 12, y + 9, "EXIT", GOLD, 1);
     InteriorProp props[ROOM_PROPS];
-    enum { ROOM_OBJECTS = MAX_ACTORS + ROOM_PROPS };
-    int count = interior_props(id, props), order[ROOM_OBJECTS];
+    int jail = b->type == JAIL;
+    enum { ROOM_OBJECTS = MAX_ACTORS + ROOM_PROPS + 1 };
+    int count = interior_props(id, props), furniture = count, order[ROOM_OBJECTS];
     float depth[ROOM_OBJECTS];
     int roomActor[ROOM_OBJECTS];
     for (int i = 0; i < count; i++) {
         order[i] = i;
-        depth[i] = props[i].art == 23 ? -1 : props[i].x + props[i].y;
+        depth[i] = props[i].art == 23 ? -1 : room_depth(props[i].x,props[i].y,jail);
         roomActor[i] = -1;
+    }
+    if (jail) {
+        order[count] = count;
+        roomActor[count] = -2;
+        depth[count++] = 12;
     }
     int player = count;
     Actor *controlled = &g.actors[g.selected];
     if (controlled->carriedBy < 0) {
         roomActor[count] = g.selected;
         order[count] = count;
-        depth[count++] = g.interiorX + g.interiorY;
+        depth[count++] = room_depth(g.interiorX,g.interiorY,jail);
         if (actor_in_bed(controlled))
-            for (int i = 0; i < player; i++)
+            for (int i = 0; i < furniture; i++)
                 if (props[i].action == ROOM_REST &&
                     distance(props[i].x, props[i].y, g.interiorX, g.interiorY) < .35f) {
-                    depth[player] = props[i].x + props[i].y + .01f;
+                    depth[player] = room_depth(props[i].x,props[i].y,jail) + .01f;
                     break;
                 }
     }
@@ -1086,7 +1258,7 @@ static void interior_draw(void) {
             continue;
         roomActor[count] = i;
         order[count] = count;
-        depth[count++] = depth_x(resident) + depth_y(resident);
+        depth[count++] = room_depth(depth_x(resident),depth_y(resident),jail);
     }
     for (int i = 1; i < count; i++) {
         int a = order[i], j = i;
@@ -1105,17 +1277,10 @@ static void interior_draw(void) {
             if (sleeping) y -= style == 1 || style == 2 ? 8 : 12;
             person(resident, x, y, 1, roomActor[i] == g.selected && !sleeping);
             if (resident->squad) squad_health_bar(resident, x, y);
+        } else if (roomActor[i] == -2) {
+            cell_partition(id+1);
         } else {
-            room_furniture(&props[i], style);
-        }
-    }
-    if (b->type == JAIL) {
-        int open = g.actors[g.selected].prisonTime <= 0 || jail_cell_open(&g.actors[g.selected]);
-        for (int panel = 0; panel < 5; panel++) {
-            if (open && panel == 2) continue;
-            InteriorProp bars = {.x = 6.2f - panel * 1.35f, .y = 3.65f, .w = .68f,
-                                 .d = .10f, .art = ART_CELL_PANEL};
-            room_furniture(&bars, style);
+            room_furniture(&props[i]);
         }
     }
     const char *name = building_name(id);
@@ -1310,20 +1475,6 @@ static void hud(void) {
         return;
     if (!g.interiorBuilding)
         mini_map();
-    if (!g.interiorBuilding) {
-        int ore = nearest_ore(a->x, a->y, 5.5f, -1);
-        if (ore >= 0) {
-            const Node *node = &g.nodes[ore];
-            int x, y;
-            project(node->x, node->y, &x, &y);
-            if (x > 56 && x < 389 && y > 54 && y < 223) {
-                const char *label = node->type == NODE_ORE ? "IRON ORE" : "COPPER ORE";
-                int w = text_width(label) + 8;
-                rect(x - w / 2, y - 21, w, 12, INK);
-                center(x, y - 19, label, GOLD, 1);
-            }
-        }
-    }
     recovery_hint(b,sizeof(b));if(b[0]){rect(4,211,472,12,INK);b[77]=0;text(8,213,b,a->bleed>.01f?RED:TEAL,1);}
     if (ui.paused) {
         panel(192, 43, 94, 18);
@@ -2496,7 +2647,6 @@ static void chest_screen(void) {
         snprintf(qty, sizeof(qty), "%d", item->qty); text(387-text_width(qty),y,qty,GOLD,1);
         snprintf(qty, sizeof(qty), "%d", itemDefs[item->item].price); text(442-text_width(qty),y,qty,TEXT,1);
     }
-    if (owner) text(31, 219, "Witnesses can warn you or report you to the watch.", MUTED, 1);
 }
 static void factions_screen(void) {
     overlay_header("FLAGS OF THE FRONTIER", "FACTION COLORS / ! HOSTILE TO YOU / YOUR STANDING");
@@ -2643,9 +2793,23 @@ void render_game(uint32_t *pixels, int stride) {
         }
     }
     depth_world_draw();
+    labelCount = 0;
+    if (ui.screen == SCREEN_WORLD) {
+        if (!g.interiorBuilding) reserve_label((LabelBox){397,36,80,68});
+        if (ui.statusPanel) reserve_label((LabelBox){8,44,201,168});
+        if (ui.paused) reserve_label((LabelBox){192,43,97,21});
+        care_and_cooldown(!!g.interiorBuilding);
+        nearby_labels(!!g.interiorBuilding);
+        const Actor *a = &g.actors[g.selected];
+        if (!g.interiorBuilding) {
+            if (a->target < 0 && a->unconscious <= 0 && !a->dead)
+                speech_bubbles();
+            structure_labels();
+        }
+    }
     if(!g.interiorBuilding){
-      for(int k=0;k<6;k++)if(g.trails.bed[k]){Building*b=&g.buildings[g.trails.bed[k]-1];if(distance(b->x,b->y,ui.camX,ui.camY)<13){int x,y;project(b->x,b->y,&x,&y);text(x-30,y-25,"WAYFARER REST",TEAL,1);}}
-      for(int t=0;t<TOWNS;t++)if(g.life.towns[t].stage==2&&distance(towns[t].x,towns[t].y,ui.camX,ui.camY)<18){int x,y;project(towns[t].x+5,towns[t].y+5,&x,&y);line(x,y,x,y-35,TEXT);triangle(x,y-35,x+16,y-30,x,y-23,factionColors[g.townOwner[t]]);text(x-20,y+3,g.life.towns[t].policy==1?"RELIEF POST":g.life.towns[t].policy==2?"GARRISON":"TRADE COURT",GOLD,1);}
+      for(int k=0;k<6;k++)if(g.trails.bed[k]){Building*b=&g.buildings[g.trails.bed[k]-1];if(distance(b->x,b->y,ui.camX,ui.camY)<13){int x,y;project(b->x,b->y,&x,&y);if(ui.screen==SCREEN_WORLD)world_label(x,y-25,"Wayfarer rest",TEAL,-1);}}
+      for(int t=0;t<TOWNS;t++)if(g.life.towns[t].stage==2&&distance(towns[t].x,towns[t].y,ui.camX,ui.camY)<18){int x,y;project(towns[t].x+5,towns[t].y+5,&x,&y);line(x,y,x,y-35,TEXT);triangle(x,y-35,x+16,y-30,x,y-23,factionColors[g.townOwner[t]]);if(ui.screen==SCREEN_WORLD)world_label(x,y+3,g.life.towns[t].policy==1?"Relief post":g.life.towns[t].policy==2?"Garrison":"Trade court",GOLD,-1);}
       for(int t=OLD_TOWNS;t<TOWNS;t++)if(distance(towns[t].x,towns[t].y,ui.camX,ui.camY)<18)civic_flag(t);
       int seenYards=0;
       for(int n=0;n<g.actorCount;n++)if(g.war.prisonTown[n]&&!g.actors[n].dead){
@@ -2653,14 +2817,9 @@ void render_game(uint32_t *pixels, int stride) {
           if(seenYards&(1<<t))continue;
           seenYards|=1<<t;
           float wx,wy;war_yard(t,&wx,&wy);
-          if(distance(wx,wy,ui.camX,ui.camY)<10){int x,y;project(wx,wy,&x,&y);center(x,y+9,"WORK YARD",GOLD,1);}
+          if(distance(wx,wy,ui.camX,ui.camY)<10){int x,y;project(wx,wy,&x,&y);if(ui.screen==SCREEN_WORLD)world_label(x,y+9,"Work yard",GOLD,-1);}
       }
     }
-    if (ui.screen == SCREEN_WORLD) {
-        nearby_labels(!!g.interiorBuilding);
-        care_and_cooldown(!!g.interiorBuilding);
-    }
-    if(ui.screen==SCREEN_WORLD && !g.interiorBuilding && g.actors[g.selected].target<0 && g.actors[g.selected].unconscious<=0 && !g.actors[g.selected].dead) speech_bubbles();
     hud();
     switch (ui.screen) {
     case SCREEN_ORDERS:case SCREEN_CAMP:case SCREEN_CARE:case SCREEN_LAYERS:

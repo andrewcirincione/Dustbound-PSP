@@ -498,19 +498,9 @@ int can_walk(float x, float y) {
         return 0;
     if (trail_blocked(x,y) || terrain_water(x, y))
         return 0;
-    for (int i = 0; i < g.buildingCount; i++) {
-        Building *b = &g.buildings[i];
-        if (fabsf(b->x - x) > 2.6f || fabsf(b->y - y) > 2.6f) continue;
-        if (b->type == WALL && fabsf(b->x - x) < 1.01f && fabsf(b->y - y) < 1.01f)
+    for (int i = 0; i < g.buildingCount; i++)
+        if (structure_blocks(i,x,y,.13f))
             return 0;
-        if (building_has_interior(b->type)) {
-            float w, d;
-            int height;
-            building_footprint(i, &w, &d, &height);
-            if (fabsf(b->x - x) < w && fabsf(b->y - y) < d)
-                return 0;
-        }
-    }
     return 1;
 }
 void move_actor(Actor *a, float dx, float dy, float dt) {
@@ -568,6 +558,16 @@ void walk_heading(const Actor *a, float *x, float *y) {
         *y = 0;
     }
 }
+void raider_scraps(Actor *a, unsigned seed) {
+    unsigned roll = seed % 16;
+    if (roll < 3)
+        inventory_add(a,CLOTH,1);
+    else if (roll < 5)
+        inventory_add(a,seed & 16 ? JERKY : OATCAKE,1);
+    else if (roll < 7)
+        inventory_add(a,portion_item(MEDKIT,30+(seed>>4)%36),1);
+}
+
 void init_actor(int n, const char *name, int kind, int faction, float x, float y, int skill) {
     combatVisuals[n] = (CombatVisual){0};
     retreats[n] = (Retreat){0};
@@ -611,12 +611,10 @@ void init_actor(int n, const char *name, int kind, int faction, float x, float y
     if (kind != RAIDER || skill > 12)
         inventory_add(a, RATION, 2);
     if (kind == RAIDER && skill <= 12) {
-        unsigned scrap = (g.seed + (unsigned)n * 37) % 12;
         a->gear[1] = n % 3 ? RAGS : NONE;
         a->gear[2] = NONE;
         a->gear[3] = n % 4 ? NONE : SANDALS;
-        if (scrap == 0) inventory_add(a, RATION, 1);
-        else if (scrap < 4) inventory_add(a, CLOTH, 1);
+        raider_scraps(a,g.seed+(unsigned)n*37u);
     } else if (kind == RAIDER)
         inventory_add(a, COPPER, 2);
     else if ((kind == SETTLER || kind == TRADER || kind == RECRUIT || kind == CARAVAN) &&
@@ -654,6 +652,7 @@ int add_build(float x, float y, int type, int faction, int owner) {
     g.field.rolls[n] = 0;
     g.frontier.variant[n] = 0;
     g.buildings[n] = (Building){x, y, type, faction, owner, 1, 0, 0};
+    if (type == WALL) building_geometry_reset();
     return n;
 }
 void add_node(float x, float y, int type, int owner, int item, int qty) {
@@ -2214,13 +2213,21 @@ static void eat_meal(Actor *a) {
         }
     }
 }
-int civilian_flees(const Actor *a) {
+int civilian_actor(const Actor *a) {
     return !a->squad && (a->kind == SETTLER || a->kind == RECRUIT || a->kind == TRADER);
 }
+int npc_last_resort(const Actor *a) {
+    return !a->squad && (civilian_actor(a) || a->kind == RAIDER) && !limb_crawling(a) &&
+           (a->blood < 34 || fminf(a->health[HEAD],a->health[CHEST]) < .18f*species_health(a));
+}
+int npc_attacked(const Actor *a, const Actor *threat) {
+    int index = a-g.actors, opponent = threat-g.actors;
+    return threat->target == index || (threat->attackPhase && threat->attackTarget == index) ||
+           a->target == opponent;
+}
 static int town_militia(const Actor *a, const Actor *threat, int town) {
-    if (!civilian_flees(a) || town < 0 || a->homeTown != town ||
+    if (!civilian_actor(a) || town < 0 || a->homeTown != town ||
         a->faction != g.townOwner[town] || !a->gear[0] || limb_crawling(a) ||
-        (a->kind != RECRUIT && a->kind != TRADER && npc_role(a) != ROLE_CITIZEN) ||
         a->health[CHEST] < species_health(a) * .48f || a->blood < 45 || threat->squad ||
         (threat->kind != BEAST && threat->kind != RAIDER) ||
         distance(threat->x, threat->y, towns[town].x, towns[town].y) > 18)
@@ -2239,11 +2246,11 @@ static int town_militia(const Actor *a, const Actor *threat, int town) {
     }
     return defenders >= 1 && defenders + 1 >= threats;
 }
-static int civilian_retreat(int n, int threat, float dt) {
+static int retreat_to_cover(int n, int threat, float dt) {
     Actor *a = &g.actors[n];
-    if (!civilian_flees(a))
-        return 0;
     Retreat *r = &retreats[n];
+    if (r->time <= 0 && (threat < 0 || !npc_last_resort(a)))
+        return 0;
     if (threat >= 0 && (r->time <= 0 || r->stuck > .65f || distance(a->x, a->y, r->x, r->y) < 1)) {
         Actor *b = &g.actors[threat];
         float angle = atan2f(a->y - b->y, a->x - b->x);
@@ -2450,7 +2457,7 @@ void simulate(float dt) {
             continue;
         int target = -1, aggressor = -1;
         float aggressor_distance = 16;
-        int town = !a->squad && (a->kind == GUARD || civilian_flees(a)) && a->homeTown >= 0 &&
+        int town = !a->squad && (a->kind == GUARD || civilian_actor(a)) && a->homeTown >= 0 &&
                    distance(a->x, a->y, towns[a->homeTown].x, towns[a->homeTown].y) < 16
                    ? a->homeTown : -1;
         float best = npc_sight_range(a);
@@ -2513,8 +2520,12 @@ void simulate(float dt) {
                 pursuit->target = 0;
             }
         }
+        if (retreat_to_cover(i,target,dt))
+            continue;
         if (target >= 0 && (a->kind == RAIDER || a->kind == BEAST || a->kind == GUARD || a->kind == CARAVAN ||
-                            (a->squad && a->autoattack) || town_militia(a, &g.actors[target], town))) {
+                            (a->squad && a->autoattack) ||
+                            (civilian_actor(a) && npc_attacked(a,&g.actors[target])) ||
+                            town_militia(a, &g.actors[target], town))) {
             retreats[i].time = 0;
             a->target = target;
             a->taskKind = 0;
@@ -2533,8 +2544,6 @@ void simulate(float dt) {
                 strike(i, target);
             continue;
         }
-        if (civilian_retreat(i, target, dt))
-            continue;
         a->target = -1;
         if (town_npc_routine(i, dt))
             continue;
@@ -2616,7 +2625,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 24 };
+enum { SAVE_VERSION = 25 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -2648,7 +2657,7 @@ static int validate_game(const Game *t) {
         t->squadCount < 1 || t->squadCount > SQUAD)
         return 0;
     if (!field_validate(t) || t->townLife.layout < 0 || t->townLife.layout > 1 ||
-        t->frontier.version < 0 || t->frontier.version > 2 || t->frontier.clanMember < 0 ||
+        t->frontier.version < 0 || t->frontier.version > 3 || t->frontier.clanMember < 0 ||
         t->frontier.clanMember > 1 || t->frontier.completedCount > COMPLETED_CONTRACTS ||
         t->frontier.completedNext >= COMPLETED_CONTRACTS || t->frontier.tollKnown > 1)
         return 0;
@@ -2843,6 +2852,7 @@ static int migrate_legacy(const LegacyGame *old) {
         memcpy(&a->active, &o->active, sizeof(*o) - ((char *)&o->active - (char *)o));
         a->prisonTown = -1;
         a->woundFlags = 0;
+        a->healthScale = 0;
         a->homeTown = town_near(a->x, a->y, 12);
         a->skin = i % 8;
         a->hair = i % 7;
@@ -2884,13 +2894,15 @@ static int migrate_legacy(const LegacyGame *old) {
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
-    return ((version==17 || version==18) && size==offsetof(Game,theftWarnings)) ||
-      (version==19 && size==offsetof(Game,roadsideAid)) ||
-      (version==20 && size==offsetof(Game,townLife)) ||
-      (version==21 && size==offsetof(Game,field)) ||
-      (version==22 && size==offsetof(Game,charges)) ||
-      (version==23 && size==offsetof(Game,frontier)) ||
-      (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    if (version >= 17 && version <= 24) {
+        static const size_t ends[] = {offsetof(Game,theftWarnings),offsetof(Game,theftWarnings),
+            offsetof(Game,roadsideAid),offsetof(Game,townLife),offsetof(Game,field),
+            offsetof(Game,charges),offsetof(Game,frontier),sizeof(Game)};
+        const size_t groupSize = sizeof(g.population.groups[0])+sizeof(g.population.state[0])+
+            sizeof(g.population.social[0])+sizeof(g.life.groups[0])+sizeof(g.fieldNotes.group[0]);
+        return size == ends[version-17] - ROAMING_BANDIT_GROUPS*groupSize;
+    }
+    return (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -2914,41 +2926,56 @@ static void read_save_array(SaveReader *reader, void *array, size_t oldBytes, si
 }
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if (version >= 17) memcpy(out, data, size);
+    if (version == SAVE_VERSION) memcpy(out, data, size);
     else {
-        int oldItems = version>=11 ? TOWN_STOCK_ITEMS : version==10 ? V100_ITEMS : version==9 ? V090_ITEMS :
-                       version==8 ? OLD_ITEMS : version>=5 ? CATALOG_ITEMS : 2052;
         SaveReader reader = {data, (unsigned char *)out, size};
 #define WIDEN(field, count) read_save_array(&reader, out->field, (count) * sizeof(out->field[0]), sizeof(out->field))
-        WIDEN(discovered, OLD_TOWNS);
-        for (int t = 0; t < OLD_TOWNS; ++t)
-            read_save_array(&reader, out->stock[t], oldItems * sizeof(int), sizeof(out->stock[t]));
-        reader.dest = (unsigned char *)&out->lastRestock;
-        WIDEN(buildings, 320);
-        WIDEN(townOwner, OLD_TOWNS);
-        WIDEN(prosperity, OLD_TOWNS);
-        WIDEN(townState, OLD_TOWNS);
-        WIDEN(depth.buildings, 320);
-        WIDEN(society.crisis, OLD_TOWNS);
-        WIDEN(population.groups, OLD_POP_GROUPS);
-        WIDEN(population.state, OLD_POP_GROUPS);
-        WIDEN(population.social, OLD_POP_GROUPS);
-        WIDEN(life.groups, OLD_POP_GROUPS);
-        WIDEN(life.towns, OLD_TOWNS);
-        WIDEN(fieldNotes.group, OLD_POP_GROUPS);
+        if (version >= 17) {
+            WIDEN(population.groups, WAR_POP_GROUPS);
+            WIDEN(population.state, WAR_POP_GROUPS);
+            WIDEN(population.social, WAR_POP_GROUPS);
+            WIDEN(life.groups, WAR_POP_GROUPS);
+            WIDEN(fieldNotes.group, WAR_POP_GROUPS);
+            read_save_span(&reader, (unsigned char *)out + sizeof(*out));
+        } else {
+            int oldItems = version>=11 ? TOWN_STOCK_ITEMS : version==10 ? V100_ITEMS : version==9 ? V090_ITEMS :
+                           version==8 ? OLD_ITEMS : version>=5 ? CATALOG_ITEMS : 2052;
+            WIDEN(discovered, OLD_TOWNS);
+            for (int t = 0; t < OLD_TOWNS; ++t)
+                read_save_array(&reader, out->stock[t], oldItems * sizeof(int), sizeof(out->stock[t]));
+            reader.dest = (unsigned char *)&out->lastRestock;
+            WIDEN(buildings, 320);
+            WIDEN(townOwner, OLD_TOWNS);
+            WIDEN(prosperity, OLD_TOWNS);
+            WIDEN(townState, OLD_TOWNS);
+            WIDEN(depth.buildings, 320);
+            WIDEN(society.crisis, OLD_TOWNS);
+            WIDEN(population.groups, OLD_POP_GROUPS);
+            WIDEN(population.state, OLD_POP_GROUPS);
+            WIDEN(population.social, OLD_POP_GROUPS);
+            WIDEN(life.groups, OLD_POP_GROUPS);
+            WIDEN(life.towns, OLD_TOWNS);
+            WIDEN(fieldNotes.group, OLD_POP_GROUPS);
+            read_save_span(&reader, &out->war);
+        }
 #undef WIDEN
-        read_save_span(&reader, &out->war);
         if (reader.left) return 0;
-    }
-    if (version < 20) {
-        for (int i = 0; i < MAX_ACTORS; i++)
-            out->actors[i].woundFlags = 0;
+        for (int i = 0; i < MAX_ACTORS; i++) {
+            out->actors[i].healthScale = 0;
+            if (version < 20) out->actors[i].woundFlags = 0;
+        }
         for (int k = 0; k < POP_GROUPS; k++)
-            for (int i = 0; i < POP_MEMBERS; i++)
-                out->population.groups[k].reserve[i].woundFlags = 0;
+            for (int i = 0; i < POP_MEMBERS; i++) {
+                Actor *a = &out->population.groups[k].reserve[i];
+                a->healthScale = 0;
+                if (version < 20) a->woundFlags = 0;
+            }
         for (int k = 0; k < EVENTS; k++)
-            for (int i = 0; i < POP_MEMBERS; i++)
-                out->living.events[k].reserve[i].woundFlags = 0;
+            for (int i = 0; i < POP_MEMBERS; i++) {
+                Actor *a = &out->living.events[k].reserve[i];
+                a->healthScale = 0;
+                if (version < 20) a->woundFlags = 0;
+            }
     }
     if (version < 23) {
         for (int n = 0; n < out->actorCount && n < MAX_ACTORS; n++) {
@@ -3456,8 +3483,6 @@ void game_tick(float dt, Input in) {
                 interior_leave();
                 return;
             }
-            if (!ui.paused && g.interiorBuilding)
-                interior_move(in.ax, in.ay, dt * ui.speed);
         } else if ((p & KEY_CIRCLE) && a->taskKind == TASK_CELL_LOCK) {
             a->taskKind = 0;
             log_msg("Stopped picking the cell lock.");
@@ -3466,8 +3491,11 @@ void game_tick(float dt, Input in) {
             dialogue_open(g.selected);
             return;
         }
-        if (!ui.paused)
+        if (!ui.paused) {
+            if (g.interiorBuilding && a->taskKind != TASK_CELL_LOCK && a->taskKind != TASK_JAIL_CARE)
+                interior_move(in.ax, in.ay, dt * ui.speed);
             simulate(dt * ui.speed);
+        }
         return;
     }
     if ((p & KEY_CIRCLE) && conscious(a)) {

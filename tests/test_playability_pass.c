@@ -170,8 +170,11 @@ static void camps_and_theft(void) {
 static void retreat_and_news(void) {
     setup();
     Actor *ash = &g.actors[0], *reed = &g.actors[1];
-    init_actor(3, "Scavenger", SETTLER, HOSTILE, 404, 400, 6);
+    init_actor(3, "Scavenger", TRADER, HOSTILE, 404, 400, 6);
     Actor *npc = &g.actors[3];
+    idle(3);
+    assert(distance(404,400,npc->x,npc->y) < 1 && !npc_last_resort(npc));
+    npc->health[CHEST] = 14;
     idle(8);
     assert(npc->x > 412);
     float x = npc->x, y = npc->y;
@@ -191,7 +194,7 @@ static void retreat_and_news(void) {
     log_tick(.9f);
     log_current(&priority, &offset);
     assert(offset > 0);
-    puts("PASS: fleeing scavenger holds a safe position; skill gains are silent and urgent news queues ahead of routine messages.");
+    puts("PASS: healthy scavenger holds ground and retreats only when critically hurt. Urgent news takes priority.");
 }
 static void scenarios_and_atlas(void) {
     for (int i = 0; i < START_SCENARIOS; i++) {

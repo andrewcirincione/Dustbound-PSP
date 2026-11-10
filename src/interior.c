@@ -1,19 +1,21 @@
 #include "game.h"
 #include "settlement_art_ids.h"
+#include "furniture_models.h"
 #include <math.h>
 #include <string.h>
 extern int conscious(const Actor *);
 static int private_chest(int building) {
     const Building *b = &g.buildings[building];
     return b->owner < 0 && b->faction > FREE &&
-           (b->type == SHOP || (b->type == HOUSE && (g.seed + building * 17u) % 3 != 0));
+           (b->type == SHOP || (b->type == HOUSE &&
+            (g.townLife.chestRefresh[building] || (g.seed + building * 17u) % 5 != 0)));
 }
 static void restock_chest(int building) {
     if (!private_chest(building) || g.day < g.townLife.chestRefresh[building])
         return;
     Building *b = &g.buildings[building];
     unsigned mix = (g.seed ^ (unsigned)building * 2654435761u) + g.day * 97u;
-    static const int home[] = {RATION, CLOTH, WATER, WOOD, GRAIN};
+    static const int home[] = {CLOTH, WATER, WOOD, GRAIN, OATCAKE, JERKY};
     static const int store[] = {MEDKIT, IRONBAR, CLOTH, RATION, BOLTS, HIDE};
     memset(b->storage, 0, sizeof(b->storage));
     if (b->type == SHOP) {
@@ -23,8 +25,13 @@ static void restock_chest(int building) {
                 item = portion_item(MEDKIT, 30 + mix % 61);
             b->storage[i] = (Stack){item, i == 0 ? 2 : 1};
         }
-    } else if (mix % 5 != 0) {
-        b->storage[0] = (Stack){home[mix % 5], 1 + mix % 2};
+    } else {
+        b->storage[0] = (Stack){home[mix % 6],1 + (mix >> 6) % 3};
+        b->storage[1] = (Stack){home[(mix % 6 + 1 + (mix >> 4) % 5) % 6],1 + (mix >> 8) % 2};
+        if ((mix >> 10) % 5 == 0) {
+            int spare = (mix >> 13) % 2 ? portion_item(MEDKIT,35 + (mix >> 16) % 40) : BEDROLL_ITEM;
+            b->storage[2] = (Stack){spare,1};
+        }
     }
     g.townLife.chestRefresh[building] = g.day + 2 + mix % 3;
 }
@@ -454,9 +461,8 @@ enum { LODGE_FEE = 280 };
 static void put_prop(InteriorProp *p, int *count, float x, float y, float w, float d, int art, int action) {
     p[(*count)++] = (InteriorProp){x,y,w,d,art,action};
 }
-int interior_props(int building, InteriorProp *p) {
+static int room_layout(int building, int t, int style, InteriorProp *p) {
     const Building *b = &g.buildings[building];
-    int t = building_town(building), style = t < 0 ? 0 : civil_style(t);
     int variant = g.frontier.variant[building], n = 0;
     const TownDesign *plan = town_design(t);
     int layout = (building + (t + 1) * 5) % 3;
@@ -557,6 +563,25 @@ int interior_props(int building, InteriorProp *p) {
     if (style == 4 || variant == BUILD_ARMORER)
         put_prop(p,&n,6.35f,5.98f,.22f,.24f,22,ROOM_NONE);
     return n;
+}
+
+int interior_props(int building, InteriorProp *p) {
+    int town = building_town(building);
+    int style = town < 0 ? 0 : civil_style(town);
+    int count = room_layout(building,town,style,p);
+    for (int i = 0; i < count; i++) {
+        InteriorProp *prop = &p[i];
+        if (prop->art == 16 && (style == 1 || style == 2))
+            prop->art = ART_LOW_COT;
+        if (prop->art == 17 && prop->d > prop->w)
+            prop->art = ART_SIDE_COUNTER;
+        const FurnitureModel *model = &furnitureModels[furniture_art_index(prop->art)];
+        float span = fminf(prop->w + prop->d, model->span / (2*ROOM_MAX_SCALE));
+        float share = furniture_is_bed(prop->art) && prop->d > prop->w ? 1-model->xShare : model->xShare;
+        prop->w = span*share;
+        prop->d = span-prop->w;
+    }
+    return count;
 }
 
 int lodge_joined(int building) {
@@ -739,11 +764,28 @@ void interior_interact(void) {
         break;
     }
 }
+int jail_room_open(int room) {
+    const Actor *selected = &g.actors[g.selected];
+    if (selected->prisonTime > 0 && depth_room(selected) == room)
+        return jail_cell_open(selected);
+    for (int i = 0; i < g.actorCount; i++) {
+        const Actor *a = &g.actors[i];
+        if (a->active && !a->dead && a->prisonTime > 0 && depth_room(a) == room && !jail_cell_open(a))
+            return 0;
+    }
+    return 1;
+}
 static int room_clear(int room, const InteriorProp *p, int count, float x, float y) {
     if (x < .4f || y < .4f || x > 6.6f || y > 6.6f)
         return 0;
-    if (g.buildings[room - 1].type == JAIL && fabsf(y-3.65f) < .2f && fabsf(x-3.5f) > .85f)
-        return 0;
+    if (g.buildings[room - 1].type == JAIL) {
+        if (fabsf(y-CELL_Y) < .24f &&
+            (x < CELL_HINGE_X+.14f || x > CELL_LATCH_X-.14f || !jail_room_open(room)))
+            return 0;
+        if (fabsf(x-CELL_HINGE_X) < .23f && y < CELL_Y &&
+            y > CELL_Y-(CELL_LATCH_X-CELL_HINGE_X)-.12f && jail_room_open(room))
+            return 0;
+    }
     for (int i = 0; i < count; i++)
         if (p[i].art != 23 && fabsf(x-p[i].x) < p[i].w + .18f && fabsf(y-p[i].y) < p[i].d + .18f)
             return 0;
@@ -754,6 +796,37 @@ int interior_walkable(int room, float x, float y) {
     InteriorProp p[ROOM_PROPS];
     int count = interior_props(room - 1,p);
     return room_clear(room,p,count,x,y);
+}
+
+void interior_clear_position(Actor *a) {
+    int room = depth_room(a);
+    if (!room || a->carriedBy >= 0 || actor_in_bed(a))
+        return;
+    InteriorProp p[ROOM_PROPS];
+    int count = interior_props(room - 1,p);
+    float ox = depth_x(a), oy = depth_y(a);
+    if (room_clear(room,p,count,ox,oy))
+        return;
+    int locked = g.buildings[room - 1].type == JAIL && !jail_room_open(room);
+    float best = 100, px = ox, py = oy;
+    for (float y = .45f; y <= 6.6f; y += .2f)
+        for (float x = .45f; x <= 6.6f; x += .2f) {
+            if (locked && (oy < CELL_Y) != (y < CELL_Y)) continue;
+            float d = (x-ox)*(x-ox)+(y-oy)*(y-oy);
+            if (d < best && room_clear(room,p,count,x,y)) {
+                best = d;
+                px = x;
+                py = y;
+            }
+        }
+    int n = a-g.actors;
+    g.depth.actors[n].rx = px;
+    g.depth.actors[n].ry = py;
+    if (g.interiorBuilding == room && g.interiorActor == n) {
+        g.interiorX = px;
+        g.interiorY = py;
+    }
+    a->routePos = a->routeLen = 0;
 }
 static float room_grid_point(int i) { return .5f + .4f * i; }
 
@@ -834,20 +907,33 @@ void interior_move(float dx, float dy, float dt) {
     if (length < .15f)
         return;
     InteriorProp props[ROOM_PROPS];
-    int count = interior_props(g.interiorBuilding - 1, props);
-    for (int i = 0; i < count; i++)
-        if (props[i].action == ROOM_REST &&
-            distance(g.interiorX, g.interiorY, props[i].x, props[i].y) < .3f)
-            g.interiorX = props[i].x + props[i].w + .25f;
+    int room = g.interiorBuilding, count = interior_props(room - 1, props);
     float wx = (dx + dy) * .7071f, wy = (dy - dx) * .7071f, speed = movement_speed(a) * dt;
+    for (int i = 0; i < count; i++) {
+        const InteriorProp *bed = &props[i];
+        if (bed->action != ROOM_REST || distance(g.interiorX,g.interiorY,bed->x,bed->y) >= .3f)
+            continue;
+        const float offsets[4][2] = {{bed->w+.25f,0},{-bed->w-.25f,0},{0,bed->d+.25f},{0,-bed->d-.25f}};
+        float best = -2;
+        for (int side = 0; side < 4; side++) {
+            float x = bed->x+offsets[side][0], y = bed->y+offsets[side][1];
+            float align = side == 0 ? wx : side == 1 ? -wx : side == 2 ? wy : -wy;
+            if (align > best && room_clear(room,props,count,x,y)) {
+                g.interiorX = x;
+                g.interiorY = y;
+                best = align;
+            }
+        }
+        break;
+    }
     if (length > 1) {
         wx /= length;
         wy /= length;
     }
     float x = g.interiorX + wx * speed, y = g.interiorY + wy * speed;
-    if (interior_walkable(g.interiorBuilding, x, g.interiorY))
+    if (room_clear(room,props,count,x,g.interiorY))
         g.interiorX = x;
-    if (interior_walkable(g.interiorBuilding, g.interiorX, y))
+    if (room_clear(room,props,count,g.interiorX,y))
         g.interiorY = y;
     a->taskKind = 0;
     walk_motion(a, g.interiorX - (x - wx * speed), g.interiorY - (y - wy * speed));

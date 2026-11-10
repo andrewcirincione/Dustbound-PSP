@@ -410,7 +410,7 @@ int politics_input(Input in){
 }
 int life_validate(const Game*s){
  const FrontierLife*l=&s->life;if(!l->version)return 1;if(l->version!=1||!isfinite(l->pulse)||l->pulse<0)return 0;
- int groups=s->war.version?POP_GROUPS:OLD_POP_GROUPS;
+ int groups=s->population.version==2?POP_GROUPS:s->war.version?WAR_POP_GROUPS:OLD_POP_GROUPS;
  for(int k=0;k<groups;k++){const GroupLife*z=&l->groups[k];const WorldEvent*e=&s->population.groups[k];if(z->serial!=e->serial||z->goal<0||z->goal>=LIFE_GOALS||z->camp<0||z->camp>CAMP_ABANDONED||z->targetTown < -1||z->targetTown>=TOWNS||z->sourceTown < -1||z->sourceTown>=TOWNS||z->targetGroup < -1||z->targetGroup>=POP_GROUPS||z->baseline<0||z->baseline>POP_MEMBERS||z->losses<0||z->losses>POP_MEMBERS||z->layout<0||z->layout>4||z->ambushSprung<0||z->ambushSprung>2)return 0;
   if((z->goal==LIFE_RESUPPLY||z->goal==LIFE_REFUGE||z->goal==LIFE_REINFORCE||z->goal==LIFE_DELIVER||z->goal==LIFE_RAID)&&z->targetTown<0)return 0;
   const float f[]={z->decision,z->clock,z->emptyClock,z->travelClock,z->stalled,z->lastX,z->lastY};for(int j=0;j<7;j++)if(!isfinite(f[j]))return 0;for(int j=0;j<3;j++)if(z->cargo[j]<0||z->cargo[j]>99)return 0;

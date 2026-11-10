@@ -117,6 +117,13 @@ static void make_actor(int k,int i){
         tier = 0;
         if (lv > 12) lv = 12;
     }
+    int roamer = k >= WAR_POP_GROUPS;
+    if (roamer) {
+        static const int races[] = {0,1,3};
+        a->race = races[seed % 3];
+        a->healthScale = 63 + (seed >> 10) % 8;
+        lv = 3 + (seed >> 17) % 5;
+    }
     for(int s=0;s<SKILLS;s++)a->xp[s]=12*(lv-1)*(lv-1);
     for(int l=0;l<LIMBS;l++)a->health[l]=species_health(a);
     a->x=a->homeX=a->tx=e->x+(i%4-1)*1.8f;a->y=a->homeY=a->ty=e->y+(i/4)*1.8f;clear_position(&a->x,&a->y);
@@ -151,8 +158,12 @@ static void make_actor(int k,int i){
         int supply = a->race == 2 ? PARTS : MEDKIT;
         if (!inventory_count(a, supply)) inventory_add(a, supply, 1);
     }
-    if(e->modifier==1)a->hunger=28;
-    population_roll_limbs(a,random_step(&seed),tier);
+    if (roamer)
+        a->hunger = 48 + (seed >> 19) % 20;
+    else {
+        if(e->modifier==1)a->hunger=28;
+        population_roll_limbs(a,random_step(&seed),tier);
+    }
     if(e->type==POP_WOUNDED){a->health[CHEST]=species_health(a)*.38f;a->health[LLEG]=24;a->bleed=.08f;inventory_remove(a,MEDKIT,99);}
     if(e->type==POP_BATTLEFIELD){a->dead=i<e->count-1;a->blood=a->dead?0:42;a->health[CHEST]=a->dead?-80:22;a->unconscious=a->dead?0:120;a->bleed=a->dead?0:.04f;}
     if(e->type==POP_PRISONERS&&i>=e->count-2){a->kind=SETTLER;a->faction=FREE;a->gear[0]=0;a->gear[1]=RAGS;a->gear[2]=0;z->captive=1;P.social[k][i].captorFaction=e->faction;}
@@ -160,8 +171,8 @@ static void make_actor(int k,int i){
 void population_generate(int k,int type){
     if(k<0||k>=POP_GROUPS)return;WorldEvent*e=&P.groups[k];PopulationState*m=&P.state[k];
     if(e->spawned)return;memset(e,0,sizeof(*e));memset(m,0,sizeof(*m));memset(P.social[k],0,sizeof(P.social[k]));
-    int legion=k>=OLD_POP_GROUPS;
-    e->seed=random_step(&P.rng);e->serial=++P.serial;e->type=legion?POP_ARMY:bounded(type,0,POP_TYPES-1);e->modifier=random_step(&e->seed)%4;e->origin=k%OLD_TOWNS;e->tier=bounded(e->origin/5+(int)(random_step(&e->seed)%2),0,3);
+    int roamer = k >= WAR_POP_GROUPS, legion = k >= OLD_POP_GROUPS && !roamer;
+    e->seed=random_step(&P.rng);e->serial=++P.serial;e->type=legion?POP_ARMY:roamer?POP_RAIDERS:bounded(type,0,POP_TYPES-1);e->modifier=random_step(&e->seed)%4;e->origin=k%OLD_TOWNS;e->tier=bounded(e->origin/5+(int)(random_step(&e->seed)%2),0,3);
     static const int forces[WAR_FACTIONS]={UNION,SHOGUN,MONKS};
     e->faction=e->type==POP_RAIDERS||e->type==POP_AMBUSH?HOSTILE:e->type==POP_BEASTS?WILDLIFE:e->type==POP_SMUGGLERS||e->type==POP_PRISONERS?OUTLAWS:e->type==POP_ARMY||e->type==POP_PATROL?forces[random_step(&e->seed)%WAR_FACTIONS]:e->type==POP_PILGRIMS?MONKS:SCAVENGERS;
     if(legion){
@@ -169,13 +180,20 @@ void population_generate(int k,int type){
         e->origin=home;e->faction=towns[home].faction;e->modifier=0;
         if(g.townOwner[home]!=e->faction)for(int t=0;t<TOWNS;t++)if(g.townOwner[t]==e->faction){e->origin=t;break;}
     }
+    if (roamer) {
+        static const int routes[ROAMING_BANDIT_GROUPS] = {0,1,2,3,5,9,11,15};
+        e->origin = routes[k - WAR_POP_GROUPS];
+        e->modifier = 1;
+        e->tier = 0;
+    }
     e->town=nearest_town(towns[e->origin].x,towns[e->origin].y,e->origin);
     e->count=e->type==POP_ARMY?12+random_step(&e->seed)%5:e->type==POP_PRISONERS?7:e->type==POP_BEASTS?3+random_step(&e->seed)%4:e->type==POP_WOUNDED?2:e->type==POP_DUELISTS?1+random_step(&e->seed)%3:3+random_step(&e->seed)%3;
     if(e->type==POP_ARMY||e->type==POP_DUELISTS)e->tier=2+random_step(&e->seed)%2;
     if(legion){e->count=10+random_step(&e->seed)%3;e->tier=2;}
+    if (roamer) e->count = 3 + random_step(&e->seed) % 2;
     for(int i=0;i<POP_MEMBERS;i++)e->members[i]=-1;
     float angle=(random_step(&e->seed)%628)/100.f;
-    if(k<16){float r=35+random_step(&e->seed)%25;e->x=towns[e->origin].x+cosf(angle)*r;e->y=towns[e->origin].y+sinf(angle)*r;}
+    if(k<16||roamer){float r=35+random_step(&e->seed)%25;e->x=towns[e->origin].x+cosf(angle)*r;e->y=towns[e->origin].y+sinf(angle)*r;}
     else if(k<48||k>=64){float u=.2f+(random_step(&e->seed)%60)*.01f;int next=e->town;e->x=towns[e->origin].x*(1-u)+towns[next].x*u+cosf(angle)*18;e->y=towns[e->origin].y*(1-u)+towns[next].y*u+sinf(angle)*18;}
     else{int cell=k-48;e->x=(cell%4+.2f+(random_step(&e->seed)%60)*.01f)*WORLD/4;e->y=(cell/4+.2f+(random_step(&e->seed)%60)*.01f)*WORLD/4;}
     if(town_near(e->x,e->y,24)>=0){e->x+=cosf(angle)*35;e->y+=sinf(angle)*35;}clear_position(&e->x,&e->y);
@@ -202,6 +220,13 @@ void population_init(void){
         if(k<0){if(imported>=16)continue;k=64+imported++;WorldEvent*e=&P.groups[k];memset(e,0,sizeof(*e));memset(&P.state[k],0,sizeof(P.state[k]));memset(P.social[k],0,sizeof(P.social[k]));e->seed=random_step(&P.rng);e->serial=++P.serial;e->type=a->kind==BEAST?POP_BEASTS:POP_RAIDERS;e->faction=a->faction;e->tier=bounded(level(a,MELEE)/15,0,3);e->origin=nearest_town(a->x,a->y,-1);e->town=nearest_town(a->x,a->y,e->origin);e->x=a->x;e->y=a->y;e->stored=1;for(int j=0;j<POP_MEMBERS;j++)e->members[j]=-1;P.state[k].phase=POP_TRAVEL;P.state[k].clock=150;P.state[k].opponent=-1;P.state[k].generation=e->serial;P.state[k].siteX=e->x;P.state[k].siteY=e->y;P.state[k].imported=1;set_destination(k,e->town);}
         WorldEvent*e=&P.groups[k];int i=e->count++;e->reserve[i]=*a;e->reserveDepth[i]=g.depth.actors[n];social_save(k,i,n);release_slot(n);P.imported++;
     }
+}
+void population_add_roaming_bandits(void) {
+    if (P.version != 1)
+        return;
+    for (int k = WAR_POP_GROUPS; k < POP_GROUPS; k++)
+        population_generate(k,POP_RAIDERS);
+    P.version = 2;
 }
 int population_materialize(int k){
     if(k<0||k>=POP_GROUPS||!P.version)return 0;WorldEvent*e=&P.groups[k];PopulationState*m=&P.state[k];if(e->spawned)return 1;
@@ -268,7 +293,8 @@ static void shift_group(int k,float dx,float dy){
 static void offline_battle(int a,int b,float dt){
     WorldEvent*e=&P.groups[a],*f=&P.groups[b];PopulationState*m=&P.state[a],*n=&P.state[b];
     if((g.life.groups[a].goal==LIFE_AMBUSH&&!g.life.groups[a].ambushSprung)||(g.life.groups[b].goal==LIFE_AMBUSH&&!g.life.groups[b].ambushSprung))return;
-    if(e->spawned||f->spawned||!enemies(e,f)||distance(e->x,e->y,f->x,f->y)>9||observers(e->x,e->y)<80||observers(f->x,f->y)<80)return;
+    if(e->spawned||f->spawned||fabsf(e->x-f->x)>9||fabsf(e->y-f->y)>9||
+       !enemies(e,f)||distance(e->x,e->y,f->x,f->y)>9||observers(e->x,e->y)<80||observers(f->x,f->y)<80)return;
     int alive[2]={standing(a),standing(b)};if(!alive[0]||!alive[1])return;
     if(m->opponent!=b||n->opponent!=a){P.conflicts++;m->fights++;n->fights++;m->opponent=b;n->opponent=a;war_report_clash(e->faction,f->faction,e->x,e->y);}m->phase=n->phase=POP_FIGHT;m->clock=n->clock=15;
     for(int side=0;side<2;side++){
@@ -516,9 +542,9 @@ const char *population_dialogue(int n) {
     return lines[e->type];
 }
 int population_validate(const Game*s){
-    const Population*p=&s->population;if(!p->version){for(int n=0;n<s->actorCount;n++)if(s->living.owned[n]>EVENTS)return 0;return 1;}if(p->version!=1||p->serial<0||!isfinite(p->pulse)||!isfinite(p->offlinePulse)||p->pulse<0||p->offlinePulse<0)return 0;
+    const Population*p=&s->population;if(!p->version){for(int n=0;n<s->actorCount;n++)if(s->living.owned[n]>EVENTS)return 0;return 1;}if(p->version<1||p->version>2||p->serial<0||!isfinite(p->pulse)||!isfinite(p->offlinePulse)||p->pulse<0||p->offlinePulse<0)return 0;
     int used[MAX_ACTORS]={0};
-    int groups=s->war.version?POP_GROUPS:OLD_POP_GROUPS;
+    int groups=p->version==2?POP_GROUPS:s->war.version?WAR_POP_GROUPS:OLD_POP_GROUPS;
     for(int k=0;k<groups;k++){const WorldEvent*e=&p->groups[k];const PopulationState*m=&p->state[k];if(e->type<0||e->type>=POP_TYPES||e->count<1||e->count>POP_MEMBERS||e->tier<0||e->tier>4||e->faction<0||e->faction>=FACTIONS||e->town<0||e->town>=TOWNS||e->origin<0||e->origin>=TOWNS||e->spawned<0||e->spawned>1||e->stored!=1||e->serial<=0||m->generation!=e->serial||m->phase<0||m->phase>POP_RUINS||m->beds<0||m->beds>3||m->detached&~65535||m->cacheItem<0||m->cacheItem>=ITEMS||m->cacheQty<0||m->cacheQty>999)return 0;
         const float coords[]={e->x,e->y,m->targetX,m->targetY,m->siteX,m->siteY};for(int j=0;j<6;j++)if(!isfinite(coords[j])||coords[j]<0||coords[j]>WORLD)return 0;if(m->opponent < -1||m->opponent>=POP_GROUPS||!isfinite(m->harvestClock)||m->harvestClock<0||!isfinite(e->age)||e->age<0||!isfinite(e->presence)||e->presence<0||!isfinite(m->clock))return 0;
         for(int j=0;j<3;j++)if(m->stock[j]<0||m->stock[j]>999)return 0;for(int j=0;j<5;j++)if(!isfinite(m->offsetX[j])||!isfinite(m->offsetY[j])||fabsf(m->offsetX[j])>50||fabsf(m->offsetY[j])>50)return 0;

@@ -159,7 +159,7 @@ static void chest_migration(void) {
     g.frontier.version = 1;
     assert(save_game("build/v174/overlapping-chest.sav") && load_game("build/v174/overlapping-chest.sav"));
     const Node *chest = &g.nodes[node];
-    assert(g.frontier.version == 2 && distance(chest->x,chest->y,x,y) > 1.5f && can_walk(chest->x,chest->y));
+    assert(g.frontier.version == 3 && distance(chest->x,chest->y,x,y) > 1.5f && can_walk(chest->x,chest->y));
     assert(chest->item == RELIC && chest->owner == SCAVENGERS && chest->qty == 2);
     assert(a->active && !actor_inside(a));
     puts("PASS: a saved chest moves clear of a building and keeps its contents and owner.");
@@ -380,6 +380,13 @@ static void settlement_layouts(void) {
             float w, d;
             int height;
             building_footprint(b, &w, &d, &height);
+            const Building *shell = &g.buildings[b];
+            for (int side = -1; side <= 1; side += 2) {
+                assert(!can_walk(shell->x+side*(w-.02f),shell->y));
+                assert(!can_walk(shell->x,shell->y+side*(d-.02f)));
+                assert(!structure_blocks(b,shell->x+side*(w+.25f),shell->y,.13f));
+                assert(!structure_blocks(b,shell->x,shell->y+side*(d+.25f),.13f));
+            }
             for (int j = 0; j < b; j++)
                 if (building_town(j) == town && building_has_interior(g.buildings[j].type)) {
                     float ww, dd;

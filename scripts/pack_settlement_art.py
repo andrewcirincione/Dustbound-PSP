@@ -12,7 +12,9 @@ def array(name, ctype, values):
     return f"static const {ctype} {name}[] = {{\n" + ",\n".join(rows) + "\n};\n"
 
 
-def pack(image, name, ground_anchor):
+def pack(image, name, ground_anchor, ground_x=None):
+    if ground_x is None:
+        ground_x = image.width // 2
     indexed = image.quantize(colors=96, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE)
     rgba = indexed.getpalette("RGBA")
     rgba += [0] * (1024 - len(rgba))
@@ -29,7 +31,7 @@ def pack(image, name, ground_anchor):
     text = array(name + "_pixels", "uint8_t", pixels)
     text += array(name + "_spans", "uint16_t", spans)
     text += array(name + "_palette", "uint32_t", [f"{v:#x}u" for v in palette])
-    entry = (f"{{{image.width},{image.height},{image.width // 2},{ground_anchor},"
+    entry = (f"{{{image.width},{image.height},{ground_x},{ground_anchor},"
              f"{name}_pixels,{name}_spans,{name}_palette}}")
     return text, entry
 

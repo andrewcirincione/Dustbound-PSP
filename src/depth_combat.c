@@ -32,14 +32,9 @@ static int shot_clear(float x, float y) {
     if (x < 0 || y < 0 || x >= WORLD || y >= WORLD)
         return 0;
     /* Water blocks walking, not a projectile traveling above the ground. */
-    for (int i = 0; i < g.buildingCount; i++) {
-        Building *b = &g.buildings[i];
-        if (b->type != HOUSE && b->type != SHOP && b->type != BAR && b->type != TOWER && b->type != WALL && b->type != JAIL)
-            continue;
-        float r = b->type == TOWER || b->type == JAIL ? .8f : b->type == WALL ? .55f : 1.25f;
-        if (fabsf(b->x - x) < r && fabsf(b->y - y) < r)
+    for (int i = 0; i < g.buildingCount; i++)
+        if (structure_blocks(i,x,y,0))
             return 0;
-    }
     return 1;
 }
 void depth_move_room(Actor *a, float dx, float dy, float dt) {
@@ -195,9 +190,16 @@ void depth_room_tick(float dt) {
         if (target >= 0 && (!a->squad || a->autoattack)) {
             Actor *b = &g.actors[target];
             int eviction = b->squad && D.actors[target].trespass >= 7 && a->gear[0];
-            if (civilian_flees(a) && !eviction) {
+            if (npc_last_resort(a) && !eviction && !a->prisonTime) {
                 a->target = -1;
-                depth_move_room(a, depth_x(a) - depth_x(b), depth_y(a) - depth_y(b), dt);
+                if (distance(depth_x(a),depth_y(a),3.5f,6.3f) < .55f)
+                    actor_leave_room(i);
+                else
+                    room_route_toward(a,3.5f,6.3f,dt);
+                continue;
+            }
+            if (civilian_actor(a) && !eviction && !npc_attacked(a,b)) {
+                a->target = -1;
                 continue;
             }
             a->target = target;

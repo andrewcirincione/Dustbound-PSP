@@ -75,83 +75,103 @@ int building_sprite(int id) {
         if (town == 3 || town == 16) return ART_DRY_INN;
         return plan->beds <= 3 ? ART_ROAD_INN : 2;
     case JAIL:
-        return plan->custody == 0 ? ART_WATCH_CAGE : plan->custody == 2 ? ART_STOCKADE : 3;
+        return plan->custody == 0 ? ART_WATCH_CAGE : plan->custody == 2 ? ART_STOCKADE : 4;
     default:
         return base[b->type];
     }
 }
-PaintedDoor painted_door(int sprite) {
-    static const PaintedDoor original[] = {
-        {.39f,.87f,0}, {.45f,.89f,0}, {.38f,.90f,0}, {.80f,.85f,1},
-        {.42f,.88f,0}, {.48f,.90f,0}, {.53f,.91f,0}, {.75f,.87f,1}
-    };
-    static const PaintedDoor generated[] = {
-        {.71f,.89f,1}, {.78f,.88f,1}, {.81f,.84f,1}, {.73f,.88f,1},
-        {.81f,.84f,1}, {.67f,.89f,1}, {.78f,.88f,1}, {.81f,.87f,1},
-        {.82f,.84f,1}, {.77f,.91f,1}, {.73f,.87f,1}, {.66f,.89f,1}
-    };
-    if (sprite < 8) return original[sprite];
-    if (sprite == ART_WATCH_CAGE) return (PaintedDoor){.81f,.88f,1};
-    return generated[sprite - SETTLEMENT_ART_FIRST];
+#include "structure_models.h"
+
+static int wallCacheCount = -1;
+static unsigned char wallAxes[MAX_BUILDINGS];
+
+void building_geometry_reset(void) {
+    wallCacheCount = -1;
 }
-void building_footprint(int id, float *w, float *d, int *height) {
+
+WallRun building_wall_run(int id) {
     const Building *b = &g.buildings[id];
-    int t = building_town(id);
-    const TownDesign *plan = town_design(t);
-    unsigned v = (unsigned)id + (unsigned)(t + 1) * 11;
-    *w = 1.05f + (v % 3) * .16f;
-    *d = .83f + (v / 3 % 3) * .17f;
-    *height = 29 + 5 * (v % 3);
-    switch (b->type) {
-    case SHOP:
-        *w = 1.25f + plan->marketTier * .24f;
-        *d = 1.03f + (v % 3) * .17f;
-        *height = 30 + (v % 3) * 5;
-        break;
-    case BAR:
-        *w = 1.0f + plan->beds * .17f;
-        *d = .9f + plan->beds * .14f;
-        *height = 29 + plan->beds * 4;
-        break;
-    case TOWER:
-        *w = .83f; *d = .81f; *height = 46 + (v % 3) * 7;
-        break;
-    case FORGE:
-        *w = 1.22f + (v % 2) * .29f; *d = 1.24f; *height = 31 + (v % 3) * 4;
-        break;
-    case STORE:
-        *w = 1.38f; *d = 1.20f + (v % 3) * .22f; *height = 29 + (v % 2) * 8;
-        break;
-    case JAIL:
-        *w = 1.26f + plan->custody * .35f; *d = 1.10f + plan->custody * .39f;
-        *height = plan->custody == 0 ? 24 : 36 + plan->custody * 6;
-        break;
+    int town = building_town(id);
+    if (town >= 0 && civil_style(town) == 1) {
+        float dx = b->x - towns[town].x, dy = b->y - towns[town].y;
+        int alongY = fabsf(fabsf(dx) - 12) < .05f;
+        if (alongY || fabsf(fabsf(dy) - 12) < .05f) {
+            float offset = alongY ? dy : dx;
+            return (WallRun){offset < -9.95f ? -2.02f : -1.02f,
+                             offset > 9.95f ? 2.02f : 1.02f, alongY};
+        }
     }
-    if (g.frontier.variant[id] == BUILD_LODGE) {
-        *w = 1.48f; *d = 1.45f; *height = 39;
+    if (wallCacheCount != g.buildingCount) {
+        memset(wallAxes, 0, sizeof(wallAxes));
+        wallCacheCount = g.buildingCount;
+    }
+    if (!wallAxes[id]) {
+        int alongX = 0, alongY = 0;
+        for (int j = 0; j < g.buildingCount; j++) {
+            const Building *near = &g.buildings[j];
+            if (j == id || near->type != WALL || b->owner != near->owner)
+                continue;
+            float dx = fabsf(near->x-b->x), dy = fabsf(near->y-b->y);
+            alongX += dy < .18f && dx <= 2.2f;
+            alongY += dx < .18f && dy <= 2.2f;
+        }
+        wallAxes[id] = 1 + (alongY > alongX);
+    }
+    return (WallRun){-1.02f,1.02f,wallAxes[id] == 2};
+}
+
+void building_footprint(int id, float *w, float *d, int *height) {
+    int model = structure_art_index(building_sprite(id));
+    if (model >= 0) {
+        *w = structureModels[model].w;
+        *d = structureModels[model].d;
+        *height = structureModels[model].height;
+    } else if (g.buildings[id].type == WALL) {
+        WallRun span = building_wall_run(id);
+        float half = fmaxf(-span.low,span.high);
+        *w = span.alongY ? .28f : half;
+        *d = span.alongY ? half : .28f;
+        *height = 37;
+    } else {
+        *w = *d = .85f;
+        *height = 26;
     }
 }
-static void door_offset(int id, float *x, float *y, int *rightWall) {
+int structure_blocks(int id, float x, float y, float padding) {
+    const Building *b = &g.buildings[id];
+    float dx = x - b->x, dy = y - b->y;
+    if (fabsf(dx) >= 2.3f || fabsf(dy) >= 2.3f)
+        return 0;
+    if (b->type == WALL) {
+        WallRun span = building_wall_run(id);
+        float along = span.alongY ? dy : dx, across = span.alongY ? dx : dy;
+        return fabsf(across) < .28f + padding && along > span.low - padding && along < span.high + padding;
+    }
+    if (!building_has_interior(b->type))
+        return 0;
     float w, d;
     int height;
     building_footprint(id, &w, &d, &height);
-    PaintedDoor door = painted_door(building_sprite(id));
-    float projected = (door.x - .5f) * (w + d) * 2.1f;
-    *rightWall = door.rightWall;
-    *x = door.rightWall ? w : fmaxf(-.76f*w, fminf(.76f*w, d + projected));
-    *y = door.rightWall ? fmaxf(-.76f*d, fminf(.76f*d, w - projected)) : d;
+    return fabsf(dx) < w + padding && fabsf(dy) < d + padding;
 }
-void building_threshold(int id, float *x, float *y) {
-    int rightWall;
-    door_offset(id, x, y, &rightWall);
-    *x += g.buildings[id].x;
-    *y += g.buildings[id].y;
+static void door_offset(int id, float *x, float *y, int *east) {
+    int model = structure_art_index(building_sprite(id));
+    if (model < 0) {
+        *x = 0;
+        *y = .85f;
+        *east = 0;
+        return;
+    }
+    const BuildingModel *shape = &structureModels[model];
+    *x = shape->doorX;
+    *y = shape->doorY;
+    *east = shape->eastDoor;
 }
 void building_door(int id, float *x, float *y) {
-    int rightWall;
-    door_offset(id, x, y, &rightWall);
-    *x += g.buildings[id].x + (rightWall ? .34f : 0);
-    *y += g.buildings[id].y + (rightWall ? 0 : .34f);
+    int east;
+    door_offset(id, x, y, &east);
+    *x += g.buildings[id].x + (east ? .34f : 0);
+    *y += g.buildings[id].y + (east ? 0 : .34f);
 }
 float building_door_distance(int id, float x, float y) {
     float bx, by;
@@ -182,6 +202,11 @@ static int street_service(int type) {
     default: return -1;
     }
 }
+static int court_approach(int town, float x, float y, float w, float d) {
+    return town >= 0 && civil_style(town) == 1 &&
+           fabsf(x - towns[town].x) < 2.65f + w &&
+           fabsf(fabsf(y - towns[town].y) - 12) < 2.8f + d;
+}
 static int structure_site(int id, float x, float y, const unsigned char *pending) {
     float w = .85f, d = .85f;
     int height = 0, solid = building_has_interior(g.buildings[id].type);
@@ -189,6 +214,8 @@ static int structure_site(int id, float x, float y, const unsigned char *pending
     float dx = 0, dy = 0;
     int side = 0;
     if (solid) door_offset(id, &dx, &dy, &side);
+    if (court_approach(town_near(x,y,24),x,y,w,d))
+        return 0;
     if (terrain_water(x, y) || terrain_water(x + dx + (side ? .34f : 0), y + dy + (side ? 0 : .34f)) || trail_blocked(x, y))
         return 0;
     for (int j = 0; j < g.buildingCount; j++) {
@@ -482,6 +509,7 @@ static void place_roadside_ore(void) {
     }
 }
 void frontier_world_init(void) {
+    building_geometry_reset();
     if (!g.frontier.version) {
         settlement_rebuild();
         frontier_resources();
@@ -492,14 +520,32 @@ void frontier_world_init(void) {
                 remember_contract(&g.contracts[i]);
         restock();
     }
-    if (g.frontier.version < 2) {
-        move_overlapping_loot();
+    if (g.frontier.version < 2)
         place_roadside_ore();
+    if (g.frontier.version < 3) {
+        for (int i = 0; i < g.buildingCount; i++) {
+            const Building *b = &g.buildings[i];
+            int town = building_town(i);
+            if (town < 0 || civil_style(town) != 1 || !building_has_interior(b->type))
+                continue;
+            float w,d;
+            int height;
+            building_footprint(i,&w,&d,&height);
+            if (court_approach(town,b->x,b->y,w,d))
+                site_building(i,b->x,b->y,NULL);
+        }
+        move_overlapping_loot();
         for (int n = 0; n < g.actorCount; n++) {
             Actor *a = &g.actors[n];
+            if (!a->active || a->dead) continue;
             int room = depth_room(a);
-            if (room) building_door(room - 1, &a->x, &a->y);
+            if (room) {
+                building_door(room - 1, &a->x, &a->y);
+                interior_clear_position(a);
+            } else if (!can_walk(a->x,a->y))
+                civil_clear_position(&a->x,&a->y);
         }
-        g.frontier.version = 2;
+        g.frontier.version = 3;
     }
+    population_add_roaming_bandits();
 }

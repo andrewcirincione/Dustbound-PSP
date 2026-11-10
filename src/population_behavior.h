@@ -26,7 +26,22 @@ static void life_seed(int k){
 }
 void life_init(void){if(L.version)return;memset(&L,0,sizeof(L));L.version=1;for(int k=0;k<POP_GROUPS;k++)life_seed(k);for(int t=0;t<TOWNS;t++){L.towns[t].elite=-1;L.towns[t].pledge=-1;}}
 static void life_announce(int k,const char*line){if(observers(P.groups[k].x,P.groups[k].y)<28)log_msg("%s: %s",population_name(k),line);}
-static int life_threat(int k,float reach){int found=-1;for(int j=0;j<POP_GROUPS;j++){if(j==k||!standing(j)||!enemies(&P.groups[k],&P.groups[j]))continue;float d=distance(P.groups[k].x,P.groups[k].y,P.groups[j].x,P.groups[j].y);if(d<reach){reach=d;found=j;}}return found;}
+static int life_threat(int k, float reach) {
+    const WorldEvent *group = &P.groups[k];
+    int found = -1;
+    for (int j = 0; j < POP_GROUPS; j++) {
+        const WorldEvent *other = &P.groups[j];
+        if (j == k || fabsf(group->x-other->x) >= reach ||
+            fabsf(group->y-other->y) >= reach || !enemies(group,other))
+            continue;
+        float d = distance(group->x,group->y,other->x,other->y);
+        if (d < reach && standing(j)) {
+            reach = d;
+            found = j;
+        }
+    }
+    return found;
+}
 static int life_bandage(int k,int patient,int medic){
  Actor*a=member(k,patient),*b=member(k,medic);if(!a||!b||a->dead||fatal_injury(a)||b->dead||b->unconscious>0||!inventory_remove(b,MEDKIT,1))return 0;
  injury_dress(a,member_depth(k,patient));gain(b,MEDICINE,24);L.groups[k].rescues++;L.rescues++;return 1;
@@ -42,9 +57,8 @@ static int life_casualties(int k,float dt){
  if(dead>z->losses){z->losses=dead;z->clock=12;z->goal=LIFE_RECOVER;life_announce(k,"regrouping after casualties");}
  for(int i=0;i<e->count;i++)if(z->carry[i]>=0){Actor*a=member(k,i),*b=member(k,z->carry[i]);if(!a||!b||a->dead||a->unconscious>0||b->dead||(b->unconscious<=0&&b->health[CHEST]>15&&b->health[HEAD]>15))life_drop(k,i);}
  int threat = life_threat(k, 24), able = standing(k);
- int routed = threat >= 0 && (able * 3 < z->baseline || (dead + down > 0 && standing(threat) > able * 3));
- if (e->type == POP_REFUGEES || e->type == POP_MERCHANTS || e->type == POP_PILGRIMS)
-    routed = threat >= 0 && standing(threat) > able * 1.4f;
+ int routed = threat >= 0 && dead + down >= 2 &&
+              able * 3 < z->baseline && standing(threat) > able * 2;
  if((down||hurt)&&standing(k)>0){
   for(int j=0;j<e->count;j++){Actor*b=member(k,j);if(!b||b->dead||(b->bleed<=.01f&&b->unconscious<=0))continue;
    int carried=0;for(int i=0;i<e->count;i++)carried|=z->carry[i]==j;if(carried)continue;

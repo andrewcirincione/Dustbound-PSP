@@ -19,7 +19,43 @@ static void distribution(void){
  for(int t=0;t<POP_TYPES;t++)assert(types[t]);int regions=0;for(int b=0;b<16;b++)regions+=biomes[b]>0;assert(regions>=6&&wearers*100<total*9&&wearers*100>total*1);
  Actor base=g.actors[g.selected];base.lostMask=base.prostheticMask=base.squad=base.dead=0;base.kind=SETTLER;base.race=0;for(int l=0;l<LIMBS;l++)base.health[l]=100;
  for(int tier=0;tier<=3;tier++){int fitted=0,relic=0;for(int seed=1;seed<=20000;seed++){Actor a=base;population_roll_limbs(&a,(unsigned)seed*19349663u,tier);fitted+=a.prostheticMask!=0;for(int l=LARM;l<=RLEG;l++)relic+=limb_item_grade(limb_installed(&a,l))==4;}printf("RARITY tier %d: %d/20000 wearers; %d Relic parts\n",tier,fitted,relic);assert(fitted>(tier==3?1600:tier==2?1000:400)&&fitted<(tier==3?2400:tier==2?1800:1200));assert(relic<30);if(tier<3)assert(!relic);}
- puts("PASS: 80 persistent groups, all 16 situations and broad regional placement; ordinary prosthetics uncommon, veteran bias modest, Relic exceptionally rare, beasts excluded.");
+ puts("PASS: persistent groups cover all 16 situations and several regions; ordinary prosthetics are uncommon and beasts have none.");
+}
+static void roaming_bandits(void) {
+    int cloth = 0, food = 0, dressings = 0, empty = 0;
+    for (unsigned seed = 73819; seed <= 73823; seed++) {
+        game_new(seed,0);
+        for (int k = WAR_POP_GROUPS; k < POP_GROUPS; k++) {
+            WorldEvent *e = &g.population.groups[k];
+            assert(e->type == POP_RAIDERS && e->tier == 0 && (e->count == 3 || e->count == 4));
+            assert(g.population.state[k].phase == POP_TRAVEL && !population_object_count(k));
+            for (int j = 0; j < e->count; j++) {
+                Actor *a = &e->reserve[j];
+                assert(a->kind == RAIDER && a->faction == HOSTILE && level(a,MELEE) <= 7);
+                assert(a->health[CHEST] == species_health(a) && a->health[CHEST] < 75);
+                int supplies = 0;
+                for (int slot = 0; slot < PACK; slot++) {
+                    if (!a->pack[slot].item) continue;
+                    int item = portion_base(a->pack[slot].item);
+                    assert(a->pack[slot].qty == 1);
+                    if (item == CLOTH) cloth++;
+                    else if (item == JERKY || item == OATCAKE) food++;
+                    else {
+                        assert(item == MEDKIT && portion_percent(a->pack[slot].item) < 100);
+                        dressings++;
+                    }
+                    supplies++;
+                }
+                assert(supplies <= 1);
+                empty += !supplies;
+            }
+        }
+    }
+    assert(cloth && food && dressings && empty);
+    int serial = g.population.groups[WAR_POP_GROUPS].serial;
+    assert(save_game("build/v120/roaming-bandits.sav") && load_game("build/v120/roaming-bandits.sav"));
+    assert(g.population.groups[WAR_POP_GROUPS].serial == serial && population_validate(&g));
+    puts("PASS: eight small roaming gangs have weak fighters, sparse supplies and persistent saves.");
 }
 static void persistence(void){
  Actor*a=fresh();isolate();prepared(0,POP_SCAVENGERS);WorldEvent*e=&g.population.groups[0];a->x=e->x;a->y=e->y;assert(population_materialize(0));int n=e->members[0];Actor*b=&g.actors[n];strcpy(b->name,"STATE SURVIVOR");b->health[LARM]=39;b->stolen[0]=OUTLAWS;limb_set(b,RLEG,limb_item(3,1),OUTLAWS);b->health[RLEG]=91;g.depth.actors[n].trauma[LARM]=4;g.society.weaponXP[n][0]=840;g.population.state[0].cacheQty=0;
@@ -52,7 +88,7 @@ static void offline(void){
 }
 static void limits(void){
  Actor*a=fresh();isolate();prepared(0,POP_ARMY);for(int n=0;n<MAX_ACTORS;n++)g.living.owned[n]=0;g.actorCount=MAX_ACTORS;assert(!population_materialize(0)&&!g.population.groups[0].spawned);assert(g.population.groups[0].count>=12);
- a=fresh();int money=g.money;assert(load_game("build/old-v11.sav")&&g.population.version==1&&g.limbs.version==1);assert(g.money==20000);assert(save_game("build/v120/migrated.sav")&&load_game("build/v120/migrated.sav"));assert(population_validate(&g));int version=g.population.version;g.population.version=3;assert(!population_validate(&g));g.population.version=version;int t=g.population.groups[0].type;g.population.groups[0].type=100;assert(!population_validate(&g));g.population.groups[0].type=t;(void)money;
+ a=fresh();int money=g.money;assert(load_game("build/old-v11.sav")&&g.population.version==2&&g.limbs.version==1);assert(g.money==20000);assert(save_game("build/v120/migrated.sav")&&load_game("build/v120/migrated.sav"));assert(population_validate(&g));int version=g.population.version;g.population.version=3;assert(!population_validate(&g));g.population.version=version;int t=g.population.groups[0].type;g.population.groups[0].type=100;assert(!population_validate(&g));g.population.groups[0].type=t;(void)money;
  /* A newly dead old group cannot renew immediately; renewal waits four quiet days away from observers. */
  a=fresh();isolate();prepared(0,POP_BATTLEFIELD);WorldEvent*e=&g.population.groups[0];a->x=a->y=100;for(int i=0;i<e->count;i++)e->reserve[i].dead=1;e->age=9000;e->presence=0;int serial=e->serial;population_tick(1);assert(e->serial==serial);e->presence=7201;population_tick(1);assert(g.population.groups[0].serial!=serial);
  /* Physical convoy captives use the existing rescue timer and preserve independent follow/flee decisions. */
@@ -74,4 +110,4 @@ static void fixtures(void){
  a=fresh();isolate();prepared(0,POP_MERCHANTS);assert(population_materialize(0));e=&g.population.groups[0];a->x=e->x+3;a->y=e->y+3;ui.screen=SCREEN_WORLD;clock_t start=clock();for(int i=0;i<1000;i++)simulate(.033f);printf("BENCH: 1000 population-enabled ticks %.3fs native CPU; not physical PSP performance.\n",(double)(clock()-start)/CLOCKS_PER_SEC);assert(population_validate(&g));
  puts("PASS: all sixteen world/action layouts stay within 480x272; ordinary prepared saves and a naturally rolled prosthetic-owner fixture are ready for PSP controller review.");
 }
-int main(void){setvbuf(stdout,NULL,_IONBF,0);distribution();persistence();camp_actions();offline();limits();fixtures();printf("ALL POPULATION CHECKS PASSED; Game=%zu Population=%zu Actor=%zu\n",sizeof(Game),sizeof(Population),sizeof(Actor));}
+int main(void){setvbuf(stdout,NULL,_IONBF,0);distribution();roaming_bandits();persistence();camp_actions();offline();limits();fixtures();printf("ALL POPULATION CHECKS PASSED; Game=%zu Population=%zu Actor=%zu\n",sizeof(Game),sizeof(Population),sizeof(Actor));}

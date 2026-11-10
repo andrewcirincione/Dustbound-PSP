@@ -18,8 +18,7 @@ void living_gear(Actor*a,int role,int tier,int n){
         a->gear[4] = gear_id(68, 0, 0);
         memset(a->pack, 0, sizeof(a->pack));
         memset(a->stolen, 0, sizeof(a->stolen));
-        if (n % 11 == 0) inventory_add(a, RATION, 1);
-        else if (n % 5 == 0) inventory_add(a, CLOTH, 1);
+        raider_scraps(a,g.seed+(unsigned)n*37u);
         return;
     }
     static const int weapons[8]={8,3,85,29,5,87,0,16},armor[8]={45,43,38,32,34,36,47,39};

@@ -1,3 +1,14 @@
+# 0.18.3 — Walls and streets
+
+- Recalibrated painted building scale, perspective and door positions across nineteen settlements. Footprints guide movement and projectile collision.
+- Aligned counters, shelving, beds, workstations and other furniture with the room grid. Their floor contact matches movement and service positions.
+- Town walls meet at corners and leave clear gateway approaches. Jail grilles and hinged gates match the walkable boundary.
+- Nearby roles, building names and speech share a collision-free layout around the HUD.
+- Added eight roaming gangs of three or four low-skill bandits with less health and worn weapons. A bandit occasionally carries cloth, food or a partial dressing.
+- Household chests carry more supplies. Civilians can defend themselves, and raiders retreat only under severe pressure.
+- Removed “Who wants me?” from watch dialogue. Factions still lists charges and fines.
+- Save format v25 preserves earlier expeditions and adds the new gangs to existing worlds.
+
 # 0.18.2 — Frontier refinements
 
 - Reduced head and headwear size across standing, crawling and prone poses.

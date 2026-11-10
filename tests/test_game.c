@@ -198,6 +198,11 @@ int main(void) {
     a = &g.actors[0];
     int bc = g.buildingCount;
     for(int i=1;i<g.actorCount;i++)g.actors[i].active=0; /* Isolate construction from random encounters. */
+    for (int k = 0; k < POP_GROUPS; k++) {
+        g.population.groups[k].x = 1140 + k%10*14;
+        g.population.groups[k].y = 1140 + k/10*14;
+        g.life.groups[k].goal = LIFE_SETTLED;
+    }
     CHECK(!build_structure(0) && g.buildingCount == bc, "town boundary prevents unauthorized construction");
     a->x = 42;
     a->y = 43;

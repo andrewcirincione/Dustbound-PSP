@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.18.2"
+#define VERSION "0.18.3"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -199,7 +199,7 @@ typedef struct {
     int active, kind, faction, squad, dead, job, target, taskKind, taskIndex, sneaking, autoattack, carrying,
         carriedBy, lostMask, prostheticMask, bounty;
     unsigned woundFlags; /* occupies the unused arrested field in older saves */
-    int lootTaken;
+    int healthScale; /* percent of species health, or zero for the normal maximum */
     int body, skin, hair, hairColor, beard, scar, origin, race, facing, homeTown;
     int voice, speech, prisonTown, stolen[PACK], bountyReward;
     float speechTime, speechCooldown, prisonTime, stun, exposure;
@@ -331,6 +331,9 @@ enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN };
 enum { ROOM_PROPS = 18 };
 #define DOOR_REACH 1.65f
+#define CELL_Y 3.65f
+#define CELL_HINGE_X 2.65f
+#define CELL_LATCH_X 4.35f
 enum { BUILD_NORMAL, BUILD_ARMORER, BUILD_LODGE };
 enum { TRADE_GENERAL, TRADE_SMITH, TRADE_INN, TRADE_ARMORER, TRADE_APOTHECARY };
 typedef struct {
@@ -347,6 +350,10 @@ void bounty_details(int target, char *out, int size);
 const char *building_name(int id);
 void civil_clear_position(float *x, float *y);
 void building_footprint(int id, float *w, float *d, int *height);
+typedef struct { float low, high; int alongY; } WallRun;
+WallRun building_wall_run(int id);
+void building_geometry_reset(void);
+int structure_blocks(int id, float x, float y, float padding);
 void building_door(int id, float *x, float *y);
 float building_door_distance(int id, float x, float y);
 typedef struct {
@@ -362,6 +369,8 @@ void interior_leave(void);
 int actor_inside(const Actor *a);
 int interior_props(int building, InteriorProp *props);
 int interior_walkable(int room, float x, float y);
+void interior_clear_position(Actor *a);
+int jail_room_open(int room);
 void room_route_toward(Actor *a, float x, float y, float dt);
 void town_routines_reset(void);
 int interior_context(void);
@@ -534,7 +543,10 @@ int automatic_work(const Actor *a);
 void work_notice(const Actor *a, const char *action, const char *target);
 int wound_needs_dressing(const Actor *a);
 float treatment_burden(const Actor *a);
-int civilian_flees(const Actor *a);
+int civilian_actor(const Actor *a);
+int npc_last_resort(const Actor *a);
+int npc_attacked(const Actor *a, const Actor *threat);
+void raider_scraps(Actor *a, unsigned seed);
 void dress_wounds(Actor *a);
 int injury_needs_dressing(const Actor *a, const DepthActor *z);
 void injury_dress(Actor *a, const DepthActor *z);

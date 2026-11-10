@@ -1,6 +1,7 @@
 #ifndef DUSTBOUND_POPULATION_H
 #define DUSTBOUND_POPULATION_H
 void population_init(void);
+void population_add_roaming_bandits(void);
 void population_tick(float dt);
 int population_owned(int actor);
 int population_walk(int actor,float dt);

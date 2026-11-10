@@ -46,7 +46,7 @@ const char *npc_role_name(const Actor *a) {
     return names[npc_role(a)];
 }
 static const int services[][7] = {
- {6,12,8,-1}, {0,14,1,6,12,8,-1}, {6,12,18,8,-1}, {1,4,15,6,8,-1}, {0,2,1,6,12,8,-1},
+ {6,12,8,-1}, {0,14,1,6,12,8,-1}, {6,12,18,8,-1}, {1,4,6,8,-1}, {0,2,1,6,12,8,-1},
  {3,6,12,8,-1}, {0,1,6,12,8,-1}, {5,6,12,8,-1}, {1,14,6,12,8,-1}, {9,10,6,12,8,-1}};
 int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
@@ -78,7 +78,7 @@ const char *dialogue_option(int actor, int row) {
                                    "Escort me. 240 silver / day",
                                    "Guard my camp. 180 silver / day",
                                    "End contract. No refund.",
-                                   "Tell me about your faction.","","Trade routes and prices.","Who wants me?"};
+                                   "Tell me about your faction.","","Trade routes and prices."};
     int action = dialogue_action(actor, row);
     if(action==16)return "Removal surgery. 400 silver";
     if(action==17)return "Show me mechanical limbs.";

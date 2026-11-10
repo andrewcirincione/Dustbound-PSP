@@ -9,16 +9,37 @@ enum {
     ART_IRON_SEAM, ART_COPPER_SEAM, ART_CUT_TIMBER, ART_WATCH_CAGE,
     ART_LOW_COT, ART_SIDE_ALTAR, ART_IRON_STOVE, ART_ARMOR_STAND,
     ART_CARAVAN_BALES, ART_PRACTICE_POST, ART_CELL_PANEL, ART_SIDE_COUNTER,
+    ART_IRON_GRILLE, ART_CELL_GATE, ART_COURT_WALL, ART_STONE_WALL,
     SETTLEMENT_ART_END
 };
 
 typedef struct {
-    float x, y; /* Painted threshold, measured in the cropped sprite. */
-    int rightWall;
-} PaintedDoor;
+    float w, d, doorX, doorY;
+    int height, eastDoor;
+} BuildingModel;
+
+typedef struct {
+    float span, xShare;
+} FurnitureModel;
+
+enum { FURNITURE_ART_FIRST = SETTLEMENT_ART_END, FURNITURE_ART_COUNT = 15, ROOM_MAX_SCALE = 25 };
+
+static inline int furniture_art_index(int art) {
+    if (art >= 16 && art <= 23) return art - 16;
+    if (art >= ART_LOW_COT && art <= ART_PRACTICE_POST) return 8 + art - ART_LOW_COT;
+    return art == ART_SIDE_COUNTER ? FURNITURE_ART_COUNT - 1 : -1;
+}
+
+static inline int furniture_is_bed(int art) {
+    return art == 16 || art == ART_LOW_COT;
+}
+
+static inline int structure_art_index(int sprite) {
+    if (sprite >= 0 && sprite < 8) return sprite;
+    if (sprite >= ART_RUST_HOME && sprite <= ART_HERB_SHOP) return sprite - ART_RUST_HOME + 8;
+    return sprite == ART_WATCH_CAGE ? 20 : -1;
+}
 
 int building_sprite(int id);
-PaintedDoor painted_door(int sprite);
-void building_threshold(int id, float *x, float *y);
 
 #endif

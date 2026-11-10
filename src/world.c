@@ -129,7 +129,7 @@ int terrain_road(float x, float y) {
     return 0;
 }
 int terrain_height(float x, float y) {
-    if (town_near(x, y, 12) >= 0)
+    if (town_near(x, y, 18) >= 0)
         return 0;
     int b = biome(x, y);
     if (b == 0 || b == 2 || b == 3)
@@ -1671,12 +1671,21 @@ int npc_sees(const Actor *observer, const Actor *a, float reach) {
     if (!actor_inside(a))
         for (int j = 0; j < g.buildingCount; j++) {
             const Building *b = &g.buildings[j];
-            if (!building_has_interior(b->type) || fabsf(b->x - observer->x) > reach + 1.5f ||
-                fabsf(b->y - observer->y) > reach + 1.3f)
+            if ((!building_has_interior(b->type) && b->type != WALL) ||
+                fabsf(b->x - observer->x) > reach + 2.3f || fabsf(b->y - observer->y) > reach + 2.3f)
                 continue;
+            float w, h, bx = b->x, by = b->y;
+            int height;
+            building_footprint(j,&w,&h,&height);
+            if (b->type == WALL) {
+                WallRun run = building_wall_run(j);
+                float center = (run.low+run.high)*.5f, half = (run.high-run.low)*.5f;
+                if (run.alongY) { by += center; h = half; }
+                else { bx += center; w = half; }
+            }
             float lo = .10f, hi = .92f;
-            if (sight_axis(observer->x, dx, b->x, 1.45f, &lo, &hi) &&
-                sight_axis(observer->y, dy, b->y, 1.28f, &lo, &hi))
+            if (sight_axis(observer->x, dx, bx, w, &lo, &hi) &&
+                sight_axis(observer->y, dy, by, h, &lo, &hi))
                 return 0;
         }
     return 1;
@@ -1969,7 +1978,7 @@ static void jail_tick(Actor *a, float dt) {
         return;
     jail_medical(a, dt);
     float *open = &g.field.cellOpen[a - g.actors];
-    if (*open > 0 && depth_y(a) < 3.7f && jail_guard(a, 6) >= 0) {
+    if (*open > 0 && depth_y(a) < CELL_Y - .25f && jail_guard(a, 6) >= 0) {
         *open = fmaxf(0, *open - dt);
         if (!*open)
             log_warn("The watch has locked the cell again.");

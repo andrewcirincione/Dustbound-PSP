@@ -752,7 +752,6 @@ int expansion_input(float dt, Input in) {
                 case 16:ui.limbReturn=SCREEN_DIALOG;limb_open(SCREEN_SURGERY);break;
                 case 17:if(town>=0&&depth_trade_open(town)){ui.tradeTown=town;ui.tradeSmith=TRADE_APOTHECARY;ui.shopFilter=0;ui.sell=0;open_view(SCREEN_TRADE);}break;
                 case 14:ui.dialogPage=4;ui.selection=0;break;
-                case 15:open_view(SCREEN_FACTIONS);break;
                 case 0:
                     if (population_vendor(n) && conscious(b) && depth_distance(a, b) <= TALK_REACH) {
                         ui.roadTrader = n + 1;
