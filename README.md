@@ -1,6 +1,6 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.18.4 — The roads move on
+## 0.18.5 — Warrants and homesteads
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
@@ -16,7 +16,11 @@ All nineteen settlements have their own street plans, amenities and interiors, w
 
 Painted buildings and furniture use measured foundations. Walls follow both isometric axes, and jail gates swing open when unlocked. Nearby names and speech share space with building labels. Household chests hold more, and retreat is reserved for severe injuries or a rout.
 
-Quiet routes draw fresh travelers, weak bandit gangs and wildlife. Wilderness encounters return after a cooldown at new locations, and older saves pick up the new encounter pacing. Weak bandits sometimes carry cloth, food or a partial dressing.
+Quiet routes draw fresh travelers, camps and encounters. Patrols from rival factions can clash, hunters track animal packs, and bandits go after caravans and pilgrims. Cleared areas replenish over time outside your squad's view.
+
+Read wanted posters at a jail to track a target and pin their last reported location. Three high-profile outlaws carry unique gear and stay dead once killed. Road warrants rotate as groups come and go. Carry the target to a jailkeeper from a paying faction. Live captures pay double.
+
+Buy a vacant house at its door. Furnish it with beds, chests, tables, shelves and stoves. Any chest in a purchased house opens the same squad stash. Existing expeditions can upgrade to save version 26.
 
 ![Nearby roles and military equipment](evidence/v150-psp-army.png)
 

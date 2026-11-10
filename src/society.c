@@ -463,7 +463,7 @@ void society_contract_text(int n, char *out, int size) {
 int society_complete(int n){if(n<0||n>=CONTRACTS||g.contracts[n].active!=1)return 0;Contract*c=&g.contracts[n];Actor*a=&g.actors[g.selected];int town=contract_turn_in(n);if(town_near(a->x,a->y,14)!=town){log_msg("Claim at %s.",towns[town].name);return 0;}
  int reward=c->reward+S.jobBond[n];
  if(c->type==4){if(!contract_use_items(c->item,c->needed,town)){log_msg("Bring the full shipment and its carriers.");return 0;}g.stock[town][c->item]+=c->needed;}
- else if(c->type==7){int who=S.jobActor[n]-1;if(who<0||who>=g.actorCount||a->carrying!=who||g.actors[who].bountyReward<=0){log_msg("Carry the named bounty; previously claimed proofs cannot pay twice.");return 0;}Actor*b=&g.actors[who];if(!b->dead&&b->unconscious<=0){log_msg("The prisoner must be subdued.");return 0;}if(b->dead)reward/=2;b->bountyReward=0;b->active=0;b->carriedBy=-1;a->carrying=-1;}
+ else if(c->type==CONTRACT_BOUNTY){log_msg("Take the target to a jailkeeper.");return 0;}
  else if(!c->progress){log_msg("Complete the escort or patrol first.");return 0;}
  c->active=2;c->completed=1;remember_contract(c);g.money+=reward;g.contractsDone++;faction_goodwill(g.townOwner[town],5);S.jobBond[n]=0;log_level("%s paid %d silver for %s.", towns[town].name, reward, contract_title(c->type));return 1;
 }
@@ -729,7 +729,9 @@ int nearby_actions(void){
   else add_action(ACTION_CONTEXT,0,n);
  }
  if(room){
-  if(interior_context()!=-2)add_action(ACTION_CONTEXT,5,room-1);
+  int context=interior_context();
+  if(context!=-2)add_action(ACTION_CONTEXT,5,room-1);
+  if(context!=-3&&home_state(room-1)==HOME_OWNED)add_action(ACTION_FURNISH,5,room-1);
   return actionCount;
  }
  for(int n=0;n<g.nodeCount;n++)if(g.nodes[n].remaining&&distance(a->x,a->y,g.nodes[n].x,g.nodes[n].y)<=WORK_REACH){if(g.nodes[n].locked){add_action(ACTION_UNLOCK,1,n);add_action(ACTION_OPEN,1,n);}else add_action(ACTION_CONTEXT,1,n);}
@@ -737,8 +739,10 @@ int nearby_actions(void){
      Building *v = &g.buildings[b];
      if (portable_bedroll(b) < 0)
          continue;
-     if (building_has_interior(v->type) && building_door_distance(b, a->x, a->y) <= DOOR_REACH)
+     if (building_has_interior(v->type) && building_door_distance(b, a->x, a->y) <= DOOR_REACH) {
          add_action(ACTION_CONTEXT, 3, b);
+         if (v->type == JAIL && bounty_board(b) >= 0) add_action(ACTION_WARRANTS, 3, b);
+     }
      if (distance(a->x, a->y, v->x, v->y) > 1.7f)
          continue;
      if (v->type >= WELL && v->type <= STORE && v->type != WALL && v->type != WINDMILL && v->type != FORGE)
@@ -766,6 +770,14 @@ void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_
  if (x->type == ACTION_BOUNTY_TURN_IN) {
      snprintf(out, size, "Turn in %s to the jailkeeper", g.actors[g.selected].carrying >= 0 ?
               g.actors[g.actors[g.selected].carrying].name : "bounty");
+     return;
+ }
+ if (x->type == ACTION_WARRANTS || x->type == ACTION_FURNISH) {
+     snprintf(out,size,"%s",x->type == ACTION_WARRANTS ? "Read wanted posters" : "Furnish house");
+     return;
+ }
+ if (x->type == ACTION_CONTEXT && x->kind == 3 && home_state(x->target) == HOME_FOR_SALE) {
+     snprintf(out,size,"View house deed (%d silver)",home_price(x->target));
      return;
  }
  if (x->type == ACTION_LAY_IN_BED || x->type == ACTION_PUT_DOWN) {
@@ -814,6 +826,10 @@ static int action_valid(const NearbyAction*x){Actor*a=&g.actors[g.selected];if(!
      return n == g.selected;
  if (x->type == ACTION_BOUNTY_TURN_IN)
      return bounty_guard(n, a->carrying);
+ if (x->type == ACTION_WARRANTS)
+     return !x->room && bounty_board(n) >= 0 && building_door_distance(n,a->x,a->y) <= DOOR_REACH;
+ if (x->type == ACTION_FURNISH)
+     return x->room == n + 1 && home_state(n) == HOME_OWNED;
  if (x->type == ACTION_PUT_DOWN || x->type == ACTION_LAY_IN_BED)
      return n >= 0 && a->carrying == n && (x->type == ACTION_PUT_DOWN || lay_carried_in_bed(a, 0));
  if(x->type==ACTION_POLITICS)return n>=0&&n<TOWNS&&distance(a->x,a->y,towns[n].x,towns[n].y)<=24;
@@ -899,6 +915,13 @@ static void perform_action(const NearbyAction *x) {
  if (x->type != ACTION_SELF_AID && x->type != ACTION_SELF_REPAIR && x->type != ACTION_EMERGENCY)
      g.field.playingDead[g.selected] = 0;
  if (x->type == ACTION_BOUNTY_TURN_IN) { bounty_turn_in(n); return; }
+ if (x->type == ACTION_WARRANTS) {
+     ui.warrantTown = bounty_board(n);
+     ui.warrantClosed = 0;
+     depth_open(SCREEN_WARRANTS);
+     return;
+ }
+ if (x->type == ACTION_FURNISH) { home_open(n); return; }
  if (x->type == ACTION_LAY_IN_BED) { lay_carried_in_bed(a, 1); return; }
  if (x->type == ACTION_PUT_DOWN) { put_down(a); return; }
  if (x->type == ACTION_SELF_AID) { heal_actor(n, n); return; }
@@ -936,7 +959,9 @@ int society_validate(const Game*v){const Society*s=&v->society;if(!s->version)re
  for(int t=0;t<TOWNS;t++)if(s->crisis[t]<0||s->crisis[t]>2)return 0;
  for(int n=0;n<MAX_ACTORS;n++){if(s->rescueHelper[n]<0||s->rescueHelper[n]>v->actorCount||s->freed[n]<0||s->freed[n]>3||s->captorFaction[n]<0||s->captorFaction[n]>=FACTIONS)return 0;for(int c=0;c<WEAPON_XP_SLOTS;c++)if(!isfinite(s->weaponXP[n][c])||s->weaponXP[n][c]<0||s->weaponXP[n][c]>SKILL_XP_CAP)return 0;if(s->queueCount[n]<0||s->queueCount[n]>ACTION_QUEUE||s->cannibal[n]<0||s->cannibal[n]>2||!isfinite(s->eating[n])||!isfinite(s->suspicion[n])||!isfinite(s->gateMessage[n]))return 0;
   for(int f=0;f<FACTIONS;f++)if(s->wanted[n][f]<0||s->wanted[n][f]>100000||!isfinite(s->recognized[n][f]))return 0;
-  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_BOUNTY_TURN_IN||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
+  for(int q=0;q<s->queueCount[n];q++){const NearbyAction*a=&s->queue[n][q];if(a->type<0||a->type>ACTION_FURNISH||a->kind<0||a->kind>32||a->room<0||a->room>v->buildingCount||a->target<0||a->target>=MAX_NODES)return 0;
+   if(a->type==ACTION_WARRANTS||a->type==ACTION_FURNISH){if(a->target>=v->buildingCount||a->kind!=(a->type==ACTION_WARRANTS?3:5))return 0;continue;}
+   if(a->type==ACTION_BOUNTY_TURN_IN||a->type==ACTION_PUT_DOWN||a->type==ACTION_LAY_IN_BED){if(a->kind||a->target>=v->actorCount)return 0;continue;}
    if(a->type==ACTION_PACK_BEDROLL||a->type==ACTION_PROPERTY){if(a->kind!=2||a->target>=v->buildingCount)return 0;continue;}
    if(a->type==ACTION_TREAT_OTHER){if(a->kind!=0||a->target>=v->actorCount)return 0;continue;}
    if(a->type>=ACTION_EMERGENCY){if(a->target!=n||a->target>=v->actorCount||a->kind!=0)return 0;continue;}

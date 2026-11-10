@@ -4,9 +4,148 @@
 #include <math.h>
 #include <string.h>
 extern int conscious(const Actor *);
+const HomeFurniture homeFurniture[FURN_TYPES] = {
+    [FURN_BED]   = {"Bed",   190, 16, ROOM_REST, .58f, .81f},
+    [FURN_CHEST] = {"Chest", 145, 20, ROOM_HOME_STASH, .47f, .43f},
+    [FURN_TABLE] = {"Table", 125, 18, ROOM_NONE, .68f, .57f},
+    [FURN_SHELF] = {"Shelf", 105, 21, ROOM_NONE, .60f, .39f},
+    [FURN_STOVE] = {"Stove", 245, ART_IRON_STOVE, ROOM_NONE, .52f, .44f}
+};
+const float homeBays[HOME_BAYS][2] = {
+    {1.35f, 1.55f}, {5.65f, 1.55f}, {1.35f, 3.55f},
+    {5.65f, 3.55f}, {1.35f, 5.55f}, {5.65f, 5.55f}
+};
+int home_state(int building) {
+    return building >= 0 && building < g.buildingCount ? g.homes.property[building] : HOME_NONE;
+}
+void homes_init(void) {
+    if (g.homes.version)
+        return;
+    g.homes.version = 1;
+    unsigned char occupied[MAX_BUILDINGS] = {0};
+    for (int n = 0; n < g.actorCount; n++) {
+        int room = depth_room(&g.actors[n]);
+        if (g.actors[n].active && room > 0 && room <= g.buildingCount)
+            occupied[room - 1] = 1;
+    }
+    for (int t = 0; t < TOWNS; t++) {
+        if (towns[t].faction == HOSTILE)
+            continue;
+        int spare = -1, houses = 0;
+        for (int i = 0; i < g.buildingCount; i++) {
+            const Building *b = &g.buildings[i];
+            if (b->type != HOUSE || b->owner >= 0 || g.frontier.variant[i] != BUILD_NORMAL ||
+                building_town(i) != t)
+                continue;
+            int landmark = 0;
+            for (int k = 0; k < LANDMARKS; k++)
+                landmark |= g.depth.siteBuilding[k] == i;
+            if (landmark)
+                continue;
+            houses++;
+            float x, y;
+            building_door(i, &x, &y);
+            if (!occupied[i] && can_walk(x,y) &&
+                (spare < 0 || !g.townLife.chestRefresh[i]))
+                spare = i;
+        }
+        if (spare >= 0 && houses >= 2)
+            g.homes.property[spare] = HOME_FOR_SALE;
+    }
+}
+int home_price(int building) {
+    int town = building_town(building);
+    return 1250 + town_design(town)->marketTier * 725 + (town >= OLD_TOWNS ? 650 : 0) +
+           (building % 5) * 125;
+}
+void home_open(int building) {
+    ui.homeSite = building;
+    ui.homeBay = 0;
+    ui.selection = FURN_BED;
+    ui.screen = SCREEN_HOME;
+}
+int home_buy(int building) {
+    Actor *a = &g.actors[g.selected];
+    if (home_state(building) != HOME_FOR_SALE || !conscious(a) || depth_room(a) ||
+        a->prisonTime > 0 || g.depth.actors[g.selected].captive ||
+        building_door_distance(building, a->x, a->y) > DOOR_REACH)
+        return 0;
+    int town = building_town(building);
+    if (town < 0)
+        return 0;
+    int faction = g.townOwner[town];
+    if (g.rep[faction] < -25 || wanted_amount(a, faction)) {
+        log_msg("The town won't sell you the deed.");
+        return 0;
+    }
+    int price = home_price(building);
+    if (g.money < price) {
+        log_msg("The deed costs %d silver.", price);
+        return 0;
+    }
+    g.money -= price;
+    g.homes.property[building] = HOME_OWNED;
+    log_warn("Bought a house in %s.", towns[town].name);
+    return 1;
+}
+int home_furnish(int building, int bay, int type) {
+    if (home_state(building) != HOME_OWNED || g.interiorBuilding != building + 1 ||
+        !conscious(&g.actors[g.selected]) || bay < 0 || bay >= HOME_BAYS ||
+        type < FURN_EMPTY || type >= FURN_TYPES)
+        return 0;
+    unsigned char *furniture = &g.homes.furniture[building][bay];
+    if (*furniture == type)
+        return 0;
+    if (*furniture && type) {
+        log_msg("Clear this spot first.");
+        return 0;
+    }
+    if (g.money < homeFurniture[type].price) {
+        log_msg("You need %d silver.", homeFurniture[type].price);
+        return 0;
+    }
+    float x = homeBays[bay][0], y = homeBays[bay][1];
+    const HomeFurniture *f = &homeFurniture[type ? type : *furniture];
+    for (int i = 0; i < g.actorCount; i++) {
+        const Actor *a = &g.actors[i];
+        if (a->active && a->carriedBy < 0 && depth_room(a) == building + 1 &&
+            fabsf(x-depth_x(a)) < f->w+.30f && fabsf(y-depth_y(a)) < f->d+.30f) {
+            log_msg("Someone is in that spot.");
+            return 0;
+        }
+    }
+    g.money -= homeFurniture[type].price;
+    *furniture = type;
+    log_msg("%s %s.", f->name, type ? "placed" : "removed");
+    return 1;
+}
+int homes_validate(const Game *save) {
+    const Homes *h = &save->homes;
+    if (h->version < 0 || h->version > 1)
+        return 0;
+    for (int i = 0; i < MAX_BUILDINGS; i++) {
+        int state = h->property[i];
+        if (state > HOME_OWNED || (state && (!h->version || i >= save->buildingCount ||
+            save->buildings[i].type != HOUSE || save->buildings[i].owner >= 0 ||
+            save->frontier.variant[i] != BUILD_NORMAL)))
+            return 0;
+        for (int b = 0; b < HOME_BAYS; b++)
+            if (h->furniture[i][b] >= FURN_TYPES || (h->furniture[i][b] && state != HOME_OWNED))
+                return 0;
+    }
+    for (int i = 0; i < HOME_STASH; i++) {
+        const Stack *s = &h->stash[i];
+        if (s->item < 0 || s->item >= ITEMS || s->qty < 0 || s->qty > 999 ||
+            h->stolen[i] >= FACTIONS || (!s->item && (s->qty || h->stolen[i])) ||
+            (s->item && (!h->version || !s->qty)))
+            return 0;
+    }
+    return 1;
+}
+
 static int private_chest(int building) {
     const Building *b = &g.buildings[building];
-    return b->owner < 0 && b->faction > FREE &&
+    return b->owner < 0 && b->faction > FREE && !home_state(building) &&
            (b->type == SHOP || (b->type == HOUSE &&
             (g.townLife.chestRefresh[building] || (g.seed + building * 17u) % 5 != 0)));
 }
@@ -116,7 +255,7 @@ static int home_destination(int n, int town) {
     unsigned best = 0;
     for (int j = 0; j < g.buildingCount; j++) {
         const Building *home = &g.buildings[j];
-        if (home->type != HOUSE || home->owner >= 0 || home->faction != a->faction ||
+        if (home->type != HOUSE || home->owner >= 0 || home_state(j) || home->faction != a->faction ||
             building_town(j) != town)
             continue;
         unsigned score = (shift ^ (j * 65537u)) * 2654435761u;
@@ -275,6 +414,20 @@ int town_npc_routine(int n, float dt) {
         return 0;
     int role = npc_role(a);
     if (a->kind == GUARD) {
+        int jail = g.field.jail[town];
+        if (jail && !strcmp(a->name,"Jailkeeper")) {
+            if (room == jail) {
+                room_route_toward(a,4.7f,5.45f,dt*.65f);
+                return 1;
+            }
+            if (!room) {
+                float x, y;
+                building_door(jail-1,&x,&y);
+                if (distance(a->x,a->y,x,y) > .85f)
+                    route_toward(a,x,y,dt*.65f);
+                return 1;
+            }
+        }
         if (room && g.buildings[room - 1].type == JAIL)
             for (int j = 0; j < g.actorCount; j++)
                 if (g.actors[j].active && !g.actors[j].dead && g.actors[j].prisonTime > 0 &&
@@ -398,7 +551,7 @@ int lay_carried_in_bed(Actor *carrier, int place) {
     float x = 0, y = 0, reach = 1.95f;
     if (room) {
         Building *b = &g.buildings[room - 1];
-        if (b->type == HOUSE && b->owner < 0 && !lodge_joined(room - 1))
+        if (b->type == HOUSE && b->owner < 0 && home_state(room - 1) != HOME_OWNED && !lodge_joined(room - 1))
             return 0;
         InteriorProp props[ROOM_PROPS];
         int n = interior_props(room - 1, props);
@@ -413,7 +566,8 @@ int lay_carried_in_bed(Actor *carrier, int place) {
             }
         }
         int t = town_near(b->x, b->y, 22);
-        cost = b->owner < 0 && t >= 0 ? regional_bed_cost(t) : 0;
+        cost = b->owner < 0 && t >= 0 && home_state(room - 1) != HOME_OWNED && !lodge_joined(room - 1)
+            ? regional_bed_cost(t) : 0;
     } else {
         for (int i = 0; i < g.buildingCount; i++) {
             Building *b = &g.buildings[i];
@@ -468,6 +622,16 @@ static int room_layout(int building, int t, int style, InteriorProp *p) {
     int layout = (building + (t + 1) * 5) % 3;
     static const int decor[] = {ART_IRON_STOVE, ART_ARMOR_STAND, ART_SIDE_ALTAR,
                                ART_CARAVAN_BALES, ART_IRON_STOVE, ART_CARAVAN_BALES};
+    if (home_state(building)) {
+        for (int bay = 0; bay < HOME_BAYS; bay++) {
+            int type = g.homes.furniture[building][bay];
+            if (!type)
+                continue;
+            const HomeFurniture *f = &homeFurniture[type];
+            put_prop(p,&n,homeBays[bay][0],homeBays[bay][1],f->w,f->d,f->art,f->action);
+        }
+        return n;
+    }
     if (variant == BUILD_LODGE) {
         put_prop(p,&n,1.1f,1.7f,.62f,.82f,16,ROOM_REST);
         put_prop(p,&n,1.1f,4.25f,.62f,.82f,16,ROOM_REST);
@@ -596,6 +760,10 @@ int interior_enter(int building) {
         return 0;
     if (a->attackPhase == 1 || a->attackPhase == 2)
         return 0;
+    if (home_state(building) == HOME_FOR_SALE) {
+        home_open(building);
+        return 1;
+    }
     if(!depth_build_ready(building)) {log_msg("Finish construction before entering.");return 0;}
     actor_enter_room(g.selected, building);
     a->taskKind = 0;
@@ -646,12 +814,14 @@ int interior_context(void) {
                 best = i;
             }
         }
-    return best;
+    return best == -2 && home_state(g.interiorBuilding - 1) == HOME_OWNED ? -3 : best;
 }
 const char *interior_prompt(void) {
     int c = interior_context();
     if (c == -1)
         return "LEAVE BUILDING";
+    if (c == -3)
+        return "FURNISH HOUSE";
     if (c < 0)
         return "WALK TO A SERVICE";
     InteriorProp p[ROOM_PROPS];
@@ -667,6 +837,8 @@ const char *interior_prompt(void) {
         return "BROWSE WEAPONS & ARMOR";
     case ROOM_STORAGE:
         return "OPEN DEPOT";
+    case ROOM_HOME_STASH:
+        return "OPEN SHARED STASH";
     case ROOM_CHEST:
         return "SEARCH OWNED CHEST";
     case ROOM_MEMBERSHIP:
@@ -685,6 +857,10 @@ void interior_interact(void) {
     int c = interior_context();
     if (c == -1) {
         interior_leave();
+        return;
+    }
+    if (c == -3) {
+        home_open(g.interiorBuilding - 1);
         return;
     }
     /* Explicit furniture selection must never be intercepted by a nearby NPC. */
@@ -715,12 +891,13 @@ void interior_interact(void) {
         ui.screen = SCREEN_TRADE;
         break;
     case ROOM_REST:
-        if (b->type == HOUSE && b->owner < 0 && !lodge_joined(id)) {
+        if (b->type == HOUSE && b->owner < 0 && home_state(id) != HOME_OWNED && !lodge_joined(id)) {
             log_msg(g.frontier.variant[id] == BUILD_LODGE ? "Dustward beds are reserved for members." : "Private bed.");
             break;
         }
         rest_at(a, id, p[c].x, p[c].y, id + 1,
-                b->owner < 0 && town >= 0 && !lodge_joined(id) ? regional_bed_cost(town) : 0);
+                b->owner < 0 && town >= 0 && home_state(id) != HOME_OWNED && !lodge_joined(id)
+                    ? regional_bed_cost(town) : 0);
         break;
     case ROOM_CHEST:
         restock_chest(id);
@@ -757,6 +934,7 @@ void interior_interact(void) {
         a->autoattack = 0;
         a->target = -1;
         break;
+    case ROOM_HOME_STASH:
     case ROOM_STORAGE:
         ui.storageIndex = id;
         ui.storageSide = 0;

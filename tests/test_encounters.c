@@ -85,7 +85,9 @@ static void test_passing_traffic(void) {
         roll_tick();
         assert(e->serial!=serial&&!e->spawned);
         assert(e->x>=a->x+75&&e->x<=a->x+110&&fabsf(e->y-a->y)<=18.1f);
-        assert(town_near(e->x,e->y,28)<0&&!population_object_count(k));
+        assert(town_near(e->x,e->y,28)<0);
+        if (g.population.state[k].beds)
+            assert(population_object_count(k)>=7);
         assert(population_validate(&g));
         if(e->type==POP_RAIDERS){
             assert(e->count==3||e->count==4);
@@ -103,9 +105,68 @@ static void test_passing_traffic(void) {
     printf("PASS: quiet day-42 travel renewed %u encounter types over 20 seeds without growing the population.\n",count);
 }
 
+static void test_live_scenes(void) {
+    unsigned seen=0;
+    int camps=0;
+    for (unsigned seed=74500;seed<74564;seed++) {
+        Actor *a=quiet_frontier(seed);
+        int serial[POP_GROUPS];
+        for (int k=0;k<POP_GROUPS;k++) {
+            WorldEvent *e=&g.population.groups[k];
+            serial[k]=e->serial;
+            if (k>=WAR_POP_GROUPS) {
+                e->age=DAY_SECONDS/4;
+                g.life.groups[k].goal=LIFE_ROAM;
+                g.life.groups[k].decision=600;
+            }
+        }
+        walk_east(a);
+        roll_tick();
+        int first=-1,second=-1;
+        for (int k=0;k<POP_GROUPS;k++)
+            if (g.population.groups[k].serial!=serial[k]) {
+                if (first<0) first=k;
+                else {
+                    assert(second<0);
+                    second=k;
+                }
+            }
+        assert(first>=0&&!g.population.groups[first].spawned);
+        camps+=g.population.state[first].beds>0;
+        if (second<0) continue;
+        WorldEvent *hunter=&g.population.groups[first],*prey=&g.population.groups[second];
+        assert(g.life.groups[first].targetGroup==second&&g.life.groups[first].targetSerial==prey->serial);
+        assert(distance(hunter->x,hunter->y,prey->x,prey->y)>18);
+        if (hunter->type==POP_HUNTERS) {
+            assert(prey->type==POP_BEASTS);
+            seen|=1;
+        } else if (hunter->type==POP_PATROL) {
+            assert(prey->type==POP_PATROL&&war_rivals(hunter->faction,prey->faction));
+            assert(g.life.groups[second].targetSerial==hunter->serial);
+            if (!(seen&2)) {
+                int before=g.population.conflicts;
+                a->x=a->y=100;
+                a->movedTimer=0;
+                for (int i=0;i<100&&g.population.conflicts==before;i++) roll_tick();
+                assert(g.population.conflicts>before);
+                assert(g.population.state[first].fights>0&&g.population.state[second].fights>0);
+                assert(save_game("build/patrol-skirmish.sav")&&load_game("build/patrol-skirmish.sav"));
+                assert(g.population.state[first].fights>0&&g.population.state[second].fights>0);
+            }
+            seen|=2;
+        } else {
+            assert(hunter->type==POP_RAIDERS&&(prey->type==POP_MERCHANTS||prey->type==POP_PILGRIMS));
+            seen|=4;
+        }
+    }
+    assert(seen==7&&camps>=5);
+    printf("PASS: hunts, rival patrol combat, road raids and %d new camps across 64 late-game route rolls.\n",camps);
+}
+
 int main(void){
     test_clearance(0);
     test_clearance(WAR_POP_GROUPS);
     test_passing_traffic();
+    test_live_scenes();
     return 0;
 }

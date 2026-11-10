@@ -208,7 +208,7 @@ int combat_candidates(void){return combat_candidate(-1);}
 int actor_relation(int n){if(n<0||n>=g.actorCount)return 0;Actor*a=&g.actors[n],*p=&g.actors[g.selected];return hostile(a,p)?-1:a->squad||a->faction==p->faction||g.rep[a->faction]>=15?1:0;}
 void command_attack(int n){Actor*a=&g.actors[g.selected];if(n<0||n>=g.actorCount||g.actors[n].squad||!conscious(a)||!conscious(&g.actors[n])||depth_distance(a,&g.actors[n])>14)return;
     g.field.playingDead[g.selected]=0;
-    Actor*b=&g.actors[n];if(!hostile(a,b)){crime_charge(a,b->faction,100,CRIME_ASSAULT);g.rep[b->faction]-=20;log_msg("Assault: +100 bounty; faction standing -20.");}
+    Actor*b=&g.actors[n];if(!hostile(a,b)&&!warrant_authorizes(n)){crime_charge(a,b->faction,100,CRIME_ASSAULT);g.rep[b->faction]-=20;log_msg("Assault: +100 bounty; faction standing -20.");}
     population_anger(n);LW.anger[n]=1;int k=event_for(n);if(k>=0)for(int i=0;i<LW.events[k].count;i++){int j=LW.events[k].members[i];if(j>=0)LW.anger[j]=1;}
     LW.command[g.selected]=n;a->target=n;a->autoattack=1;ui.attackFocus=n;
 }

@@ -55,12 +55,17 @@ int dialogue_count(int actor) {
     int n = 0;
     while (services[npc_role(&g.actors[actor])][n] >= 0)
         n++;
-    return n;
+    return n + (bounty_station(actor) >= 0);
 }
 int dialogue_action(int actor, int row) {
     if (row < 0 || row >= dialogue_count(actor))
         return 8;
     if(limb_surgeon(actor)){static const int actions[]={16,17,3,6,8};return actions[row];}
+    if (bounty_station(actor) >= 0) {
+        int last = dialogue_count(actor) - 1;
+        if (row == last - 1) return 19;
+        if (row == last) return 8;
+    }
     if (npc_role(&g.actors[actor]) == ROLE_MERCENARY && merc_slot(&g.actors[actor]) >= 0 && row == 0)
         return 11;
     return services[npc_role(&g.actors[actor])][row];
@@ -83,6 +88,7 @@ const char *dialogue_option(int actor, int row) {
     if(action==16)return "Removal surgery. 400 silver";
     if(action==17)return "Show me mechanical limbs.";
     if(action==18)return "What have you heard?";
+    if(action==19)return "Let me see the warrants.";
     if(action==0 && npc_role(&g.actors[actor])==ROLE_INNKEEPER)return "What food and drink do you have?";
     if(action==2 && !regional_bed_cost(town_near(g.actors[actor].x,g.actors[actor].y,14)))return "Rest at the sanctuary. Free";
     if (action == 6 && npc_role(&g.actors[actor]) == ROLE_RECRUIT)
@@ -135,7 +141,7 @@ const char *context_action(void) {
     if ((ui.contextKind == 2 || ui.contextKind == 3) && !depth_build_ready(n))
         return "CONTINUE CONSTRUCTION";
     if (ui.contextKind == 3)
-        return "ENTER";
+        return home_state(n) == HOME_FOR_SALE ? "VIEW DEED" : "ENTER";
     if (ui.contextKind == 0) {
         Actor *b = &g.actors[n];
         return b->squad                        ? "RESCUE OPTIONS"
@@ -692,14 +698,17 @@ static int view_item(int slot) {
         a = &g.actors[ui.lootActor];
         return limb_loot_item(a,slot);
     }
-    if (ui.screen == SCREEN_STORAGE && ui.storageSide)
-        return ui.storageIndex >= 0 && ui.storageIndex < g.buildingCount ? g.buildings[ui.storageIndex].storage[slot].item : 0;
+    if (ui.screen == SCREEN_STORAGE && ui.storageSide) {
+        const Stack *stack = storage_stack(ui.storageIndex, slot);
+        return stack ? stack->item : 0;
+    }
     int it = a->pack[slot].item;
     if (ui.screen == SCREEN_LAYERS && (itemDefs[it].slot != 1 || itemDefs[it].weight > 5)) return 0;
     return it;
 }
 static int view_limit(void) {
-    return ui.screen == SCREEN_LOOT ? PACK + GEARS + 4 : ui.screen == SCREEN_STORAGE && ui.storageSide ? 16 : PACK;
+    return ui.screen == SCREEN_LOOT ? PACK + GEARS + 4 :
+           ui.screen == SCREEN_STORAGE && ui.storageSide ? storage_slots(ui.storageIndex) : PACK;
 }
 int item_view_count(void) {
     int count = 0;

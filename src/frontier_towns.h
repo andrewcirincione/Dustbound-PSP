@@ -37,6 +37,8 @@ const char *building_name(int id) {
     const TownDesign *plan = town_design(t);
     if (v == BUILD_LODGE) return "Dustward Lodge";
     if (v == BUILD_ARMORER) return "Armorer";
+    if (home_state(id) == HOME_FOR_SALE) return "House for sale";
+    if (home_state(id) == HOME_OWNED) return "Squad home";
     if (b->type == BAR && t >= 0) return plan->inn;
     if (b->type == SHOP && t >= 0) return plan->market;
     if (b->type == JAIL)
@@ -548,4 +550,6 @@ void frontier_world_init(void) {
         g.frontier.version = 3;
     }
     population_add_roaming_bandits();
+    homes_init();
+    warrants_init();
 }

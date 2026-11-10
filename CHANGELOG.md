@@ -1,3 +1,10 @@
+# 0.18.5 — Warrants and homesteads
+
+- Jails post regional warrants and three permanent elite targets. Track leads in the Journal, pin sightings on the atlas, and deliver targets to an accepting jailkeeper. Keep a record of payouts.
+- Rival patrol skirmishes, hunter pursuits and road raids roll alongside fresh camps, convoys and travelers. Groups can meet, fight and leave casualties without the squad present.
+- Buy vacant houses in settlements, furnish them, and store goods in a shared 64-stack stash across all purchased homes. Beds are free for your squad.
+- Save format 26 preserves homes, shared storage, tracked warrants and payouts. Existing expeditions migrate on load.
+
 # 0.18.4 — The roads move on
 
 - Quiet stretches of the frontier draw fresh traffic as you travel. Small bandit gangs, traders, pilgrims, patrols, hunters and wildlife can pass through.

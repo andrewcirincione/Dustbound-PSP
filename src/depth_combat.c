@@ -136,9 +136,10 @@ void depth_room_tick(float dt) {
         if (a->squad) {
             Building *b = &g.buildings[room - 1];
             DepthActor *z = &D.actors[i];
-            int unwelcome = b->owner < 0 && g.rep[b->faction] < -25 &&
+            int privateOwner = b->owner < 0 && home_state(room - 1) != HOME_OWNED;
+            int unwelcome = privateOwner && g.rep[b->faction] < -25 &&
                 (disguise_score(a, b->faction) < 40 || g.society.recognized[i][b->faction] > 0);
-            int privateRoom = b->owner < 0 && (b->type == HOUSE || b->type == TOWER || b->type == JAIL ||
+            int privateRoom = privateOwner && (b->type == HOUSE || b->type == TOWER || b->type == JAIL ||
                                                (b->type == SHOP && (g.dayTime < 6 || g.dayTime >= 22)));
             int witness = -1;
             if (unwelcome || privateRoom) {

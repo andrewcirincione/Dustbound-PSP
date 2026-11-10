@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.18.4"
+#define VERSION "0.18.5"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -38,6 +38,11 @@
 #define ITEMS (PORTION_ITEMS+PORTION_TYPES*99)
 #define LODGES 3
 #define COMPLETED_CONTRACTS 32
+#define HOME_BAYS 6
+#define HOME_STASH 64
+#define ELITE_WARRANTS 3
+#define WARRANT_RECEIPTS 16
+#define WARRANT_ROWS (ELITE_WARRANTS + 8)
 #define SKILL_CAP 150
 #define SKILL_XP_CAP (12 * (SKILL_CAP - 1) * (SKILL_CAP - 1))
 #define SLAVE_CAMPS 3
@@ -161,7 +166,7 @@ enum {
     SCREEN_ASSIST,
     SCREEN_LOG, SCREEN_EXPEDITION, SCREEN_ORDERS, SCREEN_CAMP, SCREEN_CARE, SCREEN_ENCOUNTER, SCREEN_LAYERS,
     SCREEN_THEFT, SCREEN_ENGAGE, SCREEN_ACTIONS, SCREEN_LIMBS, SCREEN_LIMBFIT, SCREEN_SURGERY, SCREEN_LIMBCONFIRM, SCREEN_LIFE, SCREEN_POLITICS,
-    SCREEN_PASS, SCREEN_SCENARIOS, SCREEN_CHEST
+    SCREEN_PASS, SCREEN_SCENARIOS, SCREEN_CHEST, SCREEN_HOME, SCREEN_WARRANTS
 };
 enum {
     KEY_UP = 1,
@@ -261,6 +266,43 @@ typedef struct {
 #include "society_types.h"
 #include "population_types.h"
 #include "life_types.h"
+enum { HOME_NONE, HOME_FOR_SALE, HOME_OWNED };
+enum { FURN_EMPTY, FURN_BED, FURN_CHEST, FURN_TABLE, FURN_SHELF, FURN_STOVE, FURN_TYPES };
+typedef struct {
+    const char *name;
+    int price, art, action;
+    float w, d;
+} HomeFurniture;
+typedef struct {
+    int version;
+    unsigned char property[MAX_BUILDINGS], furniture[MAX_BUILDINGS][HOME_BAYS];
+    Stack stash[HOME_STASH];
+    unsigned char stolen[HOME_STASH];
+} Homes;
+typedef struct {
+    float x, y, seen, until;
+    int serial;
+    unsigned char tracked, down;
+} WarrantLead;
+typedef struct {
+    char name[16];
+    int silver, day;
+    unsigned char faction, dead;
+} WarrantReceipt;
+typedef struct {
+    int version;
+    float pulse;
+    WarrantLead elite[ELITE_WARRANTS], local[POP_GROUPS];
+    WarrantReceipt eliteReceipts[ELITE_WARRANTS];
+    WarrantReceipt receipts[WARRANT_RECEIPTS];
+    unsigned char next, count;
+} Warrants;
+typedef struct {
+    const char *name, *offense;
+    int reward, elite, down, tracked, town;
+    unsigned payers;
+    float x, y, seen;
+} WarrantView;
 typedef struct {
     uint32_t seed, rng;
     float time, dayTime, raidTimer, autosave;
@@ -326,9 +368,11 @@ typedef struct {
         unsigned char venue[TOWNS][ITEMS];
         unsigned char knownSites[LANDMARKS], tollKnown, knownLodges[LODGES];
     } frontier; /* v24 extension */
+    Homes homes; /* v26 extension */
+    Warrants warrants;
 } Game;
 enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
-enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN };
+enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH };
 enum { ROOM_PROPS = 18 };
 #define DOOR_REACH 1.65f
 #define CELL_Y 3.65f
@@ -347,6 +391,22 @@ unsigned bounty_payers(int target);
 int bounty_guard(int guard, int target);
 int bounty_turn_in(int guard);
 void bounty_details(int target, char *out, int size);
+int bounty_station(int guard);
+int bounty_board(int building);
+void warrants_init(void);
+void warrants_tick(float dt);
+int warrants_validate(const Game *save);
+unsigned warrant_terms(int actor);
+int warrant_authorizes(int actor);
+int warrant_list(int town, int *ids);
+int warrant_view(int id, WarrantView *out);
+void warrant_track(int id);
+void warrant_paid(int actor, int faction, int silver);
+void warrant_register(int group);
+int warrant_preserve(int group);
+void population_detain(int actor);
+const WarrantReceipt *warrant_receipt(int row);
+int warrant_receipt_count(void);
 const char *building_name(int id);
 void civil_clear_position(float *x, float *y);
 void building_footprint(int id, float *w, float *d, int *height);
@@ -399,6 +459,18 @@ int *market_stock(int town, int item);
 int home_occupant(int building);
 int rest_at(Actor *a, int bed, float x, float y, int room, int price);
 int actor_in_bed(const Actor *a);
+void homes_init(void);
+int homes_validate(const Game *save);
+int home_state(int building);
+int home_price(int building);
+int home_buy(int building);
+int home_furnish(int building, int bay, int type);
+void home_open(int building);
+extern const HomeFurniture homeFurniture[FURN_TYPES];
+extern const float homeBays[HOME_BAYS][2];
+int storage_slots(int building);
+const Stack *storage_stack(int building, int slot);
+int storage_owner(int building, int slot);
 typedef struct {
     int screen, selection, scroll, tab, paused, speed, contextKind, contextIndex, tradeTown, sell, slot,
         confirmAction, titleChoice, waypoint;
@@ -420,6 +492,7 @@ typedef struct {
     int depthSite, depthRow;
     int menuTab, menuRow, menuReturn, statusPanel;
     int journalTab,regionChoice,attackFocus;
+    int homeSite, homeBay, warrantTown, warrantClosed;
     int mapCategory,mapChoice,skillPage;
     int limbTarget, limbSourceSlot, limbReturn, limbConfirm;
     float travelStall, travelLastX, travelLastY;

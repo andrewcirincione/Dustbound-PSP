@@ -2587,12 +2587,14 @@ static void engage_screen(void){
     overlay_header("CHOOSE OPPONENT","\015 SELECT   \001 ATTACK   \002 CANCEL");char v[40];int count=combat_candidates(),first=start_row(ui.selection,count,7);
     for(int j=0;j<7&&first+j<count;j++){int n=combat_candidate(first+j),rel=actor_relation(n);snprintf(v,sizeof(v),"%s  %.1fm",rel<0?"HOSTILE":rel>0?"FRIENDLY":"NEUTRAL",depth_distance(&g.actors[g.selected],&g.actors[n]));row(85+j*16,first+j==ui.selection,g.actors[n].name,v);}
     if(!count)text(31,96,"Nobody within 14m.",MUTED,1);
-    if(ui.attackFocus>=0&&actor_relation(ui.attackFocus)>=0)text(31,211,"ASSAULT: +100 BOUNTY / -20 FACTION STANDING",RED,1);
+    if (ui.attackFocus >= 0 && warrant_authorizes(ui.attackFocus))
+        text(31,211,"WANTED DEAD OR ALIVE",GOLD,1);
+    else if(ui.attackFocus>=0&&actor_relation(ui.attackFocus)>=0)text(31,211,"ASSAULT: +100 BOUNTY / -20 FACTION STANDING",RED,1);
     else text(31,211,"Close to weapon reach to strike. Square stops attacking.",MUTED,1);
 }
 static void journal_screen(void) {
     overlay_header(ui.journalTab ? "JOURNAL / COMPLETED" : "JOURNAL / ACTIVE",
-                   ui.journalTab ? "\016 SWITCH TAB   \015 SELECT" : "\016 SWITCH TAB   \015 SELECT   \003 LOCATE");
+                   ui.journalTab ? "\016 SWITCH TAB   \004 WARRANTS" : "\016 SWITCH TAB   \003 LOCATE   \004 WARRANTS");
     char b[214], v[42];
     int count = journal_count(), first = start_row(ui.selection, count, 6);
     for (int j = 0; j < 6 && first + j < count; j++) {
@@ -2685,17 +2687,125 @@ static void factions_screen(void) {
 }
 static void storage_screen(void) {
     Actor *a = &g.actors[g.selected];
-    Building *z = &g.buildings[ui.storageIndex];
-    overlay_header(ui.storageSide ? "DEPOT / WITHDRAW" : "DEPOT / DEPOSIT",
-                   "\014 SIDE   \001 MOVE ONE   \003 MOVE STACK   \010 GUIDE");
+    int home = home_state(ui.storageIndex) == HOME_OWNED;
+    const char *title = home ? (ui.storageSide ? "STASH / WITHDRAW" : "STASH / DEPOSIT") :
+                               (ui.storageSide ? "DEPOT / WITHDRAW" : "DEPOT / DEPOSIT");
+    overlay_header(title, "\014 SIDE   \001 MOVE ONE   \003 MOVE STACK");
     int count = item_view_count(), first = start_row(item_view_row(ui.selection), count, 9);
     char b[30];
     if(!count)text(31,100,"NO ITEMS ON THIS SIDE",MUTED,1);
     for (int j = 0; j < 9 && first + j < count; j++) {
         int k = item_view_slot(first+j);
-        Stack st = ui.storageSide ? z->storage[k] : a->pack[k];
-        snprintf(b, 30, "\001%d", st.qty);
-        row(86 + j * 15, k == ui.selection, st.item ? itemDefs[st.item].name : "EMPTY", st.item ? b : "");
+        const Stack *st = ui.storageSide ? storage_stack(ui.storageIndex,k) : &a->pack[k];
+        int y = 86 + j * 15, stolen = ui.storageSide ? storage_owner(ui.storageIndex,k) : a->stolen[k];
+        snprintf(b, sizeof(b), "%d", st->qty);
+        row(y, k == ui.selection, stolen ? "" : itemDefs[st->item].name, b);
+        if (stolen) {
+            text(32,y,"!",RED,1);
+            clipped(44,y,itemDefs[st->item].name,55,RED);
+        }
+    }
+}
+static void home_screen(void) {
+    int id = ui.homeSite, town = building_town(id);
+    char buf[72];
+    if (home_state(id) == HOME_FOR_SALE) {
+        overlay_header("HOUSE FOR SALE", "\001 BUY DEED");
+        const ArtSprite *s = scene_sprite(building_sprite(id));
+        scaled_art(building_sprite(id),108-s->w/2,95,s->w,s->h,1.05f,0,0);
+        text(190,102,towns[town].name,GOLD,1);
+        snprintf(buf,sizeof(buf),"DEED     %d SILVER",home_price(id));
+        text(190,128,buf,g.money >= home_price(id) ? TEXT : RED,1);
+        snprintf(buf,sizeof(buf),"PURSE    %d SILVER",g.money);
+        text(190,149,buf,MUTED,1);
+        text(190,179,"VACANT",TEAL,1);
+        return;
+    }
+    overlay_header("FURNISH HOUSE", "\014 SPOT   \015 FURNITURE   \001 PLACE   \003 REMOVE");
+    const int cx = 126, cy = 112, scale = 13;
+    texture_plane(104,cx,cy,7*scale,7*scale/2,-7*scale,7*scale/2,2,2,.9f);
+    for (int bay = 0; bay < HOME_BAYS; bay++) {
+        float u = homeBays[bay][0], v = homeBays[bay][1];
+        int x = cx + (u-v)*scale, y = cy + (u+v)*scale*.5f;
+        int placed = g.homes.furniture[id][bay];
+        int preview = placed ? placed : bay == ui.homeBay ? ui.selection : FURN_EMPTY;
+        if (bay == ui.homeBay)
+            rect(x-12,y-3,24,7,TEAL);
+        if (preview) {
+            int art = FURNITURE_ART_FIRST + furniture_art_index(homeFurniture[preview].art);
+            const ArtSprite *s = scene_sprite(art);
+            scaled_art(art,x-s->ax/2,y-s->ay/2,s->w/2,s->h/2,placed ? 1.02f : .58f,0,0);
+        }
+        if (!placed || bay == ui.homeBay) {
+            snprintf(buf,sizeof(buf),"%d",bay+1);
+            text(x-3,y+7,buf,bay==ui.homeBay ? TEXT : MUTED,1);
+        }
+    }
+    text(253,87,"FURNITURE",MUTED,1);
+    for (int f = 1; f < FURN_TYPES; f++) {
+        int y = 103 + (f-1)*17;
+        if (f == ui.selection) rect(245,y-3,198,14,0x4a4030);
+        text(253,y,homeFurniture[f].name,f == ui.selection ? TEXT : MUTED,1);
+        snprintf(buf,sizeof(buf),"%d",homeFurniture[f].price);
+        text(432-text_width(buf),y,buf,g.money >= homeFurniture[f].price ? GOLD : RED,1);
+    }
+    int placed = g.homes.furniture[id][ui.homeBay];
+    snprintf(buf,sizeof(buf),"SPOT %d  /  %s",ui.homeBay+1,placed ? homeFurniture[placed].name : "Empty");
+    text(253,193,buf,TEAL,1);
+    snprintf(buf,sizeof(buf),"PURSE  %d SILVER",g.money);
+    text(253,212,buf,MUTED,1);
+}
+static void warrants_screen(void) {
+    int ids[WARRANT_ROWS];
+    int count = ui.warrantClosed ? warrant_receipt_count() : warrant_list(ui.warrantTown,ids);
+    const char *title = ui.warrantClosed ? "WARRANTS / PAID" :
+                        ui.warrantTown >= 0 ? "WANTED POSTERS" : "TRACKED WARRANTS";
+    overlay_header(title, ui.warrantClosed ? "\016 OPEN WARRANTS   \015 SELECT" :
+                                            "\016 PAID   \001 TRACK / DROP   \003 PIN LEAD");
+    if (!count) {
+        text(31,105,ui.warrantClosed ? "No bounties collected." :
+             ui.warrantTown < 0 ? "Track a warrant at a jail." : "The watch has no open warrants here.",MUTED,1);
+        return;
+    }
+    int selected = ui.selection < count ? ui.selection : count - 1;
+    int first = start_row(selected,count,5);
+    char label[84], detail[120];
+    for (int rowIndex = first; rowIndex < count && rowIndex < first + 5; rowIndex++) {
+        if (ui.warrantClosed) {
+            const WarrantReceipt *r = warrant_receipt(rowIndex);
+            snprintf(detail,sizeof(detail),"%d SILVER / %s",r->silver,r->dead ? "DEAD" : "ALIVE");
+            row(86 + (rowIndex-first)*14,rowIndex==selected,r->name,detail);
+        } else {
+            WarrantView w;
+            if (!warrant_view(ids[rowIndex],&w)) continue;
+            snprintf(label,sizeof(label),"%s%s%s",w.tracked ? "* " : "",w.name,w.elite ? "  /  ELITE" : "");
+            snprintf(detail,sizeof(detail),"%d ALIVE / %d DEAD",2*w.reward,w.reward);
+            row(86 + (rowIndex-first)*14,rowIndex==selected,label,detail);
+        }
+    }
+    line(27,157,451,157,EDGE);
+    if (ui.warrantClosed) {
+        const WarrantReceipt *r = warrant_receipt(selected);
+        snprintf(detail,sizeof(detail),"%s paid %d silver on day %d.",factionNames[r->faction],r->silver,r->day);
+        text(31,176,detail,TEXT,1);
+        return;
+    }
+    WarrantView w;
+    if (!warrant_view(ids[selected],&w)) return;
+    clipped(31,166,w.offense,67,TEXT);
+    int t = town_near(w.x,w.y,WORLD*2);
+    int hours = (int)fmaxf(0,(g.time-w.seen)*24/DAY_SECONDS);
+    snprintf(detail,sizeof(detail),"%s NEAR %s  /  %dh AGO",
+             w.down==2 ? "BODY SEEN" : w.down ? "DOWNED" : "LAST REPORT",towns[t].name,hours);
+    clipped(31,180,detail,67,GOLD);
+    int used = snprintf(detail,sizeof(detail),"PAYS: ");
+    for (int f = 0; f < FACTIONS && used < (int)sizeof(detail); f++)
+        if (w.payers & (1u<<f))
+            used += snprintf(detail+used,sizeof(detail)-used,"%s%s",used>6?", ":"",factionNames[f]);
+    wrap(31,194,67,detail,TEXT);
+    if (w.town >= 0) {
+        snprintf(detail,sizeof(detail),"JAIL NEAR LEAD: %s",towns[w.town].name);
+        clipped(31,220,detail,67,TEAL);
     }
 }
 static void loot_screen(void) {
@@ -2853,6 +2963,12 @@ void render_game(uint32_t *pixels, int stride) {
         break;
     case SCREEN_JOURNAL:
         journal_screen();
+        break;
+    case SCREEN_WARRANTS:
+        warrants_screen();
+        break;
+    case SCREEN_HOME:
+        home_screen();
         break;
     case SCREEN_FACTIONS:
         factions_screen();

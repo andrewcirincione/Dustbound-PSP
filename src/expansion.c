@@ -179,6 +179,7 @@ static int guide_for(int s) {
     case SCREEN_FACTIONS:
         return 13;
     case SCREEN_JOURNAL:
+    case SCREEN_WARRANTS:
         return 14;
     case SCREEN_SAVES:
     case SCREEN_CONFIRM:
@@ -526,22 +527,41 @@ int expansion_input(float dt, Input in) {
             ui.storageSide = !ui.storageSide;
             ui.selection = 0;
         }
-        int count = ui.storageSide ? 16 : PACK;
+        int count = ui.storageSide ? storage_slots(ui.storageIndex) : PACK;
+        if (!count)
+            return 1;
         if (p & KEY_UP)
             ui.selection = wrapi(ui.selection - 1, count);
         if (p & KEY_DOWN)
             ui.selection = wrapi(ui.selection + 1, count);
         if (p & (KEY_CROSS | KEY_SQUARE)) {
-            int qty = p & KEY_SQUARE
-                          ? (ui.storageSide ? g.buildings[ui.storageIndex].storage[ui.selection].qty
-                                            : a->pack[ui.selection].qty)
-                          : 1;
+            const Stack *stack = ui.storageSide ? storage_stack(ui.storageIndex, ui.selection) : &a->pack[ui.selection];
+            int qty = stack && (p & KEY_SQUARE) ? stack->qty : 1;
             int moved = 0;
             while (moved < qty && storage_transfer(ui.storageIndex, ui.storageSide, ui.selection))
                 moved++;
             if (moved > 1)
                 log_msg("Moved %d items. Remaining goods stay in their source stack.", moved);
         }
+        return 1;
+    }
+    if (ui.screen == SCREEN_HOME) {
+        int site = ui.homeSite;
+        if (p & (KEY_CIRCLE | KEY_START)) {
+            open_view(SCREEN_WORLD);
+            return 1;
+        }
+        if (home_state(site) == HOME_FOR_SALE) {
+            if ((p & KEY_CROSS) && home_buy(site))
+                open_view(SCREEN_WORLD);
+            return 1;
+        }
+        if (p & KEY_LEFT) ui.homeBay = wrapi(ui.homeBay - 1, HOME_BAYS);
+        if (p & KEY_RIGHT) ui.homeBay = wrapi(ui.homeBay + 1, HOME_BAYS);
+        if (p & KEY_UP) ui.selection = 1 + wrapi(ui.selection - 2, FURN_TYPES - 1);
+        if (p & KEY_DOWN) ui.selection = 1 + wrapi(ui.selection, FURN_TYPES - 1);
+        if (p & KEY_CROSS) home_furnish(site, ui.homeBay, ui.selection);
+        if (p & KEY_SQUARE) home_furnish(site, ui.homeBay, FURN_EMPTY);
         return 1;
     }
     if (ui.screen == SCREEN_SAVES) {
@@ -579,6 +599,12 @@ int expansion_input(float dt, Input in) {
             ui.journalTab ^= 1;
             ui.selection = 0;
         }
+        if (ui.screen == SCREEN_JOURNAL && (p & KEY_TRIANGLE)) {
+            ui.warrantTown = -1;
+            ui.warrantClosed = 0;
+            open_view(SCREEN_WARRANTS);
+            return 1;
+        }
         int n = ui.screen == SCREEN_JOURNAL ? journal_count() : FACTIONS;
         if (!n) return 1;
         if (p & KEY_UP)
@@ -596,6 +622,35 @@ int expansion_input(float dt, Input in) {
                 ui.mapZoom = 1;
             } else
                 log_msg("Select an active contract to locate its destination.");
+        }
+        return 1;
+    }
+    if (ui.screen == SCREEN_WARRANTS) {
+        if (p & (KEY_CIRCLE | KEY_START)) {
+            open_view(ui.warrantTown < 0 && !(p & KEY_START) ? SCREEN_JOURNAL : SCREEN_WORLD);
+            return 1;
+        }
+        if (p & (KEY_LEFT | KEY_RIGHT | KEY_L | KEY_R)) {
+            ui.warrantClosed ^= 1;
+            ui.selection = 0;
+        }
+        int ids[WARRANT_ROWS];
+        int count = ui.warrantClosed ? warrant_receipt_count() : warrant_list(ui.warrantTown, ids);
+        if (!count) return 1;
+        if (p & KEY_UP) ui.selection = wrapi(ui.selection - 1, count);
+        if (p & KEY_DOWN) ui.selection = wrapi(ui.selection + 1, count);
+        if (ui.selection >= count) ui.selection = count - 1;
+        if (ui.warrantClosed) return 1;
+        int id = ids[ui.selection];
+        if (p & KEY_CROSS) warrant_track(id);
+        WarrantView w;
+        if ((p & KEY_SQUARE) && warrant_view(id, &w)) {
+            ui.waypoint = 1;
+            ui.travelX = ui.mapX = w.x;
+            ui.travelY = ui.mapY = w.y;
+            ui.mapTown = w.town >= 0 ? w.town : 0;
+            ui.mapZoom = 1;
+            open_view(SCREEN_MAP);
         }
         return 1;
     }
@@ -813,6 +868,13 @@ int expansion_input(float dt, Input in) {
                 case 18:
                     ui.dialogPage = 5;
                     ui.selection = 0;
+                    break;
+                case 19:
+                    ui.warrantTown = bounty_station(n);
+                    if (ui.warrantTown >= 0 && depth_distance(a,b) <= TALK_REACH) {
+                        ui.warrantClosed = 0;
+                        open_view(SCREEN_WARRANTS);
+                    }
                     break;
                 case 8:
                     open_view(SCREEN_WORLD);

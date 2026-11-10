@@ -94,6 +94,10 @@ Ask merchants or marshals for work. Freight needs a refundable deposit and four 
 
 Journal shows your objective, payment and contact. Completed contracts have their own tab.
 
+Read wanted posters by a jail door or ask a jailkeeper for the warrants. Cross tracks or drops a case. Square pins its last reported location. Triangle in the Journal opens tracked warrants, and left or right switches to paid cases. Nine Knives, Red Surveyor and Hollow Prince each have a standing warrant. Their deaths are permanent.
+
+At a house for sale, open the deed from Nearby Actions. Once you own the house, enter and choose Furnish house. Left or right picks a spot, up or down picks furniture, Cross places it, and Square removes it. Approach a chest to open the shared stash. Left or right switches between your pack and the stash. Cross moves one item and Square moves the selected stack.
+
 ## 16. Saves
 
 Six manual slots plus autosave. ![start](../assets/ui/start.svg), Save or Load opens a ledger with name, day, party size and silver. Choose a slot; ![cross](../assets/ui/cross.svg) asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.

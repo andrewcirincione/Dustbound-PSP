@@ -552,51 +552,87 @@ int forge_equipment(int it) {
     log_msg("Forged %s.", d->name);
     return 1;
 }
+int storage_slots(int building) {
+    if (home_state(building) == HOME_OWNED)
+        return HOME_STASH;
+    return building >= 0 && building < g.buildingCount && g.buildings[building].type == STORE ? 16 : 0;
+}
+const Stack *storage_stack(int building, int slot) {
+    if (slot < 0 || slot >= storage_slots(building))
+        return NULL;
+    return home_state(building) == HOME_OWNED ? &g.homes.stash[slot] : &g.buildings[building].storage[slot];
+}
+int storage_owner(int building, int slot) {
+    return home_state(building) == HOME_OWNED && slot >= 0 && slot < HOME_STASH ? g.homes.stolen[slot] : FREE;
+}
 int storage_transfer(int b, int from, int slot) {
-    if (b < 0 || b >= g.buildingCount || g.buildings[b].type != STORE)
+    int count = storage_slots(b);
+    if (!count)
         return 0;
     Actor *a = &g.actors[g.selected];
     Building *z = &g.buildings[b];
-    if (actor_inside(a) ? nearby_station(STORE, 1.7f) != b :
-        distance(a->x, a->y, z->x, z->y) > 1.7f && building_door_distance(b, a->x, a->y) > DOOR_REACH) {
+    int home = home_state(b) == HOME_OWNED;
+    if (!conscious(a))
+        return 0;
+    if (home) {
+        InteriorProp props[ROOM_PROPS];
+        int reach = 0;
+        if (actor_inside(a) == b + 1) {
+            int n = interior_props(b, props);
+            for (int i = 0; i < n; i++)
+                reach |= props[i].action == ROOM_HOME_STASH &&
+                         distance(depth_x(a), depth_y(a), props[i].x, props[i].y) < 2;
+        }
+        if (!reach)
+            return 0;
+    } else if (actor_inside(a) ? nearby_station(STORE, 1.7f) != b :
+               distance(a->x, a->y, z->x, z->y) > 1.7f && building_door_distance(b, a->x, a->y) > DOOR_REACH) {
         log_msg("Walk to the depot before transferring goods.");
         return 0;
     }
+    Stack *stacks = home ? g.homes.stash : z->storage;
     if (from) {
-        if (slot < 0 || slot >= 16 || !z->storage[slot].item)
+        if (slot < 0 || slot >= count || !stacks[slot].item)
             return 0;
-        int it = z->storage[slot].item;
-        if (!inventory_add(a, it, 1))
+        int it = stacks[slot].item;
+        if (!inventory_add_owned(a, it, 1, storage_owner(b, slot))) {
+            log_msg("Pack full.");
             return 0;
-        if (--z->storage[slot].qty == 0)
-            z->storage[slot].item = 0;
+        }
+        if (--stacks[slot].qty == 0) {
+            stacks[slot].item = NONE;
+            if (home)
+                g.homes.stolen[slot] = FREE;
+        }
         log_msg("Withdrew %s.", itemDefs[it].name);
         return 1;
     }
     if (slot < 0 || slot >= PACK || !a->pack[slot].item)
         return 0;
-    int dest = -1, it = a->pack[slot].item;
-    for (int i = 0; i < 16; i++)
-        if (z->storage[i].item == it && z->storage[i].qty < 999) {
+    int dest = -1, it = a->pack[slot].item, owner = a->stolen[slot];
+    if (owner && !home) {
+        log_msg("Fence stolen goods before using a public depot.");
+        return 0;
+    }
+    for (int i = 0; i < count; i++)
+        if (stacks[i].item == it && stacks[i].qty < 999 && storage_owner(b, i) == owner) {
             dest = i;
             break;
         }
     if (dest < 0)
-        for (int i = 0; i < 16; i++)
-            if (!z->storage[i].item) {
+        for (int i = 0; i < count; i++)
+            if (!stacks[i].item) {
                 dest = i;
                 break;
             }
     if (dest < 0) {
-        log_msg("Depot has no free stack.");
+        log_msg(home ? "Shared stash is full." : "Depot has no free stack.");
         return 0;
     }
-    if (a->stolen[slot]) {
-        log_msg("Fence stolen goods before using a public depot.");
-        return 0;
-    }
-    z->storage[dest].item = it;
-    z->storage[dest].qty++;
+    stacks[dest].item = it;
+    stacks[dest].qty++;
+    if (home)
+        g.homes.stolen[dest] = owner;
     inventory_remove_slot(a, slot, 1);
     log_msg("Stored %s.", itemDefs[it].name);
     return 1;
@@ -825,11 +861,329 @@ static void cell_place(int n, int b) {
     }
 }
 
+typedef struct {
+    int elite, level, reward;
+    unsigned payers;
+    const char *offense;
+} EliteWarrant;
+static const EliteWarrant highProfile[ELITE_WARRANTS] = {
+    {13, 63, 2300, (1u << UNION) | (1u << SHOGUN), "Murdered the Copper Road tax escort."},
+    {16, 72, 2950, (1u << UNION) | (1u << MONKS), "Shot hospice couriers for their medicine."},
+    {17, 84, 3650, (1u << SHOGUN) | (1u << MONKS), "Burned two villages after losing his claim."}
+};
+static int warrant_actor(int id) {
+    if (id < ELITE_WARRANTS)
+        return g.civil.eliteActor[highProfile[id].elite] - 1;
+    int group = id - ELITE_WARRANTS;
+    const WorldEvent *e = &g.population.groups[group];
+    return e->spawned ? e->members[0] : -1;
+}
+static int warrant_id(int actor) {
+    if (actor < 0 || actor >= g.actorCount)
+        return -1;
+    for (int i = 0; i < ELITE_WARRANTS; i++)
+        if (warrant_actor(i) == actor)
+            return i;
+    int group = population_owned(actor) - 1;
+    if (group >= 0 && warrant_actor(group + ELITE_WARRANTS) == actor &&
+        g.warrants.local[group].serial == g.population.groups[group].serial)
+        return ELITE_WARRANTS + group;
+    return -1;
+}
+static unsigned road_warrant_payers(const WorldEvent *e) {
+    return e->type == POP_SMUGGLERS ? (1u << UNION) | (1u << SHOGUN) :
+           (1u << UNION) | (1u << SCAVENGERS) | (1u << MONKS) | (1u << SHOGUN);
+}
+unsigned warrant_terms(int actor) {
+    int id = warrant_id(actor);
+    if (id < 0)
+        return 0;
+    if (id < ELITE_WARRANTS)
+        return highProfile[id].payers;
+    return road_warrant_payers(&g.population.groups[id - ELITE_WARRANTS]);
+}
+static int nearest_jurisdiction(float x, float y, unsigned payers) {
+    int town = -1;
+    float best = WORLD * 2;
+    for (int t = 0; t < TOWNS; t++) {
+        float d = distance(x,y,towns[t].x,towns[t].y);
+        if (d < best && g.field.jail[t] && (payers & (1u << g.townOwner[t]))) {
+            town = t;
+            best = d;
+        }
+    }
+    return town;
+}
+static WarrantLead *warrant_lead(int id) {
+    return id < ELITE_WARRANTS ? &g.warrants.elite[id] : &g.warrants.local[id - ELITE_WARRANTS];
+}
+void warrant_register(int k) {
+    if (!g.warrants.version)
+        return;
+    const WorldEvent *e = &g.population.groups[k];
+    WarrantLead *lead = &g.warrants.local[k];
+    *lead = (WarrantLead){0};
+    if (e->count < 1 || (e->type != POP_RAIDERS && e->type != POP_AMBUSH && e->type != POP_SMUGGLERS) ||
+        (g.population.state[k].detached & 1))
+        return;
+    int n = warrant_actor(k + ELITE_WARRANTS);
+    if (e->spawned && n < 0)
+        return;
+    Actor *a = e->spawned ? &g.actors[n] : &g.population.groups[k].reserve[0];
+    if (a->dead || a->squad || (!a->bountyReward && (e->serial * 13u + g.seed) % 5 >= 2))
+        return;
+    if (!a->bountyReward)
+        a->bountyReward = 85 + 55 * e->tier + (e->serial * 17u) % 70;
+    *lead = (WarrantLead){.x = e->x, .y = e->y, .seen = g.time, .serial = e->serial};
+}
+void warrants_init(void) {
+    if (g.warrants.version)
+        return;
+    g.warrants.version = 1;
+    for (int n = 0; n < g.actorCount; n++) {
+        Actor *a = &g.actors[n];
+        int t = a->homeTown;
+        if (t >= 0 && t < TOWNS && g.field.jail[t] && a->kind == GUARD && a->active &&
+            !a->squad && !a->dead && a->faction == FREE && !g.depth.actors[n].captive &&
+            !strcmp(a->name,"Jailkeeper"))
+            a->faction = g.townOwner[t];
+    }
+    static const int combat[] = {MELEE, DEFENCE, DODGE, TOUGHNESS, STRENGTH, DEXTERITY, CROSSBOWS};
+    for (int i = 0; i < ELITE_WARRANTS; i++) {
+        int n = warrant_actor(i);
+        if (n < 0)
+            continue;
+        Actor *a = &g.actors[n];
+        if (!a->bountyReward || a->squad)
+            continue;
+        const EliteWarrant *w = &highProfile[i];
+        a->bountyReward = w->reward;
+        if (!a->dead) {
+            int xp = 12 * (w->level - 1) * (w->level - 1);
+            for (unsigned s = 0; s < sizeof(combat)/sizeof(*combat); s++)
+                a->xp[combat[s]] = fmaxf(xp, a->xp[combat[s]]);
+        }
+        g.warrants.elite[i] = (WarrantLead){.x = a->x, .y = a->y, .seen = g.time, .serial = 1};
+    }
+    for (int k = 0; k < POP_GROUPS; k++)
+        warrant_register(k);
+}
+int warrant_preserve(int group) {
+    const WarrantLead *lead = &g.warrants.local[group];
+    return lead->tracked && lead->serial == g.population.groups[group].serial &&
+           g.time < lead->until;
+}
+static const Actor *warrant_subject(int id) {
+    int n = warrant_actor(id);
+    if (n >= 0)
+        return &g.actors[n];
+    if (id < ELITE_WARRANTS)
+        return NULL;
+    int group = id - ELITE_WARRANTS;
+    const WorldEvent *e = &g.population.groups[group];
+    return !e->spawned && !(g.population.state[group].detached & 1) ? &e->reserve[0] : NULL;
+}
+int warrant_view(int id, WarrantView *out) {
+    if (id < 0 || id >= ELITE_WARRANTS + POP_GROUPS)
+        return 0;
+    const WarrantLead *lead = warrant_lead(id);
+    if (!lead->serial)
+        return 0;
+    const Actor *a = warrant_subject(id);
+    if (!a || !a->active || a->squad || !a->bountyReward)
+        return 0;
+    int elite = id < ELITE_WARRANTS;
+    const char *offense;
+    unsigned payers;
+    if (elite) {
+        offense = highProfile[id].offense;
+        payers = highProfile[id].payers;
+    } else {
+        const WorldEvent *e = &g.population.groups[id - ELITE_WARRANTS];
+        if (e->serial != lead->serial)
+            return 0;
+        offense = e->type == POP_SMUGGLERS ? "Moved stolen arms past the watch." :
+                  e->type == POP_AMBUSH ? "Ambushed travelers for their packs." : "Robbed wagons on the frontier.";
+        payers = road_warrant_payers(e);
+    }
+    *out = (WarrantView){a->name, offense, a->bountyReward, elite, lead->down, lead->tracked,
+                         nearest_jurisdiction(lead->x,lead->y,payers), payers, lead->x, lead->y, lead->seen};
+    return 1;
+}
+int warrant_list(int town, int *ids) {
+    int count = 0;
+    for (int i = 0; i < ELITE_WARRANTS; i++) {
+        WarrantView w;
+        if (warrant_view(i, &w) && (town < 0 ? w.tracked : (w.payers & (1u << g.townOwner[town])) != 0))
+            ids[count++] = i;
+    }
+    int first = count, limit = town < 0 ? WARRANT_ROWS : first + 4;
+    float distances[WARRANT_ROWS];
+    for (int i = ELITE_WARRANTS; i < ELITE_WARRANTS + POP_GROUPS; i++) {
+        WarrantView w;
+        if (!warrant_view(i, &w))
+            continue;
+        if (town < 0) {
+            if (w.tracked && count < limit)
+                ids[count++] = i;
+            continue;
+        }
+        if (!(w.payers & (1u << g.townOwner[town])))
+            continue;
+        float d = distance(w.x,w.y,towns[town].x,towns[town].y);
+        if (d > 230)
+            continue;
+        if (count == limit && distances[count - 1] <= d)
+            continue;
+        int j = count < limit ? count++ : count - 1;
+        while (j > first && distances[j - 1] > d) {
+            ids[j] = ids[j-1];
+            distances[j] = distances[j-1];
+            j--;
+        }
+        ids[j] = i;
+        distances[j] = d;
+    }
+    return count;
+}
+void warrant_track(int id) {
+    WarrantView w;
+    if (!warrant_view(id, &w))
+        return;
+    if (!w.tracked && !w.elite) {
+        int count = 0;
+        for (int k = 0; k < POP_GROUPS; k++)
+            count += g.warrants.local[k].tracked != 0;
+        if (count >= 8) {
+            log_msg("Eight road warrants tracked.");
+            return;
+        }
+    }
+    WarrantLead *lead = warrant_lead(id);
+    lead->tracked = !w.tracked;
+    if (!w.elite)
+        lead->until = lead->tracked ? g.time + DAY_SECONDS * 2 : 0;
+    log_msg(w.tracked ? "Stopped tracking %s." : "Tracking %s.", w.name);
+}
+void warrants_tick(float dt) {
+    if (!g.warrants.version || (g.warrants.pulse += dt) < 1)
+        return;
+    g.warrants.pulse = 0;
+    for (int id = 0; id < ELITE_WARRANTS + POP_GROUPS; id++) {
+        WarrantLead *lead = warrant_lead(id);
+        if (!lead->serial)
+            continue;
+        if (id >= ELITE_WARRANTS && lead->tracked && g.time >= lead->until)
+            lead->tracked = 0;
+        const Actor *a = warrant_subject(id);
+        if (!a || !a->active || !a->bountyReward || a->squad)
+            continue;
+        int target = warrant_actor(id);
+        int spotted = 0;
+        for (int n = 0; target >= 0 && n < g.actorCount; n++) {
+            const Actor *p = &g.actors[n];
+            if (!p->squad || !conscious(p) || depth_distance(p,a) > 13)
+                continue;
+            if (a->carriedBy != n && !npc_sees(p,a,13))
+                continue;
+            lead->x = a->x;
+            lead->y = a->y;
+            lead->seen = g.time;
+            lead->down = a->dead ? 2 : a->unconscious > 0;
+            spotted = 1;
+            break;
+        }
+        if (!spotted && !a->dead && a->unconscious <= 0 && a->carriedBy < 0 &&
+            g.time - lead->seen > DAY_SECONDS / 16) {
+            int t = town_near(a->x,a->y,24);
+            unsigned payers = id < ELITE_WARRANTS ? highProfile[id].payers :
+                road_warrant_payers(&g.population.groups[id - ELITE_WARRANTS]);
+            if (t >= 0 && g.field.jail[t] && (payers & (1u << g.townOwner[t]))) {
+                lead->x = a->x;
+                lead->y = a->y;
+                lead->seen = g.time;
+                lead->down = 0;
+                spotted = 1;
+            }
+        }
+        if (spotted && id >= ELITE_WARRANTS && lead->tracked)
+            lead->until = g.time + DAY_SECONDS * 2;
+    }
+}
+void warrant_paid(int actor, int faction, int silver) {
+    Warrants *w = &g.warrants;
+    const Actor *a = &g.actors[actor];
+    int id = warrant_id(actor);
+    if (id >= 0)
+        warrant_lead(id)->tracked = 0;
+    WarrantReceipt *r;
+    if (id >= 0 && id < ELITE_WARRANTS) {
+        r = &w->eliteReceipts[id];
+    } else {
+        r = &w->receipts[w->next];
+        w->next = (w->next + 1) % WARRANT_RECEIPTS;
+        if (w->count < WARRANT_RECEIPTS)
+            w->count++;
+    }
+    *r = (WarrantReceipt){.silver = silver, .day = g.day, .faction = faction, .dead = a->dead};
+    snprintf(r->name, sizeof(r->name), "%s", a->name);
+}
+const WarrantReceipt *warrant_receipt(int row) {
+    const Warrants *w = &g.warrants;
+    for (int i = 0; i < ELITE_WARRANTS; i++)
+        if (w->eliteReceipts[i].silver && row-- == 0)
+            return &w->eliteReceipts[i];
+    if (row < 0 || row >= w->count)
+        return NULL;
+    return &w->receipts[(w->next + WARRANT_RECEIPTS - 1 - row) % WARRANT_RECEIPTS];
+}
+int warrant_receipt_count(void) {
+    int count = g.warrants.count;
+    for (int i = 0; i < ELITE_WARRANTS; i++)
+        count += g.warrants.eliteReceipts[i].silver > 0;
+    return count;
+}
+int warrants_validate(const Game *save) {
+    const Warrants *w = &save->warrants;
+    if (w->version < 0 || w->version > 1 || w->next >= WARRANT_RECEIPTS ||
+        w->count > WARRANT_RECEIPTS || !isfinite(w->pulse) || w->pulse < 0)
+        return 0;
+    int tracked = 0;
+    for (int i = 0; i < ELITE_WARRANTS + POP_GROUPS; i++) {
+        int local = i >= ELITE_WARRANTS;
+        const WarrantLead *l = local ? &w->local[i - ELITE_WARRANTS] : &w->elite[i];
+        if (l->serial < 0 || l->tracked > 1 || l->down > 2 || !isfinite(l->x) ||
+            !isfinite(l->y) || !isfinite(l->seen) || !isfinite(l->until) ||
+            l->x < 0 || l->y < 0 || l->x > WORLD || l->y > WORLD ||
+            l->seen < 0 || l->until < 0 || (l->serial && !w->version) ||
+            (l->tracked && !l->serial) ||
+            (local && l->serial && l->serial != save->population.groups[i - ELITE_WARRANTS].serial))
+            return 0;
+        tracked += local && l->tracked;
+    }
+    if (tracked > 8)
+        return 0;
+    for (int i = 0; i < ELITE_WARRANTS; i++) {
+        const WarrantReceipt *r = &w->eliteReceipts[i];
+        if (r->silver && (!memchr(r->name,0,sizeof(r->name)) || r->faction >= FACTIONS ||
+                          r->dead > 1 || r->day < 0 || r->silver < 0))
+            return 0;
+    }
+    for (int i = 0; i < w->count; i++) {
+        const WarrantReceipt *r = &w->receipts[(w->next + WARRANT_RECEIPTS - 1 - i) % WARRANT_RECEIPTS];
+        if (!memchr(r->name,0,sizeof(r->name)) || r->faction >= FACTIONS || r->dead > 1 ||
+            r->day < 0 || r->silver <= 0)
+            return 0;
+    }
+    return 1;
+}
 unsigned bounty_payers(int target) {
     if (target < 0 || target >= g.actorCount || g.actors[target].bountyReward <= 0)
         return 0;
     const Actor *a = &g.actors[target];
-    unsigned candidates = a->faction == OUTLAWS ? (1u << UNION) | (1u << SHOGUN) :
+    unsigned candidates = warrant_terms(target);
+    if (!candidates)
+        candidates = a->faction == OUTLAWS ? (1u << UNION) | (1u << SHOGUN) :
                           a->faction == HOSTILE ? (1u << UNION) | (1u << SCAVENGERS) | (1u << MONKS) :
                           (1u << UNION) | (1u << SHOGUN);
     candidates &= ~(1u << a->faction);
@@ -842,17 +1196,45 @@ unsigned bounty_payers(int target) {
         if (g.field.jail[t]) open |= 1u << g.townOwner[t];
     return candidates & open;
 }
+int warrant_authorizes(int actor) {
+    if (!warrant_terms(actor))
+        return 0;
+    unsigned payers = bounty_payers(actor);
+    const Actor *target = &g.actors[actor];
+    int t = town_near(target->x,target->y,18);
+    return t < 0 ? payers != 0 : (payers & (1u << g.townOwner[t])) != 0;
+}
+int bounty_board(int building) {
+    if (building < 0 || building >= g.buildingCount)
+        return -1;
+    for (int t = 0; t < TOWNS; t++)
+        if (g.field.jail[t] == building + 1 && g.townOwner[t] != HOSTILE && g.townOwner[t] != WILDLIFE)
+            return t;
+    return -1;
+}
+int bounty_station(int guard) {
+    if (guard < 0 || guard >= g.actorCount)
+        return -1;
+    const Actor *watch = &g.actors[guard];
+    int town = watch_town(watch);
+    if (town < 0 || !conscious(watch))
+        return -1;
+    int jail = g.field.jail[town] - 1;
+    if (depth_room(watch) == jail + 1 || !strcmp(watch->name, "Jailkeeper") ||
+        building_door_distance(jail, watch->x, watch->y) < 3.6f)
+        return town;
+    return -1;
+}
 int bounty_guard(int guard, int target) {
     if (guard < 0 || guard >= g.actorCount || target < 0 || target >= g.actorCount || target == guard)
         return 0;
     const Actor *watch = &g.actors[guard], *a = &g.actors[g.selected], *p = &g.actors[target];
-    int town = watch_town(watch);
-    if (town < 0 || !conscious(watch) || (!p->dead && p->unconscious <= 0) ||
+    int town = bounty_station(guard);
+    if (town < 0 || !p->active || p->squad || a->carrying != target || p->carriedBy != g.selected ||
+        p->prisonTime > 0 || g.depth.actors[target].captive ||
         !(bounty_payers(target) & (1u << watch->faction)) || depth_distance(a, watch) > TALK_REACH)
         return 0;
-    int jail = g.field.jail[town] - 1;
-    return depth_room(watch) == jail + 1 || !strcmp(watch->name, "Jailkeeper") ||
-           building_door_distance(jail, watch->x, watch->y) < 3.6f;
+    return 1;
 }
 int bounty_turn_in(int guard) {
     Actor *a = &g.actors[g.selected];
@@ -861,8 +1243,10 @@ int bounty_turn_in(int guard) {
         return 0;
     Actor *p = &g.actors[n], *watch = &g.actors[guard];
     int town = watch_town(watch), reward = p->bountyReward * (p->dead ? 1 : 2);
+    warrant_paid(n, watch->faction, reward);
     a->carrying = p->carriedBy = -1;
     p->bountyReward = 0;
+    population_detain(n);
     if (p->dead) {
         p->active = 0;
         g.depth.actors[n].room = 0;
@@ -1223,7 +1607,7 @@ int contract_ready(int slot) {
     if (c->type == CONTRACT_BOUNTY) {
         int who = g.society.jobActor[slot] - 1;
         return who >= 0 && who < g.actorCount && g.actors[g.selected].carrying == who &&
-            g.actors[who].bountyReward > 0 && (g.actors[who].dead || g.actors[who].unconscious > 0);
+            g.actors[who].bountyReward > 0;
     }
     return c->item ? contract_item_count(c->item, -1) >= c->needed : c->progress >= c->needed;
 }

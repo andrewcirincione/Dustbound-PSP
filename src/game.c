@@ -2606,6 +2606,7 @@ void simulate(float dt) {
         }
     }
     depth_after_tick(dt);
+    warrants_tick(dt);
     const Actor *controlled = &g.actors[g.selected];
     if (ui.waypoint && !actor_inside(controlled) && controlled->carriedBy < 0 &&
         distance(controlled->x, controlled->y, ui.travelX, ui.travelY) < 2.5f)
@@ -2625,7 +2626,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 25 };
+enum { SAVE_VERSION = 26 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -2656,7 +2657,8 @@ static int validate_game(const Game *t) {
         t->selected >= t->actorCount || !t->actors[t->selected].squad || t->tech < 0 || t->tech > 3 ||
         t->squadCount < 1 || t->squadCount > SQUAD)
         return 0;
-    if (!field_validate(t) || t->townLife.layout < 0 || t->townLife.layout > 1 ||
+    if (!homes_validate(t) || !warrants_validate(t) || !field_validate(t) ||
+        t->townLife.layout < 0 || t->townLife.layout > 1 ||
         t->frontier.version < 0 || t->frontier.version > 3 || t->frontier.clanMember < 0 ||
         t->frontier.clanMember > 1 || t->frontier.completedCount > COMPLETED_CONTRACTS ||
         t->frontier.completedNext >= COMPLETED_CONTRACTS || t->frontier.tollKnown > 1)
@@ -2894,10 +2896,12 @@ static int migrate_legacy(const LegacyGame *old) {
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
+    if (version == 25)
+        return size == offsetof(Game, homes);
     if (version >= 17 && version <= 24) {
         static const size_t ends[] = {offsetof(Game,theftWarnings),offsetof(Game,theftWarnings),
             offsetof(Game,roadsideAid),offsetof(Game,townLife),offsetof(Game,field),
-            offsetof(Game,charges),offsetof(Game,frontier),sizeof(Game)};
+            offsetof(Game,charges),offsetof(Game,frontier),offsetof(Game,homes)};
         const size_t groupSize = sizeof(g.population.groups[0])+sizeof(g.population.state[0])+
             sizeof(g.population.social[0])+sizeof(g.life.groups[0])+sizeof(g.fieldNotes.group[0]);
         return size == ends[version-17] - ROAMING_BANDIT_GROUPS*groupSize;
@@ -2926,7 +2930,7 @@ static void read_save_array(SaveReader *reader, void *array, size_t oldBytes, si
 }
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if (version == SAVE_VERSION) memcpy(out, data, size);
+    if (version >= 25) memcpy(out, data, size);
     else {
         SaveReader reader = {data, (unsigned char *)out, size};
 #define WIDEN(field, count) read_save_array(&reader, out->field, (count) * sizeof(out->field[0]), sizeof(out->field))
@@ -3254,6 +3258,7 @@ void game_tick(float dt, Input in) {
     if (ui.menuReturn && ui.screen != SCREEN_MENU && ui.screen != SCREEN_HELP &&
         ui.screen != SCREEN_CONFIRM && ui.screen != SCREEN_SAVES && ui.screen != SCREEN_PASS &&
         ui.screen != SCREEN_SCENARIOS && ui.screen != SCREEN_CREATE && ui.screen != SCREEN_NAME &&
+        ui.screen != SCREEN_WARRANTS &&
         (p & (KEY_CIRCLE | KEY_START))) {
         open_screen(p & KEY_START ? SCREEN_WORLD : SCREEN_MENU);
         ui.selection = ui.menuRow;

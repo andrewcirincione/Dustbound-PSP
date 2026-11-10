@@ -272,6 +272,7 @@ int main(void) {
     memset(g.field.jail, 0, sizeof(g.field.jail));
     memset(g.field.camp, 0, sizeof(g.field.camp));
     memset(g.frontier.lodge, 0, sizeof(g.frontier.lodge));
+    memset(&g.homes, 0, sizeof(g.homes));
     CHECK(save_game("build/v052-workers.sav"));
     int q = stored(0, RATION);
     CHECK(load_game("build/v052-workers.sav"));

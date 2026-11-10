@@ -269,6 +269,18 @@ void civil_init(void){
 }
 int civil_npc_job(int n,float dt){
  int e=civil_elite_index(n);if(e<12||C.fallen[e])return 0;Actor*a=&g.actors[n];if(a->squad||g.depth.actors[n].captive||a->prisonTime>0||!conscious(a))return 0;
+ if (e==13||e==16||e==17) {
+  static const float trail[4][2]={{0,0},{-28,32},{35,49},{48,-20}};
+  int leg=C.routeTown[e]%4;
+  float x=a->homeX+trail[leg][0],y=a->homeY+trail[leg][1];
+  if (distance(a->x,a->y,x,y)<3) C.routeTown[e]=(leg+1)%4;
+  else {
+   if(!can_walk(x,y))civil_clear_position(&x,&y);
+   if(can_walk(x,y)&&distance(a->x,a->y,x,y)>2)route_toward(a,x,y,dt*.65f);
+   else C.routeTown[e]=(leg+1)%4;
+  }
+  return 1;
+ }
  int t=C.routeTown[e];if(distance(a->x,a->y,towns[t].x,towns[t].y)<22)C.routeTown[e]=(t+3+(e%3))%TOWNS;
  t=C.routeTown[e];route_toward(a,towns[t].x,towns[t].y,dt*.65f);return 1;
 }

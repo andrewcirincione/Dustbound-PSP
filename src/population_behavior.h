@@ -224,7 +224,11 @@ static void group_behavior(int k,float dt){
   for(int i=0;i<e->count;i++){Actor*a=member(k,i);if(a)a->sneaking=!z->ambushSprung;}return;
  }
  int fighting=0;for(int i=0;i<e->count;i++){Actor*a=member(k,i);if(a&&e->spawned&&a->target>=0)fighting=1;}
- if((fighting||targetThreat>=0)&&z->goal!=LIFE_RETREAT&&z->goal!=LIFE_RAID){m->phase=POP_FIGHT;m->clock=8;return;}
+ if((fighting||targetThreat>=0)&&z->goal!=LIFE_RETREAT&&z->goal!=LIFE_RAID){
+  if(targetThreat>=0&&e->spawned&&P.groups[targetThreat].spawned&&m->phase!=POP_FIGHT)
+   population_clash(k,targetThreat);
+  m->phase=POP_FIGHT;m->clock=8;return;
+ }
  if(m->phase==POP_FIGHT&&m->clock>0&&z->goal!=LIFE_RETREAT&&z->goal!=LIFE_RAID)return;
  if(camp_type(k)&&z->camp==CAMP_READY)for(int i=0;i<e->count;i++){Actor*a=member(k,i);if(a&&!a->dead&&a->hunger<40&&!inventory_count(a,RATION)){
    if(inventory_count(a,MEAT)>=2&&inventory_add(a,RATION,1))inventory_remove(a,MEAT,2);
