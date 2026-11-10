@@ -408,7 +408,7 @@ static TownStop town_stop(int n, int town, int role) {
 int town_npc_routine(int n, float dt) {
     Actor *a = &g.actors[n];
     int town = a->homeTown, room = depth_room(a);
-    if (a->squad || a->kind == BEAST || town < 0 || town >= TOWNS || !conscious(a) || a->target >= 0 || a->attackPhase ||
+    if (a->squad || a->taskKind == TASK_TREAT || actor_in_bed(a) || a->kind == BEAST || town < 0 || town >= TOWNS || !conscious(a) || a->target >= 0 || a->attackPhase ||
         a->carrying >= 0 || a->prisonTime > 0 || g.depth.actors[n].captive || population_owned(n) ||
         a->faction != g.townOwner[town])
         return 0;
@@ -467,6 +467,7 @@ void actor_enter_room(int n, int building) {
     Actor *a = &g.actors[n];
     DepthActor *z = &g.depth.actors[n];
     z->room = building + 1;
+    g.innFloor[n] = 0;
     z->rx = 3.5f;
     z->ry = 6.1f;
     building_door(building, &a->x, &a->y);
@@ -482,7 +483,7 @@ void actor_enter_room(int n, int building) {
 }
 int actor_in_bed(const Actor *a) {
     int bed = a->taskIndex;
-    if (a->taskKind != 3)
+    if (a->taskKind != 3 || a->carriedBy >= 0)
         return 0;
     if (bed <= -1000)
         return 1;
@@ -491,16 +492,17 @@ int actor_in_bed(const Actor *a) {
     int type = g.buildings[bed].type;
     return type == BED || type == BAR || type == HOUSE || type == TOWER;
 }
-static int bed_unoccupied(const Actor *a, float x, float y, int room) {
+int room_bed_free(const Actor *a, float x, float y, int room, int floor) {
     for (int i = 0; i < g.actorCount; i++) {
         const Actor *other = &g.actors[i];
         if (other != a && other->active && !other->dead && actor_in_bed(other) &&
-            depth_room(other) == room && distance(x, y, depth_x(other), depth_y(other)) < .9f)
+            depth_room(other) == room && actor_floor(other) == floor &&
+            distance(x, y, depth_x(other), depth_y(other)) < .9f)
             return 0;
     }
     return 1;
 }
-static void bed_position(Actor *a, int bed, float x, float y, int room) {
+void place_in_bed(Actor *a, int bed, float x, float y, int room) {
     int n = a - g.actors;
     DepthActor *z = &g.depth.actors[n];
     z->room = room;
@@ -512,20 +514,22 @@ static void bed_position(Actor *a, int bed, float x, float y, int room) {
             g.interiorY = y;
         }
     } else {
+        g.innFloor[n] = 0;
         a->x = x;
         a->y = y;
     }
     a->taskKind = 3;
     a->taskIndex = bed;
     a->action = REST_DURATION;
-    a->autoattack = a->attackPhase = 0;
+    a->autoattack = a->attackPhase = a->sneaking = 0;
+    a->movedTimer = 0;
     a->target = g.living.command[n] = -1;
     g.field.playingDead[n] = 0;
 }
 int rest_at(Actor *a, int bed, float x, float y, int room, int price) {
     if (!conscious(a) || a->attackPhase == 1 || a->attackPhase == 2 || a->carrying >= 0 || a->prisonTime > 0)
         return 0;
-    if (!bed_unoccupied(a, x, y, room)) {
+    if (!room_bed_free(a, x, y, room, actor_floor(a))) {
         log_msg("That bed is occupied.");
         return 0;
     }
@@ -533,10 +537,11 @@ int rest_at(Actor *a, int bed, float x, float y, int room, int price) {
         log_msg("A bed costs %d silver.", price);
         return 0;
     }
-    if (a->taskKind == 3 && a->taskIndex == bed)
+    if (a->taskKind == 3 && a->taskIndex == bed &&
+        distance(depth_x(a), depth_y(a), x, y) < .3f)
         return 1;
     g.money -= price;
-    bed_position(a, bed, x, y, room);
+    place_in_bed(a, bed, x, y, room);
     ui.screen = SCREEN_WORLD;
     log_msg("Resting in bed.");
     return 1;
@@ -554,11 +559,11 @@ int lay_carried_in_bed(Actor *carrier, int place) {
         if (b->type == HOUSE && b->owner < 0 && home_state(room - 1) != HOME_OWNED && !lodge_joined(room - 1))
             return 0;
         InteriorProp props[ROOM_PROPS];
-        int n = interior_props(room - 1, props);
+        int n = interior_floor_props(room - 1, actor_floor(carrier), props);
         for (int i = 0; i < n; i++) {
             if (props[i].action != ROOM_REST) continue;
             float d = distance(depth_x(carrier), depth_y(carrier), props[i].x, props[i].y);
-            if (d < reach && bed_unoccupied(patient, props[i].x, props[i].y, room)) {
+            if (d < reach && room_bed_free(patient, props[i].x, props[i].y, room, actor_floor(carrier))) {
                 bed = room - 1;
                 x = props[i].x;
                 y = props[i].y;
@@ -573,7 +578,7 @@ int lay_carried_in_bed(Actor *carrier, int place) {
             Building *b = &g.buildings[i];
             if (b->type != BED || portable_bedroll(i) < 0 || !depth_build_ready(i)) continue;
             float d = distance(carrier->x, carrier->y, b->x, b->y);
-            if (d < reach && bed_unoccupied(patient, b->x, b->y, 0)) {
+            if (d < reach && room_bed_free(patient, b->x, b->y, 0, 0)) {
                 bed = i;
                 x = b->x;
                 y = b->y;
@@ -588,7 +593,7 @@ int lay_carried_in_bed(Actor *carrier, int place) {
                     float bx, by;
                     if (population_object(k, j, &bx, &by) != 2) continue;
                     float d = distance(carrier->x, carrier->y, bx, by);
-                    if (d < reach && bed_unoccupied(patient, bx, by, 0)) {
+                    if (d < reach && room_bed_free(patient, bx, by, 0, 0)) {
                         bed = -1000 - k * 4 - (j - 1);
                         x = bx; y = by; reach = d; cost = 0;
                     }
@@ -601,7 +606,8 @@ int lay_carried_in_bed(Actor *carrier, int place) {
         carrier->carrying = patient->carriedBy = -1;
         patient->x = carrier->x;
         patient->y = carrier->y;
-        bed_position(patient, bed, x, y, room);
+        g.innFloor[patient - g.actors] = actor_floor(carrier);
+        place_in_bed(patient, bed, x, y, room);
         log_msg("%s laid %s in bed.", carrier->name, patient->name);
     }
     return 1;
@@ -615,7 +621,7 @@ enum { LODGE_FEE = 280 };
 static void put_prop(InteriorProp *p, int *count, float x, float y, float w, float d, int art, int action) {
     p[(*count)++] = (InteriorProp){x,y,w,d,art,action};
 }
-static int room_layout(int building, int t, int style, InteriorProp *p) {
+static int room_layout(int building, int t, int style, int floor, InteriorProp *p) {
     const Building *b = &g.buildings[building];
     int variant = g.frontier.variant[building], n = 0;
     const TownDesign *plan = town_design(t);
@@ -686,33 +692,30 @@ static int room_layout(int building, int t, int style, InteriorProp *p) {
         }
         put_prop(p,&n,3.8f,1.1f,.62f,.38f,21,ROOM_NONE);
     } else if (b->type == BAR) {
-        int beds = t < 0 ? 3 : plan->beds;
-        int alcove = beds >= 4 && (layout == 1 || style == 2);
-        int sideBar = alcove || (t >= 0 && (plan->turn == 2 || plan->plan == 4) && beds <= 3);
-        for (int j = 0; j < beds; j++) {
-            float x, y, w = .60f, d = .67f;
-            if (alcove) {
-                x = 1.14f + (j % 3) * 1.88f;
-                y = 1.05f + (j / 3) * 1.98f;
-            } else {
-                x = sideBar ? 1.12f + j * 1.66f : ((j + layout) & 1) ? 5.80f : 1.12f;
-                y = sideBar ? 1.20f : 1.11f + (j / 2) * 1.77f;
-                if (beds == 1) { w = .76f; d = .56f; }
+        int upstairs = inn_has_upstairs(building);
+        if (upstairs)
+            put_prop(p,&n,5.94f,5.88f,.46f,.76f,ART_INN_STAIRS,ROOM_STAIRS);
+        if (floor) {
+            for (int j = 0; j < plan->beds; j++) {
+                float x = j % 2 ? 5.61f : 1.39f;
+                float y = .95f + (j / 2) * 1.60f;
+                put_prop(p,&n,x,y,.53f,.65f,16,ROOM_REST);
             }
-            put_prop(p,&n,x,y,w,d,16,ROOM_REST);
-        }
-        if (sideBar) {
-            put_prop(p,&n,5.65f,5.15f,.36f,.86f,17,ROOM_TRADE);
-            put_prop(p,&n,1.35f,5.2f,.63f,.49f,decor[style],ROOM_NONE);
-            put_prop(p,&n,3.59f,5.34f,.76f,.57f,23,ROOM_NONE);
+            put_prop(p,&n,3.49f,1.08f,.47f,.35f,21,ROOM_NONE);
         } else {
-            put_prop(p,&n,3.55f,1.05f,.94f,.36f,17,ROOM_TRADE);
-            if (beds > 2)
-                put_prop(p,&n,layout == 1 ? 2.75f : 4.25f,3.7f,.60f,.55f,18,ROOM_NONE);
-            if (style == 2 || beds >= 4)
-                put_prop(p,&n,3.58f,5.15f,1.10f,.68f,23,ROOM_NONE);
-            if (beds < 4)
-                put_prop(p,&n,style == 3 ? 5.73f : 1.1f,5.35f,.50f,.43f,decor[style],ROOM_NONE);
+            put_prop(p,&n,layout == 1 ? 4.22f : 3.43f,1.26f,1.06f,.39f,ART_INN_BAR,ROOM_TRADE);
+            put_prop(p,&n,2.17f,3.67f,.59f,.48f,18,ROOM_NONE);
+            if (upstairs || plan->beds >= 3)
+                put_prop(p,&n,4.53f,3.56f,.56f,.45f,18,ROOM_NONE);
+            if (upstairs)
+                put_prop(p,&n,1.12f,5.35f,.54f,.43f,decor[style],ROOM_NONE);
+            else {
+                put_prop(p,&n,5.67f,4.96f,.54f,.64f,16,ROOM_REST);
+                if (plan->beds >= 3)
+                    put_prop(p,&n,1.12f,5.25f,.54f,.64f,16,ROOM_REST);
+                else
+                    put_prop(p,&n,1.12f,1.01f,.51f,.35f,decor[style],ROOM_NONE);
+            }
         }
     } else {
         float bx = layout == 1 ? 5.45f : 1.28f;
@@ -729,14 +732,48 @@ static int room_layout(int building, int t, int style, InteriorProp *p) {
     return n;
 }
 
-int interior_props(int building, InteriorProp *p) {
+int inn_has_upstairs(int building) {
+    return building >= 0 && building < g.buildingCount && g.buildings[building].type == BAR &&
+           town_design(building_town(building))->beds >= 4;
+}
+
+void inn_change_floor(Actor *a, int floor) {
+    int n = a - g.actors;
+    g.innFloor[n] = floor;
+    DepthActor *z = &g.depth.actors[n];
+    z->rx = 4.86f - (n == g.selected ? 0 : .3f * (1 + n % 3));
+    z->ry = 5.72f;
+    if (n == g.selected) {
+        g.interiorX = z->rx;
+        g.interiorY = z->ry;
+    }
+    a->routeLen = a->routePos = 0;
+    a->routeClock = 0;
+    a->target = -1;
+    if (a->carrying >= 0) {
+        g.innFloor[a->carrying] = floor;
+        g.depth.actors[a->carrying].rx = z->rx;
+        g.depth.actors[a->carrying].ry = z->ry;
+    }
+}
+
+int inn_follow_stairs(Actor *a, int floor, float dt) {
+    int room = depth_room(a);
+    if (actor_floor(a) == floor || !inn_has_upstairs(room - 1))
+        return 0;
+    if (distance(depth_x(a), depth_y(a), 4.86f, 5.72f) < .65f)
+        inn_change_floor(a, floor);
+    else
+        room_route_toward(a, 4.86f, 5.72f, dt);
+    return 1;
+}
+
+int interior_floor_props(int building, int floor, InteriorProp *p) {
     int town = building_town(building);
     int style = town < 0 ? 0 : civil_style(town);
-    int count = room_layout(building,town,style,p);
+    int count = room_layout(building,town,style,floor,p);
     for (int i = 0; i < count; i++) {
         InteriorProp *prop = &p[i];
-        if (prop->art == 16 && (style == 1 || style == 2))
-            prop->art = ART_LOW_COT;
         if (prop->art == 17 && prop->d > prop->w)
             prop->art = ART_SIDE_COUNTER;
         const FurnitureModel *model = &furnitureModels[furniture_art_index(prop->art)];
@@ -746,6 +783,10 @@ int interior_props(int building, InteriorProp *p) {
         prop->d = span-prop->w;
     }
     return count;
+}
+
+int interior_props(int building, InteriorProp *p) {
+    return interior_floor_props(building, 0, p);
 }
 
 int lodge_joined(int building) {
@@ -776,6 +817,7 @@ int interior_enter(int building) {
     if (a->carrying >= 0) {
         DepthActor *carried = &g.depth.actors[a->carrying];
         carried->room = building + 1;
+        g.innFloor[a->carrying] = 0;
         carried->rx = g.interiorX;
         carried->ry = g.interiorY;
     }
@@ -786,11 +828,14 @@ void interior_leave(void) {
         return;
     Actor *a = &g.actors[g.interiorActor];
     int building = g.interiorBuilding - 1;
-    if (a->prisonTime > 0 && !jail_cell_open(a))
+    if (actor_floor(a) || (a->prisonTime > 0 && !jail_cell_open(a)))
         return;
     jail_exit(a);
     building_door(building, &a->x, &a->y);
-    if (a->carrying >= 0) g.depth.actors[a->carrying].room = 0;
+    if (a->carrying >= 0) {
+        g.depth.actors[a->carrying].room = 0;
+        g.innFloor[a->carrying] = 0;
+    }
     a->taskKind = 0;
     a->target = -1;
     g.depth.actors[g.interiorActor].trespass = 0;
@@ -801,10 +846,10 @@ void interior_leave(void) {
 int interior_context(void) {
     if (!g.interiorBuilding)
         return -2;
-    if (distance(g.interiorX, g.interiorY, 3.5f, 6.7f) < 1.1f)
+    if (!actor_floor(&g.actors[g.selected]) && distance(g.interiorX, g.interiorY, 3.5f, 6.7f) < 1.1f)
         return -1;
     InteriorProp p[ROOM_PROPS];
-    int n = interior_props(g.interiorBuilding - 1, p), best = -2;
+    int n = interior_floor_props(g.interiorBuilding - 1, actor_floor(&g.actors[g.selected]), p), best = -2;
     float near = 2.0f;
     for (int i = 0; i < n; i++)
         if (p[i].action) {
@@ -825,8 +870,10 @@ const char *interior_prompt(void) {
     if (c < 0)
         return "WALK TO A SERVICE";
     InteriorProp p[ROOM_PROPS];
-    interior_props(g.interiorBuilding - 1, p);
+    interior_floor_props(g.interiorBuilding - 1, actor_floor(&g.actors[g.selected]), p);
     switch (p[c].action) {
+    case ROOM_STAIRS:
+        return actor_floor(&g.actors[g.selected]) ? "GO DOWNSTAIRS" : "GO UPSTAIRS";
     case ROOM_TRADE:
         return "TRADE AT COUNTER";
     case ROOM_REST:
@@ -871,10 +918,24 @@ void interior_interact(void) {
     int id = g.interiorBuilding - 1;
     Building *b = &g.buildings[id];
     InteriorProp p[ROOM_PROPS];
-    interior_props(id, p);
+    interior_floor_props(id, actor_floor(a), p);
     int town = building_town(id);
     ui.selection = ui.scroll = 0;
     switch (p[c].action) {
+    case ROOM_STAIRS: {
+        int floor = actor_floor(a);
+        if (a->attackPhase || a->prisonTime > 0)
+            break;
+        for (int i = 0; i < g.actorCount; i++) {
+            Actor *other = &g.actors[i];
+            if (i != g.selected && other->squad && conscious(other) && !other->taskKind &&
+                assigned_job(other) == JOB_FOLLOW && depth_distance(a, other) < 1.9f)
+                inn_change_floor(other, !floor);
+        }
+        inn_change_floor(a, !floor);
+        a->taskKind = 0;
+        break;
+    }
     case ROOM_TRADE:
     case ROOM_SMITH_TRADE:
         if (town < 0) {
@@ -969,11 +1030,15 @@ static int room_clear(int room, const InteriorProp *p, int count, float x, float
             return 0;
     return 1;
 }
-int interior_walkable(int room, float x, float y) {
+int room_floor_walkable(int room, int floor, float x, float y) {
     if (room <= 0 || room > g.buildingCount) return 0;
     InteriorProp p[ROOM_PROPS];
-    int count = interior_props(room - 1,p);
+    int count = interior_floor_props(room - 1,floor,p);
     return room_clear(room,p,count,x,y);
+}
+
+int interior_walkable(int room, float x, float y) {
+    return room_floor_walkable(room, 0, x, y);
 }
 
 void interior_clear_position(Actor *a) {
@@ -981,7 +1046,7 @@ void interior_clear_position(Actor *a) {
     if (!room || a->carriedBy >= 0 || actor_in_bed(a))
         return;
     InteriorProp p[ROOM_PROPS];
-    int count = interior_props(room - 1,p);
+    int count = interior_floor_props(room - 1,actor_floor(a),p);
     float ox = depth_x(a), oy = depth_y(a);
     if (room_clear(room,p,count,ox,oy))
         return;
@@ -1015,7 +1080,7 @@ void room_route_toward(Actor *a, float tx, float ty, float dt) {
     float gap = distance(x,y,tx,ty);
     if (gap < .18f) return;
     InteriorProp p[ROOM_PROPS];
-    int count = interior_props(room-1,p);
+    int count = interior_floor_props(room-1,actor_floor(a),p);
     int clear = 1, steps = (int)ceilf(gap/.25f);
     for (int j = 1; j <= steps; j++)
         if (!room_clear(room,p,count,x+(tx-x)*j/steps,y+(ty-y)*j/steps)) {
@@ -1085,7 +1150,7 @@ void interior_move(float dx, float dy, float dt) {
     if (length < .15f)
         return;
     InteriorProp props[ROOM_PROPS];
-    int room = g.interiorBuilding, count = interior_props(room - 1, props);
+    int room = g.interiorBuilding, count = interior_floor_props(room - 1, actor_floor(a), props);
     float wx = (dx + dy) * .7071f, wy = (dy - dx) * .7071f, speed = movement_speed(a) * dt;
     for (int i = 0; i < count; i++) {
         const InteriorProp *bed = &props[i];

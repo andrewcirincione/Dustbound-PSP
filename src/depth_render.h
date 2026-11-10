@@ -2,7 +2,7 @@
 static void depth_world_draw(void) {
     for (int i = 0; i < PROJECTILES; i++) {
         Projectile *p = &g.depth.shots[i];
-        if (!p->active || p->room != g.interiorBuilding)
+        if (!p->active || p->room != g.interiorBuilding || g.shotFloor[i] != actor_floor(&g.actors[g.selected]))
             continue;
         int x, y, xx, yy;
         if (p->room) {

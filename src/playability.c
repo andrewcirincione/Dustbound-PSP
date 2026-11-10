@@ -45,8 +45,8 @@ const char *npc_role_name(const Actor *a) {
                                   "MEDIC",    "SMITH",    "BARBER",  "SCOUT",   "CONTRACT GUARD"};
     return names[npc_role(a)];
 }
-static const int services[][7] = {
- {6,12,8,-1}, {0,14,1,6,12,8,-1}, {6,12,18,8,-1}, {1,4,6,8,-1}, {0,2,1,6,12,8,-1},
+static const int services[][8] = {
+ {6,12,8,-1}, {0,14,1,6,12,8,-1}, {6,12,18,8,-1}, {1,4,6,8,-1}, {0,2,1,20,6,12,8,-1},
  {3,6,12,8,-1}, {0,1,6,12,8,-1}, {5,6,12,8,-1}, {1,14,6,12,8,-1}, {9,10,6,12,8,-1}};
 int dialogue_count(int actor) {
     if (actor < 0 || actor >= g.actorCount)
@@ -89,6 +89,7 @@ const char *dialogue_option(int actor, int row) {
     if(action==17)return "Show me mechanical limbs.";
     if(action==18)return "What have you heard?";
     if(action==19)return "Let me see the warrants.";
+    if(action==20)return "Where does the stagecoach go?";
     if(action==0 && npc_role(&g.actors[actor])==ROLE_INNKEEPER)return "What food and drink do you have?";
     if(action==2 && !regional_bed_cost(town_near(g.actors[actor].x,g.actors[actor].y,14)))return "Rest at the sanctuary. Free";
     if (action == 6 && npc_role(&g.actors[actor]) == ROLE_RECRUIT)
@@ -105,7 +106,7 @@ float context_distance(void) {
     if (ui.contextKind == 0)
         return depth_distance(a, &g.actors[n]);
     if (ui.contextKind == 1)
-        return distance(a->x, a->y, g.nodes[n].x, g.nodes[n].y);
+        return node_distance(a, n);
     Building *b = &g.buildings[n];
     return ui.contextKind == 3 ? building_door_distance(n, a->x, a->y) : distance(a->x, a->y, b->x, b->y);
 }
@@ -123,6 +124,7 @@ const char *context_name(void) {
     if (ui.contextKind == 1) {
         static const char *s[] = {"IRON DEPOSIT",  "COPPER DEPOSIT", "DEADWOOD",
                                   "SALVAGE CHEST", "LOCKED CHEST",   "OLD RUINS"};
+        if (g.nodes[n].type == NODE_DROPPED) return itemDefs[g.nodes[n].item].name;
         if (g.nodes[n].owner && g.nodes[n].type >= NODE_LOOT) {
             static char owned[64];
             snprintf(owned, sizeof(owned), "%s (%s)", s[g.nodes[n].type], factionNames[g.nodes[n].owner]);
@@ -151,7 +153,8 @@ const char *context_action(void) {
     }
     if (ui.contextKind == 1) {
         Node *b = &g.nodes[n];
-        return b->locked                ? (b->owner ? "PICK OWNED LOCK" : "PICK LOCK")
+        return b->type == NODE_DROPPED ? "PICK UP"
+               : b->locked              ? (b->owner ? "PICK OWNED LOCK" : "PICK LOCK")
                : b->type <= NODE_COPPER ? "MINE"
                : b->type == NODE_WOOD   ? "GATHER"
                                         : b->owner ? "SEARCH OWNED CHEST" : "SEARCH CACHE";

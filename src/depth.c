@@ -452,8 +452,15 @@ int depth_group_job(Actor *a, float dt) {
         return 1;
     int room = depth_room(a), leadRoom = depth_room(lead);
     if (room && room == leadRoom) {
-        if (depth_distance(a, lead) > 2.2f)
-            depth_move_room(a, depth_x(lead) - depth_x(a), depth_y(lead) - depth_y(a), dt);
+        if (!inn_follow_stairs(a, actor_floor(lead), dt) && depth_distance(a, lead) > 2.2f)
+            room_route_toward(a, depth_x(lead), depth_y(lead), dt);
+    } else if (room && inn_has_upstairs(room - 1)) {
+        if (!inn_follow_stairs(a, 0, dt)) {
+            if (distance(depth_x(a), depth_y(a), 3.5f, 6.35f) < .6f)
+                actor_leave_room(n);
+            else
+                room_route_toward(a, 3.5f, 6.35f, dt);
+        }
     } else if (!room && leadRoom) {
         float x, y;
         building_door(leadRoom - 1, &x, &y);

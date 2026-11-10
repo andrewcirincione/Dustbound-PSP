@@ -56,6 +56,17 @@ int building_sprite(int id) {
     if (g.frontier.variant[id] == BUILD_LODGE) return ART_DUSTWARD;
     if (g.frontier.variant[id] == BUILD_ARMORER) return ART_ARMORER;
     static const int base[] = {0, 1, 2, 3, 24, 25, 27, 26, 28, 6, 29, 30, 7, 3, 31};
+    if (b->type == BENCH) return ART_RESEARCH_TABLE;
+    if (town == 3) {
+        switch (b->type) {
+        case HOUSE: return id % 3 ? ART_RUST_HOME : 7;
+        case SHOP: return 1;
+        case BAR: return ART_DRY_INN;
+        case TOWER: return ART_ARMORER;
+        case JAIL: return ART_WATCH_CAGE;
+        default: break;
+        }
+    }
     switch (b->type) {
     case HOUSE:
         if (town == 9 || town == 13 || town == 15) return id % 3 ? ART_REED_HOME : ART_ASH_HOME;
@@ -122,12 +133,22 @@ WallRun building_wall_run(int id) {
     return (WallRun){-1.02f,1.02f,wallAxes[id] == 2};
 }
 
+static float sprite_scale(int sprite) {
+    if (sprite == 3 || sprite == 7 || sprite == ART_WATCH_CAGE)
+        return 1.10f;
+    return 1.f;
+}
+float building_scale(int id) {
+    return sprite_scale(building_sprite(id));
+}
+
 void building_footprint(int id, float *w, float *d, int *height) {
-    int model = structure_art_index(building_sprite(id));
+    int sprite = building_sprite(id), model = structure_art_index(sprite);
     if (model >= 0) {
-        *w = structureModels[model].w;
-        *d = structureModels[model].d;
-        *height = structureModels[model].height;
+        float scale = sprite_scale(sprite);
+        *w = structureModels[model].w * scale;
+        *d = structureModels[model].d * scale;
+        *height = (int)roundf(structureModels[model].height * scale);
     } else if (g.buildings[id].type == WALL) {
         WallRun span = building_wall_run(id);
         float half = fmaxf(-span.low,span.high);
@@ -157,7 +178,7 @@ int structure_blocks(int id, float x, float y, float padding) {
     return fabsf(dx) < w + padding && fabsf(dy) < d + padding;
 }
 static void door_offset(int id, float *x, float *y, int *east) {
-    int model = structure_art_index(building_sprite(id));
+    int sprite = building_sprite(id), model = structure_art_index(sprite);
     if (model < 0) {
         *x = 0;
         *y = .85f;
@@ -165,8 +186,9 @@ static void door_offset(int id, float *x, float *y, int *east) {
         return;
     }
     const BuildingModel *shape = &structureModels[model];
-    *x = shape->doorX;
-    *y = shape->doorY;
+    float scale = sprite_scale(sprite);
+    *x = shape->doorX * scale;
+    *y = shape->doorY * scale;
     *east = shape->eastDoor;
 }
 void building_door(int id, float *x, float *y) {

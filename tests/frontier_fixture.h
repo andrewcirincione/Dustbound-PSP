@@ -11,16 +11,20 @@ static inline void fixture_door(Actor *a, int id) {
 static inline void fixture_service(int action) {
     assert(g.interiorBuilding);
     InteriorProp props[ROOM_PROPS];
-    int n = interior_props(g.interiorBuilding - 1, props);
+    int n = interior_floor_props(g.interiorBuilding - 1, actor_floor(&g.actors[g.selected]), props);
     for (int i = 0; i < n; i++)
         if (props[i].action == action) {
-            g.interiorX = props[i].x;
-            g.interiorY = props[i].y + props[i].d + .22f;
-            if (interior_context() == i)
-                return;
-            g.interiorY = props[i].y - props[i].d - .22f;
-            if (interior_context() == i)
-                return;
+            const float sides[][2] = {{0,1},{0,-1},{-1,0},{1,0}};
+            for (int j = 0; j < 4; j++) {
+                float x = props[i].x + (props[i].w + .22f) * sides[j][0];
+                float y = props[i].y + (props[i].d + .22f) * sides[j][1];
+                if (!room_floor_walkable(g.interiorBuilding, actor_floor(&g.actors[g.selected]), x, y))
+                    continue;
+                g.interiorX = x;
+                g.interiorY = y;
+                if (interior_context() == i)
+                    return;
+            }
         }
     assert(!"Service is missing or out of reach");
 }

@@ -590,6 +590,45 @@ int expansion_input(float dt, Input in) {
         }
         return 1;
     }
+    if (ui.screen == SCREEN_DROP) {
+        if (p & (KEY_CIRCLE | KEY_START | KEY_CROSS)) {
+            if (p & KEY_CROSS)
+                inventory_drop(a, ui.dropSlot, ui.selection == 1 ? a->pack[ui.dropSlot].qty : 1);
+            open_view(p & KEY_START ? SCREEN_WORLD : SCREEN_PACK);
+            ui.selection = ui.dropSlot;
+        } else if (p & (KEY_UP | KEY_DOWN)) {
+            ui.selection ^= 1;
+        }
+        return 1;
+    }
+    if (ui.screen == SCREEN_STAGECOACH) {
+        int n = coach_count(ui.coachTown);
+        if (p & (KEY_CIRCLE | KEY_START)) {
+            open_view(p & KEY_START ? SCREEN_WORLD : SCREEN_DIALOG);
+        } else if (n) {
+            if (p & KEY_UP) ui.selection = wrapi(ui.selection - 1, n);
+            if (p & KEY_DOWN) ui.selection = wrapi(ui.selection + 1, n);
+            if ((p & KEY_CROSS) && coach_travel(ui.coachTown, coach_destination(ui.coachTown, ui.selection)))
+                open_view(SCREEN_WORLD);
+        }
+        return 1;
+    }
+    if (ui.screen == SCREEN_CONTRACT_NOTE) {
+        if (p & (KEY_CIRCLE | KEY_START)) {
+            open_view(p & KEY_START ? SCREEN_WORLD : ui.noteReturn);
+            for (int row = 0; row < journal_count(); row++)
+                if (journal_slot(row) == ui.contractNote) {
+                    ui.selection = row;
+                    break;
+                }
+        } else {
+            int change = (p & KEY_DOWN ? 11 : 0) - (p & KEY_UP ? 11 : 0) +
+                         (p & KEY_R ? 99 : 0) - (p & KEY_L ? 99 : 0);
+            int max = ui.noteMaxScroll;
+            ui.scroll = ui.scroll + change < 0 ? 0 : ui.scroll + change > max ? max : ui.scroll + change;
+        }
+        return 1;
+    }
     if (ui.screen == SCREEN_JOURNAL || ui.screen == SCREEN_FACTIONS) {
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(SCREEN_WORLD);
@@ -611,6 +650,12 @@ int expansion_input(float dt, Input in) {
             ui.selection = wrapi(ui.selection - 1, n);
         if (p & KEY_DOWN)
             ui.selection = wrapi(ui.selection + 1, n);
+        if (ui.screen == SCREEN_JOURNAL && (p & KEY_CROSS)) {
+            ui.contractNote = journal_slot(ui.selection);
+            ui.noteReturn = SCREEN_JOURNAL;
+            open_view(SCREEN_CONTRACT_NOTE);
+            return 1;
+        }
         if (ui.screen == SCREEN_JOURNAL && !ui.journalTab && (p & KEY_SQUARE)) {
             float x, y;
             int town = contract_location(journal_slot(ui.selection), &x, &y);
@@ -796,14 +841,28 @@ int expansion_input(float dt, Input in) {
                     if (complete_contract(turnIn))
                         open_view(SCREEN_WORLD);
                 } else if (kind >= 0 && depth_distance(a, b) <= TALK_REACH && conscious(b)) {
-                    if (accept_contract(town, kind))
-                        open_view(SCREEN_WORLD);
+                    if (accept_contract(town, kind)) {
+                        for (int i = 0; i < CONTRACTS; i++)
+                            if (g.contracts[i].active == 1 && g.contracts[i].town == town && g.contracts[i].type == kind) {
+                                ui.contractNote = i;
+                                ui.noteReturn = SCREEN_WORLD;
+                                ui.journalTab = 0;
+                                open_view(SCREEN_CONTRACT_NOTE);
+                                break;
+                            }
+                    }
                 } else {
                     ui.dialogPage = 0;
                     ui.selection = 0;
                 }
             } else
                 switch (dialogue_action(n, choice)) {
+                case 20:
+                    if (town >= 0 && conscious(b) && depth_distance(a, b) <= TALK_REACH) {
+                        ui.coachTown = town;
+                        open_view(SCREEN_STAGECOACH);
+                    }
+                    break;
                 case 16:ui.limbReturn=SCREEN_DIALOG;limb_open(SCREEN_SURGERY);break;
                 case 17:if(town>=0&&depth_trade_open(town)){ui.tradeTown=town;ui.tradeSmith=TRADE_APOTHECARY;ui.shopFilter=0;ui.sell=0;open_view(SCREEN_TRADE);}break;
                 case 14:ui.dialogPage=4;ui.selection=0;break;

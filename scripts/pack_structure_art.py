@@ -59,6 +59,14 @@ ROOM_FURNITURE = [
     ((1,54),(19,64),(76,39), 72,46),       # side counter
 ]
 
+# Foundation landmarks are normalized to each trimmed generated inn sprite.
+INN_FURNITURE = [
+    ((.025,.81),(.33,.99),(.978,.64), 64,50),   # rigid-frame bed
+    ((.018,.845),(.303,.983),(.947,.678), 58,62), # staircase
+    ((.025,.678),(.848,.983),(.977,.895), 79,65), # bar
+    ((.065,.745),(.61,.984),(.922,.815), 45,35),  # research table
+]
+
 
 def tile(sheet, index, columns):
     w, h = sheet.width / columns, sheet.height / 2
@@ -161,10 +169,19 @@ def pack_furniture():
     for filename, indices, specs in (
         ("furniture.png",range(8),FURNITURE),
         ("settlement-rooms.png",(0,1,2,3,4,5,7),ROOM_FURNITURE),
+        ("inn-furniture.png",(1,2,3),INN_FURNITURE[1:]),
     ):
         sheet = Image.open(ART/filename).convert("RGBA")
         for i, spec in zip(indices,specs):
-            im = tile(sheet,i,4)
+            im = tile(sheet,i,2 if filename == "inn-furniture.png" else 4)
+            if filename == "inn-furniture.png":
+                spec = tuple((x*im.width,y*im.height) for x,y in spec[:3]) + spec[3:]
+            if filename == "furniture.png" and i == 0:
+                im = tile(Image.open(ART/"inn-furniture.png").convert("RGBA"),0,2)
+                im = im.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+                left, front, right, *size = INN_FURNITURE[0]
+                points = [(1-x,y) for x,y in (right,front,left)]
+                spec = tuple((x*im.width,y*im.height) for x,y in points) + tuple(size)
             if filename == "furniture.png" and i == 6:
                 # Remove the corner of the neighboring mat from the lamp tile.
                 im = im.crop((0,0,205,im.height))

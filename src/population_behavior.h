@@ -56,9 +56,8 @@ static int life_casualties(int k,float dt){
  if(!alive){m->phase=POP_RUINS;e->presence+=dt;return 1;}e->presence=0;
  if(dead>z->losses){z->losses=dead;z->clock=12;z->goal=LIFE_RECOVER;life_announce(k,"regrouping after casualties");}
  for(int i=0;i<e->count;i++)if(z->carry[i]>=0){Actor*a=member(k,i),*b=member(k,z->carry[i]);if(!a||!b||a->dead||a->unconscious>0||b->dead||(b->unconscious<=0&&b->health[CHEST]>15&&b->health[HEAD]>15))life_drop(k,i);}
- int threat = life_threat(k, 24), able = standing(k);
- int routed = threat >= 0 && dead + down >= 2 &&
-              able * 3 < z->baseline && standing(threat) > able * 2;
+ int threat = life_threat(k, 24);
+ if(z->goal==LIFE_RETREAT){z->goal=LIFE_RECOVER;z->clock=12;}
  if((down||hurt)&&standing(k)>0){
   for(int j=0;j<e->count;j++){Actor*b=member(k,j);if(!b||b->dead||(b->bleed<=.01f&&b->unconscious<=0))continue;
    int carried=0;for(int i=0;i<e->count;i++)carried|=z->carry[i]==j;if(carried)continue;
@@ -69,9 +68,6 @@ static int life_casualties(int k,float dt){
     break;
    }
   }
- }
- if(routed && able && z->goal != LIFE_RECOVER){
-  if(z->goal!=LIFE_RETREAT){int t=life_town(k,e->faction!=HOSTILE&&e->faction!=OUTLAWS,-1);if(t>=0){life_target(k,LIFE_RETREAT,t);z->camp=CAMP_AWAY;life_announce(k,"withdrawing with survivors");}}
  }
  if(z->goal==LIFE_RESCUE){if(down==0){z->goal=LIFE_RECOVER;z->clock=35;}else if(threat<0){m->phase=POP_REST;return 1;}}
  if(z->goal==LIFE_RECOVER){m->phase=POP_REST;z->clock-=dt;if(z->clock>0)return 1;z->goal=LIFE_ROAM;}
@@ -265,7 +261,7 @@ static void group_behavior(int k,float dt){
 }
 int population_tactics(int n,float dt){
  int owned=population_owned(n);if(!owned||!L.version)return 0;int k=owned-1;GroupLife*z=&L.groups[k];WorldEvent*e=&P.groups[k];Actor*a=&g.actors[n];int i=0;while(i<e->count&&e->members[i]!=n)i++;if(i>=e->count||a->squad||g.society.freed[n])return 0;
- if(z->goal==LIFE_RETREAT){a->target=-1;a->attackPhase=0;route_toward(a,e->x+(i%4-1)*1.8f,e->y+(i/4)*1.8f,dt);return 1;}
+
  if(z->goal==LIFE_AMBUSH&&!z->ambushSprung){float angle=i*6.283185f/e->count;route_toward(a,P.state[k].siteX+cosf(angle)*4,P.state[k].siteY+sinf(angle)*4,dt*.6f);a->sneaking=1;return 1;}
  if(z->goal==LIFE_AMBUSH&&z->ambushSprung==1&&z->clock>20){float x=g.actors[g.selected].x,y=g.actors[g.selected].y;if(z->targetGroup>=0&&P.groups[z->targetGroup].serial==z->targetSerial){x=P.groups[z->targetGroup].x;y=P.groups[z->targetGroup].y;}float side=i%2?1:-1;route_toward(a,x+side*3,y+(i%3-1)*2,dt);return 1;}
  if(life_threat(k,10)<0&&a->target<0){for(int j=0;j<e->count;j++){Actor*b=member(k,j);if(i==j||!b||b->dead||b->carriedBy>=0||(b->bleed<=.01f&&b->unconscious<=0))continue;if(inventory_count(a,MEDKIT)||b->unconscious>0){if(distance(a->x,a->y,b->x,b->y)>TALK_REACH)route_toward(a,b->x,b->y,dt);else{life_bandage(k,j,i);if(b->unconscious>0&&a->carrying<0&&!life_carried(k,i)){life_drop(k,j);z->carry[i]=j;a->carrying=e->members[j];b->carriedBy=n;}}return 1;}}}

@@ -1,7 +1,7 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.18.5"
+#define VERSION "0.18.6"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -135,7 +135,7 @@ enum {
 enum { PLAYER, SETTLER, GUARD, TRADER, RECRUIT, RAIDER, BEAST, CARAVAN };
 enum { FREE, UNION, SCAVENGERS, HOSTILE, SHOGUN, MONKS, OUTLAWS, WILDLIFE };
 enum { HOUSE, SHOP, BAR, TOWER, WINDMILL, WELL, CAMPFIRE, BED, FARM, FORGE, BENCH, WALL, STORE, JAIL, SLAVE_YARD };
-enum { NODE_ORE, NODE_COPPER, NODE_WOOD, NODE_LOOT, NODE_LOCKED, NODE_RUIN };
+enum { NODE_ORE, NODE_COPPER, NODE_WOOD, NODE_LOOT, NODE_LOCKED, NODE_RUIN, NODE_DROPPED };
 enum { JOB_FOLLOW, JOB_HOLD, JOB_MINE, JOB_FARM, JOB_MEDIC, JOB_SMELT, JOB_COOK, JOB_HAUL };
 enum {
     SCREEN_WORLD,
@@ -166,7 +166,8 @@ enum {
     SCREEN_ASSIST,
     SCREEN_LOG, SCREEN_EXPEDITION, SCREEN_ORDERS, SCREEN_CAMP, SCREEN_CARE, SCREEN_ENCOUNTER, SCREEN_LAYERS,
     SCREEN_THEFT, SCREEN_ENGAGE, SCREEN_ACTIONS, SCREEN_LIMBS, SCREEN_LIMBFIT, SCREEN_SURGERY, SCREEN_LIMBCONFIRM, SCREEN_LIFE, SCREEN_POLITICS,
-    SCREEN_PASS, SCREEN_SCENARIOS, SCREEN_CHEST, SCREEN_HOME, SCREEN_WARRANTS
+    SCREEN_PASS, SCREEN_SCENARIOS, SCREEN_CHEST, SCREEN_HOME, SCREEN_WARRANTS,
+    SCREEN_DROP, SCREEN_STAGECOACH, SCREEN_CONTRACT_NOTE
 };
 enum {
     KEY_UP = 1,
@@ -249,7 +250,7 @@ typedef struct {
     float squadHitAt[MAX_ACTORS];
 } TownLife;
 typedef struct {
-    int exists, valid, version, day, squad, money;
+    int exists, valid, version, day, squad, money, minute;
     char name[16];
 } SaveInfo;
 #include "depth_types.h"
@@ -303,6 +304,7 @@ typedef struct {
     unsigned payers;
     float x, y, seen;
 } WarrantView;
+typedef struct { float x, y; unsigned short room; unsigned char floor; } DropLocation;
 typedef struct {
     uint32_t seed, rng;
     float time, dayTime, raidTimer, autosave;
@@ -370,9 +372,13 @@ typedef struct {
     } frontier; /* v24 extension */
     Homes homes; /* v26 extension */
     Warrants warrants;
+    uint32_t visitedTowns; /* v27 extension */
+    unsigned char innFloor[MAX_ACTORS]; /* 0 is ground, 1 is upstairs */
+    DropLocation drops[MAX_NODES];
+    unsigned char shotFloor[PROJECTILES];
 } Game;
 enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
-enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH };
+enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH, ROOM_STAIRS };
 enum { ROOM_PROPS = 18 };
 #define DOOR_REACH 1.65f
 #define CELL_Y 3.65f
@@ -390,6 +396,7 @@ int starter_country(float x, float y);
 unsigned bounty_payers(int target);
 int bounty_guard(int guard, int target);
 int bounty_turn_in(int guard);
+int bounty_reward(int actor, int alive);
 void bounty_details(int target, char *out, int size);
 int bounty_station(int guard);
 int bounty_board(int building);
@@ -410,6 +417,7 @@ int warrant_receipt_count(void);
 const char *building_name(int id);
 void civil_clear_position(float *x, float *y);
 void building_footprint(int id, float *w, float *d, int *height);
+float building_scale(int id);
 typedef struct { float low, high; int alongY; } WallRun;
 WallRun building_wall_run(int id);
 void building_geometry_reset(void);
@@ -428,6 +436,14 @@ void actor_enter_room(int actor, int building);
 void interior_leave(void);
 int actor_inside(const Actor *a);
 int interior_props(int building, InteriorProp *props);
+int interior_floor_props(int building, int floor, InteriorProp *props);
+int inn_has_upstairs(int building);
+void inn_change_floor(Actor *a, int floor);
+int inn_follow_stairs(Actor *a, int floor, float dt);
+int actor_floor(const Actor *a);
+int room_floor_walkable(int room, int floor, float x, float y);
+int room_bed_free(const Actor *a, float x, float y, int room, int floor);
+void place_in_bed(Actor *a, int bed, float x, float y, int room);
 int interior_walkable(int room, float x, float y);
 void interior_clear_position(Actor *a);
 int jail_room_open(int room);
@@ -493,6 +509,7 @@ typedef struct {
     int menuTab, menuRow, menuReturn, statusPanel;
     int journalTab,regionChoice,attackFocus;
     int homeSite, homeBay, warrantTown, warrantClosed;
+    int dropSlot, coachTown, contractNote, noteMaxScroll, noteReturn;
     int mapCategory,mapChoice,skillPage;
     int limbTarget, limbSourceSlot, limbReturn, limbConfirm;
     float travelStall, travelLastX, travelLastY;
@@ -617,7 +634,6 @@ void work_notice(const Actor *a, const char *action, const char *target);
 int wound_needs_dressing(const Actor *a);
 float treatment_burden(const Actor *a);
 int civilian_actor(const Actor *a);
-int npc_last_resort(const Actor *a);
 int npc_attacked(const Actor *a, const Actor *threat);
 void raider_scraps(Actor *a, unsigned seed);
 void dress_wounds(Actor *a);
@@ -724,6 +740,8 @@ extern const char *originNames[5], *raceNames[SPECIES], *effectNames[12], *mater
     *qualityNames[QUALITIES];
 extern const char *familyNames[FAMILIES], *guideTitles[GUIDE_PAGES], *guideBodies[GUIDE_PAGES];
 extern const uint32_t factionColors[FACTIONS];
+enum { SFX_SWING = 1, SFX_HIT, SFX_BLOCK, SFX_SHOT, SFX_MENU_MOVE, SFX_MENU_PICK,
+       SFX_DRAW, SFX_SHEATHE, SFX_STEP, SFX_MINE };
 void audio_event(int kind);
 void audio_init(const char *eboot);
 void audio_shutdown(void);
@@ -800,6 +818,16 @@ int terrain_height(float x, float y);
 int terrain_water(float x, float y);
 int terrain_road(float x, float y);
 void route_toward(Actor *a, float x, float y, float dt);
+void route_frame_start(void);
+int actor_self_aid(int n);
+int inventory_drop(Actor *a, int slot, int qty);
+float node_distance(const Actor *a, int node);
+int coach_count(int origin);
+int coach_destination(int origin, int row);
+int coach_price(int origin, int destination);
+float coach_duration(int origin, int destination);
+int coach_travel(int origin, int destination);
+
 void walk_motion(Actor *a, float dx, float dy);
 void walk_heading(const Actor *a, float *x, float *y);
 int nearby_workstation(int type);

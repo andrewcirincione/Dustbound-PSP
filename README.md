@@ -1,6 +1,6 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.18.5 — Warrants and homesteads
+## 0.18.6 — Inns and stagecoaches
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
@@ -14,17 +14,17 @@ Fight stance closes to weapon range and repeats at the weapon's cooldown. Analog
 
 All nineteen settlements have their own street plans, amenities and interiors, with painted buildings and furniture tied to local materials and culture. Brass Junction has an armorer and a six-bed inn. Vermilion Keep has a stockade, while Copper Cross uses watch cages. Guests circulate between the inn, streets and homes. Dustward Clan lodges share beds and training access for members. The Compact, Shogunate and Ash Monastery send armies against one another. Captured cities can have guarded labor yards, and nearby residents pass on news of actual raids and victories.
 
-Painted buildings and furniture use measured foundations. Walls follow both isometric axes, and jail gates swing open when unlocked. Nearby names and speech share space with building labels. Household chests hold more, and retreat is reserved for severe injuries or a rout.
+Painted buildings and furniture use measured foundations. Walls follow both isometric axes, and jail gates swing open when unlocked. Nearby names and speech share space with building labels. Household chests hold supplies. Enemies hold their ground when wounded.
 
 Quiet routes draw fresh travelers, camps and encounters. Patrols from rival factions can clash, hunters track animal packs, and bandits go after caravans and pilgrims. Cleared areas replenish over time outside your squad's view.
 
 Read wanted posters at a jail to track a target and pin their last reported location. Three high-profile outlaws carry unique gear and stay dead once killed. Road warrants rotate as groups come and go. Carry the target to a jailkeeper from a paying faction. Live captures pay double.
 
-Buy a vacant house at its door. Furnish it with beds, chests, tables, shelves and stoves. Any chest in a purchased house opens the same squad stash. Existing expeditions can upgrade to save version 26.
+Buy a vacant house at its door. Furnish it with beds, chests, tables, shelves and stoves. Any chest in a purchased house opens the same squad stash. Existing expeditions can upgrade to save version 27.
 
 ![Nearby roles and military equipment](evidence/v150-psp-army.png)
 
-There is no map or group auto-travel. Cross on the map places a pin on both maps. Follow its guide line on the minimap until you reach it. Squad followers, work jobs and NPC movement remain part of the simulation.
+Ask an innkeeper for a stagecoach fare to a town you have visited. On foot, Cross on the map places a pin on both maps. Follow its line on the minimap. Iron, copper and timber have distinct minimap dots.
 
 Starving bandits carry poor weapons and wear incomplete clothing. Soldiers wear coordinated armor and move in three-wide formations. Elite duelists wear complete superior equipment. Nearby labels show a broad role in faction colors, with a red **!** for hostility. Enemy combat bars show knockout reserve from head, chest and blood. Nearby characters do not expose skill values or encounter tiers. Start > World > Factions shows the color key, reputation and wanted standing.
 
@@ -53,7 +53,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dustbound-0.18.4-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v25 reads earlier expeditions. Existing equipment, training and town control carry over.
+Extract `Dustbound-0.18.6-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v27 reads earlier expeditions. Existing equipment, training and town control carry over.
 
 ## Controls
 
@@ -63,6 +63,7 @@ Extract `Dustbound-0.18.4-PSP.zip` to the memory-stick root, or replace `PSP/GAM
 | Cross | Nearby actions; confirm menu choice |
 | Circle | Sneak in the world, back in menus |
 | Triangle | Inventory |
+| D-pad Right in inventory | Drop one or drop stack |
 | Square | Fight or Passive stance in the world |
 | Select | Atlas in the world; contextual guide in menus |
 | Start | Pause menu |

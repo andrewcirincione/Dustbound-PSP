@@ -167,16 +167,16 @@ static void camps_and_theft(void) {
     assert(wanted_amount(ash, SCAVENGERS) == 80 && strstr(ui.logs[0], factionNames[SCAVENGERS]));
     puts("PASS: camp cook availability has no side effects; ownership is visible; first scavenger warning and repeat bounty.");
 }
-static void retreat_and_news(void) {
+static void hold_position_and_news(void) {
     setup();
     Actor *ash = &g.actors[0], *reed = &g.actors[1];
     init_actor(3, "Scavenger", TRADER, HOSTILE, 404, 400, 6);
     Actor *npc = &g.actors[3];
     idle(3);
-    assert(distance(404,400,npc->x,npc->y) < 1 && !npc_last_resort(npc));
+    assert(distance(404,400,npc->x,npc->y) < 1);
     npc->health[CHEST] = 14;
     idle(8);
-    assert(npc->x > 412);
+    assert(distance(404,400,npc->x,npc->y) < 1);
     float x = npc->x, y = npc->y;
     idle(5);
     assert(distance(x, y, npc->x, npc->y) < 1);
@@ -194,7 +194,7 @@ static void retreat_and_news(void) {
     log_tick(.9f);
     log_current(&priority, &offset);
     assert(offset > 0);
-    puts("PASS: healthy scavenger holds ground and retreats only when critically hurt. Urgent news takes priority.");
+    puts("PASS: injured scavenger holds ground. Urgent news takes priority.");
 }
 static void scenarios_and_atlas(void) {
     for (int i = 0; i < START_SCENARIOS; i++) {
@@ -232,7 +232,7 @@ int main(void) {
     squad_control();
     transfers_and_recovery();
     camps_and_theft();
-    retreat_and_news();
+    hold_position_and_news();
     scenarios_and_atlas();
     return 0;
 }

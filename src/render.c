@@ -405,7 +405,7 @@ static float light(void) {
     float dawn = (g.dayTime - 5) / 3, dusk = (21 - g.dayTime) / 4;
     float daylight = fmaxf(0, fminf(1, fminf(dawn, dusk)));
     /* Cache terrain through each small step of the lighting transition. */
-    return .54f + (int)(daylight * 12) * (.46f / 12);
+    return .76f + (int)(daylight * 12) * (.32f / 12);
 }
 static const char *bearing(float dx, float dy) {
     if (fabsf(dx) < fabsf(dy) * .4f) return dy < 0 ? "N" : "S";
@@ -578,8 +578,15 @@ static void elevation(int id, int x0, int y0, int x1, int y1, int height, float 
             const uint16_t *span = &s->rows[(y-top)*s->h/height*3];
             if (sx < span[1] || sx >= span[2]) continue;
             uint32_t c = palette[s->pixels[span[0]+sx-span[1]]];
-            if (c >> 24)
-                fb[y*pitch+x] = c | 0xff000000;
+            unsigned alpha = c >> 24;
+            if (alpha == 255) {
+                fb[y*pitch+x] = c;
+            } else if (alpha) {
+                uint32_t d = fb[y*pitch+x];
+                unsigned rb = (((c & 0xff00ff) * alpha + (d & 0xff00ff) * (256-alpha)) >> 8) & 0xff00ff;
+                unsigned gg = (((c & 0xff00) * alpha + (d & 0xff00) * (256-alpha)) >> 8) & 0xff00;
+                fb[y*pitch+x] = 0xff000000 | rb | gg;
+            }
         }
     }
 }
@@ -627,8 +634,9 @@ static void building(int id) {
     float brightness = light();
     if (b->type != WALL) {
         int sprite = building_sprite(id), fade = g.depth.buildings[id].labor > 0;
+        const ArtSprite *s = scene_sprite(sprite);
+        float scale = building_scale(id);
         if (building_has_interior(b->type)) {
-            const ArtSprite *s = scene_sprite(sprite);
             const Actor *a = &g.actors[g.selected];
             int ax, ay;
             project(a->x,a->y,&ax,&ay);
@@ -637,9 +645,13 @@ static void building(int id) {
             building_footprint(id,&w,&d,&height);
             int behind = (a->x < b->x-w || a->y < b->y-d) &&
                          a->x < b->x+w && a->y < b->y+d;
-            fade |= behind && ax > x-s->ax && ax < x-s->ax+s->w && ay > y-s->ay && ay < y;
+            fade |= behind && ax > x-s->ax*scale && ax < x+(s->w-s->ax)*scale && ay > y-s->ay*scale && ay < y;
         }
-        art(sprite,x,y,brightness,fade);
+        if (scale == 1)
+            art(sprite,x,y,brightness,fade);
+        else
+            scaled_art(sprite,x-(int)roundf(s->ax*scale),y-(int)roundf(s->ay*scale),
+                       (int)roundf(s->w*scale),(int)roundf(s->h*scale),brightness,0,fade);
     }
     if (g.depth.buildings[id].labor > 0) {
         bar(x-20,y-8,40,3,100-g.depth.buildings[id].labor/35*100,GOLD);
@@ -665,6 +677,10 @@ static void resource(int n) {
     project(b->x, b->y, &x, &y);
     if (x < -40 || x > 520 || y < -30 || y > 245)
         return;
+    if (b->type == NODE_DROPPED) {
+        scaled_art(20, x - 7, y - 10, 14, 12, light(), 0, 0);
+        return;
+    }
     if(b->item==SEVERED_ARM||b->item==SEVERED_LEG){
         diamond(x,y,7,3,shade(0x653c30,light()));
         part(b->item==SEVERED_ARM?75:64,x-5,y-2,x+5,y,4,0x9d7660,light(),0,0,0,1);
@@ -724,7 +740,7 @@ static void objects_draw(void) {
     int n = 0;
     for (int i = 0; i < g.nodeCount; i++) {
         Node *b = &g.nodes[i];
-        if (b->remaining && fabsf(b->x - ui.camX) < 20 && fabsf(b->y - ui.camY) < 20)
+        if (b->remaining && !g.drops[i].room && fabsf(b->x - ui.camX) < 20 && fabsf(b->y - ui.camY) < 20)
             objects[n++] = (Object){b->x + b->y, 0, i, 0, 0};
     }
     BuildingYard yards[MAX_BUILDINGS];
@@ -766,14 +782,25 @@ static void objects_draw(void) {
             objects[n++] = (Object){a->x + a->y + (bed ? .05f : 0), 2, i, x, y - (bed ? 8 : 0)};
     }
     int cx = ui.camX, cy = ui.camY;
-    int campSites[POP_GROUPS], campCount = 0;
+    float campX[POP_GROUPS + 6], campY[POP_GROUPS + 6];
+    int campCount = 0;
+    for (int i = 0; i < 6; i++)
+        if (g.trails.bed[i]) {
+            const Building *bed = &g.buildings[g.trails.bed[i] - 1];
+            if (fabsf(bed->x - cx) < 27 && fabsf(bed->y - cy) < 27) {
+                campX[campCount] = bed->x;
+                campY[campCount++] = bed->y;
+            }
+        }
     for (int k = 0; k < POP_GROUPS; k++) {
         int props = population_object_count(k);
         if (!props)
             continue;
         const PopulationState *site = &g.population.state[k];
-        if (fabsf(site->siteX - cx) < 24 && fabsf(site->siteY - cy) < 24)
-            campSites[campCount++] = k;
+        if (fabsf(site->siteX - cx) < 27 && fabsf(site->siteY - cy) < 27) {
+            campX[campCount] = site->siteX;
+            campY[campCount++] = site->siteY;
+        }
         for (int j = 0; j < props; j++) {
             float wx, wy;
             if (!population_object(k, j, &wx, &wy) || fabsf(wx - ui.camX) > 20 || fabsf(wy - ui.camY) > 20)
@@ -805,8 +832,7 @@ static void objects_draw(void) {
                 continue;
             int campGround = 0;
             for (int k = 0; k < campCount; k++) {
-                const PopulationState *site = &g.population.state[campSites[k]];
-                if (fabsf(x - site->siteX) < 7 && fabsf(y - site->siteY) < 7) {
+                if (fabsf(wx - campX[k]) < 8 && fabsf(wy - campY[k]) < 8) {
                     campGround = 1;
                     break;
                 }
@@ -832,7 +858,7 @@ static void objects_draw(void) {
             if (b->type != WALL)
                 art_shadow(building_sprite(o->index), x, y);
         }
-        if (o->kind == 0 && g.nodes[o->index].remaining) {
+        if (o->kind == 0 && g.nodes[o->index].type != NODE_DROPPED && g.nodes[o->index].remaining) {
             Node *b = &g.nodes[o->index];
             project(b->x, b->y, &x, &y);
             int id = resource_sprite(o->index);
@@ -968,7 +994,7 @@ static void care_and_cooldown(int indoors) {
         Actor *medic = &g.actors[i];
         int patient = treatment_patient(medic);
         if (patient < 0 || patient >= g.actorCount || (!medic->squad && !g.actors[patient].squad) ||
-            !medic->active || depth_room(medic) != depth_room(selected))
+            !medic->active || depth_room(medic) != depth_room(selected) || actor_floor(medic) != actor_floor(selected))
             continue;
         int x, y;
         if (indoors) room_project(depth_x(medic), depth_y(medic), &x, &y);
@@ -1169,7 +1195,7 @@ static void room_furniture(const InteriorProp *p) {
     int width = (int)roundf(sprite->w * scale), height = (int)roundf(sprite->h * scale);
     int anchorX = flip ? sprite->w-1-sprite->ax : sprite->ax;
     scaled_art(FURNITURE_ART_FIRST + model,x-(int)roundf(anchorX*scale),
-               y-(int)roundf(sprite->ay*scale),width,height,.94f,flip,0);
+               y-(int)roundf(sprite->ay*scale),width,height,1.08f,flip,0);
 }
 static void cell_partition(int room) {
     int leftX,leftY, hingeX,hingeY, latchX,latchY, rightX,rightY;
@@ -1193,12 +1219,13 @@ static void interior_draw(void) {
     Building *b = &g.buildings[id];
     int town = building_town(id), style = town < 0 ? 0 : civil_style(town);
     const TownDesign *plan = town_design(town);
+    int floor = actor_floor(&g.actors[g.selected]);
     roomScale = b->type == BAR ? 17.6f + plan->beds * 1.16f :
                 b->type == JAIL ? 18.5f + plan->custody * 2.3f :
                 b->type == HOUSE ? 19.8f + (id % 3) * .9f : 21.0f + plan->marketTier;
     if (g.frontier.variant[id] == BUILD_LODGE) roomScale = 22;
     roomBase = 69 - (roomScale - 20) * 2.3f;
-    rect(0, 0, 480, 272, 0x211d18);
+    rect(0, 0, 480, 272, 0x3d3429);
     int cx, cy, eastX, eastY, westX, westY;
     room_project(0, 0, &cx, &cy);
     room_project(7, 0, &eastX, &eastY);
@@ -1206,9 +1233,9 @@ static void interior_draw(void) {
     float wall = style == 1 ? 38 : style == 2 ? 41 : 37;
     int wallArt = style == 3 || style == 5 ? 106 : style == 4 ? 107 : 105;
     int floorArt = style == 2 ? 105 : 104;
-    texture_plane(wallArt, westX, westY, cx-westX, cy-westY, 0, -wall, 3, 1.2f, .83f);
-    texture_plane(wallArt, cx, cy, eastX-cx, eastY-cy, 0, -wall, 3, 1.2f, .67f);
-    texture_plane(floorArt, cx, cy, eastX-cx, eastY-cy, westX-cx, westY-cy, 2.6f, 2.6f, .91f);
+    texture_plane(wallArt, westX, westY, cx-westX, cy-westY, 0, -wall, 3, 1.2f, 1.04f);
+    texture_plane(wallArt, cx, cy, eastX-cx, eastY-cy, 0, -wall, 3, 1.2f, .90f);
+    texture_plane(floorArt, cx, cy, eastX-cx, eastY-cy, westX-cx, westY-cy, 2.6f, 2.6f, 1.12f);
     if (wallArt == 105)
         for (int j = 0; j <= 5; j++) {
             int x, y;
@@ -1218,13 +1245,21 @@ static void interior_draw(void) {
             texture_plane(106, x, y, 0, -wall, 3, -1.5f, 1, 1, .78f);
         }
     int x, y;
-    room_project(3.5f, 6.86f, &x, &y);
-    texture_plane(104, x, y - 8, 15, 8, -15, 8, .8f, .8f, 1.11f);
-    text(x - 12, y + 9, "EXIT", GOLD, 1);
+    if (!floor) {
+        room_project(3.5f, 6.86f, &x, &y);
+        texture_plane(104, x, y - 8, 15, 8, -15, 8, .8f, .8f, 1.11f);
+        text(x - 12, y + 9, "EXIT", GOLD, 1);
+    }
+    for (int i = 0; i < g.nodeCount; i++)
+        if (g.nodes[i].type == NODE_DROPPED && g.nodes[i].remaining &&
+            g.drops[i].room == id + 1 && g.drops[i].floor == floor) {
+            room_project(g.drops[i].x, g.drops[i].y, &x, &y);
+            scaled_art(20, x-7, y-10, 14, 12, 1.08f, 0, 0);
+        }
     InteriorProp props[ROOM_PROPS];
     int jail = b->type == JAIL;
     enum { ROOM_OBJECTS = MAX_ACTORS + ROOM_PROPS + 1 };
-    int count = interior_props(id, props), furniture = count, order[ROOM_OBJECTS];
+    int count = interior_floor_props(id, floor, props), furniture = count, order[ROOM_OBJECTS];
     float depth[ROOM_OBJECTS];
     int roomActor[ROOM_OBJECTS];
     for (int i = 0; i < count; i++) {
@@ -1254,7 +1289,7 @@ static void interior_draw(void) {
     for (int i = 0; i < g.actorCount; i++) {
         Actor *resident = &g.actors[i];
         if (i == g.selected || !resident->active || resident->carriedBy >= 0 ||
-            depth_room(resident) != g.interiorBuilding)
+            (depth_room(resident) != g.interiorBuilding || actor_floor(resident) != floor))
             continue;
         roomActor[count] = i;
         order[count] = count;
@@ -1274,7 +1309,7 @@ static void interior_draw(void) {
             Actor *resident = &g.actors[roomActor[i]];
             room_project(depth_x(resident), depth_y(resident), &x, &y);
             int sleeping = actor_in_bed(resident);
-            if (sleeping) y -= style == 1 || style == 2 ? 8 : 12;
+            if (sleeping) y -= 9;
             person(resident, x, y, 1, roomActor[i] == g.selected && !sleeping);
             if (resident->squad) squad_health_bar(resident, x, y);
         } else if (roomActor[i] == -2) {
@@ -1283,7 +1318,9 @@ static void interior_draw(void) {
             room_furniture(&props[i]);
         }
     }
-    const char *name = building_name(id);
+    char roomTitle[64];
+    snprintf(roomTitle, sizeof(roomTitle), "%s%s", building_name(id), floor ? " / UPSTAIRS" : "");
+    const char *name = roomTitle;
     int titleWidth = text_width(name);
     rect(467-titleWidth,223,titleWidth+9,13,INK);
     text(471-titleWidth,226,name,GOLD,1);
@@ -1390,6 +1427,17 @@ static void mini_map(void) {
         int x = map_x(view, b->x, b->y), y = map_y(view, b->x, b->y);
         if (x >= ox && x < ox + 65 && y >= oy && y < oy + 59)
             rect(x, y, 2, 2, 0xb5aa86);
+    }
+    for (int i = 0; i < g.nodeCount; i++) {
+        const Node *n = &g.nodes[i];
+        if (!n->remaining || n->type > NODE_WOOD ||
+            fabsf(n->x - ui.camX) > 20 || fabsf(n->y - ui.camY) > 20)
+            continue;
+        int x = map_x(view, n->x, n->y), y = map_y(view, n->x, n->y);
+        if (x >= ox + 1 && x < ox + 64 && y >= oy + 1 && y < oy + 58) {
+            uint32_t color = n->type == NODE_WOOD ? 0x91cd86 : n->type == NODE_COPPER ? 0xf2a276 : 0xc4dfed;
+            rect(x, y, 2, 2, color);
+        }
     }
     for (int i = 0; i < g.actorCount; i++) {
         Actor *a = &g.actors[i];
@@ -1518,12 +1566,13 @@ static void hud(void) {
     snprintf(b, sizeof(b), "FOOD %d", (int)a->hunger);
     text(320, 259, b, a->hunger < 25 ? GOLD : MUTED, 1);
     const char *status = a->dead ? "DEAD" : recovery_coma(a) ? "COMA" :
-        a->unconscious > 0 ? "DOWN" : a->bleed > .01f ? "BLEEDING" : a->prisonTime > 0 ? "JAILED" :
+        a->unconscious > 0 ? "DOWN" : a->prisonTime > 0 ? "JAILED" :
         limb_crawling(a) ? "CRAWLING" : limb_limping(a) ? "LIMPING" :
-        a->autoattack ? "FIGHT" : "PASSIVE";
-    text(472 - (int)strlen(status) * 6, 259, status, a->bleed > .01f || a->dead || a->unconscious > 0 ? RED : TEAL, 1);
+        actor_in_bed(a) ? "RESTING" : a->autoattack ? "FIGHT" : "PASSIVE";
+    text(472 - (int)strlen(status) * 6, 259, status, a->dead || a->unconscious > 0 ? RED : TEAL, 1);
 
-    if (a->sneaking && !a->dead) {
+    if (a->bleed > .01f) text(370, 259, "BLEED", RED, 1);
+    if (a->sneaking && !a->dead && a->bleed <= .01f) {
         line(379, 263, 385, 259, GOLD);
         line(385, 259, 391, 263, GOLD);
         line(379, 263, 385, 267, GOLD);
@@ -1661,7 +1710,7 @@ static void equipment_comparison(int it, int y) {
     clipped(31,y,d->name,68,TEXT);
     if(it>=CATALOG_ITEMS&&it<OLD_ITEMS)text(374,y,it>=CATALOG_ITEMS+16?"SIGNATURE":"SPECIAL",GOLD,1);
     else if((it>=UNIQUE_ITEMS&&it<V090_ITEMS)||regalia_owner(it)>=0)text(404,y,"NAMED",GOLD,1);
-    snprintf(b,sizeof(b),"WORN: %.24s",worn?old->name:"EMPTY");clipped(31,y+12,b,33,MUTED);
+    snprintf(b,sizeof(b),"EQUIPPED %.24s",worn?old->name:"EMPTY");clipped(31,y+12,b,33,MUTED);
     if (d->slot == 0) {
         int skill = weapon_class(it);
         snprintf(b,sizeof(b),"Trains %s",skill >= 0 ? weaponClassNames[skill] : "Melee");
@@ -1719,6 +1768,7 @@ static void pack_screen(void) {
     int capacity = actor_capacity(a);
     snprintf(b, sizeof(b), "LOAD %.0f/%d", load, capacity);
     text(449 - text_width(b), 61, b, load > capacity ? GOLD : TEAL, 1);
+    text(164,237,"\017 DROP",MUTED,1);
     Actor preview=preview_actor();int wearable=it&&itemDefs[it].slot>=0;
     if(wearable)preview.gear[itemDefs[it].slot]=it;
     portrait_scale(&preview,103,69,28,81,1);
@@ -2470,6 +2520,11 @@ static void equipped_screen(void) {
         effectNames[itemDefs[it].effect],item_effect_value(it));
     else snprintf(b,sizeof(b),"%s / WEIGHT %d",slotNames[ui.selection],itemDefs[it].weight);
     clipped(30, 212, b, 68, TEAL);
+    if (it && itemDefs[it].slot == 0) {
+        int skill = weapon_class(it);
+        snprintf(b, sizeof(b), "Trains %s", skill >= 0 ? weaponClassNames[skill] : "Melee");
+        text(30, 224, b, GOLD, 1);
+    }
 }
 static void requirement_cell(int cell,const char*label,int need,int have){
     int x=29+(cell%2)*211,y=177+(cell/2)*13;char b[60];clipped(x,y,label,22,TEXT);snprintf(b,sizeof(b),"%d/%d",have,need);text(x+138,y,b,have>=need?0x73c58b:RED,1);
@@ -2557,7 +2612,7 @@ static void save_screen(void) {
         SaveInfo *z = &ui.saves[i];
         snprintf(b, 100, i ? "SLOT %d  %s" : "AUTO %d  %s", i,
                  z->exists ? (z->valid ? z->name : "DAMAGED / INCOMPATIBLE") : "EMPTY");
-        snprintf(v, 100, "DAY %d  %d MEMBERS  %d SILVER", z->day, z->squad, z->money);
+        snprintf(v, 100, "DAY %d %02d:%02d  %d MEMBERS  %d SILVER", z->day, z->minute / 60, z->minute % 60, z->squad, z->money);
         row(89 + i * 18, ui.selection == i, b, z->valid ? v : "");
     }
     text(31, 221, "AUTOSAVE IS SEPARATE FROM YOUR MANUAL SLOTS.", TEAL, 1);
@@ -2592,9 +2647,54 @@ static void engage_screen(void){
     else if(ui.attackFocus>=0&&actor_relation(ui.attackFocus)>=0)text(31,211,"ASSAULT: +100 BOUNTY / -20 FACTION STANDING",RED,1);
     else text(31,211,"Close to weapon reach to strike. Square stops attacking.",MUTED,1);
 }
+static void drop_screen(void) {
+    overlay_header("DROP ITEM", "\001 DROP   \002 BACK");
+    const Stack *stack = &g.actors[g.selected].pack[ui.dropSlot];
+    char qty[24];
+    snprintf(qty, sizeof(qty), "%d", stack->qty);
+    row(90, 0, itemDefs[stack->item].name, qty);
+    row(125, ui.selection == 0, "Drop one", "1");
+    row(148, ui.selection == 1, "Drop stack", qty);
+}
+static void coach_screen(void) {
+    overlay_header("STAGECOACH", "\001 PAY FARE   \015 DESTINATION   \002 BACK");
+    int count = coach_count(ui.coachTown), first = start_row(ui.selection, count, 8);
+    if (!count)
+        text(31, 91, "Visit another town to open a route.", MUTED, 1);
+    for (int i = first; i < count && i < first + 8; i++) {
+        int town = coach_destination(ui.coachTown, i);
+        char fare[50];
+        snprintf(fare, sizeof(fare), "%.1f H / %d SILVER",
+                 coach_duration(ui.coachTown, town) * 24 / DAY_SECONDS, coach_price(ui.coachTown, town));
+        row(88 + (i - first) * 16, ui.selection == i, towns[town].name, fare);
+    }
+}
+static void contract_note_screen(void) {
+    const Contract *c = journal_contract(ui.contractNote);
+    overlay_header("CONTRACT NOTE", "\015 SCROLL   \005/\006 PAGE   \002 BACK");
+    if (!c) return;
+    char body[600], details[100];
+    snprintf(details, sizeof(details), "%s / %s", contract_title(c->type), towns[c->town].name);
+    text(30, 86, details, GOLD, 1);
+    contract_description(ui.contractNote, body, sizeof(body));
+    ui.noteMaxScroll = wrap(0, 0, 43, body, 0) - 72;
+    if (ui.noteMaxScroll < 0) ui.noteMaxScroll = 0;
+    int top = clipTop, bottom = clipBottom;
+    clipTop = 104;
+    clipBottom = 176;
+    wrap(31, 104-ui.scroll, 43, body, TEXT);
+    clipTop = top;
+    clipBottom = bottom;
+    if (ui.noteMaxScroll) {
+        rect(303,104,2,72,EDGE);
+        rect(303,104+ui.scroll*62/ui.noteMaxScroll,2,10,GOLD);
+    }
+    snprintf(details, sizeof(details), "%s  %d SILVER", c->completed ? "PAID" : "REWARD", c->reward);
+    text(31, 196, details, TEAL, 1);
+}
 static void journal_screen(void) {
     overlay_header(ui.journalTab ? "JOURNAL / COMPLETED" : "JOURNAL / ACTIVE",
-                   ui.journalTab ? "\016 SWITCH TAB   \004 WARRANTS" : "\016 SWITCH TAB   \003 LOCATE   \004 WARRANTS");
+                   ui.journalTab ? "\001 READ NOTE  \016 TAB  \004 WARRANTS" : "\001 READ NOTE  \016 TAB  \003 LOCATE  \004 WARRANTS");
     char b[214], v[42];
     int count = journal_count(), first = start_row(ui.selection, count, 6);
     for (int j = 0; j < 6 && first + j < count; j++) {
@@ -2615,7 +2715,10 @@ static void journal_screen(void) {
     int selected = journal_slot(ui.selection);
     const Contract *entry = journal_contract(selected);
     contract_description(selected, b, sizeof(b));
+    int bottom = clipBottom;
+    clipBottom = 202;
     wrap(31, 171, 68, b, TEXT);
+    clipBottom = bottom;
     if (entry && !ui.journalTab) {
         snprintf(b, sizeof(b), "REWARD %d SILVER", entry->reward);
         text(31, 208, b, GOLD, 1);
@@ -2821,7 +2924,7 @@ static void loot_screen(void) {
         int stolen = theft || (k < PACK ? a->stolen[k] : k < PACK + GEARS ? a->gearStolen[k-PACK] :
                                limb_owner(a, LARM + k - PACK - GEARS));
         if (stolen) text(31,y,"!",RED,1);
-        snprintf(b,sizeof(b),"%s%.48s",k>=PACK+GEARS?"FITTED: ":k>=PACK?"WORN: ":"",itemDefs[id].name);
+        snprintf(b,sizeof(b),"%s%.48s",k>=PACK+GEARS?"FITTED: ":k>=PACK?"EQUIPPED: ":"",itemDefs[id].name);
         clipped(42,y,b,52,stolen?RED:k==ui.selection?TEXT:MUTED);
         snprintf(b,sizeof(b),"%d",k<PACK?a->pack[k].qty:1);text(386-text_width(b),y,b,GOLD,1);
         snprintf(b,sizeof(b),"%d",itemDefs[id].price);text(442-text_width(b),y,b,TEXT,1);
@@ -2830,7 +2933,7 @@ static void loot_screen(void) {
     if (a->bountyReward > 0) {
         char payers[110];
         bounty_details(ui.lootActor, payers, sizeof(payers));
-        snprintf(b, sizeof(b), "BOUNTY  %d ALIVE / %d DEAD", a->bountyReward * 2, a->bountyReward);
+        snprintf(b, sizeof(b), "BOUNTY  %d ALIVE / %d DEAD", bounty_reward(ui.lootActor, 1), bounty_reward(ui.lootActor, 0));
         text(31, 73, b, GOLD, 1);
         clipped(31, 160, payers, 68, TEXT);
     } else {
@@ -2961,6 +3064,9 @@ void render_game(uint32_t *pixels, int stride) {
     case SCREEN_SAVES:
         save_screen();
         break;
+    case SCREEN_DROP: drop_screen(); break;
+    case SCREEN_STAGECOACH: coach_screen(); break;
+    case SCREEN_CONTRACT_NOTE: contract_note_screen(); break;
     case SCREEN_JOURNAL:
         journal_screen();
         break;

@@ -180,7 +180,7 @@ static void shop_and_inn(void) {
     assert(!interior_enter(bench));
 
     InteriorProp props[ROOM_PROPS];
-    int beds = 0, count = interior_props(inn, props);
+    int beds = 0, count = interior_floor_props(inn, inn_has_upstairs(inn), props);
     for (int i = 0; i < count; i++) beds += props[i].action == ROOM_REST;
     assert(beds == town_design(town)->beds && beds > town_design(1)->beds);
     g.dayTime = 8;

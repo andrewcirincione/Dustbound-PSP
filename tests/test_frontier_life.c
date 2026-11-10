@@ -160,7 +160,7 @@ static void test_warrants(void) {
 
     next_to_watch(no);
     carry_target(victim,1);
-    int money=g.money,reward=g.actors[victim].bountyReward;
+    int money=g.money,reward=bounty_reward(victim,0);
     assert(!bounty_turn_in(no)&&g.money==money);
     next_to_watch(yes);
     choose(ACTION_BOUNTY_TURN_IN,0,yes);
@@ -183,8 +183,8 @@ static void test_warrants(void) {
     carry_target(n,0);
     g.actors[n].unconscious=0;
     money=g.money;
-    reward=g.actors[n].bountyReward;
-    assert(bounty_turn_in(yes)&&g.money==money+2*reward);
+    reward=bounty_reward(n,1);
+    assert(bounty_turn_in(yes)&&g.money==money+reward);
     assert(!population_owned(n)&&g.actors[n].prisonTime>0&&depth_room(&g.actors[n])>0);
     assert(g.population.state[group].detached&1);
     assert(save_game("build/warrant-capture.sav")&&load_game("build/warrant-capture.sav"));

@@ -554,13 +554,17 @@ static int bed_head_direction(const Actor *a) {
     int room = depth_room(a);
     if (room) {
         InteriorProp props[ROOM_PROPS];
-        int count = interior_props(room - 1, props);
+        int count = interior_floor_props(room - 1, actor_floor(a), props);
         for (int i = 0; i < count; i++)
             if (props[i].action == ROOM_REST &&
                 distance(depth_x(a),depth_y(a),props[i].x,props[i].y) < .4f)
                 return props[i].d > props[i].w ? 1 : -1;
     }
     return -1;
+}
+static int mining_pose(const Actor *a) {
+    return a->taskKind == 1 && a->taskIndex >= 0 && a->taskIndex < g.nodeCount &&
+           g.nodes[a->taskIndex].type <= NODE_COPPER && !a->attackPhase && limb_arms(a);
 }
 static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float stance, int variant, int laid_out) {
     uint32_t skin = actor_skin(a);
@@ -581,8 +585,9 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     float progress = a->attackDuration > 0 ? fmaxf(0, fminf(1, 1 - a->attackClock / a->attackDuration)) : 0;
     float block = a->impactKind == 2 && a->hitFlash > 0 ? pose_ease(a->hitFlash / .27f) : 0;
     int stowed = a->squad && !a->autoattack && !a->attackPhase && block <= 0 ? a->gear[0] : 0;
-    int weapon = a->attackPhase ? a->attackWeapon : stowed ? 0 : a->gear[0];
-    int relaxed = !a->attackPhase && block <= 0 &&
+    int mining = mining_pose(a);
+    int weapon = mining ? gear_id(12, 0, 0) : a->attackPhase ? a->attackWeapon : stowed ? 0 : a->gear[0];
+    int relaxed = !mining && !a->attackPhase && block <= 0 &&
                   ((a->squad && !a->autoattack) || (!weapon && stance < .2f));
     if (relaxed)
         stance = 0;
@@ -597,6 +602,15 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         parry.blade = -1.18f; parry.crouch = 3.1f;
         parry.shift = -1.5f; parry.step = 2;
         rig = pose_mix(rig, parry, block);
+    }
+    if (mining) {
+        float phase = fmodf(fmaxf(0, 2.8f - a->action), .94f) / .94f;
+        float down = phase < .60f ? 1 - pose_ease(phase / .60f) : pose_ease((phase - .60f) / .25f);
+        rig.handX = 3 + 8 * down;
+        rig.handY = -29 + 15 * down;
+        rig.blade = -1.92f + 2.77f * down;
+        rig.crouch = 2 * down;
+        rig.shift = 1.6f * down;
     }
     float aim = a->attackPhase ? a->attackAngle : (face > 0 ? 0 : 3.14159265f), forward = cosf(aim),
           depth = sinf(aim);
@@ -980,6 +994,7 @@ static uint64_t actor_key(const Actor *a, int lum, float stance, int variant) {
     HASHV(a->unconscious > 0);
     HASHV(playing_dead(a));
     HASHV(a->taskKind == 3);
+    HASHV(mining_pose(a) ? 1 + (int)(a->action * 34) : 0);
     HASHV(actor_in_bed(a));
     HASHV(a->kind);
     HASHV(a->attackPhase);

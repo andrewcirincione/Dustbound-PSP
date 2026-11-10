@@ -1,3 +1,10 @@
+# 0.18.6 — Inns and stagecoaches
+
+- Large inns have upstairs bedrooms. Small inns have one or two beds and room around the bar. New generated beds, bars, stairs and research benches fit the isometric grid. Dry Market uses frontier storefronts and homes. Night and interiors are brighter, rain is shorter and rarer, and foliage clears roadside camps.
+- Ask an innkeeper for a paid stagecoach to a town you have visited. Contract notes scroll from the Journal, rewards are higher, and the save list shows in-game time. Use Right in the pack to drop one item or a stack. Minimap dots mark iron, copper and timber, and miners swing a pick.
+- Medics carry patients to available beds. Idle NPCs use their own medical supplies, bleeding appears beside the survivor's condition, and crawling follows leg injuries. Injured enemies hold their ground. Ordinary raiders near the starter towns deal less damage.
+- Outdoor pathfinding limits repeated blocked searches. Menus, footsteps and switching between Fight and Passive have sound effects. Save format v27 reads previous expeditions.
+
 # 0.18.5 — Warrants and homesteads
 
 - Jails post regional warrants and three permanent elite targets. Track leads in the Journal, pin sightings on the atlas, and deliver targets to an accepting jailkeeper. Keep a record of payouts.

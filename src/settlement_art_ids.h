@@ -10,7 +10,8 @@ enum {
     ART_LOW_COT, ART_SIDE_ALTAR, ART_IRON_STOVE, ART_ARMOR_STAND,
     ART_CARAVAN_BALES, ART_PRACTICE_POST, ART_CELL_PANEL, ART_SIDE_COUNTER,
     ART_IRON_GRILLE, ART_CELL_GATE, ART_COURT_WALL, ART_STONE_WALL,
-    SETTLEMENT_ART_END
+    SETTLEMENT_ART_END,
+    ART_INN_STAIRS = SETTLEMENT_ART_END + 15, ART_INN_BAR, ART_RESEARCH_TABLE
 };
 
 typedef struct {
@@ -22,12 +23,14 @@ typedef struct {
     float span, xShare;
 } FurnitureModel;
 
-enum { FURNITURE_ART_FIRST = SETTLEMENT_ART_END, FURNITURE_ART_COUNT = 15, ROOM_MAX_SCALE = 25 };
+enum { FURNITURE_ART_FIRST = SETTLEMENT_ART_END, FURNITURE_ART_COUNT = 18, ROOM_MAX_SCALE = 25 };
 
 static inline int furniture_art_index(int art) {
     if (art >= 16 && art <= 23) return art - 16;
     if (art >= ART_LOW_COT && art <= ART_PRACTICE_POST) return 8 + art - ART_LOW_COT;
-    return art == ART_SIDE_COUNTER ? FURNITURE_ART_COUNT - 1 : -1;
+    if (art == ART_SIDE_COUNTER) return 14;
+    if (art == ART_INN_STAIRS || art == ART_INN_BAR) return 15 + art - ART_INN_STAIRS;
+    return -1;
 }
 
 static inline int furniture_is_bed(int art) {

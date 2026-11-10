@@ -1,4 +1,5 @@
 #include "game.h"
+#include "civilization.h"
 #include "settlement_art_ids.h"
 #include <math.h>
 #include <stdio.h>
@@ -148,8 +149,9 @@ int terrain_water(float x, float y) {
     }
     if (x < 128 && y < 128)
         return 0;
-    float r = 194 + 12 * sinf(y * .025f), s = 139 + 9 * sinf(x * .025f);
-    int wet = fabsf(x - r) < 2.2f || (x < 210 && fabsf(y - s) < 1.6f) || distance(x, y, 107, 242) < 12;
+    int wet = (x > 179 && x < 209 && fabsf(x - 194 - 12 * sinf(y * .025f)) < 2.2f) ||
+              (x < 210 && y > 128 && y < 150 && fabsf(y - 139 - 9 * sinf(x * .025f)) < 1.6f) ||
+              (x > 95 && x < 119 && y > 230 && y < 254 && distance(x, y, 107, 242) < 12);
     if (!wet)
         return 0;
     if (town_near(wx, wy, 12) >= 0 || terrain_road(wx, wy) || terrain_road(wx + 1, wy) ||
@@ -157,6 +159,21 @@ int terrain_water(float x, float y) {
         return 0;
     return 1;
 }
+static int route_budget = 3;
+
+void route_frame_start(void) {
+    route_budget = 3;
+}
+
+static int route_cell_open(float x, float y, const short *buildings, int count) {
+    if (x < 2 || y < 2 || x > WORLD - 3 || y > WORLD - 3 || trail_blocked(x, y) || terrain_water(x, y))
+        return 0;
+    for (int i = 0; i < count; i++)
+        if (structure_blocks(buildings[i], x, y, .13f))
+            return 0;
+    return 1;
+}
+
 void route_toward(Actor *a, float x, float y, float dt) {
     if (!conscious(a) || a->prisonTime > 0)
         return;
@@ -173,15 +190,28 @@ void route_toward(Actor *a, float x, float y, float dt) {
     }
     if (clear) {
         a->routeLen = 0;
+        a->routeClock = 0;
         move_actor(a, dx, dy, dt);
         return;
     }
     a->routeClock -= dt;
+    if (a->routeLen == 0 && a->routeClock > 0)
+        return;
     if (a->routePos >= a->routeLen || a->routeClock <= 0 ||
-        distance(x, y, a->routeTargetX, a->routeTargetY) > 2) {
+        (a->routeClock < 6.5f && distance(x, y, a->routeTargetX, a->routeTargetY) > 2)) {
+        if (!route_budget)
+            return;
+        route_budget--;
         enum { N = 33, C = N * N };
-        static short parent[C], queue[C], back[C];
+        static short parent[C], queue[C], back[C], buildings[MAX_BUILDINGS];
         int ox = (int)a->x - N / 2, oy = (int)a->y - N / 2, st = N / 2 * N + N / 2;
+        int nearby = 0;
+        for (int i = 0; i < g.buildingCount; i++) {
+            const Building *b = &g.buildings[i];
+            if (b->x > ox - 2.3f && b->x < ox + N + 2.3f &&
+                b->y > oy - 2.3f && b->y < oy + N + 2.3f)
+                buildings[nearby++] = i;
+        }
         for (int i = 0; i < C; i++)
             parent[i] = -2;
         int head = 0, tail = 0, goal = st;
@@ -202,8 +232,10 @@ void route_toward(Actor *a, float x, float y, float dt) {
                 int nx = xx + dd[j][0], ny = yy + dd[j][1], z = ny * N + nx;
                 if (nx < 0 || ny < 0 || nx >= N || ny >= N || parent[z] != -2)
                     continue;
-                if (!can_walk(ox + nx + .5f, oy + ny + .5f))
+                if (!route_cell_open(ox + nx + .5f, oy + ny + .5f, buildings, nearby)) {
+                    parent[z] = -3;
                     continue;
+                }
                 parent[z] = n;
                 queue[tail++] = z;
             }
@@ -218,7 +250,7 @@ void route_toward(Actor *a, float x, float y, float dt) {
             a->routeX[i] = ox + z % N;
             a->routeY[i] = oy + z / N;
         }
-        a->routeClock = 7;
+        a->routeClock = count ? 7.f : 1.0f + (float)((int)a->x % 5) * .13f;
         a->routeTargetX = x;
         a->routeTargetY = y;
     }
@@ -641,7 +673,18 @@ int start_sleep(int town) {
     Actor *a = &g.actors[g.selected];
     int bed = nearby_station(BED, 1.7f);
     if (bed < 0) {
-        log_msg("Enter the inn and choose Sleep in bed beside a bed. 25 silver.");
+        int room = depth_room(a);
+        log_msg(room && inn_has_upstairs(room - 1) && !actor_floor(a) ? "The beds are upstairs." :
+                room ? "There's a bed on this floor." : "The inn has beds.");
+        return 0;
+    }
+    int room = depth_room(a);
+    if (room) {
+        InteriorProp props[ROOM_PROPS];
+        int count = interior_floor_props(room - 1, actor_floor(a), props);
+        for (int i = 0; i < count; i++)
+            if (props[i].action == ROOM_REST && distance(depth_x(a), depth_y(a), props[i].x, props[i].y) < 2)
+                return rest_at(a, room - 1, props[i].x, props[i].y, room, regional_bed_cost(town));
         return 0;
     }
     Building *b = &g.buildings[bed];
@@ -983,6 +1026,19 @@ static const Actor *warrant_subject(int id) {
     const WorldEvent *e = &g.population.groups[group];
     return !e->spawned && !(g.population.state[group].detached & 1) ? &e->reserve[0] : NULL;
 }
+static int warrant_pay(const Actor *a, int elite, int alive) {
+    return a->bountyReward * (elite ? 3 : 4) / (alive ? 1 : 2);
+}
+
+int bounty_reward(int actor, int alive) {
+    if (actor < 0 || actor >= g.actorCount)
+        return 0;
+    int elite = 0;
+    for (int i = 0; i < ELITE_WARRANTS; i++)
+        elite |= warrant_actor(i) == actor;
+    return warrant_pay(&g.actors[actor], elite, alive);
+}
+
 int warrant_view(int id, WarrantView *out) {
     if (id < 0 || id >= ELITE_WARRANTS + POP_GROUPS)
         return 0;
@@ -1006,7 +1062,7 @@ int warrant_view(int id, WarrantView *out) {
                   e->type == POP_AMBUSH ? "Ambushed travelers for their packs." : "Robbed wagons on the frontier.";
         payers = road_warrant_payers(e);
     }
-    *out = (WarrantView){a->name, offense, a->bountyReward, elite, lead->down, lead->tracked,
+    *out = (WarrantView){a->name, offense, warrant_pay(a, elite, 0), elite, lead->down, lead->tracked,
                          nearest_jurisdiction(lead->x,lead->y,payers), payers, lead->x, lead->y, lead->seen};
     return 1;
 }
@@ -1242,7 +1298,7 @@ int bounty_turn_in(int guard) {
     if (!conscious(a) || !bounty_guard(guard, n))
         return 0;
     Actor *p = &g.actors[n], *watch = &g.actors[guard];
-    int town = watch_town(watch), reward = p->bountyReward * (p->dead ? 1 : 2);
+    int town = watch_town(watch), reward = bounty_reward(n, !p->dead);
     warrant_paid(n, watch->faction, reward);
     a->carrying = p->carriedBy = -1;
     p->bountyReward = 0;
@@ -1262,6 +1318,7 @@ int bounty_turn_in(int guard) {
         if (c->active == 1 && c->type == CONTRACT_BOUNTY && g.society.jobActor[i] == n + 1) {
             c->completed = 1;
             c->active = 2;
+            c->reward = reward;
             remember_contract(c);
             g.contractsDone++;
         }
@@ -1475,8 +1532,109 @@ int journal_count(void) {
         count += g.contracts[i].active == 1 || g.contracts[i].active == 3;
     return count;
 }
+int coach_destination(int origin, int row) {
+    if (origin < 0 || origin >= TOWNS || row < 0)
+        return -1;
+    for (int t = 0; t < TOWNS; t++)
+        if (t != origin && (g.visitedTowns & (1u << t)) && g.townOwner[t] != HOSTILE && row-- == 0)
+            return t;
+    return -1;
+}
+
+int coach_count(int origin) {
+    int count = 0;
+    for (int t = 0; t < TOWNS; t++)
+        if (t != origin && (g.visitedTowns & (1u << t)) && g.townOwner[t] != HOSTILE)
+            count++;
+    return count;
+}
+
+int coach_price(int origin, int destination) {
+    float trip = distance(towns[origin].x, towns[origin].y, towns[destination].x, towns[destination].y);
+    return 180 + (int)(trip * .75f) + (g.squadCount - 1) * 65;
+}
+
+float coach_duration(int origin, int destination) {
+    return 95 + distance(towns[origin].x, towns[origin].y, towns[destination].x, towns[destination].y) * .48f;
+}
+
+int coach_travel(int origin, int destination) {
+    Actor *leader = &g.actors[g.selected];
+    if (origin < 0 || origin >= TOWNS || destination < 0 || destination >= TOWNS || origin == destination ||
+        !(g.visitedTowns & (1u << destination)) || g.townOwner[destination] == HOSTILE ||
+        town_near(leader->x, leader->y, 14) != origin)
+        return 0;
+    int faction = g.townOwner[destination], price = coach_price(origin, destination);
+    for (int i = 0; i < g.actorCount; i++) {
+        Actor *a = &g.actors[i];
+        if (!a->active || !a->squad || a->dead)
+            continue;
+        if (town_near(a->x, a->y, 16) != origin || !conscious(a) || a->carrying >= 0 ||
+            a->carriedBy >= 0 || a->target >= 0 || a->attackPhase || a->prisonTime > 0 ||
+            g.depth.actors[i].captive || a->bleed > .01f) {
+            log_msg("The driver needs the whole squad here and ready to travel.");
+            return 0;
+        }
+        if (wanted_amount(a, faction) >= SERIOUS_BOUNTY || g.rep[faction] < -25) {
+            log_msg("The driver won't cross that checkpoint with your squad.");
+            return 0;
+        }
+    }
+    for (int i = 0; i < CONTRACTS; i++)
+        if (g.contracts[i].active == 1 && g.contracts[i].type == CONTRACT_ESCORT) {
+            log_msg("Finish the caravan escort first.");
+            return 0;
+        }
+    if (g.money < price) {
+        log_msg("The fare is %d silver.", price);
+        return 0;
+    }
+    float x = towns[destination].x, y = towns[destination].y;
+    for (int i = 0; i < g.buildingCount; i++)
+        if (g.buildings[i].type == BAR && building_town(i) == destination) {
+            building_door(i, &x, &y);
+            break;
+        }
+    civil_clear_position(&x, &y);
+    if (!can_walk(x, y))
+        return 0;
+    g.money -= price;
+    float duration = coach_duration(origin, destination);
+    g.time += duration;
+    g.dayTime += duration * (24.f / DAY_SECONDS);
+    if (g.dayTime >= 24) {
+        g.dayTime -= 24;
+        g.day++;
+        restock();
+    }
+    for (int i = 0; i < g.actorCount; i++) {
+        Actor *a = &g.actors[i];
+        if (!a->active || !a->squad || a->dead)
+            continue;
+        actor_leave_room(i);
+        a->x = x + (i == g.selected ? 0 : (i % 3 - 1) * .8f);
+        a->y = y + (i == g.selected ? 0 : .8f + (i % 2) * .8f);
+        civil_clear_position(&a->x, &a->y);
+        a->tx = a->x;
+        a->ty = a->y;
+        a->taskKind = a->routePos = a->routeLen = a->sneaking = a->autoattack = 0;
+        a->routeClock = a->cooldown = a->stun = a->movedTimer = 0;
+        a->target = g.living.command[i] = -1;
+        g.society.queueCount[i] = 0;
+        g.field.playingDead[i] = 0;
+        if (a->race != 2)
+            a->hunger = fmaxf(0, a->hunger - duration * .045f * species_food(a));
+        reveal_area(a);
+    }
+    ui.camX = leader->x;
+    ui.camY = leader->y;
+    ui.paused = 0;
+    log_msg("Stagecoach arrived at %s. Fare %d silver.", towns[destination].name, price);
+    return 1;
+}
+
 int contract_reward(int town, int kind) {
-    static const int silver[CONTRACT_TYPES] = {220, 240, 420, 550, 260, 280, 180, 600};
+    static const int silver[CONTRACT_TYPES] = {420, 480, 750, 940, 510, 640, 420, 950};
     if (kind == CONTRACT_BOUNTY) {
         int bounty = society_bounty_reward(town);
         if (bounty) return bounty;
@@ -2037,7 +2195,7 @@ float npc_sight_range(const Actor *a) {
     return !actor_inside(a) && (g.weather == 1 || g.weather == 3) ? reach * .75f : reach;
 }
 int npc_sees(const Actor *observer, const Actor *a, float reach) {
-    if (!conscious(observer) || actor_inside(observer) != actor_inside(a))
+    if (!conscious(observer) || actor_inside(observer) != actor_inside(a) || actor_floor(observer) != actor_floor(a))
         return 0;
     float dx = depth_x(a) - depth_x(observer), dy = depth_y(a) - depth_y(observer);
     float d = sqrtf(dx * dx + dy * dy);
@@ -2528,8 +2686,15 @@ static void labor_tick(int n, float dt) {
         }
         return;
     }
-    float angle = (floorf(g.time / 13) + n) * 1.570796f;
-    route_toward(a, b->x + cosf(angle) * 3, b->y + sinf(angle) * 3, dt * .65f);
+    static const float posts[4][2] = {{3, 0}, {0, 3}, {-3, 0}, {0, -3}};
+    int post = ((int)(g.time / 13) + n) % 4;
+    float x = b->x + posts[post][0], y = b->y + posts[post][1];
+    if (!can_walk(x, y)) {
+        x = b->x + posts[post][0] * 1.5f;
+        y = b->y + posts[post][1] * 1.5f;
+    }
+    if (can_walk(x, y))
+        route_toward(a, x, y, dt * .65f);
     gain(a, LABOUR, dt * .9f);
     gain(a, STRENGTH, dt * .35f);
 }
@@ -2645,12 +2810,13 @@ void tick_expansion(float dt) {
     g.eventTimer -= dt;
     g.season = (g.day / 7) % 4;
     if (g.weatherTimer <= 0) {
-        g.weatherTimer = 160 + wrand() % 160;
         int b = biome(g.actors[g.selected].x, g.actors[g.selected].y);
-        int r = wrand() % 5;
-        g.weather = r < 2 ? 0 : b == 6 ? 4 : b == 3 ? 3 : r == 2 ? 2 : 1;
-        snprintf(g.worldNews, sizeof(g.worldNews), "%s over the borderlands. Watch your supplies.",
-                 weatherNames[g.weather]);
+        int roll = wrand() % 100;
+        int rain = b == 2 || b == 3 ? 18 : b == 0 || b == 7 ? 12 : 7;
+        g.weather = g.weather ? 0 : b == 6 && roll < 25 ? 4 : roll < rain ? 2 :
+                    b == 3 && roll < 27 ? 3 : b != 6 && roll >= 94 ? 1 : 0;
+        g.weatherTimer = g.weather ? 50 + wrand() % 61 : 230 + wrand() % 241;
+        snprintf(g.worldNews, sizeof(g.worldNews), "%s over the borderlands.", weatherNames[g.weather]);
     }
     if (g.eventTimer <= 0) {
         g.eventTimer = 220;
@@ -2732,9 +2898,25 @@ void tick_expansion(float dt) {
 
 /* Six fixed roadside landmarks. Geometry leaves a direct lane and outer bypasses. */
 void trail_point(int site,float*x,float*y,float*dx,float*dy){
- static const int ends[6][2]={{0,1},{0,2},{1,3},{5,6},{9,10},{11,13}};
- int a=ends[site][0],b=ends[site][1];float vx=towns[b].x-towns[a].x,vy=towns[b].y-towns[a].y,d=fmaxf(1,sqrtf(vx*vx+vy*vy));
- *dx=vx/d;*dy=vy/d;*x=towns[a].x+vx*.46f;*y=towns[a].y+vy*.46f;
+    static const int ends[6][2] = {{0,1},{0,2},{1,3},{5,6},{9,10},{11,13}};
+    static struct { float x, y, dx, dy; } points[6];
+    static int cachedLayout = -1;
+    int layout = world_is_expanded();
+    if (cachedLayout != layout) {
+        cachedLayout = layout;
+        for (int i = 0; i < 6; i++) {
+            const Town *a = &towns[ends[i][0]], *b = &towns[ends[i][1]];
+            float vx = b->x - a->x, vy = b->y - a->y, d = fmaxf(1, sqrtf(vx*vx + vy*vy));
+            points[i].x = a->x + vx*.46f;
+            points[i].y = a->y + vy*.46f;
+            points[i].dx = vx/d;
+            points[i].dy = vy/d;
+        }
+    }
+    *x = points[site].x;
+    *y = points[site].y;
+    *dx = points[site].dx;
+    *dy = points[site].dy;
 }
 int trail_rock(int site,int rock,float*x,float*y){float cx,cy,dx,dy;trail_point(site,&cx,&cy,&dx,&dy);float u=rock<2?-4:4,v=rock%2?-3.8f:3.8f;*x=cx+dx*u-dy*v;*y=cy+dy*u+dx*v;return !(g.trails.omit&(1<<(site*4+rock)));}
 int trail_blocked(float x,float y){
@@ -2814,10 +2996,30 @@ int field_aid(int n, float dt) {
     }
     return 0;
 }
+static int inn_recovery_spot(const Actor *patient, int building, int floor, float *x, float *y) {
+    InteriorProp props[ROOM_PROPS];
+    int count = interior_floor_props(building, floor, props);
+    for (int i = 0; i < count; i++)
+        if (props[i].action == ROOM_REST &&
+            room_bed_free(patient, props[i].x, props[i].y, building + 1, floor)) {
+            *x = props[i].x;
+            *y = props[i].y;
+            return 1;
+        }
+    return 0;
+}
 static int recovery_bed_location(int bed, float *x, float *y) {
     if (bed > 0 && bed <= g.buildingCount && g.buildings[bed - 1].type == BED && depth_build_ready(bed - 1)) {
         *x = g.buildings[bed - 1].x;
         *y = g.buildings[bed - 1].y;
+        return 1;
+    }
+    if (bed < 0 && bed > -1000) {
+        int building = (-bed - 1) / 2, floor = (-bed - 1) % 2;
+        if (building >= g.buildingCount || g.buildings[building].type != BAR ||
+            !depth_build_ready(building) || (floor && !inn_has_upstairs(building)))
+            return 0;
+        building_door(building, x, y);
         return 1;
     }
     if (bed <= -1000) {
@@ -2829,6 +3031,10 @@ static int recovery_bed_location(int bed, float *x, float *y) {
 static int recovery_bed_free(const Actor *patient, int bed, float *x, float *y) {
     if (!recovery_bed_location(bed, x, y) || !can_walk(*x, *y) || !aid_safe_at(patient, *x, *y))
         return 0;
+    if (bed < 0 && bed > -1000) {
+        float bx, by;
+        return inn_recovery_spot(patient, (-bed - 1) / 2, (-bed - 1) % 2, &bx, &by);
+    }
     for (int n = 0; n < g.actorCount; n++) {
         Actor *a = &g.actors[n];
         if (a != patient && a->active && !a->dead && !actor_inside(a) &&
@@ -2840,7 +3046,8 @@ static int recovery_bed_free(const Actor *patient, int bed, float *x, float *y) 
 static int nearest_recovery_bed(const Actor *a) {
     int best = 0;
     float reach = 26, x, y;
-    for (int b = 1; b <= g.buildingCount; b++) {
+    for (int i = 0; i < g.buildingCount; i++) {
+        int b = g.buildings[i].type == BAR ? -1 - i * 2 - inn_has_upstairs(i) : i + 1;
         if (!recovery_bed_location(b, &x, &y))
             continue;
         float d = distance(a->x, a->y, x, y);
@@ -2873,7 +3080,7 @@ void roadside_aid_finished(int mi, int pi) {
     if (g.roadsideAid.actor)
         g.roadsideAid.patient = 0;
     if (a->unconscious <= 0 || a->carriedBy >= 0 || m->carrying >= 0 ||
-        !aid_patient(a) || actor_inside(m) || wrand() % 3 != 0)
+        !aid_patient(a) || actor_inside(m) || (npc_role(m) != ROLE_MEDIC && wrand() % 3 != 0))
         return;
     int bed = nearest_recovery_bed(a);
     if (!bed)
@@ -2916,11 +3123,16 @@ static void roadside_move(int mi, float dt) {
         else {
             int bed = g.roadsideAid.bed;
             roadside_put_down(mi, a);
-            a->x = x;
-            a->y = y;
-            a->taskKind = 3;
-            a->taskIndex = bed > 0 ? bed - 1 : bed;
-            a->action = 120;
+            if (bed < 0 && bed > -1000) {
+                int building = (-bed - 1) / 2, floor = (-bed - 1) % 2;
+                if (!inn_recovery_spot(a, building, floor, &x, &y))
+                    return;
+                actor_enter_room(pi, building);
+                g.innFloor[pi] = floor;
+                place_in_bed(a, building, x, y, building + 1);
+            } else {
+                place_in_bed(a, bed > 0 ? bed - 1 : bed, x, y, 0);
+            }
             log_warn("%s laid %s in a bed to recover.", m->name, a->name);
         }
         return;

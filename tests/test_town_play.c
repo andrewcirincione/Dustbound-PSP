@@ -298,7 +298,7 @@ static void contracts(void) {
     a->x = towns[town].x;
     a->y = towns[town].y + 3;
     assert(save_game("build/v174/claim-ready.sav"));
-    assert(complete_contract(0) && !complete_contract(0) && g.money == money + 420);
+    assert(complete_contract(0) && !complete_contract(0) && g.money == money + contract_reward(town, CONTRACT_HUNT));
     assert(accept_contract(town, CONTRACT_ORE));
     assert(inventory_add(a, ORE, 1));
     contract_tick();
@@ -455,7 +455,7 @@ static void lodging_and_bounties(void) {
     row = fixture_action(ACTION_BOUNTY_TURN_IN);
     assert(row >= 0);
     nearby_action_choose(row);
-    assert(g.money == money + 300 && a->carrying < 0 && target->prisonTime > 0 && depth_room(target) == jail + 1);
+    assert(g.money == money + 600 && a->carrying < 0 && target->prisonTime > 0 && depth_room(target) == jail + 1);
     assert(!bounty_turn_in(2) && !bounty_payers(3));
     puts("PASS: shared lodge access, skill caps, placement on a bed and a single bounty payout through the jailkeeper.");
 }

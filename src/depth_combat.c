@@ -14,6 +14,10 @@ int depth_room(const Actor *a) {
         return 0;
     return g.interiorBuilding && n == g.interiorActor ? g.interiorBuilding : D.actors[n].room;
 }
+int actor_floor(const Actor *a) {
+    int n = index_of(a);
+    return n >= 0 && depth_room(a) ? g.innFloor[n] : 0;
+}
 float depth_x(const Actor *a) {
     int n = index_of(a);
     return depth_room(a) ? n == g.interiorActor && g.interiorBuilding ? g.interiorX : D.actors[n].rx
@@ -25,7 +29,7 @@ float depth_y(const Actor *a) {
                          : a->y;
 }
 float depth_distance(const Actor *a, const Actor *b) {
-    return depth_room(a) != depth_room(b) ? 9999
+    return depth_room(a) != depth_room(b) || actor_floor(a) != actor_floor(b) ? 9999
                                           : distance(depth_x(a), depth_y(a), depth_x(b), depth_y(b));
 }
 static int shot_clear(float x, float y) {
@@ -46,9 +50,10 @@ void depth_move_room(Actor *a, float dx, float dy, float dt) {
         return;
     float step = movement_speed(a) * dt / len;
     float x = depth_x(a), y = depth_y(a), ox=x, oy=y, nx = x + dx * step, ny = y + dy * step;
-    if (interior_walkable(room, nx, y))
+    int floor = actor_floor(a);
+    if (room_floor_walkable(room, floor, nx, y))
         x = nx;
-    if (interior_walkable(room, x, ny))
+    if (room_floor_walkable(room, floor, x, ny))
         y = ny;
     if (g.interiorBuilding && n == g.interiorActor) {
         g.interiorX = x;
@@ -68,6 +73,7 @@ void depth_enter_room(int building) {
             assigned_job(b) != JOB_FOLLOW || distance(a->x, a->y, b->x, b->y) >= 4)
             continue;
         D.actors[i].room = room;
+        g.innFloor[i] = 0;
         D.actors[i].rx = 2.8f + (i % 2) * 1.3f;
         D.actors[i].ry = 5.8f;
     }
@@ -78,6 +84,7 @@ void actor_leave_room(int n) {
     if (!room)
         return;
     D.actors[n].room = 0;
+    g.innFloor[n] = 0;
     D.actors[n].trespass = 0;
     building_door(room - 1, &a->x, &a->y);
     a->routeLen = a->routePos = 0;
@@ -88,7 +95,7 @@ void actor_leave_room(int n) {
 }
 void depth_leave_room(int building) {
     for (int i = 0; i < g.actorCount; i++)
-        if (g.actors[i].squad && D.actors[i].room == building + 1 && g.actors[i].prisonTime <= 0 &&
+        if (g.actors[i].squad && !actor_floor(&g.actors[i]) && D.actors[i].room == building + 1 && g.actors[i].prisonTime <= 0 &&
             !g.field.intake[i] && !actor_in_bed(&g.actors[i]))
             actor_leave_room(i);
 }
@@ -191,19 +198,13 @@ void depth_room_tick(float dt) {
         if (target >= 0 && (!a->squad || a->autoattack)) {
             Actor *b = &g.actors[target];
             int eviction = b->squad && D.actors[target].trespass >= 7 && a->gear[0];
-            if (npc_last_resort(a) && !eviction && !a->prisonTime) {
-                a->target = -1;
-                if (distance(depth_x(a),depth_y(a),3.5f,6.3f) < .55f)
-                    actor_leave_room(i);
-                else
-                    room_route_toward(a,3.5f,6.3f,dt);
-                continue;
-            }
             if (civilian_actor(a) && !eviction && !npc_attacked(a,b)) {
                 a->target = -1;
                 continue;
             }
             a->target = target;
+            if (a->taskKind == TASK_TREAT && !a->squad && treatment_patient(a) == i)
+                a->taskKind = 0;
             if (depth_tactics(a, target, dt))
                 continue;
             float range = a->gear[0] ? itemDefs[a->gear[0]].range : 1.55f;
@@ -211,8 +212,10 @@ void depth_room_tick(float dt) {
                 strike(i, target);
             else if (i != g.selected || !ui.manualMove)
                 room_route_toward(a, depth_x(b), depth_y(b), dt);
-        } else
+        } else {
             a->target = -1;
+            actor_self_aid(i);
+        }
     }
 }
 int depth_tactics(Actor *a, int target, float dt) {
@@ -228,7 +231,7 @@ int depth_tactics(Actor *a, int target, float dt) {
         return 1;
     Actor *b = &g.actors[target];
     float d = depth_distance(a, b);
-    if (order == ORDER_RANGED && weapon_ranged(a->gear[0]) && d < 3.5f && n != g.selected) {
+    if (order == ORDER_RANGED && weapon_ranged(a->gear[0]) && d < 3.5f && n != g.selected && a->squad) {
         if (depth_room(a))
             depth_move_room(a, depth_x(a) - depth_x(b), depth_y(a) - depth_y(b), dt);
         else
@@ -239,10 +242,12 @@ int depth_tactics(Actor *a, int target, float dt) {
 }
 int depth_fire(int source, int target, int weapon) {
     Actor *a = &g.actors[source], *b = &g.actors[target];
+    if (depth_room(a) != depth_room(b) || actor_floor(a) != actor_floor(b)) return 0;
     for (int i = 0; i < PROJECTILES; i++)
         if (!D.shots[i].active) {
             float dx = depth_x(b) - depth_x(a), dy = depth_y(b) - depth_y(a),
                   length = fmaxf(.01f, sqrtf(dx * dx + dy * dy));
+            g.shotFloor[i] = actor_floor(a);
             D.shots[i] = (Projectile){1,
                                       source,
                                       weapon,
@@ -271,13 +276,13 @@ void depth_projectiles(float dt) {
             p->x += p->vx * step;
             p->y += p->vy * step;
             p->left -= 18 * step;
-            if (p->left <= 0 || (p->room ? !interior_walkable(p->room, p->x, p->y) : !shot_clear(p->x, p->y))) {
+            if (p->left <= 0 || (p->room ? !room_floor_walkable(p->room, g.shotFloor[i], p->x, p->y) : !shot_clear(p->x, p->y))) {
                 p->active = 0;
                 break;
             }
             for (int j = 0; j < g.actorCount; j++) {
                 Actor *a = &g.actors[j];
-                if (j == p->source || !conscious(a) || depth_room(a) != p->room)
+                if (j == p->source || !conscious(a) || depth_room(a) != p->room || actor_floor(a) != g.shotFloor[i])
                     continue;
                 if (distance(p->x, p->y, depth_x(a), depth_y(a)) < .34f) {
                     combat_impact(p->source, j, p->weapon);

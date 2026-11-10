@@ -402,7 +402,7 @@ int society_job_available(int town, int kind) {
 }
 int society_bounty_reward(int town) {
     int who = service_actor(town, CONTRACT_BOUNTY);
-    return who >= 0 ? g.actors[who].bountyReward * 2 : 0;
+    return bounty_reward(who, 1);
 }
 int society_contract(int town,int kind){
  if(town<0||town>=TOWNS||kind<4||kind>7)return 0;
@@ -421,7 +421,7 @@ int society_contract(int town,int kind){
  if(kind==4){c.item=exports[town];int bond=item_price(town,c.item,0)*c.needed;if(g.money<bond){log_msg("Freight deposit: %d silver, refunded on delivery.",bond);return 0;}
   if(!inventory_add(p,c.item,c.needed)){log_msg("Make room for four units of freight.");return 0;}g.money-=bond;S.jobBond[slot]=bond;
  }else S.jobBond[slot]=0;
- if(kind==7)c.reward=g.actors[actor].bountyReward*2;
+ if(kind==7)c.reward=bounty_reward(actor,1);
  g.contracts[slot]=c;g.frontier.giver[slot]=ui.screen==SCREEN_DIALOG?ui.dialogActor+1:work_contact(town)+1;S.jobActor[slot]=actor+1;S.jobStage[slot]=0;S.jobWarned[slot]=0;S.jobFar[slot]=S.jobWarning[slot]=0;S.jobElapsed[slot]=S.jobNear[slot]=S.jobPaid[slot]=S.jobDistance[slot]=0;
  if(actor>=0){S.jobX[slot]=g.actors[actor].x;S.jobY[slot]=g.actors[actor].y;}
  if(kind==CONTRACT_ESCORT) {
@@ -539,9 +539,9 @@ static void tick_jobs(float dt) {
             S.jobNear[i] += dt;
             S.jobDistance[i] += moved;
             if (S.jobNear[i] - S.jobPaid[i] >= 30) {
-                g.money += 12;
+                g.money += 20;
                 S.jobPaid[i] += 30;
-                log_msg("Wages +12 silver.");
+                log_msg("Wages +20 silver.");
             }
         }
         if ((escort && near && distance(a->x,a->y,towns[c->target].x,towns[c->target].y) < 4) ||
@@ -728,13 +728,22 @@ int nearby_actions(void){
   else if(!b->squad){if(!hostile(a,b)||b->target<0){add_action(ACTION_CONTEXT,0,n);if(a->sneaking)add_action(ACTION_STEAL,0,n);}if(a->autoattack)add_action(ACTION_ATTACK,0,n);}
   else add_action(ACTION_CONTEXT,0,n);
  }
+ for (int n = 0; n < g.nodeCount; n++)
+     if (g.nodes[n].remaining && node_distance(a, n) <= WORK_REACH) {
+         if (g.nodes[n].locked) {
+             add_action(ACTION_UNLOCK, 1, n);
+             add_action(ACTION_OPEN, 1, n);
+         } else {
+             add_action(ACTION_CONTEXT, 1, n);
+         }
+     }
  if(room){
   int context=interior_context();
   if(context!=-2)add_action(ACTION_CONTEXT,5,room-1);
   if(context!=-3&&home_state(room-1)==HOME_OWNED)add_action(ACTION_FURNISH,5,room-1);
   return actionCount;
  }
- for(int n=0;n<g.nodeCount;n++)if(g.nodes[n].remaining&&distance(a->x,a->y,g.nodes[n].x,g.nodes[n].y)<=WORK_REACH){if(g.nodes[n].locked){add_action(ACTION_UNLOCK,1,n);add_action(ACTION_OPEN,1,n);}else add_action(ACTION_CONTEXT,1,n);}
+
  for (int b = 0; b < g.buildingCount; b++) {
      Building *v = &g.buildings[b];
      if (portable_bedroll(b) < 0)
@@ -874,6 +883,8 @@ static const char *action_reason(const NearbyAction *x, int queueing) {
         return population_action_reason(n, x->kind);
     if (x->kind == 1) {
         Node *node = &g.nodes[n];
+        if (!node->remaining)
+            return "Nothing left";
         if (x->type == ACTION_OPEN && node->locked) {
             if (queueing)
                 for (int q = 0; q < S.queueCount[g.selected]; q++)
@@ -896,7 +907,7 @@ static const char *action_reason(const NearbyAction *x, int queueing) {
     }
     if (x->kind == 5 && g.buildings[n].owner < 0 && g.money < 25) {
         InteriorProp props[ROOM_PROPS];
-        interior_props(n, props);
+        interior_floor_props(n, actor_floor(a), props);
         int c = interior_context();
         if (c >= 0 && props[c].action == ROOM_REST)
             return "Need 25 silver";

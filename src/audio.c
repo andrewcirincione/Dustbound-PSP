@@ -139,11 +139,12 @@ static int decode_thread(SceSize n, void *arg) {
 }
 
 typedef struct {
-    int kind, left, length;
+    int kind, left, length, filtered;
     unsigned phase, step, noise;
 } Voice;
 static Voice voices[4];
 void audio_event(int kind) {
+    if (kind < SFX_SWING || kind > SFX_MINE) return;
     int next = (writeEvent + 1) & 15;
     if (next == readEvent)
         return;
@@ -174,10 +175,13 @@ static int sound_thread(SceSize n, void *arg) {
             int kind = events[readEvent];
             readEvent = (readEvent + 1) & 15;
             Voice *v = &voices[serial++ % 4];
+            static const unsigned short length[] = {0,5500,7000,10000,9000,1250,2300,4300,3700,2850,3550};
+            static const unsigned short pitch[] = {0,700,190,2200,110,920,1160,1670,500,102,3200};
             v->kind = kind;
-            v->length = v->left = kind == 1 ? 5500 : kind == 2 ? 7000 : kind == 3 ? 10000 : 9000;
+            v->length = v->left = length[kind];
             v->phase = 0;
-            v->step = kind == 2 ? 190 : kind == 3 ? 2200 : kind == 4 ? 110 : 700;
+            v->filtered = 0;
+            v->step = pitch[kind];
             v->noise = 73819 + serial * 93;
         }
         for (int i = 0; i < BLOCK_FRAMES; i++) {
@@ -194,11 +198,23 @@ static int sound_thread(SceSize n, void *arg) {
                 wave = wave < 32768 ? wave : -wave + 65535;
                 wave = (wave - 16384) / 3;
                 int noise = (int)(v->noise & 16383) - 8192;
-                int sample = v->kind == 1   ? noise / 3
-                             : v->kind == 2 ? (wave * 2 + noise) / 2
-                             : v->kind == 3 ? wave + noise / 4
-                                            : noise;
+                int sample;
+                v->filtered += (noise - v->filtered) / 10;
+                switch (v->kind) {
+                case SFX_SWING: sample = noise / 3; break;
+                case SFX_HIT: sample = wave + noise / 2; break;
+                case SFX_BLOCK: sample = wave + noise / 4; break;
+                case SFX_MENU_MOVE: sample = wave / 7; break;
+                case SFX_MENU_PICK: sample = (wave + v->filtered) / 5; break;
+                case SFX_DRAW: sample = (noise - v->filtered) / 6 + wave / 8; break;
+                case SFX_SHEATHE: sample = v->filtered / 2 + wave / 7; break;
+                case SFX_STEP: sample = v->filtered / 2 + wave / 11; break;
+                case SFX_MINE: sample = wave / 4 + noise / 8; break;
+                default: sample = noise; break;
+                }
                 int amp = v->left * 256 / v->length;
+                int attack = (v->length - v->left) * 4;
+                if (amp > attack) amp = attack;
                 mixed += sample * amp / 256;
                 v->left--;
             }

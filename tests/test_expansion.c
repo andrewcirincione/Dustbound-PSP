@@ -121,7 +121,7 @@ int main(void) {
     inventory_add(a, ORE, 8);
     CHECK(accept_contract(0, 1) && !accept_contract(0, 1), "journal rejects a duplicate active contract");
     oldmoney = g.money;
-    CHECK(complete_contract(0) && g.money == oldmoney + 240 && g.contractsDone == 1 && g.rep[UNION] == 8 &&
+    CHECK(complete_contract(0) && g.money == oldmoney + contract_reward(0, CONTRACT_ORE) && g.contractsDone == 1 && g.rep[UNION] == 8 &&
               inventory_count(a, ORE) == 0,
           "supply contract consumes goods and pays silver and reputation");
     CHECK(!complete_contract(0), "completed contract cannot pay twice");
