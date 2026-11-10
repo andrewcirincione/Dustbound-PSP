@@ -24,7 +24,7 @@ def glyphs(s):
  for code,name in icons.items():s=s.replace(chr(code),f'![{name}](../assets/ui/{name}.svg)')
  return s.replace('\n','\n\n')
 version=re.search(r'#define VERSION "([^"]+)"',(root/'src/game.h').read_text()).group(1)
-text=f'# Dustbound field guide — {version}\n\nThe {len(array("guideTitles"))} chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.\n\n'
+text=f'# Dust field guide — {version}\n\nThe {len(array("guideTitles"))} chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.\n\n'
 for i,(title,body) in enumerate(zip(array('guideTitles'),array('guideBodies')),1):text+=f'## {i}. {title.title()}\n\n{glyphs(body)}\n\n'
 text+='## Nearby identities and sightings\n\nRead equipment and formation to judge a group. Nearby labels show role, faction color and hostility. Start > World > Factions shows the color key and your standing. Hidden ambushers remain hidden until detected. Combat bars show remaining knockout reserve; no skill readouts appear from proximity.\n\nWorld activity records last-seen places and times. Cross locates a report on the map; Cross there sets a manual pin. Councils show named claimants and policies before a pledge.\n'
 (root/'docs/FIELD_GUIDE.md').write_text(text.rstrip()+'\n')

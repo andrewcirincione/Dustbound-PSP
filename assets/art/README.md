@@ -1,6 +1,6 @@
 # Original painted frontier artwork
 
-The runtime uses thirteen original painted source atlases: buildings-v2, wilderness, furniture, props, torsos, heads, limbs, boots-backs, beasts, materials, weapons-blades, weapons-frontier and weapons-heavy. Their western/samurai briefs were created for Dustbound; no Kenshi game assets are included. The launcher-v041 illustration supplies the PSP launcher icon. A separate dust-storm illustration is used for the PSP wallpaper.
+The runtime uses thirteen original painted source atlases: buildings-v2, wilderness, furniture, props, torsos, heads, limbs, boots-backs, beasts, materials, weapons-blades, weapons-frontier and weapons-heavy. Their western/samurai briefs were created for Dust; no Kenshi game assets are included. The launcher-v041 illustration supplies the PSP launcher icon. A separate dust-storm illustration is used for the PSP wallpaper. The ruined-villages atlas supplies painted ruins for the trading post, inn, smithy and cottage.
 
 Version 0.4.1 replaces all 32 geometric weapon families with painted sprites. Legacy items use the matching family art. Six material treatments and four quality grades preserve wood, leather, wrapping and rust while changing exposed metal. Warm source colours remain muted. Painted sprites, articulated body parts and rigid weapon pivots share the existing attack poses.
 

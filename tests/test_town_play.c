@@ -157,9 +157,11 @@ static void chest_migration(void) {
     add_node(x, y, NODE_LOCKED, SCAVENGERS, RELIC, 2);
     assert(g.nodeCount == node + 1);
     g.frontier.version = 1;
+    int buildings = g.buildingCount;
     assert(save_game("build/v174/overlapping-chest.sav") && load_game("build/v174/overlapping-chest.sav"));
     const Node *chest = &g.nodes[node];
-    assert(g.frontier.version == 3 && distance(chest->x,chest->y,x,y) > 1.5f && can_walk(chest->x,chest->y));
+    assert(g.frontier.version == 4 && g.buildingCount == buildings);
+    assert(distance(chest->x,chest->y,x,y) > 1.5f && can_walk(chest->x,chest->y));
     assert(chest->item == RELIC && chest->owner == SCAVENGERS && chest->qty == 2);
     assert(a->active && !actor_inside(a));
     puts("PASS: a saved chest moves clear of a building and keeps its contents and owner.");

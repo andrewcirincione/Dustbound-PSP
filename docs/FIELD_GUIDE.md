@@ -1,4 +1,4 @@
-# Dustbound field guide — 0.18.4
+# Dust field guide — 0.19.0
 
 The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 

@@ -4,7 +4,7 @@ extern int hostile(const Actor*,const Actor*);
 #define LW (g.living)
 static unsigned event_random(WorldEvent *e){unsigned x=e->seed;x^=x<<13;x^=x>>17;x^=x<<5;return e->seed=x?x:31;}
 static const char *eventTypes[8]={"CARAVAN","RAIDING COLUMN","RELIEF APPEAL","LOST CACHE","STRANDED PILGRIM","HUNTING PACK","MARCHING ARMY","WARLORD RETINUE"};
-static const char *eventMods[4]={"DUSTBOUND","STARVING","IRONCLAD","VETERAN"};
+static const char *eventMods[4]={"DUST-WORN","STARVING","IRONCLAD","VETERAN"};
 int living_owned(int n){return n>=0&&n<MAX_ACTORS&&LW.owned[n]!=0;}
 static int actor_index(const Actor*a){return (uintptr_t)a>=(uintptr_t)g.actors&&(uintptr_t)a<(uintptr_t)(g.actors+g.actorCount)?(int)(a-g.actors):-1;}
 static int event_for(int n){return n>=0&&n<MAX_ACTORS&&LW.owned[n]>0&&LW.owned[n]<=EVENTS?LW.owned[n]-1:-1;}

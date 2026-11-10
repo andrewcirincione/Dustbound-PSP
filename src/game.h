@@ -1,13 +1,15 @@
 #ifndef DUSTBOUND_GAME_H
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
-#define VERSION "0.18.9"
+#define GAME_NAME "Dust"
+#define VERSION "0.19.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
 #define TALK_REACH 1.6f
 #define MAX_ACTORS 192
-#define MAX_BUILDINGS 384
+#define MAX_BUILDINGS 448
+#define RUIN_VILLAGES 4
 #define MAX_NODES 640
 #define PACK 24
 #define SKILLS 20
@@ -376,6 +378,9 @@ typedef struct {
     unsigned char innFloor[MAX_ACTORS]; /* 0 is ground, 1 is upstairs */
     DropLocation drops[MAX_NODES];
     unsigned char shotFloor[PROJECTILES];
+    /* v28 extension. Building and actor references are one-based. */
+    unsigned short residentHome[MAX_ACTORS], ruinedVillage[RUIN_VILLAGES];
+    unsigned char ruinCrew[RUIN_VILLAGES];
 } Game;
 enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH, ROOM_STAIRS };
@@ -384,14 +389,19 @@ enum { ROOM_PROPS = 18 };
 #define CELL_Y 3.65f
 #define CELL_HINGE_X 2.65f
 #define CELL_LATCH_X 4.35f
-enum { BUILD_NORMAL, BUILD_ARMORER, BUILD_LODGE };
+enum { BUILD_NORMAL, BUILD_ARMORER, BUILD_LODGE,
+       BUILD_RUIN_FIRST, BUILD_RUIN_LAST = BUILD_RUIN_FIRST + RUIN_VILLAGES - 1 };
+enum { TOWN_LOCAL, TOWN_HUB, TOWN_FORTRESS, TOWN_CAPITAL };
 enum { TRADE_GENERAL, TRADE_SMITH, TRADE_INN, TRADE_ARMORER, TRADE_APOTHECARY };
 typedef struct {
     const char *inn, *market;
-    unsigned char beds, smith, custody, marketTier, plan, turn;
+    unsigned char beds, smith, custody, marketTier, plan, turn, importance;
+    signed char location;
 } TownDesign;
 const TownDesign *town_design(int town);
 int building_town(int id);
+int ruined_building(int id);
+void ruined_village_guards(int nearby);
 int starter_country(float x, float y);
 unsigned bounty_payers(int target);
 int bounty_guard(int guard, int target);
@@ -476,6 +486,7 @@ int home_occupant(int building);
 int rest_at(Actor *a, int bed, float x, float y, int room, int price);
 int actor_in_bed(const Actor *a);
 void homes_init(void);
+void home_assign_resident(int n, int building);
 int homes_validate(const Game *save);
 int home_state(int building);
 int home_price(int building);

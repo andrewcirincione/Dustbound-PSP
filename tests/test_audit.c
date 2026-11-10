@@ -273,6 +273,11 @@ int main(void) {
     memset(g.field.camp, 0, sizeof(g.field.camp));
     memset(g.frontier.lodge, 0, sizeof(g.frontier.lodge));
     memset(&g.homes, 0, sizeof(g.homes));
+    memset(g.residentHome, 0, sizeof(g.residentHome));
+    memset(g.ruinedVillage, 0, sizeof(g.ruinedVillage));
+    memset(g.ruinCrew, 0, sizeof(g.ruinCrew));
+    for (int i = 0; i < g.actorCount; i++)
+        g.depth.actors[i].room = 0;
     CHECK(save_game("build/v052-workers.sav"));
     int q = stored(0, RATION);
     CHECK(load_game("build/v052-workers.sav"));

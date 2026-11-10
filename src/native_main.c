@@ -288,7 +288,7 @@ int main(int argc, char **argv) {
     }
 #ifdef USE_SDL
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
-    SDL_Window *w = SDL_CreateWindow("Dustbound - native development", SDL_WINDOWPOS_CENTERED,
+    SDL_Window *w = SDL_CreateWindow(GAME_NAME " - native development", SDL_WINDOWPOS_CENTERED,
                                      SDL_WINDOWPOS_CENTERED, 960, 544, 0);
     SDL_Renderer *r = SDL_CreateRenderer(w, -1, SDL_RENDERER_SOFTWARE);
     SDL_Texture *t = SDL_CreateTexture(r, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, 480, 272);

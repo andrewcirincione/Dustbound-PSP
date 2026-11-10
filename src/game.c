@@ -574,6 +574,7 @@ void raider_scraps(Actor *a, unsigned seed) {
 void init_actor(int n, const char *name, int kind, int faction, float x, float y, int skill) {
     combatVisuals[n] = (CombatVisual){0};
     g.innFloor[n] = 0;
+    g.residentHome[n] = 0;
     pursuits[n] = (Pursuit){0};
     g.townLife.squadHitAt[n] = 0;
     g.field.intake[n] = 0;
@@ -650,8 +651,7 @@ int add_build(float x, float y, int type, int faction, int owner) {
         return -1;
     if (n == g.buildingCount)
         g.buildingCount++;
-    else
-        g.depth.buildings[n] = (DepthBuilding){.condition = 100};
+    g.depth.buildings[n] = (DepthBuilding){.condition = 100};
     g.field.rolls[n] = 0;
     g.frontier.variant[n] = 0;
     g.buildings[n] = (Building){x, y, type, faction, owner, 1, 0, 0};
@@ -2370,6 +2370,7 @@ void simulate(float dt) {
     tick_expansion(dt);
     custody_tick(dt);
     population_tick(dt);
+    ruined_village_guards(1);
     living_tick(dt);
     society_tick(dt);
     civil_tick(dt);
@@ -2701,7 +2702,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 27 };
+enum { SAVE_VERSION = 28, V27_BUILDINGS = 384 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -2734,7 +2735,7 @@ static int validate_game(const Game *t) {
         return 0;
     if (!homes_validate(t) || !warrants_validate(t) || !field_validate(t) ||
         t->townLife.layout < 0 || t->townLife.layout > 1 ||
-        t->frontier.version < 0 || t->frontier.version > 3 || t->frontier.clanMember < 0 ||
+        t->frontier.version < 0 || t->frontier.version > 4 || t->frontier.clanMember < 0 ||
         t->frontier.clanMember > 1 || t->frontier.completedCount > COMPLETED_CONTRACTS ||
         t->frontier.completedNext >= COMPLETED_CONTRACTS || t->frontier.tollKnown > 1)
         return 0;
@@ -2760,8 +2761,20 @@ static int validate_game(const Game *t) {
             if (t->charges[n][f] & ~CRIME_MASK)
                 return 0;
     for (int i = 0; i < t->buildingCount; i++)
-        if (t->townLife.chestRefresh[i] < 0 || t->frontier.variant[i] > BUILD_LODGE)
+        if (t->townLife.chestRefresh[i] < 0 || t->frontier.variant[i] > BUILD_RUIN_LAST)
             return 0;
+    for (int i = 0; i < RUIN_VILLAGES; i++) {
+        int b = t->ruinedVillage[i];
+        if (b > t->buildingCount || t->ruinCrew[i] > 3 ||
+            (b && t->frontier.variant[b - 1] != BUILD_RUIN_FIRST + i))
+            return 0;
+    }
+    for (int n = 0; n < t->actorCount; n++) {
+        int b = t->residentHome[n];
+        if (b > t->buildingCount || (b && (t->buildings[b - 1].type != HOUSE ||
+            t->buildings[b - 1].owner >= 0 || t->homes.property[b - 1] || t->frontier.variant[b - 1])))
+            return 0;
+    }
     for (int i = 0; i < TOWNS; i++)
         if (t->townLife.theftCount[i] > 3 || t->townLife.boardCycle[i] < 0 ||
             !isfinite(t->townLife.theftUntil[i]) || !isfinite(t->townLife.searchAfter[i]) ||
@@ -2996,17 +3009,23 @@ static int migrate_legacy(const LegacyGame *old) {
     return validate_game(&g);
 }
 static int save_shape(uint32_t version,uint32_t size) {
-    if (version == 26)
-        return size == offsetof(Game, visitedTowns);
-    if (version == 25)
-        return size == offsetof(Game, homes);
-    if (version >= 17 && version <= 24) {
+    if (version >= 17 && version <= 27) {
         static const size_t ends[] = {offsetof(Game,theftWarnings),offsetof(Game,theftWarnings),
             offsetof(Game,roadsideAid),offsetof(Game,townLife),offsetof(Game,field),
-            offsetof(Game,charges),offsetof(Game,frontier),offsetof(Game,homes)};
-        const size_t groupSize = sizeof(g.population.groups[0])+sizeof(g.population.state[0])+
-            sizeof(g.population.social[0])+sizeof(g.life.groups[0])+sizeof(g.fieldNotes.group[0]);
-        return size == ends[version-17] - ROAMING_BANDIT_GROUPS*groupSize;
+            offsetof(Game,charges),offsetof(Game,frontier),offsetof(Game,homes),
+            offsetof(Game,homes),offsetof(Game,visitedTowns),offsetof(Game,residentHome)};
+        size_t buildingBytes = sizeof(g.buildings[0]) + sizeof(g.depth.buildings[0]);
+        if (version >= 21) buildingBytes += sizeof(g.townLife.chestRefresh[0]);
+        if (version >= 22) buildingBytes += sizeof(g.field.rolls[0]);
+        if (version >= 24) buildingBytes += sizeof(g.frontier.variant[0]);
+        if (version >= 26) buildingBytes += sizeof(g.homes.property[0]) + sizeof(g.homes.furniture[0]);
+        size_t expansion = (MAX_BUILDINGS - V27_BUILDINGS) * buildingBytes;
+        if (version <= 24) {
+            const size_t groupSize = sizeof(g.population.groups[0]) + sizeof(g.population.state[0]) +
+                sizeof(g.population.social[0]) + sizeof(g.life.groups[0]) + sizeof(g.fieldNotes.group[0]);
+            expansion += ROAMING_BANDIT_GROUPS * groupSize;
+        }
+        return size == ends[version - 17] - expansion;
     }
     return (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
@@ -3032,17 +3051,28 @@ static void read_save_array(SaveReader *reader, void *array, size_t oldBytes, si
 }
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if (version >= 25) memcpy(out, data, size);
+    if (version == SAVE_VERSION) memcpy(out, data, size);
     else {
         SaveReader reader = {data, (unsigned char *)out, size};
 #define WIDEN(field, count) read_save_array(&reader, out->field, (count) * sizeof(out->field[0]), sizeof(out->field))
         if (version >= 17) {
-            WIDEN(population.groups, WAR_POP_GROUPS);
-            WIDEN(population.state, WAR_POP_GROUPS);
-            WIDEN(population.social, WAR_POP_GROUPS);
-            WIDEN(life.groups, WAR_POP_GROUPS);
-            WIDEN(fieldNotes.group, WAR_POP_GROUPS);
-            read_save_span(&reader, (unsigned char *)out + sizeof(*out));
+            WIDEN(buildings, V27_BUILDINGS);
+            WIDEN(depth.buildings, V27_BUILDINGS);
+            if (version <= 24) {
+                WIDEN(population.groups, WAR_POP_GROUPS);
+                WIDEN(population.state, WAR_POP_GROUPS);
+                WIDEN(population.social, WAR_POP_GROUPS);
+                WIDEN(life.groups, WAR_POP_GROUPS);
+                WIDEN(fieldNotes.group, WAR_POP_GROUPS);
+            }
+            if (version >= 21) WIDEN(townLife.chestRefresh, V27_BUILDINGS);
+            if (version >= 22) WIDEN(field.rolls, V27_BUILDINGS);
+            if (version >= 24) WIDEN(frontier.variant, V27_BUILDINGS);
+            if (version >= 26) {
+                WIDEN(homes.property, V27_BUILDINGS);
+                WIDEN(homes.furniture, V27_BUILDINGS);
+            }
+            read_save_span(&reader, &out->residentHome);
         } else {
             int oldItems = version>=11 ? TOWN_STOCK_ITEMS : version==10 ? V100_ITEMS : version==9 ? V090_ITEMS :
                            version==8 ? OLD_ITEMS : version>=5 ? CATALOG_ITEMS : 2052;
@@ -3066,6 +3096,8 @@ static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t si
         }
 #undef WIDEN
         if (reader.left) return 0;
+    }
+    if (version < 25) {
         for (int i = 0; i < MAX_ACTORS; i++) {
             out->actors[i].healthScale = 0;
             if (version < 20) out->actors[i].woundFlags = 0;

@@ -1,3 +1,11 @@
+# 0.19.0 — Dust
+
+- The game and PSP launcher now use the name Dust.
+- The near arm layers in front of clothing in the creator, passive stance and combat.
+- Deed prices reflect settlement importance, services and location. The Dry Market is cheaper than Copper Cross.
+- Residents have specific homes and visit them on their daily routines.
+- Four ruined villages house bandit or raider crews. Wrecked businesses contain finite salvage.
+
 # 0.18.9 — Settlement deeds and ambient music
 
 - Deed prices rise with settlement size and market tier. Faction capitals carry the highest prices.

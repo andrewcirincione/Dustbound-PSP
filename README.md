@@ -1,6 +1,6 @@
-# Dustbound — PSP frontier survival RPG
+# Dust — PSP frontier survival RPG
 
-## 0.18.9 — Settlement deeds and ambient music
+## 0.19.0 — Ruined villages
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
@@ -16,11 +16,11 @@ All nineteen settlements have their own street plans, amenities and interiors, w
 
 Painted buildings and furniture use measured foundations. Walls follow both isometric axes, and jail gates swing open when unlocked. Nearby names and speech share space with building labels. Household chests hold supplies. Enemies hold their ground when wounded.
 
-Quiet routes draw fresh travelers, camps and encounters. Patrols from rival factions can clash, hunters track animal packs, and bandits go after caravans and pilgrims. Cleared areas replenish over time outside your squad's view.
+Four ruined villages sit off the main roads. Raider crews occupy the wrecked buildings, and their abandoned trading posts hold finite salvage. Quiet routes draw fresh travelers, camps and encounters. Patrols from rival factions can clash, hunters track animal packs, and bandits go after caravans and pilgrims. Cleared areas replenish over time outside your squad's view.
 
 Read wanted posters at a jail to track a target and pin their last reported location. Three high-profile outlaws carry unique gear and stay dead once killed. Road warrants rotate as groups come and go. Carry the target to a jailkeeper from a paying faction. Live captures pay double.
 
-Buy a vacant house at its door. Furnish it with beds, chests, tables, shelves and stoves. Any chest in a purchased house opens the same squad stash. Existing expeditions can upgrade to save version 27.
+Residents return to their own homes. Buy a vacant house at its door. Deeds reflect the town’s importance, services and location. Furnish it with beds, chests, tables, shelves and stoves. Any chest in a purchased house opens the same squad stash. Existing expeditions can upgrade to save version 28.
 
 ![Nearby roles and military equipment](evidence/v150-psp-army.png)
 
@@ -53,7 +53,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dustbound-0.18.9-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v27 reads earlier expeditions. Existing equipment, training and town control carry over.
+Extract `Dust-0.19.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v28 reads earlier expeditions. Existing equipment, training and town control carry over.
 
 ## Controls
 

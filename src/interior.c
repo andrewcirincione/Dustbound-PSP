@@ -55,10 +55,27 @@ void homes_init(void) {
 }
 int home_price(int building) {
     int town = building_town(building);
+    if (town < 0)
+        return 0;
     const TownDesign *plan = town_design(town);
-    int sizePremium = plan->beds > 2 ? (plan->beds - 2) * 1200 : 0;
-    int capitalPremium = town >= OLD_TOWNS ? 8000 : 0;
-    return 5200 + sizePremium + plan->marketTier * 2600 + capitalPremium + (building % 5) * 250;
+    static const int importance[] = {0, 650, 1600, 6500};
+    const Town *center = &towns[town];
+    const Building *plot = &g.buildings[building];
+    int smith = 0, specialist = 0;
+    for (int i = 0; i < g.buildingCount; i++) {
+        const Building *service = &g.buildings[i];
+        int forge = service->type == FORGE, armor = g.frontier.variant[i] == BUILD_ARMORER;
+        if ((forge || armor) && service->owner < 0 &&
+            fabsf(service->x - center->x) < 24 && fabsf(service->y - center->y) < 24 &&
+            building_town(i) == town && depth_build_ready(i)) {
+            smith |= forge;
+            specialist |= armor;
+        }
+    }
+    int amenities = plan->beds * 125 + plan->marketTier * 400 + plan->custody * 250 +
+                    smith * 1800 + specialist * 950;
+    int frontage = (int)fmaxf(0, 15 - distance(plot->x, plot->y, center->x, center->y)) * 50;
+    return 5200 + importance[plan->importance] + plan->location * 400 + amenities + frontage;
 }
 void home_open(int building) {
     ui.homeSite = building;
@@ -145,14 +162,17 @@ int homes_validate(const Game *save) {
     return 1;
 }
 
-static int private_chest(int building) {
+static int room_has_chest(int building) {
     const Building *b = &g.buildings[building];
+    if (ruined_building(building))
+        return b->type == SHOP;
     return b->owner < 0 && b->faction > FREE && !home_state(building) &&
            (b->type == SHOP || (b->type == HOUSE &&
             (g.townLife.chestRefresh[building] || (g.seed + building * 17u) % 5 != 0)));
 }
 static void restock_chest(int building) {
-    if (!private_chest(building) || g.day < g.townLife.chestRefresh[building])
+    if (ruined_building(building) || !room_has_chest(building) ||
+        g.day < g.townLife.chestRefresh[building])
         return;
     Building *b = &g.buildings[building];
     unsigned mix = (g.seed ^ (unsigned)building * 2654435761u) + g.day * 97u;
@@ -186,7 +206,7 @@ static Stack *chest_stack(int row, int *slot) {
         count = SEIZED_STACKS;
     } else {
         if (!g.interiorBuilding || g.interiorBuilding != ui.storageIndex + 1 ||
-            !private_chest(ui.storageIndex))
+            !room_has_chest(ui.storageIndex))
             return NULL;
         stacks = g.buildings[ui.storageIndex].storage;
         count = 16;
@@ -247,26 +267,16 @@ void interior_chest_take(int row) {
     if (owner && ui.chestKind != CHEST_PROPERTY)
         witnessed_theft(a, owner, 6, 18);
 }
+static int home_hours(int town) {
+    int morning = 7 + (town + g.day) % 3;
+    return g.dayTime < 7 || g.dayTime >= 21 ||
+           (g.dayTime >= morning && g.dayTime < morning + 3) ||
+           (g.dayTime >= 16 + town % 3 && g.dayTime < 17 + town % 3);
+}
 static int home_destination(int n, int town) {
-    const Actor *a = &g.actors[n];
-    int night = g.dayTime < 7 || g.dayTime >= 19;
-    unsigned shift = g.seed + n * 17u + g.day;
-    if (night ? shift % 5 == 0 : (shift + (int)g.dayTime / 3) % 5 != 0)
-        return -1;
-    int chosen = -1;
-    unsigned best = 0;
-    for (int j = 0; j < g.buildingCount; j++) {
-        const Building *home = &g.buildings[j];
-        if (home->type != HOUSE || home->owner >= 0 || home_state(j) || home->faction != a->faction ||
-            building_town(j) != town)
-            continue;
-        unsigned score = (shift ^ (j * 65537u)) * 2654435761u;
-        if (chosen < 0 || score > best) {
-            best = score;
-            chosen = j;
-        }
-    }
-    return chosen;
+    int home = g.residentHome[n] - 1;
+    return home >= 0 && home_hours(town) && g.buildings[home].faction == g.actors[n].faction
+           ? home : -1;
 }
 int home_occupant(int building) {
     for (int i = 0; i < g.actorCount; i++)
@@ -329,7 +339,7 @@ static int open_stop(int n, int room, float x, float y, float gap) {
     }
     return 1;
 }
-static int pick_inn_post(int n, int building, unsigned shift, float *x, float *y) {
+static int pick_room_post(int n, int building, unsigned shift, float *x, float *y) {
     static const float places[][2] = {
         {1.25f,3.5f},{2.25f,4.4f},{4.85f,3.25f},{5.7f,3.8f},{4.7f,5.8f},
         {1.8f,5.6f},{2.95f,2.55f},{4.3f,2.55f},{2.45f,1.45f},{5.85f,1.5f},
@@ -349,6 +359,17 @@ static int pick_inn_post(int n, int building, unsigned shift, float *x, float *y
         return 1;
     }
     return 0;
+}
+void home_assign_resident(int n, int building) {
+    g.residentHome[n] = building + 1;
+    if (g.time > 0 || !home_hours(g.actors[n].homeTown))
+        return;
+    float x, y;
+    if (pick_room_post(n, building, g.seed + (unsigned)n, &x, &y)) {
+        actor_enter_room(n, building);
+        g.depth.actors[n].rx = x;
+        g.depth.actors[n].ry = y;
+    }
 }
 static void pick_street_post(int n, float cx, float cy, float radius, unsigned shift, float *x, float *y) {
     for (int k = 0; k < 16; k++) {
@@ -389,18 +410,16 @@ static TownStop town_stop(int n, int town, int role) {
             return next;
         }
     }
+    int home = home_destination(n, town);
+    if (home >= 0 && pick_room_post(n, home, shift, &next.x, &next.y)) {
+        next.room = home + 1;
+        return next;
+    }
     int mealtime = (hour >= 7 && hour <= 10) || (hour >= 17 && hour <= 22);
     if (hour >= 7 && hour <= 23 && shift % 10 < (mealtime ? 7u : 3u)) {
         int inn = town_service_building(a,town,BAR);
-        if (inn >= 0 && pick_inn_post(n,inn,shift,&next.x,&next.y)) {
+        if (inn >= 0 && pick_room_post(n,inn,shift,&next.x,&next.y)) {
             next.room = inn + 1;
-            return next;
-        }
-    }
-    if (role != ROLE_RECRUIT && (hour < 7 || hour >= 19 || shift % 5 == 0)) {
-        int home = home_destination(n,town);
-        if (home >= 0 && pick_inn_post(n,home,shift,&next.x,&next.y)) {
-            next.room = home + 1;
             return next;
         }
     }
@@ -635,6 +654,16 @@ static int room_layout(int building, int t, int style, int floor, InteriorProp *
     int layout = (building + (t + 1) * 5) % 3;
     static const int decor[] = {ART_IRON_STOVE, ART_ARMOR_STAND, ART_SIDE_ALTAR,
                                ART_CARAVAN_BALES, ART_IRON_STOVE, ART_CARAVAN_BALES};
+    if (ruined_building(building)) {
+        if (b->type == SHOP)
+            put_prop(p,&n,5.75f,2.0f,.43f,.37f,20,ROOM_CHEST);
+        if (b->type == FORGE)
+            put_prop(p,&n,1.35f,1.55f,.60f,.57f,19,ROOM_NONE);
+        if (b->type == BAR || b->type == SHOP)
+            put_prop(p,&n,2.45f,1.22f,.89f,.34f,17,ROOM_NONE);
+        put_prop(p,&n,1.15f,4.35f,.46f,.47f,ART_CARAVAN_BALES,ROOM_NONE);
+        return n;
+    }
     if (home_state(building)) {
         for (int bay = 0; bay < HOME_BAYS; bay++) {
             int type = g.homes.furniture[building][bay];
@@ -669,7 +698,7 @@ static int room_layout(int building, int t, int style, int floor, InteriorProp *
         else
             put_prop(p,&n,layout == 2 ? 4.1f : 3.35f,1.62f,
                      .94f + plan->marketTier*.10f,.36f,17,ROOM_TRADE);
-        if (private_chest(building))
+        if (room_has_chest(building))
             put_prop(p,&n,sideCounter ? 6.15f : 1.05f,sideCounter ? 1.26f : 3.32f,.43f,.37f,20,ROOM_CHEST);
         put_prop(p,&n,1.1f,1.06f,.50f,.35f,variant == BUILD_ARMORER ? ART_ARMOR_STAND : decor[style],ROOM_NONE);
         if (layout == 2 && t == 3) {
@@ -729,7 +758,7 @@ static int room_layout(int building, int t, int style, int floor, InteriorProp *
         put_prop(p,&n,bx,layout == 2 ? 3.1f : 1.55f,layout == 2 ? .82f : .59f,layout == 2 ? .54f : .81f,16,ROOM_REST);
         put_prop(p,&n,layout == 1 ? 1.42f : 5.48f,layout == 2 ? 2.05f : 4.08f,.66f,.57f,18,ROOM_NONE);
         put_prop(p,&n,layout == 1 ? 1.12f : 5.62f,1.0f,.65f,.37f,decor[style],ROOM_NONE);
-        if (private_chest(building))
+        if (room_has_chest(building))
             put_prop(p,&n,layout == 1 ? 5.5f : 1.17f,4.85f,.46f,.42f,20,ROOM_CHEST);
         if (style == 2 || style == 1 || layout == 0)
             put_prop(p,&n,3.58f,3.15f,1.08f,.75f,23,ROOM_NONE);
@@ -741,7 +770,7 @@ static int room_layout(int building, int t, int style, int floor, InteriorProp *
 
 int inn_has_upstairs(int building) {
     return building >= 0 && building < g.buildingCount && g.buildings[building].type == BAR &&
-           town_design(building_town(building))->beds >= 4;
+           !ruined_building(building) && town_design(building_town(building))->beds >= 4;
 }
 
 void inn_change_floor(Actor *a, int floor) {
@@ -875,7 +904,7 @@ const char *interior_prompt(void) {
     if (c == -3)
         return "FURNISH HOUSE";
     if (c < 0)
-        return "WALK TO A SERVICE";
+        return ruined_building(g.interiorBuilding - 1) ? "RUINS" : "WALK TO A SERVICE";
     InteriorProp p[ROOM_PROPS];
     interior_floor_props(g.interiorBuilding - 1, actor_floor(&g.actors[g.selected]), p);
     switch (p[c].action) {
@@ -894,7 +923,7 @@ const char *interior_prompt(void) {
     case ROOM_HOME_STASH:
         return "OPEN SHARED STASH";
     case ROOM_CHEST:
-        return "SEARCH OWNED CHEST";
+        return ruined_building(g.interiorBuilding - 1) ? "SEARCH SALVAGE CHEST" : "SEARCH OWNED CHEST";
     case ROOM_MEMBERSHIP:
         return g.frontier.clanMember ? "Dustward Clan membership" : "Join Dustward Clan (280 silver)";
     case ROOM_TRAIN:

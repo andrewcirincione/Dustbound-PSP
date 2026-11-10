@@ -1,4 +1,4 @@
-#include "game.h"
+#include "frontier_fixture.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -54,8 +54,8 @@ static void test_homes(void) {
             prices[town] = home_price(b);
         }
     assert(count>=8);
-    assert(prices[1] >= 5200 && prices[3] > prices[1]);
-    assert(prices[OLD_TOWNS] > prices[3] && prices[OLD_TOWNS] >= 22000);
+    assert(prices[3] >= 5200 && prices[3] < 7000 && prices[3] < prices[1]);
+    assert(prices[OLD_TOWNS] > prices[6] && prices[6] > prices[1]);
     int first=sites[0],second=sites[1];
     assert(building_town(first)!=building_town(second));
     assert(!home_buy(second));
@@ -107,6 +107,49 @@ static void test_homes(void) {
     assert(inventory_remove_slot(a,pack_slot(a,item,UNION),2));
     puts("PASS: buy homes in two towns, furnish both, use a free bed, and withdraw the same marked partial items after reload.");
 }
+static void test_ruined_villages(void) {
+    game_new(73819, 0);
+    Actor *player = &g.actors[g.selected];
+    for (int i = 0; i < RUIN_VILLAGES; i++) {
+        int shop = g.ruinedVillage[i] - 1, buildings = 0, guards = 0;
+        assert(ruined_building(shop) && g.buildings[shop].type == SHOP && building_town(shop) < 0);
+        for (int b = 0; b < g.buildingCount; b++) {
+            if (g.frontier.variant[b] != BUILD_RUIN_FIRST + i) continue;
+            float x, y;
+            building_door(b, &x, &y);
+            assert(can_walk(x,y) && !can_walk(g.buildings[b].x,g.buildings[b].y));
+            InteriorProp props[ROOM_PROPS];
+            int count = interior_props(b, props);
+            for (int k = 0; k < count; k++)
+                assert(!props[k].action || (b == shop && props[k].action == ROOM_CHEST));
+            buildings++;
+        }
+        for (int n = 0; n < g.actorCount; n++) {
+            Actor *a = &g.actors[n];
+            if (a->kind == RAIDER && conscious(a) && hostile(a, player) &&
+                distance(a->x,a->y,g.buildings[shop].x,g.buildings[shop].y) < 12)
+                guards++;
+        }
+        assert(buildings == 3 && guards >= 2);
+    }
+    int shop = g.ruinedVillage[0] - 1;
+    fixture_door(player, shop);
+    assert(interior_enter(shop));
+    fixture_service(ROOM_CHEST);
+    interior_interact();
+    assert(ui.screen == SCREEN_CHEST && !chest_owner() && interior_chest_count() == 3);
+    int old = inventory_count(player,CLOTH);
+    interior_chest_take(0);
+    assert(inventory_count(player,CLOTH) == old + 1 && interior_chest_item(0)->qty == 1);
+    g.day += 7;
+    assert(save_game("build/ruin-salvage.sav") && load_game("build/ruin-salvage.sav"));
+    assert(g.ruinedVillage[0] == shop + 1 && g.interiorBuilding == shop + 1);
+    fixture_service(ROOM_CHEST);
+    interior_interact();
+    assert(!chest_owner() && interior_chest_item(0)->qty == 1);
+    puts("PASS: four raider-held villages, enterable ruins and finite salvage after save and reload.");
+}
+
 static int watch_for(unsigned mask,int accepted) {
     for (int n=0;n<g.actorCount;n++) {
         int t=bounty_station(n);
@@ -203,6 +246,7 @@ static void test_warrants(void) {
 }
 int main(void) {
     test_homes();
+    test_ruined_villages();
     test_warrants();
     return 0;
 }

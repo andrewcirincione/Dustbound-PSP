@@ -11,7 +11,8 @@ enum {
     ART_CARAVAN_BALES, ART_PRACTICE_POST, ART_CELL_PANEL, ART_SIDE_COUNTER,
     ART_IRON_GRILLE, ART_CELL_GATE, ART_COURT_WALL, ART_STONE_WALL,
     SETTLEMENT_ART_END,
-    ART_INN_STAIRS = SETTLEMENT_ART_END + 15, ART_INN_BAR, ART_RESEARCH_TABLE, ART_BEDROLL
+    ART_INN_STAIRS = SETTLEMENT_ART_END + 15, ART_INN_BAR, ART_RESEARCH_TABLE, ART_BEDROLL,
+    ART_RUIN_SHOP, ART_RUIN_INN, ART_RUIN_FORGE, ART_RUIN_HOUSE, SCENE_ART_END
 };
 
 typedef struct {
@@ -40,6 +41,7 @@ static inline int furniture_is_bed(int art) {
 static inline int structure_art_index(int sprite) {
     if (sprite >= 0 && sprite < 8) return sprite;
     if (sprite >= ART_RUST_HOME && sprite <= ART_HERB_SHOP) return sprite - ART_RUST_HOME + 8;
+    if (sprite >= ART_RUIN_SHOP && sprite <= ART_RUIN_HOUSE) return 21 + sprite - ART_RUIN_SHOP;
     return sprite == ART_WATCH_CAGE ? 20 : -1;
 }
 

@@ -807,7 +807,9 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     WeaponGrip grip = weapon_grip(RX(handx, handy), RY(handy), angle, sc);
     float wrists[2][2], shoulders[2][2];
     int primary = limb_missing(a, RARM) ? 0 : 1;
-    int nearArm = face > 0 ? 1 : 0, farArm = 1 - nearArm;
+    /* The near shoulder is the character's left when looking right. Grip
+       ownership stays anatomical even when that hand is on the far side. */
+    int nearArm = face > 0 ? 0 : 1, farArm = 1 - nearArm;
     for(int i=0;i<2;i++){
         float roll = weapon ? 0 : fmaxf(0, -rig.twist) * 9;
         float level = i == nearArm ? -23 : -24.8f;

@@ -1,33 +1,49 @@
 /* Settlement plans are keyed by the original town, so occupation changes the flag
    without rebuilding the native architecture or replacing a town's services. */
 static const TownDesign townDesigns[TOWNS] = {
-    /* inn, market, beds, forge, custody, market tier, plan, turn */
-    {"Copper Lantern", "Dusk Provisions",   3, 1, 1, 1, 0, 0},
-    {"Sprocket Rest",   "Crossing Supplies", 2, 1, 0, 0, 1, 0},
-    {"Brine House",     "Salt Exchange",     2, 0, 0, 0, 2, 1},
-    {"Canvas & Salt",   "Dry Market Bazaar", 5, 0, 1, 1, 3, 0},
-    {"Riven Shelter",   "Spire Scavengers",  1, 0, 0, 0, 5, 2},
-    {"The Split Rock",  "Gulch Outfitters",  3, 1, 0, 0, 4, 0},
-    {"Three Shields",   "Iron Gate Supply", 4, 1, 2, 2, 2, 0},
-    {"Ash Pilgrim",     "Ash Herb Room",     4, 0, 1, 1, 5, 1},
-    {"Smokestack",      "Mesa Fence",        3, 1, 1, 2, 4, 1},
-    {"Reed & Rope",     "Reed Provisioner",  2, 0, 0, 0, 1, 3},
-    {"The Drift Net",   "Cinder Exchange",   5, 1, 2, 2, 0, 3},
-    {"The Red Banner",  "Rest Quartermaster",2, 1, 2, 1, 2, 2},
-    {"Snowmelt Lodge",  "Pass Waystation",   2, 0, 0, 0, 5, 3},
-    {"Raft House",      "Ferry Freight",     3, 0, 1, 0, 1, 2},
-    {"Vulture Roost",   "Nest Salvage",      1, 0, 0, 0, 4, 3},
-    {"Pine Sanctuary",  "Pine Pantry",       3, 0, 1, 0, 5, 0},
-    {"Pump House Inn",  "Rail Exchange",     6, 1, 2, 2, 3, 3},
-    {"Court Inn",       "Iron Tribute Hall", 5, 1, 2, 2, 2, 3},
-    {"Pilgrim Hospice", "Herbal Dispensary", 6, 0, 1, 2, 5, 2},
+    /* inn, market, beds, forge, custody, market tier, plan, turn, importance, access */
+    {"Copper Lantern", "Dusk Provisions",   3, 1, 1, 1, 0, 0, TOWN_HUB,  1},
+    {"Sprocket Rest",   "Crossing Supplies", 2, 1, 0, 0, 1, 0, TOWN_LOCAL,  1},
+    {"Brine House",     "Salt Exchange",     2, 0, 0, 0, 2, 1, TOWN_LOCAL, -1},
+    {"Canvas & Salt",   "Dry Market Bazaar", 5, 0, 1, 1, 3, 0, TOWN_HUB, -2},
+    {"Riven Shelter",   "Spire Scavengers",  1, 0, 0, 0, 5, 2, TOWN_LOCAL, -2},
+    {"The Split Rock",  "Gulch Outfitters",  3, 1, 0, 0, 4, 0, TOWN_LOCAL,  0},
+    {"Three Shields",   "Iron Gate Supply", 4, 1, 2, 2, 2, 0, TOWN_FORTRESS,  1},
+    {"Ash Pilgrim",     "Ash Herb Room",     4, 0, 1, 1, 5, 1, TOWN_HUB, -1},
+    {"Smokestack",      "Mesa Fence",        3, 1, 1, 2, 4, 1, TOWN_HUB,  1},
+    {"Reed & Rope",     "Reed Provisioner",  2, 0, 0, 0, 1, 3, TOWN_LOCAL, -1},
+    {"The Drift Net",   "Cinder Exchange",   5, 1, 2, 2, 0, 3, TOWN_HUB,  2},
+    {"The Red Banner",  "Rest Quartermaster",2, 1, 2, 1, 2, 2, TOWN_FORTRESS,  1},
+    {"Snowmelt Lodge",  "Pass Waystation",   2, 0, 0, 0, 5, 3, TOWN_LOCAL, -2},
+    {"Raft House",      "Ferry Freight",     3, 0, 1, 0, 1, 2, TOWN_LOCAL,  0},
+    {"Vulture Roost",   "Nest Salvage",      1, 0, 0, 0, 4, 3, TOWN_LOCAL, -2},
+    {"Pine Sanctuary",  "Pine Pantry",       3, 0, 1, 0, 5, 0, TOWN_LOCAL, -2},
+    {"Pump House Inn",  "Rail Exchange",     6, 1, 2, 2, 3, 3, TOWN_CAPITAL,  2},
+    {"Court Inn",       "Iron Tribute Hall", 5, 1, 2, 2, 2, 3, TOWN_CAPITAL,  1},
+    {"Pilgrim Hospice", "Herbal Dispensary", 6, 0, 1, 2, 5, 2, TOWN_CAPITAL,  0},
 };
 const TownDesign *town_design(int town) {
     return &townDesigns[town >= 0 && town < TOWNS ? town : 0];
 }
+typedef struct {
+    const char *tradingPost, *crewName;
+    float x, y;
+    signed char plots[3][2];
+    unsigned char type[3], crew, skill;
+} RuinedVillage;
+static const RuinedVillage ruins[RUIN_VILLAGES] = {
+    {"Shale End ruins", "Shale bandit", 174, 103, {{-4,-3},{4,-2},{-1,4}}, {SHOP,FORGE,HOUSE}, 2, 4},
+    {"Crooked Ferry ruins", "Ferry bandit", 370, 815, {{-3,4},{-5,-3},{4,-2}}, {SHOP,BAR,HOUSE}, 2, 7},
+    {"Kiln's End ruins", "Kiln raider", 1125, 395, {{-4,2},{3,4},{2,-4}}, {SHOP,FORGE,BAR}, 3, 9},
+    {"Pale Hollow ruins", "Hollow raider", 979, 1175, {{2,-4},{-5,-1},{1,4}}, {SHOP,BAR,HOUSE}, 2, 11},
+};
+int ruined_building(int id) {
+    return id >= 0 && id < g.buildingCount && g.frontier.variant[id] >= BUILD_RUIN_FIRST;
+}
+
 int building_town(int id) {
     const Building *b = &g.buildings[id];
-    if (b->owner >= 0 || g.frontier.variant[id] == BUILD_LODGE)
+    if (b->owner >= 0 || g.frontier.variant[id] == BUILD_LODGE || ruined_building(id))
         return -1;
     return town_near(b->x, b->y, 24);
 }
@@ -35,6 +51,12 @@ const char *building_name(int id) {
     const Building *b = &g.buildings[id];
     int t = building_town(id), v = g.frontier.variant[id];
     const TownDesign *plan = town_design(t);
+    if (ruined_building(id)) {
+        if (b->type == SHOP) return ruins[v - BUILD_RUIN_FIRST].tradingPost;
+        if (b->type == BAR) return "Burned inn";
+        if (b->type == FORGE) return "Ruined smithy";
+        return "Ruined cottage";
+    }
     if (v == BUILD_LODGE) return "Dustward Lodge";
     if (v == BUILD_ARMORER) return "Armorer";
     if (home_state(id) == HOME_FOR_SALE) return "House for sale";
@@ -53,6 +75,12 @@ int building_sprite(int id) {
     const Building *b = &g.buildings[id];
     int town = building_town(id), style = town < 0 ? -1 : civil_style(town);
     const TownDesign *plan = town_design(town);
+    if (ruined_building(id)) {
+        if (b->type == SHOP) return ART_RUIN_SHOP;
+        if (b->type == BAR) return ART_RUIN_INN;
+        if (b->type == FORGE) return ART_RUIN_FORGE;
+        return ART_RUIN_HOUSE;
+    }
     if (g.frontier.variant[id] == BUILD_LODGE) return ART_DUSTWARD;
     if (g.frontier.variant[id] == BUILD_ARMORER) return ART_ARMORER;
     static const int base[] = {0, 1, 2, 3, 24, 25, 27, ART_BEDROLL, 28, 6, 29, 30, 7, 3, 31};
@@ -583,6 +611,158 @@ static void separate_contract_guards(void) {
         }
     }
 }
+/* Use a vacant director slot before adding another local to the world. */
+static int add_local_actor(const char *name, int kind, int faction, float x, float y, int skill) {
+    for (int n = 0; n < g.actorCount; n++) {
+        if (g.living.owned[n] >= 0)
+            continue;
+        init_actor(n, name, kind, faction, x, y, skill);
+        g.living.owned[n] = g.living.anger[n] = 0;
+        g.living.command[n] = -1;
+        return n;
+    }
+    return add_actor(name, kind, faction, x, y, skill);
+}
+
+static int ruin_site_clear(const RuinedVillage *site, float x, float y) {
+    if (!clear_structure_site(x, y, 15) || town_near(x, y, 36) >= 0)
+        return 0;
+    for (int j = 0; j < 3; j++) {
+        float bx = x + site->plots[j][0], by = y + site->plots[j][1];
+        for (int dx = -2; dx <= 2; dx += 2)
+            for (int dy = -2; dy <= 2; dy += 2)
+                if (!can_walk(bx + dx, by + dy) || terrain_road(bx + dx, by + dy))
+                    return 0;
+        for (int n = 0; n < g.nodeCount; n++)
+            if (g.nodes[n].remaining && fabsf(g.nodes[n].x - bx) < 3 && fabsf(g.nodes[n].y - by) < 3)
+                return 0;
+    }
+    for (int n = 0; n < g.actorCount; n++)
+        if (g.actors[n].active && fabsf(g.actors[n].x - x) < 13 && fabsf(g.actors[n].y - y) < 13)
+            return 0;
+    return 1;
+}
+
+static void place_ruined_villages(void) {
+    static const Stack salvage[RUIN_VILLAGES][3] = {
+        {{CLOTH,2},{OATCAKE,2},{MEDKIT,1}},
+        {{JERKY,2},{COPPER,3},{PARTS,1}},
+        {{IRONBAR,3},{PARTS,2},{BOLTS,6}},
+        {{RELIC,1},{CLOTH,2},{MEDKIT,1}}
+    };
+    for (int i = 0; i < RUIN_VILLAGES && g.buildingCount <= MAX_BUILDINGS - 3; i++) {
+        if (g.ruinedVillage[i])
+            continue;
+        const RuinedVillage *site = &ruins[i];
+        float x = site->x, y = site->y;
+        int found = 0;
+        for (int ring = 0; ring <= 8 && !found; ring++)
+            for (int j = 0; j < (ring ? 16 : 1); j++) {
+                float angle = (j * .39269908f + i * .51f);
+                x = site->x + cosf(angle) * ring * 7;
+                y = site->y + sinf(angle) * ring * 7;
+                if ((found = ruin_site_clear(site, x, y)))
+                    break;
+            }
+        if (!found)
+            continue;
+        for (int j = 0; j < 3; j++) {
+            int b = add_build(x + site->plots[j][0], y + site->plots[j][1], site->type[j], FREE, -1);
+            g.frontier.variant[b] = BUILD_RUIN_FIRST + i;
+            if (j == 0) {
+                g.ruinedVillage[i] = b + 1;
+                memcpy(g.buildings[b].storage, salvage[i], sizeof(salvage[i]));
+                for (int slot = 0; slot < 3; slot++)
+                    if (g.buildings[b].storage[slot].item == MEDKIT)
+                        g.buildings[b].storage[slot].item = portion_item(MEDKIT, 43 + i * 8);
+            }
+        }
+    }
+}
+
+void ruined_village_guards(int nearby) {
+    static const float post[3][2] = {{-.9f,1.1f},{2.6f,.3f},{.6f,-2.7f}};
+    for (int i = 0; i < RUIN_VILLAGES; i++) {
+        const RuinedVillage *site = &ruins[i];
+        int b = g.ruinedVillage[i] - 1, j = g.ruinCrew[i];
+        if (b < 0 || j >= site->crew)
+            continue;
+        float x = g.buildings[b].x - site->plots[0][0], y = g.buildings[b].y - site->plots[0][1];
+        if (nearby) {
+            const Actor *a = &g.actors[g.selected];
+            float d = distance(a->x,a->y,x,y);
+            if (d < 16 || d > 52)
+                continue;
+        }
+        for (; j < site->crew; j++) {
+            float px = x + post[j][0], py = y + post[j][1];
+            civil_clear_position(&px, &py);
+            int n = add_local_actor(site->crewName, RAIDER, HOSTILE, px, py, site->skill + j);
+            if (n < 0)
+                break;
+            g.actors[n].gear[0] = j % 2 ? gear_id(10,0,0) : RUSTSWORD;
+            g.actors[n].gear[4] = gear_id(74,0,0);
+            g.ruinCrew[i]++;
+        }
+    }
+}
+
+static void seed_home_residents(void) {
+    static const char *newResidents[TOWNS] = {
+        [0] = "Anja Flint", [1] = "Mira Reed", [3] = "Nima Voss"
+    };
+    for (int t = 0; t < TOWNS; t++) {
+        int faction = g.townOwner[t], home = -1, resident = -1;
+        if (faction == HOSTILE)
+            continue;
+        int assigned = 0;
+        for (int n = 0; n < g.actorCount; n++)
+            if (g.residentHome[n] && building_town(g.residentHome[n] - 1) == t) {
+                assigned = 1;
+                break;
+            }
+        if (assigned)
+            continue;
+        for (int b = 0; b < g.buildingCount; b++) {
+            const Building *house = &g.buildings[b];
+            if (house->type == HOUSE && house->owner < 0 && house->faction == faction &&
+                !g.frontier.variant[b] && !home_state(b) && building_town(b) == t &&
+                home_occupant(b) < 0 && depth_build_ready(b)) {
+                float x, y;
+                building_door(b, &x, &y);
+                if (can_walk(x, y)) {
+                    home = b;
+                    break;
+                }
+            }
+        }
+        if (home < 0)
+            continue;
+        for (int n = 0; !newResidents[t] && n < g.actorCount; n++) {
+            const Actor *a = &g.actors[n];
+            if (a->kind == SETTLER && a->homeTown == t && a->faction == faction && !a->squad &&
+                conscious(a) && a->target < 0 && !living_owned(n) && !g.society.freed[n] &&
+                !depth_room(a) && a->carriedBy < 0 && a->carrying < 0 && !g.depth.actors[n].captive &&
+                a->prisonTime <= 0 && npc_role(a) == ROLE_CITIZEN) {
+                resident = n;
+                break;
+            }
+        }
+        if (resident < 0) {
+            if (!newResidents[t])
+                continue;
+            float x, y;
+            building_door(home, &x, &y);
+            resident = add_local_actor(newResidents[t], SETTLER, faction, x, y, 4);
+            if (resident < 0)
+                continue;
+            g.actors[resident].homeTown = t;
+            g.actors[resident].gear[0] = NONE;
+        }
+        home_assign_resident(resident, home);
+    }
+}
+
 void frontier_world_init(void) {
     building_geometry_reset();
     if (!g.frontier.version) {
@@ -625,5 +805,11 @@ void frontier_world_init(void) {
     population_add_roaming_bandits();
     homes_init();
     separate_contract_guards();
+    if (g.frontier.version < 4) {
+        place_ruined_villages();
+        ruined_village_guards(0);
+        seed_home_residents();
+        g.frontier.version = 4;
+    }
     warrants_init();
 }

@@ -39,12 +39,12 @@ static uint32_t blend(uint32_t a, uint32_t b, float f) {
 }
 /* Indexed row spans skip transparent margins. Only edge texels need blending.
    A lighting change updates 256 palette entries, not every sprite pixel. */
-static uint32_t artPalette[FURNITURE_ART_FIRST + FURNITURE_ART_COUNT][256];
-static int artLight[FURNITURE_ART_FIRST + FURNITURE_ART_COUNT];
+static uint32_t artPalette[SCENE_ART_END][256];
+static int artLight[SCENE_ART_END];
 static const ArtSprite *scene_sprite(int id) {
-    if (id >= FURNITURE_ART_FIRST) return &furnitureSprites[id - FURNITURE_ART_FIRST];
     int model = structure_art_index(id);
     if (model >= 0) return &structureSprites[model];
+    if (id >= FURNITURE_ART_FIRST) return &furnitureSprites[id - FURNITURE_ART_FIRST];
     if (id >= ART_IRON_GRILLE) return &barrierSprites[id - ART_IRON_GRILLE];
     return id < ART_COUNT ? &artSprites[id] : &settlementSprites[id - SETTLEMENT_ART_FIRST];
 }
@@ -1646,7 +1646,7 @@ static void title(void) {
             fb[y * pitch + x] = abgr(blend(rgb, INK, .84f));
         }
     line(30, 45, 205, 45, EDGE);
-    text(29, 61, "DUSTBOUND", GOLD, 3);
+    text(29, 61, GAME_NAME, GOLD, 3);
     const char *opts[] = {"NEW EXPEDITION", "CONTINUE EXPEDITION", "FIELD GUIDE"};
     for (int i = 0; i < 3; i++) {
         int y = 130 + i * 27;
@@ -2806,6 +2806,7 @@ static void chest_screen(void) {
     int owner = chest_owner();
     const char *name = ui.chestKind == CHEST_PROPERTY ? "CONFISCATED BELONGINGS" :
         ui.chestKind == CHEST_FIELD ? "CHEST CONTENTS" :
+        ruined_building(ui.storageIndex) ? "SALVAGE CHEST" :
         g.buildings[ui.storageIndex].type == SHOP ? "SHOP STOCK CHEST" : "HOUSEHOLD CHEST";
     overlay_header(name, "\001 TAKE ONE   \015 SELECT ITEM   \002 LEAVE");
     if (owner) {

@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-PSP_MODULE_INFO("Dustbound", 0, 0, 4);
+PSP_MODULE_INFO(GAME_NAME, 0, 0, 4);
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU);
 PSP_HEAP_SIZE_KB(12 * 1024);
 static volatile int running = 1;
