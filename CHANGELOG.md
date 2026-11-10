@@ -1,3 +1,9 @@
+# 0.18.4 — The roads move on
+
+- Quiet stretches of the frontier draw fresh traffic as you travel. Small bandit gangs, traders, pilgrims, patrols, hunters and wildlife can pass through.
+- Cleared encounters replenish at new locations after a cooldown. New arrivals stay outside the squad's view and clear of settlements and player bases.
+- Existing expeditions use the new pacing with the same save format and population cap.
+
 # 0.18.3 — Walls and streets
 
 - Recalibrated painted building scale, perspective and door positions across nineteen settlements. Footprints guide movement and projectile collision.

@@ -18,7 +18,12 @@ static unsigned random_step(unsigned *seed){unsigned x=*seed;x^=x<<13;x^=x>>17;x
 static int bounded(int n,int lo,int hi){return n<lo?lo:n>hi?hi:n;}
 static int actor_no(const Actor *a){return (uintptr_t)a>=(uintptr_t)g.actors&&(uintptr_t)a<(uintptr_t)(g.actors+g.actorCount)?(int)(a-g.actors):-1;}
 int population_owned(int n){return n>=0&&n<g.actorCount&&g.living.owned[n]>EVENTS&&g.living.owned[n]<=EVENTS+POP_GROUPS?g.living.owned[n]-EVENTS:0;}
-static int camp_type(int type){return type<=POP_MERCHANTS||type==POP_WOUNDED||type==POP_AMBUSH||type==POP_SALVAGE;}
+static int passing_group(int k){return k>=WAR_POP_GROUPS;}
+static int legion_group(int k){return k>=OLD_POP_GROUPS&&k<WAR_POP_GROUPS;}
+static int camp_type(int k){
+    int type=P.groups[k].type;
+    return !passing_group(k)&&(type<=POP_MERCHANTS||type==POP_WOUNDED||type==POP_AMBUSH||type==POP_SALVAGE);
+}
 static int military(int type){return type==POP_PATROL||type==POP_RAIDERS||type==POP_ARMY||type==POP_AMBUSH||type==POP_PRISONERS;}
 static int enemies(const WorldEvent*a,const WorldEvent*b){
     if(a->faction==b->faction)return 0;
@@ -40,7 +45,16 @@ static int nearest_town(float x,float y,int avoid){int found=0;float best=1e9f;f
 static Actor *member(int k,int i){WorldEvent*e=&P.groups[k];if(P.state[k].detached&(1<<i))return NULL;return e->spawned?e->members[i]>=0?&g.actors[e->members[i]]:NULL:&e->reserve[i];}
 static DepthActor *member_depth(int k,int i){WorldEvent*e=&P.groups[k];return e->spawned?&g.depth.actors[e->members[i]]:&e->reserveDepth[i];}
 static int standing(int k){int n=0;WorldEvent*e=&P.groups[k];for(int i=0;i<e->count;i++){Actor*a=member(k,i);if(a&&!a->dead&&a->unconscious<=0&&a->health[HEAD]>0&&a->health[CHEST]>0&&a->blood>=20)n++;}return n;}
-const char *population_name(int k){return k>=0&&k<POP_GROUPS?names[P.groups[k].type]:"TRAVELERS";}
+const char *population_name(int k){
+    if(k<0||k>=POP_GROUPS)return "TRAVELERS";
+    int type=P.groups[k].type;
+    if(passing_group(k)){
+        if(type==POP_MERCHANTS)return "ROAD TRADERS";
+        if(type==POP_HUNTERS)return "ROVING HUNTERS";
+        if(type==POP_SCAVENGERS)return "ROVING SCAVENGERS";
+    }
+    return names[type];
+}
 void population_roll_limbs(Actor *a,unsigned seed,int tier){
     if(a->squad||a->dead||a->kind==BEAST||a->lostMask||a->prostheticMask)return;
     for(int l=LARM;l<=RLEG;l++)if(a->health[l]<species_health(a)*.8f)return;
@@ -117,8 +131,8 @@ static void make_actor(int k,int i){
         tier = 0;
         if (lv > 12) lv = 12;
     }
-    int roamer = k >= WAR_POP_GROUPS;
-    if (roamer) {
+    int weak = e->type == POP_RAIDERS && e->tier == 0 && e->modifier == 1;
+    if (weak) {
         static const int races[] = {0,1,3};
         a->race = races[seed % 3];
         a->healthScale = 63 + (seed >> 10) % 8;
@@ -158,7 +172,7 @@ static void make_actor(int k,int i){
         int supply = a->race == 2 ? PARTS : MEDKIT;
         if (!inventory_count(a, supply)) inventory_add(a, supply, 1);
     }
-    if (roamer)
+    if (weak)
         a->hunger = 48 + (seed >> 19) % 20;
     else {
         if(e->modifier==1)a->hunger=28;
@@ -168,11 +182,12 @@ static void make_actor(int k,int i){
     if(e->type==POP_BATTLEFIELD){a->dead=i<e->count-1;a->blood=a->dead?0:42;a->health[CHEST]=a->dead?-80:22;a->unconscious=a->dead?0:120;a->bleed=a->dead?0:.04f;}
     if(e->type==POP_PRISONERS&&i>=e->count-2){a->kind=SETTLER;a->faction=FREE;a->gear[0]=0;a->gear[1]=RAGS;a->gear[2]=0;z->captive=1;P.social[k][i].captorFaction=e->faction;}
 }
-void population_generate(int k,int type){
+typedef struct { float x,y; } EncounterSite;
+static void generate_population(int k,int type,const EncounterSite *site){
     if(k<0||k>=POP_GROUPS)return;WorldEvent*e=&P.groups[k];PopulationState*m=&P.state[k];
     if(e->spawned)return;memset(e,0,sizeof(*e));memset(m,0,sizeof(*m));memset(P.social[k],0,sizeof(P.social[k]));
-    int roamer = k >= WAR_POP_GROUPS, legion = k >= OLD_POP_GROUPS && !roamer;
-    e->seed=random_step(&P.rng);e->serial=++P.serial;e->type=legion?POP_ARMY:roamer?POP_RAIDERS:bounded(type,0,POP_TYPES-1);e->modifier=random_step(&e->seed)%4;e->origin=k%OLD_TOWNS;e->tier=bounded(e->origin/5+(int)(random_step(&e->seed)%2),0,3);
+    int passing=passing_group(k),legion=legion_group(k);
+    e->seed=random_step(&P.rng);e->serial=++P.serial;e->type=legion?POP_ARMY:bounded(type,0,POP_TYPES-1);e->modifier=random_step(&e->seed)%4;e->origin=k%OLD_TOWNS;e->tier=bounded(e->origin/5+(int)(random_step(&e->seed)%2),0,3);
     static const int forces[WAR_FACTIONS]={UNION,SHOGUN,MONKS};
     e->faction=e->type==POP_RAIDERS||e->type==POP_AMBUSH?HOSTILE:e->type==POP_BEASTS?WILDLIFE:e->type==POP_SMUGGLERS||e->type==POP_PRISONERS?OUTLAWS:e->type==POP_ARMY||e->type==POP_PATROL?forces[random_step(&e->seed)%WAR_FACTIONS]:e->type==POP_PILGRIMS?MONKS:SCAVENGERS;
     if(legion){
@@ -180,9 +195,13 @@ void population_generate(int k,int type){
         e->origin=home;e->faction=towns[home].faction;e->modifier=0;
         if(g.townOwner[home]!=e->faction)for(int t=0;t<TOWNS;t++)if(g.townOwner[t]==e->faction){e->origin=t;break;}
     }
-    if (roamer) {
+    if (site) e->origin=nearest_town(site->x,site->y,-1);
+    else if (passing) {
         static const int routes[ROAMING_BANDIT_GROUPS] = {0,1,2,3,5,9,11,15};
         e->origin = routes[k - WAR_POP_GROUPS];
+    }
+    if (passing) e->tier=bounded(e->tier,0,1);
+    if (e->type==POP_RAIDERS&&(passing||site)) {
         e->modifier = 1;
         e->tier = 0;
     }
@@ -190,21 +209,27 @@ void population_generate(int k,int type){
     e->count=e->type==POP_ARMY?12+random_step(&e->seed)%5:e->type==POP_PRISONERS?7:e->type==POP_BEASTS?3+random_step(&e->seed)%4:e->type==POP_WOUNDED?2:e->type==POP_DUELISTS?1+random_step(&e->seed)%3:3+random_step(&e->seed)%3;
     if(e->type==POP_ARMY||e->type==POP_DUELISTS)e->tier=2+random_step(&e->seed)%2;
     if(legion){e->count=10+random_step(&e->seed)%3;e->tier=2;}
-    if (roamer) e->count = 3 + random_step(&e->seed) % 2;
+    if (e->type==POP_RAIDERS&&e->tier==0&&e->modifier==1) e->count=3+random_step(&e->seed)%2;
     for(int i=0;i<POP_MEMBERS;i++)e->members[i]=-1;
     float angle=(random_step(&e->seed)%628)/100.f;
-    if(k<16||roamer){float r=35+random_step(&e->seed)%25;e->x=towns[e->origin].x+cosf(angle)*r;e->y=towns[e->origin].y+sinf(angle)*r;}
+    if(site){e->x=site->x;e->y=site->y;}
+    else if(k<16||passing){float r=35+random_step(&e->seed)%25;e->x=towns[e->origin].x+cosf(angle)*r;e->y=towns[e->origin].y+sinf(angle)*r;}
     else if(k<48||k>=64){float u=.2f+(random_step(&e->seed)%60)*.01f;int next=e->town;e->x=towns[e->origin].x*(1-u)+towns[next].x*u+cosf(angle)*18;e->y=towns[e->origin].y*(1-u)+towns[next].y*u+sinf(angle)*18;}
     else{int cell=k-48;e->x=(cell%4+.2f+(random_step(&e->seed)%60)*.01f)*WORLD/4;e->y=(cell/4+.2f+(random_step(&e->seed)%60)*.01f)*WORLD/4;}
-    if(town_near(e->x,e->y,24)>=0){e->x+=cosf(angle)*35;e->y+=sinf(angle)*35;}clear_position(&e->x,&e->y);
-    /* Keep initial encounters outside every current squad member's view. */
-    for(int tries=0;tries<16&&observers(e->x,e->y)<32;tries++){e->x+=cosf(angle)*10;e->y+=sinf(angle)*10;clear_position(&e->x,&e->y);}
-    m->siteX=e->x;m->siteY=e->y;m->opponent=-1;m->generation=e->serial;m->phase=camp_type(e->type)?POP_REST:e->type==POP_BATTLEFIELD?POP_RUINS:POP_TRAVEL;m->clock=100+random_step(&e->seed)%160;
-    m->beds=camp_type(e->type)?2+random_step(&e->seed)%2:0;
+    if(!site){
+        if(town_near(e->x,e->y,24)>=0){e->x+=cosf(angle)*35;e->y+=sinf(angle)*35;}
+        clear_position(&e->x,&e->y);
+        for(int tries=0;tries<16&&observers(e->x,e->y)<32;tries++){e->x+=cosf(angle)*10;e->y+=sinf(angle)*10;clear_position(&e->x,&e->y);}
+    }
+    m->siteX=e->x;m->siteY=e->y;m->opponent=-1;m->generation=e->serial;m->phase=camp_type(k)?POP_REST:e->type==POP_BATTLEFIELD?POP_RUINS:POP_TRAVEL;m->clock=100+random_step(&e->seed)%160;
+    m->beds=camp_type(k)?2+random_step(&e->seed)%2:0;
     m->stock[0]=4+random_step(&e->seed)%6;m->stock[1]=1+random_step(&e->seed)%3;m->stock[2]=1+random_step(&e->seed)%3;
     m->cacheItem=e->type==POP_SALVAGE?PARTS:e->type==POP_HUNTERS?HIDE:e->type==POP_BATTLEFIELD?MEDKIT:e->type==POP_SMUGGLERS?TONIC:RATION;m->cacheQty=1+random_step(&e->seed)%3;
     for(int i=0;i<5;i++){float x=e->x+(i==0?0:i==4?4:(i-2)*3),y=e->y+(i==0?0:i==4?-3:3);clear_position(&x,&y);m->offsetX[i]=x-e->x;m->offsetY[i]=y-e->y;}
     set_destination(k,e->town);for(int i=0;i<e->count;i++)make_actor(k,i);e->stored=1;life_seed(k);
+}
+void population_generate(int k,int type){
+    generate_population(k,type,NULL);
 }
 static int importable(int n){
     Actor*a=&g.actors[n];return a->active&&!a->squad&&!a->dead&&!a->lostMask&&a->unconscious<=0&&!living_owned(n)&&depth_named(n)<0&&!regional_named(n)&&civil_elite_index(n)<0&&(a->kind==RAIDER||a->kind==BEAST)&&town_near(a->x,a->y,25)<0&&!g.depth.actors[n].captive&&a->prisonTime<=0&&!pinned(n)&&observers(a->x,a->y)>65;
@@ -318,6 +343,140 @@ static void offline_battle(int a,int b,float dt){
         }
     }
 }
+
+static float refill_delay(const WorldEvent *e) {
+    return DAY_SECONDS/8 + (unsigned)e->serial * 37u % 150;
+}
+
+static int open_encounter_site(EncounterSite site,int slot) {
+    const float x=site.x,y=site.y;
+    const WorldEvent *old=&P.groups[slot];
+    if (x<12||y<12||x>WORLD-12||y>WORLD-12||town_near(x,y,28)>=0||
+        (g.baseExists&&distance(x,y,g.baseX,g.baseY)<35)||
+        distance(x,y,old->x,old->y)<38||observers(x,y)<68)
+        return 0;
+    for(int k=0;k<POP_GROUPS;k++){
+        if(k==slot)continue;
+        const WorldEvent *e=&P.groups[k];
+        if(fabsf(x-e->x)<32&&fabsf(y-e->y)<32&&distance(x,y,e->x,e->y)<32&&
+           (e->presence<refill_delay(e)||life_alive(k)))return 0;
+        const PopulationState *m=&P.state[k];
+        if(fabsf(x-m->siteX)<26&&fabsf(y-m->siteY)<26&&population_object_count(k)&&
+           distance(x,y,m->siteX,m->siteY)<26)return 0;
+    }
+    for(int k=0;k<EVENTS;k++){
+        const WorldEvent *e=&g.living.events[k];
+        if(!e->status&&e->count&&fabsf(x-e->x)<32&&fabsf(y-e->y)<32&&
+           distance(x,y,e->x,e->y)<32)return 0;
+    }
+    return can_walk(x,y)&&can_walk(x-4,y)&&can_walk(x+4,y)&&
+           can_walk(x,y-3)&&can_walk(x,y+3);
+}
+
+static int encounter_roll(int slot,EncounterSite site) {
+    static const int travelers[]={POP_RAIDERS,POP_RAIDERS,POP_RAIDERS,POP_RAIDERS,
+        POP_BEASTS,POP_BEASTS,POP_MERCHANTS,POP_MERCHANTS,POP_PILGRIMS,POP_PILGRIMS,
+        POP_PATROL,POP_HUNTERS,POP_SCAVENGERS};
+    static const int backcountry[]={POP_RAIDERS,POP_RAIDERS,POP_RAIDERS,POP_BEASTS,POP_BEASTS,
+        POP_SCAVENGERS,POP_SCAVENGERS,POP_REFUGEES,POP_HUNTERS,POP_SMUGGLERS,POP_MERCHANTS,
+        POP_PATROL,POP_PILGRIMS,POP_WOUNDED,POP_BATTLEFIELD,POP_ARMY,POP_AMBUSH,
+        POP_SALVAGE,POP_PRISONERS,POP_DUELISTS};
+    unsigned roll=random_step(&P.rng);
+    int type=backcountry[roll%(sizeof(backcountry)/sizeof(*backcountry))];
+    if(passing_group(slot)||
+       (starter_country(site.x,site.y)&&(type==POP_ARMY||type==POP_DUELISTS||type==POP_AMBUSH)))
+        type=travelers[roll%(sizeof(travelers)/sizeof(*travelers))];
+    return type;
+}
+
+static int quiet_route(const Actor *lead,float dx,float dy) {
+    int nearby=0;
+    for(int k=0;k<POP_GROUPS+EVENTS;k++){
+        const WorldEvent *e=k<POP_GROUPS?&P.groups[k]:&g.living.events[k-POP_GROUPS];
+        float x=e->x-lead->x,y=e->y-lead->y;
+        if(fabsf(x)>140||fabsf(y)>140||x*x+y*y>140*140)continue;
+        if(k<POP_GROUPS?!life_alive(k):e->status||!e->count)continue;
+        float forward=x*dx+y*dy,side=x*dy-y*dx;
+        if(++nearby>=3||(forward>=-10&&fabsf(side)<33))return 0;
+    }
+    return 1;
+}
+
+static int passing_can_leave(int k) {
+    const WorldEvent *e=&P.groups[k];
+    const GroupLife *z=&g.life.groups[k];
+    const FieldSighting *seen=&g.fieldNotes.group[k];
+    if(!passing_group(k)||P.state[k].phase==POP_FIGHT||e->age<DAY_SECONDS/10||
+       (!z->arrivals&&e->age<DAY_SECONDS/6)||
+       (z->goal!=LIFE_ROAM&&(z->goal!=LIFE_RECOVER||!z->arrivals))||
+       (seen->serial==e->serial&&g.time-seen->time<DAY_SECONDS/3))
+        return 0;
+    for(int i=0;i<e->count;i++){
+        const Actor *a=member(k,i);
+        if(a&&!a->dead&&(a->unconscious>0||a->prisonTime>0||a->bountyReward||
+                         e->reserveDepth[i].captive||e->reserveDepth[i].room))
+            return 0;
+    }
+    return 1;
+}
+
+static void refresh_encounters(const float *near) {
+    int cleared=-1,passing=-1;
+    for(int k=0;k<POP_GROUPS;k++){
+        const WorldEvent *e=&P.groups[k];
+        if(e->spawned||near[k]<=105||legion_group(k))continue;
+        if(P.state[k].phase==POP_RUINS){
+            if(e->presence>=refill_delay(e)&&(cleared<0||e->presence>P.groups[cleared].presence))
+                cleared=k;
+        }else if(near[k]>150&&passing_can_leave(k)){
+            if(passing<0||e->age>P.groups[passing].age)passing=k;
+        }
+    }
+    const Actor *lead=&g.actors[g.selected];
+    int slot=cleared>=0?cleared:passing;
+    if(slot>=0&&lead->movedTimer>0&&conscious(lead)&&!actor_inside(lead)&&
+       town_near(lead->x,lead->y,24)<0){
+        float sx,sy,dx,dy;
+        walk_heading(lead,&sx,&sy);
+        view_to_world(sx,sy,&dx,&dy);
+        float len=sqrtf(dx*dx+dy*dy);
+        if(len>.01f){
+            dx/=len;dy/=len;
+            if(quiet_route(lead,dx,dy)){
+                for(int tries=0;tries<10;tries++){
+                    float ahead=76+random_step(&P.rng)%33;
+                    float side=(int)(random_step(&P.rng)%37)-18;
+                    EncounterSite site={lead->x+dx*ahead-dy*side,lead->y+dy*ahead+dx*side};
+                    if(!open_encounter_site(site,slot))continue;
+                    int reachable=1;
+                    for(int sample=1;sample<5;sample++){
+                        float u=sample*.2f;
+                        if(terrain_water(lead->x+(site.x-lead->x)*u,lead->y+(site.y-lead->y)*u)){
+                            reachable=0;break;
+                        }
+                    }
+                    if(reachable){
+                        generate_population(slot,encounter_roll(slot,site),&site);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    if(cleared<0)return;
+    const WorldEvent *old=&P.groups[cleared];
+    int town=random_step(&P.rng)%TOWNS;
+    for(int tries=0;tries<12;tries++){
+        float x=tries<8?old->x:towns[town].x,y=tries<8?old->y:towns[town].y;
+        float angle=(random_step(&P.rng)%628)*.01f,r=46+random_step(&P.rng)%50;
+        EncounterSite site={x+cosf(angle)*r,y+sinf(angle)*r};
+        if(open_encounter_site(site,cleared)){
+            generate_population(cleared,encounter_roll(cleared,site),&site);
+            return;
+        }
+    }
+}
+
 void population_tick(float dt){
     if(!P.version)return;if(!g.life.version)life_init();P.pulse+=dt;P.offlinePulse+=dt;if(P.pulse<1)return;float step=fminf(5,P.pulse);P.pulse=0;
     /* Unload before allocating; all members of all player squads keep their area alive. */
@@ -329,10 +488,15 @@ void population_tick(float dt){
     for(int i=1;i<POP_GROUPS;i++){int k=order[i],j=i;while(j>0&&near[order[j-1]]>near[k]){order[j]=order[j-1];j--;}order[j]=k;}
     for(int j=0;j<POP_GROUPS;j++){int k=order[j];if(near[k]<55){population_materialize(k);if(near[k]<14)field_observe(k);}}
     for(int k=0;k<POP_GROUPS;k++){WorldEvent*e=&P.groups[k];physiology(k,step);group_behavior(k,step);forage_offline(k,step);
-        if(P.state[k].phase==POP_RUINS&&e->presence>7200&&!e->spawned&&near[k]>120)population_generate(k,random_step(&P.rng)%POP_TYPES);
+        if(legion_group(k)&&P.state[k].phase==POP_RUINS&&e->presence>DAY_SECONDS*4&&
+           !e->spawned&&near[k]>120)population_generate(k,POP_ARMY);
         if(e->spawned&&e->type==POP_PRISONERS&&P.state[k].phase==POP_TRAVEL)for(int i=e->count-2;i<e->count;i++){Actor*a=member(k,i);if(a&&!a->dead&&a->unconscious<=0&&g.depth.actors[e->members[i]].captive){float x=e->x-2+i%2,y=e->y+3;route_toward(a,x,y,step*.55f);}}
     }
-    if(P.offlinePulse>=5){float battleStep=fminf(5,P.offlinePulse);P.offlinePulse=0;for(int a=0;a<POP_GROUPS;a++)for(int b=a+1;b<POP_GROUPS;b++)offline_battle(a,b,battleStep);}
+    if(P.offlinePulse>=5){
+        float battleStep=fminf(5,P.offlinePulse);P.offlinePulse=0;
+        for(int a=0;a<POP_GROUPS;a++)for(int b=a+1;b<POP_GROUPS;b++)offline_battle(a,b,battleStep);
+        refresh_encounters(near);
+    }
 }
 int population_walk(int n,float dt){
     int owned=population_owned(n);if(!owned)return 0;int k=owned-1;WorldEvent*e=&P.groups[k];PopulationState*m=&P.state[k];Actor*a=&g.actors[n];
@@ -340,7 +504,7 @@ int population_walk(int n,float dt){
     float x,y;
     if(e->type==POP_ARMY||e->type==POP_PATROL){float dx=m->targetX-e->x,dy=m->targetY-e->y,d=fmaxf(1,sqrtf(dx*dx+dy*dy));float side=(i%3-1)*2.2f,back=(i/3)*2.3f;x=e->x-dy/d*side-dx/d*back;y=e->y+dx/d*side-dy/d*back;}
     else {float angle=i*2.39996f+e->serial;x=e->x+cosf(angle)*(2+i%3);y=e->y+sinf(angle)*(2+i%3);}
-    if(camp_type(e->type)&&g.life.groups[k].goal==LIFE_ROAM&&g.life.groups[k].camp==CAMP_READY){
+    if(camp_type(k)&&g.life.groups[k].goal==LIFE_ROAM&&g.life.groups[k].camp==CAMP_READY){
         if(m->phase==POP_REST&&i<m->beds-1){x=m->siteX+m->offsetX[i+1];y=m->siteY+m->offsetY[i+1];if(distance(a->x,a->y,x,y)<.8f){a->taskKind=3;a->taskIndex=-1000-k*4-i;a->action=180;return 1;}}
         else if(m->phase==POP_FORAGE){float angle=(i*1.7f+e->serial);x=e->x+cosf(angle)*(8+i%3*3);y=e->y+sinf(angle)*(8+i%3*3);
             if(i<2&&(e->type==POP_SCAVENGERS||e->type==POP_SALVAGE)){int node=forage_node(k);if(node>=0){x=g.nodes[node].x;y=g.nodes[node].y;if(distance(a->x,a->y,x,y)<=WORK_REACH){if(a->taskKind!=1){a->taskKind=1;a->taskIndex=node;a->action=2;}return 1;}}}
@@ -377,7 +541,7 @@ void population_anger(int n){int pa=population_owned(n);if(!pa)return;WorldEvent
 int population_object_count(int k){
  if(k<0||k>=POP_GROUPS||!P.version)return 0;WorldEvent*e=&P.groups[k];
  if(g.life.version&&g.life.groups[k].camp>=CAMP_AWAY)return 0;
- return camp_type(e->type)?P.state[k].beds+5:e->type==POP_BATTLEFIELD?1:0;
+ return camp_type(k)?P.state[k].beds+5:e->type==POP_BATTLEFIELD?1:0;
 }
 int population_object(int k,int object,float*x,float*y){
  int count=population_object_count(k);if(object<0||object>=count)return 0;PopulationState*m=&P.state[k];
@@ -397,14 +561,14 @@ int population_sleep_valid(const Actor*a){int raw=-1000-a->taskIndex,k=raw/4,bed
 int population_action_valid(int k,int action){
     if(k<0||k>=POP_GROUPS||!P.version||depth_room(&g.actors[g.selected]))return 0;Actor*a=&g.actors[g.selected];WorldEvent*e=&P.groups[k];float x=e->x,y=e->y;
     if(!conscious(a))return 0;if(!action)return distance(a->x,a->y,e->x,e->y)<=8;
-    int object=action>=11&&action<=13?action-10:action==20?(camp_type(e->type)?P.state[k].beds+1:0):0;
+    int object=action>=11&&action<=13?action-10:action==20?(camp_type(k)?P.state[k].beds+1:0):0;
     if(!population_object(k,object,&x,&y))return 0;
     if(action>=30&&(e->type!=POP_MERCHANTS&&e->type!=POP_SMUGGLERS))return 0;
     return distance(a->x,a->y,x,y)<=1.7f;
 }
 void population_detail(int k,char*out,int size){
     if(k<0||k>=POP_GROUPS){snprintf(out,size,"No travelers here.");return;}WorldEvent*e=&P.groups[k];PopulationState*m=&P.state[k];int live=0,down=0;for(int i=0;i<e->count;i++){Actor*a=member(k,i);if(a&&!a->dead){live++;down+=a->unconscious>0;}}
-    snprintf(out,size,"%s: %d alive, %d down; %s. %s",names[e->type],live,down,g.life.version?life_goal_name(g.life.groups[k].goal):phases[m->phase],m->beds?"Camp beds are available when unoccupied.":e->type==POP_PRISONERS?"Prisoners can be freed after evading or defeating guards.":e->type==POP_WOUNDED?"Dressings may save the wounded.":e->type==POP_BATTLEFIELD?"The survivors and fallen carry their actual equipment.":"These travelers follow their own route.");
+    snprintf(out,size,"%s: %d alive, %d down; %s. %s",population_name(k),live,down,g.life.version?life_goal_name(g.life.groups[k].goal):phases[m->phase],m->beds?"Camp beds are available when unoccupied.":e->type==POP_PRISONERS?"Prisoners can be freed after evading or defeating guards.":e->type==POP_WOUNDED?"Dressings may save the wounded.":e->type==POP_BATTLEFIELD?"The survivors and fallen carry their actual equipment.":"These travelers follow their own route.");
 }
 static int cache_owner(const WorldEvent *e) {
     return e->type == POP_BATTLEFIELD || e->faction == HOSTILE ? FREE : e->faction;
@@ -482,7 +646,7 @@ int population_action(int k, int action) {
     }
     if (!action) {
         log_msg("%s: %d standing / %s / %d beds.",
-                e->type == POP_SMUGGLERS && !population_object_count(k) ? "Smugglers" : names[e->type], standing(k),
+                e->type == POP_SMUGGLERS && !population_object_count(k) ? "Smugglers" : population_name(k), standing(k),
                 g.life.version ? life_goal_name(g.life.groups[k].goal) : phases[m->phase], m->beds);
     } else if (action >= 11 && action <= 13) {
         float x, y;

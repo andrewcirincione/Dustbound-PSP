@@ -51,3 +51,6 @@ cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c 
 
 cc -O2 -std=gnu99 -Wall -Wextra -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_town_watch.c -lm -o build/test-town-watch
 ./build/test-town-watch
+
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_encounters.c -lm -o build/test-encounters
+./build/test-encounters

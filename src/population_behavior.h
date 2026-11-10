@@ -187,7 +187,7 @@ static void life_choose(int k){
  if(z->goal==LIFE_RETREAT||z->goal==LIFE_RESCUE||z->goal==LIFE_RECOVER||z->goal==LIFE_RESUPPLY||z->goal==LIFE_RETURN||z->goal==LIFE_REFUGE||z->goal==LIFE_SETTLED||z->goal==LIFE_DELIVER||z->goal==LIFE_REINFORCE||z->goal==LIFE_RAID)return;
  if(e->type==POP_ARMY){life_army_mission(k);return;}
  if(e->type==POP_REFUGEES||e->type==POP_WOUNDED){if(e->age>240&&standing(k)==life_alive(k)){int t=life_town(k,1,-1);if(t>=0){z->camp=CAMP_PACKING;life_target(k,LIFE_REFUGE,t);z->clock=12;life_announce(k,"packing for a safer settlement");}}return;}
- if(camp_type(e->type)&&(z->emptyClock>90||(e->type==POP_SMUGGLERS&&(g.dayTime>19||g.dayTime<5)&&e->age>120))){int t=life_town(k,0,-1);if(t>=0){z->camp=CAMP_PACKING;life_target(k,LIFE_RESUPPLY,t);z->clock=12;life_announce(k,"packing up for a supply run");}return;}
+ if(camp_type(k)&&(z->emptyClock>90||(e->type==POP_SMUGGLERS&&(g.dayTime>19||g.dayTime<5)&&e->age>120))){int t=life_town(k,0,-1);if(t>=0){z->camp=CAMP_PACKING;life_target(k,LIFE_RESUPPLY,t);z->clock=12;life_announce(k,"packing up for a supply run");}return;}
  if(e->type==POP_HUNTERS){if(z->goal==LIFE_HUNT)return;int prey=-1;float d=70;for(int j=0;j<POP_GROUPS;j++)if(P.groups[j].type==POP_BEASTS&&life_alive(j)){float n=distance(e->x,e->y,P.groups[j].x,P.groups[j].y);if(n<d){d=n;prey=j;}}if(prey>=0){z->goal=LIFE_HUNT;z->targetGroup=prey;z->targetSerial=P.groups[prey].serial;z->clock=0;}return;}
  if(e->type==POP_AMBUSH&&!z->ambushSprung)return;
  if(e->type==POP_PATROL){int threat=life_threat(k,65);if(threat>=0){z->targetGroup=threat;z->targetSerial=P.groups[threat].serial;z->goal=LIFE_HUNT;}return;}
@@ -226,21 +226,21 @@ static void group_behavior(int k,float dt){
  int fighting=0;for(int i=0;i<e->count;i++){Actor*a=member(k,i);if(a&&e->spawned&&a->target>=0)fighting=1;}
  if((fighting||targetThreat>=0)&&z->goal!=LIFE_RETREAT&&z->goal!=LIFE_RAID){m->phase=POP_FIGHT;m->clock=8;return;}
  if(m->phase==POP_FIGHT&&m->clock>0&&z->goal!=LIFE_RETREAT&&z->goal!=LIFE_RAID)return;
- if(camp_type(e->type)&&z->camp==CAMP_READY)for(int i=0;i<e->count;i++){Actor*a=member(k,i);if(a&&!a->dead&&a->hunger<40&&!inventory_count(a,RATION)){
+ if(camp_type(k)&&z->camp==CAMP_READY)for(int i=0;i<e->count;i++){Actor*a=member(k,i);if(a&&!a->dead&&a->hunger<40&&!inventory_count(a,RATION)){
    if(inventory_count(a,MEAT)>=2&&inventory_add(a,RATION,1))inventory_remove(a,MEAT,2);
    else if(m->stock[0]>0&&inventory_add(a,RATION,1))m->stock[0]--;
    else if(m->cacheItem==RATION&&m->cacheQty>0&&inventory_add(a,RATION,1))m->cacheQty--;
   }}
- if(camp_type(e->type)&&m->stock[0]<=1&&(m->cacheItem!=RATION||!m->cacheQty))z->emptyClock+=dt;else z->emptyClock=fmaxf(0,z->emptyClock-dt);
+ if(camp_type(k)&&m->stock[0]<=1&&(m->cacheItem!=RATION||!m->cacheQty))z->emptyClock+=dt;else z->emptyClock=fmaxf(0,z->emptyClock-dt);
  z->decision-=dt;if(z->decision<=0){life_choose(k);z->decision=10;}
  if(z->camp==CAMP_PACKING){m->phase=POP_REST;if(life_player_near_site(k))return;z->clock-=dt;if(z->clock>0)return;z->camp=CAMP_AWAY;}
  if(z->goal==LIFE_SETTLED){m->phase=POP_REST;return;}
  if(z->goal==LIFE_HUNT){int prey=z->targetGroup;if(prey<0||P.groups[prey].serial!=z->targetSerial){z->goal=LIFE_ROAM;return;}
   m->targetX=P.groups[prey].x;m->targetY=P.groups[prey].y;z->clock+=dt;
   if(!standing(prey)&&distance(e->x,e->y,m->targetX,m->targetY)<8&&e->type==POP_HUNTERS){if(life_harvest_prey(k,prey)&&z->clock<240){m->phase=POP_REST;return;}z->clock=241;}
-  if((!life_alive(prey)&&e->type!=POP_HUNTERS)||z->clock>240){m->targetX=m->siteX;m->targetY=m->siteY;z->goal=camp_type(e->type)?LIFE_RETURN:LIFE_ROAM;z->clock=0;}
+  if((!life_alive(prey)&&e->type!=POP_HUNTERS)||z->clock>240){m->targetX=m->siteX;m->targetY=m->siteY;z->goal=camp_type(k)?LIFE_RETURN:LIFE_ROAM;z->clock=0;}
  }
- if(camp_type(e->type)&&z->goal==LIFE_ROAM){m->phase=g.dayTime<6||g.dayTime>19?POP_REST:(int)(e->age/110)%3==0?POP_FORAGE:POP_REST;return;}
+ if(camp_type(k)&&z->goal==LIFE_ROAM){m->phase=g.dayTime<6||g.dayTime>19?POP_REST:(int)(e->age/110)%3==0?POP_FORAGE:POP_REST;return;}
  if(z->goal==LIFE_RAID){
   int t=z->targetTown;
   if(t<0||g.townOwner[t]==e->faction||(g.war.heldSince[t]>0&&g.time-g.war.heldSince[t]<650)){z->goal=LIFE_ROAM;return;}

@@ -1,6 +1,6 @@
 # Dustbound — PSP frontier survival RPG
 
-## 0.18.3 — Walls and streets
+## 0.18.4 — The roads move on
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
@@ -14,7 +14,9 @@ Fight stance closes to weapon range and repeats at the weapon's cooldown. Analog
 
 All nineteen settlements have their own street plans, amenities and interiors, with painted buildings and furniture tied to local materials and culture. Brass Junction has an armorer and a six-bed inn. Vermilion Keep has a stockade, while Copper Cross uses watch cages. Guests circulate between the inn, streets and homes. Dustward Clan lodges share beds and training access for members. The Compact, Shogunate and Ash Monastery send armies against one another. Captured cities can have guarded labor yards, and nearby residents pass on news of actual raids and victories.
 
-Painted buildings and furniture use measured foundations. Walls follow both isometric axes, and jail gates swing open when unlocked. Nearby names and speech share space with building labels. Eight more small bandit gangs roam the roads with weak fighters and occasional supplies. Household chests hold more, and retreat is reserved for severe injuries or a rout.
+Painted buildings and furniture use measured foundations. Walls follow both isometric axes, and jail gates swing open when unlocked. Nearby names and speech share space with building labels. Household chests hold more, and retreat is reserved for severe injuries or a rout.
+
+Quiet routes draw fresh travelers, weak bandit gangs and wildlife. Wilderness encounters return after a cooldown at new locations, and older saves pick up the new encounter pacing. Weak bandits sometimes carry cloth, food or a partial dressing.
 
 ![Nearby roles and military equipment](evidence/v150-psp-army.png)
 
@@ -37,7 +39,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 ## The wider game
 
 - Five playable species, distinct settlement cultures, eighteen named leaders and elites, and personal equipment.
-- Ninety-one persistent wilderness groups across sixteen encounter types, from refugee camps with usable beds to armies, convoys and ambushes.
+- A bounded population of ninety-one wilderness groups across sixteen encounter types, from refugee camps with usable beds to armies, convoys and ambushes.
 - Hunters pursue real prey; survivors use medicine and carry casualties; camps seek finite supplies; refugees can settle; armies reinforce, supply and assault settlements.
 - Six body regions, permanent limb loss, crawling, two-handed weapon penalties, five prosthetic grades, shops and a surgeon.
 - Weapons with different shapes, reach and handling; layered clothing, backpacks, crafting requirements and direct equipment comparisons.
@@ -47,7 +49,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dustbound-0.18.3-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v25 reads earlier expeditions. Existing equipment, training and town control carry over.
+Extract `Dustbound-0.18.4-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v25 reads earlier expeditions. Existing equipment, training and town control carry over.
 
 ## Controls
 
