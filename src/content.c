@@ -273,16 +273,16 @@ void content_init(void) {
 
 const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE BORDERLANDS",    "COMBAT",
                                         "WOUNDS & RESCUE", "FOOD & SLEEP", "EQUIPMENT",          "MERCHANTS",
-                                        "FORGING GEAR",    "CRAFTING",     "YOUR OUTPOST",       "SQUAD JOBS",
+                                        "FORGING GEAR",    "RESEARCH",     "CAMP & HOME",       "SQUAD JOBS",
                                         "CRIME & STEALTH", "FACTIONS",     "CONTRACTS",          "SAVES",
-                                        "WEATHER",         "CAPTIVITY",    "BUILDING INTERIORS", "BACKPACKS", "FINDING WORK", "ORDERS & GROUPS", "CAMP WORK & FUEL", "TRAUMA & REPAIR", "ARMOR LAYERS"};
+                                        "WEATHER",         "CAPTIVITY",    "BUILDING INTERIORS", "BACKPACKS", "FINDING WORK", "ORDERS & GROUPS", "CAMP COOKING", "TRAUMA & REPAIR", "ARMOR LAYERS"};
 const char *guideBodies[GUIDE_PAGES] = {
     "Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down: skills. Left: worn gear. Right: squad management.\n\001: interact. \004: pack. \003: "
     "fight/passive. Hold L + Square: choose someone to attack (also Start > Squad). \002: sneak. \005: next squad member. \006: tactical pause. \010: world atlas. \007: "
-    "pause menu: \005/\006 change Pause, Squad and World tabs. D-pad navigates menus.\nMenus pause time. \010 opens help. \005/\006 switch members or guide pages. Cross opens nearby actions. Pause with R, choose an action to queue it, then R resumes. Four actions can wait; moving cancels them. Analog movement cancels work. Map pins never move you.",
+    "pause menu: \005/\006 change Pause, Squad, World and Camp & Home tabs. D-pad navigates menus.\nMenus pause time. \010 opens help. \005/\006 switch members or guide pages. Cross opens nearby actions. Pause with R, choose an action to queue it, then R resumes. Four actions can wait; moving cancels them. Analog movement cancels work. Map pins never move you.",
     "New expedition opens character creation. Choose a name, origin, species, body, skin, hairstyle, hair "
     "color and beard. \014 adjusts each choice. \001 edits your name or begins.\nOrigins change "
-    "equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts as a group of three. Species "
+    "equipment, supplies and skills. Outlaws begin with a bounty. Species "
     "changes health, carry, speed, appetite and starting skills. The preview shows your starting values. Clockworks need spare parts, not food or bandages. A town barber can change your appearance later.",
     "The 1536 by 1536 borderlands contain nineteen settlements and nine terrain regions. Roads connect towns. "
     "Rivers have fords near roads; hills rise into mesas and snowfields.\n\010 opens the atlas. "
@@ -290,8 +290,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "white squares are towns. World activity records last-seen sightings, not live tracking. "
     "\001 places a reference pin. \004 opens the local view. \005/\006 selects known towns. \003 "
     "reveals surveyed geography after buying a "
-    "chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits "
-    "persist.",
+    "chart. Town ownership, prosperity and unrest change with world events. Depleted deposits persist. Player camps expire after a day away.",
     "\003 toggles fighting. L + Square opens opponents; Cross orders an attack, including neutrals (assault adds bounty). Small feet marks: teal line friendly, gold dot neutral, red chevron hostile. Red corners mark your opponent. Fight stance closes to weapon reach and attacks at cooldown. The analog stick overrides pursuit. Followers engage nearby "
     "threats. \006 pauses combat for orders. Heavy steel handles best with strength equal to twice its weight. Weak or "
     "injured arms lengthen preparation and recovery. Mauls pierce armor; glaives reach farther; greatswords "
@@ -304,8 +303,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "permanent; dismiss the body from Squad to free its slot.",
     "Food is eaten below forty hunger. You eat what you need and save the remainder. Supplies come from your pack, then a nearby companion or owned depot within "
     "three meters. Water supports "
-    "farms; tonics restore blood and treat exposure. Starvation damages the chest.\nAn inn bed costs 25 "
-    "silver and starts safe rest. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and helps dressed wounds heal. Severe hunger slows recovery. Move to wake. The sun completes a day in thirty minutes of "
+    "farms; tonics restore blood and treat exposure. Starvation damages the chest.\nAn inn bed charges its listed lodging price. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and helps dressed wounds heal. Severe hunger slows recovery. Move to wake. The sun completes a day in thirty minutes of "
     "simulation; menus and "
     "tactical pause stop time.",
     "Six slots: weapon, torso, head, boots, legs, back. Pack \001 equips; \003 passes one to an ally; \004 "
@@ -324,16 +322,8 @@ const char *guideBodies[GUIDE_PAGES] = {
     "the selected design. Metal, cloth and timber costs scale with material and grade; relic gear also needs "
     "a relic. Higher grades require smithing experience and research. Missing materials or a full pack "
     "cancel the transaction without charging you.",
-    "Crafting recipes make supplies, refined metal, ammunition and prosthetics. A forge smelts ore and "
-    "shapes weapons. A campfire cooks grain or meat with water. A research bench makes dressings.\nStand "
-    "close to the station. Enter a smithy before using its forge. Each ingredient shows HAVE/NEED: 6/3 means you own six and need three. Green means enough, including exact amounts; red means short. Research, station reach and fuel are also shown. \003 switches recipes/equipment. Research consumes relics and silver in "
-    "three tiers. Skills rise when crafting succeeds. A shared depot supplies worker jobs, but hand crafting "
-    "uses the selected survivor's pack.",
-    "Build outside settlement boundaries. Choose a structure and place it beside the selected character. "
-    "Buildings cannot overlap; materials are charged only after validation.\nShelters heal; farms need water "
-    "and yield grain; wind pumps irrigate nearby crops. Forges and benches unlock production. Depots hold "
-    "sixteen clean stacks. \001 opens storage; \014 switches sides; \003 moves a full stack. Camps attract "
-    "raiders, so keep medicine and a retreat route.",
+    "Start > Camp & Home > Research shows three forging tiers. Stand near a research bench with a relic and silver to research. Furniture needs no research.\nEnter a smithy to forge equipment. Mechanical limbs must be bought or found. Cooking remains available at campfires, including with enemies nearby.",
+    "Start > Camp & Home > Build camp offers a campfire and an inventory bedroll. Move the placement cursor with the analog stick or D-pad, then Cross to place. Red spots are blocked. Placement clears foliage. Camps disappear after a day away.\nBuy a house at its door, enter it and choose Place furniture. Beds, chests, tables, shelves and stoves cost silver. Move / remove repositions existing furniture. All purchased-home chests share a free stash.\nTalk to a depot clerk or use the counter for a separate store shared across towns. Fees are quoted for deposits and withdrawals. \014 switches sides; \001 moves one item; \003 moves a stack.",
     "D-pad Right opens Squad management. \005/\006 chooses a member; \015 selects a row; \014 changes its value. Follow trails the "
     "assigned group leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats "
     "injured allies.\nSmelt and Cook use nearby stations and can collect ingredients from a nearby depot. "
@@ -347,7 +337,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Contracts raise standing; theft lowers it. The Factions ledger shows each faction’s outstanding amount and charges. Ash Monastery, Shogun Rest and Vulture Nest require matching body armor and headwear; close inspections can expose a disguise. "
     "Hired guards cost 240 silver for escort or 180 for camp duty: one simulated day. They fight and "
     "bandage independently, keep their gear, wait outside interiors and return home on expiry.",
-    "Ask merchants or marshals for work. Freight needs a refundable deposit and four goods. Bring the cargo to the receiving contact. Caravans wait for you outside town. Square on the Journal entry locates the caravan. Escort or patrol work pays 12 silver per 30 seconds of nearby movement, plus a completion bonus. Stay within 8m. A wanted target has a silver mark beside their name. Their loot screen lists the paying factions. Carry them to a paying jailkeeper. A live target pays twice as much.\nJournal shows your objective, payment and contact. Completed contracts have their own tab.",
+    "Ask merchants or marshals for work. Freight needs a refundable deposit and four goods. Bring the cargo to the receiving contact. Caravans wait for you outside town. Square on the Journal entry locates the caravan. Escort or patrol work pays 20 silver per 30 seconds of nearby movement, plus a completion bonus. Stay within 8m. Check Health / Stats has Health, Stats and Bounty tabs. The Bounty tab lists payouts and accepting factions. Carry the target inside a paying faction's jail and choose Environment > Turn in carried bounty. Live targets pay double.\nDispatch jobs give a sealed packet. It is delivered when you reach the destination; return to your contact for payment. The Journal tracks the current objective and completed work.",
     "Six manual slots plus autosave. \007, Save or Load opens a ledger with name, day, party size and "
     "silver. Choose a slot; \001 asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.\nSaves "
     "use version, size and checksum validation and preserve a previous .bak file. Invalid files never "
@@ -373,8 +363,8 @@ const char *guideBodies[GUIDE_PAGES] = {
     "FIGHT reduces melee attack/defence: travel -2, medicine 0, ore -7, bedroll -4. Bulky packs hurt "
     "stealth. Medicine rolls speed up first aid. Bedroll packs help you recover while resting. Buy a Bedroll in Supplies to lay out a portable bed.",
 
-    "Work is posted intermittently. Ask a merchant, marshal, innkeeper or smith, or ask locals what they have heard. If someone is hiring, the local contact will name the job. A town can have zero, one or two postings. After accepting one, allow time for new work. The Journal lists the objective, payout and the person who pays.",
+    "Work is posted intermittently. Ask a merchant, marshal, innkeeper or smith, or ask locals what they have heard. If someone is hiring, the local contact will name the job. A town can have up to three postings. After accepting one, allow time for new work. The Journal lists the objective, payout and the person who pays.",
     "Squad management sets Balanced, Defensive, Keep range or Hold fire. Defensive gives +18 defence but never attacks. Ranged allies retreat if a foe closes within 3.5m. Projectiles travel and hit walls or allies: clear your firing line.\nAssign each survivor to one of three groups and choose its leader. A pin marks the destination on both maps. Follow its line on the minimap. Walk with the analog stick; group members follow their leader. Four job priorities choose the first available task. Put Follow or Hold last. Manual movement pauses a queue; resume the Priority queue in Squad management.",
-    "The wilderness has persistent camps, patrols, refugees, raiders, beasts, prisoners and armies. Groups travel, rest, gather and clash even far away. Camp beds are free when unoccupied. Ore seams and cuttable timber have distinct markings and sit outside settlements. Campfires cook 2 meat into 1 ration. Road traders and some smugglers carry their own stock. Search a chest to see its contents before taking anything.\nHighlight a Bedroll in the pack and press \001 to lay it out. Use Nearby Actions to rest or pack it up. Construction consumes materials when a foundation is placed. Stay beside it to build; moving cancels work. Resume from the nearby action or Camp ledger. Unfinished stations and beds cannot work.\nCampfires and forges burn one charge per production action. Add clean timber for four charges or coal for ten. Stations lose a little condition with use. One timber repairs 35 condition. Town workshops supply their own fuel. Windpumps irrigate nearby farms. Queues skip unavailable jobs.",
+    "Wilderness groups travel, camp, hunt and fight. Camp bedrolls are free when unoccupied, and some camps have tents. Ore and cuttable timber have distinct minimap dots outside settlements. Road traders carry their own stock.\nUse a campfire to cook food; nearby enemies do not block cooking. A bedroll from your pack opens the placement view. Use Nearby Actions to rest or pack it up. Player camps disappear after a day away.",
     "Cuts can worsen while bleeding. Bandaging starts gradual recovery from organic damage. Deep wounds take longer. Rest in a bed to recover faster.\nMechanical characters and prosthetics need timed repairs with spare parts. Medicine and sleep cannot repair metal. Health & recovery shows health, trauma and armor condition. Cloth restores equipment condition.\nFree allies can pick a captive's shackles. First aid, trade and completed work improve faction standing.",
     "Use Armor Layers to fit a light body garment under outer armor. Weight must be five or less. Swaps preserve stolen ownership and fail safely if your pack is full.\nOuter body covers 95% of chest hits and 65% of arm hits; headwear covers 85%, legwear 90%, boots 35%. An uncovered hit bypasses that piece. Blunt impacts use 72% of outer protection. Underlayers add reduced protection. Wear lowers protection to a minimum of 65%; maintain with cloth. Inspect both armor and movement before equipping."};

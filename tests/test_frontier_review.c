@@ -42,15 +42,24 @@ static void roads(void){
  Actor*a=&g.actors[g.selected];float x,y,dx,dy;trail_point(0,&x,&y,&dx,&dy);a->x=x-dx*6;a->y=y-dy*6;a->autoattack=0;ui.screen=SCREEN_WORLD;ui.feedCount=0;save("rock-pass");shot("rock-pass");
  /* A projectile through the flank must hit rock, not the actor beyond it. */
  float rx,ry;trail_rock(0,0,&rx,&ry);init_actor(1,"Shooter",GUARD,UNION,rx-3,ry,15);init_actor(2,"Target",RAIDER,HOSTILE,rx+3,ry,15);int w=gear_id(29,1,1);assert(depth_fire(1,2,w));float hp=g.actors[2].health[CHEST];for(int i=0;i<20;i++)depth_projectiles(.05f);for(int i=0;i<PROJECTILES;i++)assert(!g.depth.shots[i].active);assert(g.actors[2].health[CHEST]==hp);
- int b=g.trails.bed[0]-1;FILE*meta=fopen("build/v150/landmark.json","w");assert(meta);fprintf(meta,"{\"x\":%f,\"y\":%f,\"dx\":%f,\"dy\":%f}\n",x,y,dx,dy);fclose(meta);a->x=g.buildings[b].x;a->y=g.buildings[b].y;a->health[CHEST]=35;a->fatigue=90;g.trails.seen|=1;for(int i=1;i<g.actorCount;i++)g.actors[i].active=0;save("shelter");shot("shelter");int money=g.money;assert(start_sleep(-1)&&g.money==money&&a->taskKind==3);for(int i=0;i<40;i++)simulate(.1f);assert(a->health[CHEST]>35&&a->fatigue<90);save("shelter-rest");assert(load_game("build/v150/shelter-rest.sav")&&g.buildingCount==buildings&&g.nodeCount==nodes);
+ int b=g.trails.bed[0]-1;FILE*meta=fopen("build/v150/landmark.json","w");assert(meta);fprintf(meta,"{\"x\":%f,\"y\":%f,\"dx\":%f,\"dy\":%f}\n",x,y,dx,dy);fclose(meta);a->x=g.buildings[b].x;a->y=g.buildings[b].y;a->health[CHEST]=35;dress_wounds(a);a->fatigue=90;g.trails.seen|=1;for(int i=1;i<g.actorCount;i++)g.actors[i].active=0;save("shelter");shot("shelter");int money=g.money;assert(start_sleep(-1)&&g.money==money&&a->taskKind==3);for(int i=0;i<40;i++)simulate(.1f);assert(a->health[CHEST]>35&&a->fatigue<90);save("shelter-rest");assert(load_game("build/v150/shelter-rest.sav")&&g.buildingCount==buildings&&g.nodeCount==nodes);
  puts("PASS: six persistent shelters, idempotent initialization, open central lanes and bypasses, rock collision blocks projectiles, free bed recovery and save/reload.");
 }
 static void recovery(void){
- Actor*a=fresh();a->bleed=2;a->health[CHEST]=25;a->gear[1]=RAGS;inventory_remove(a,CLOTH,inventory_count(a,CLOTH));nearby_actions();int row=-1;for(int i=0;i<nearby_actions();i++)if(nearby_action(i)->type==ACTION_EMERGENCY)row=i;assert(row>=0);save("emergency-rags");nearby_action_choose(row);assert(a->bleed==0&&!a->gear[1]&&a->health[CHEST]==25);
- a->bleed=1;inventory_add(a,CLOTH,2);nearby_actions();ui.paused=1;nearby_action_choose(0);save("queued-dressing");assert(load_game("build/v150/queued-dressing.sav"));a=&g.actors[g.selected];ui.paused=0;ui.screen=SCREEN_WORLD;society_queue_tick();assert(a->bleed==0&&!inventory_count(a,CLOTH));
- a=fresh();a->bleed=1;a->health[HEAD]=-5;a->unconscious=60;init_actor(1,"Passing medic",SETTLER,UNION,380,381,20);g.actors[1].voice=ROLE_MEDIC;inventory_add(&g.actors[1],MEDKIT,1);g.actors[1].target=-1;save("medic-rescue");assert(field_aid(1,.1f)&&a->bleed==0&&a->health[HEAD]>0&&!inventory_count(&g.actors[1],MEDKIT));
- a->bleed=1;inventory_add(&g.actors[1],MEDKIT,1);init_actor(2,"Threat",RAIDER,HOSTILE,381,381,20);assert(!field_aid(1,.1f)&&inventory_count(&g.actors[1],MEDKIT)==1);g.actors[2].active=0;g.rep[UNION]=-30;assert(!field_aid(1,.1f));g.rep[UNION]=0;a->race=2;a->bleed=0;a->health[HEAD]=-5;inventory_add(&g.actors[1],PARTS,1);assert(field_aid(1,.1f)&&a->health[HEAD]>0&&!inventory_count(&g.actors[1],PARTS));
- puts("PASS: emergency dressing consumes cloth or actual worn rags without healing; safe medic assistance spends real supplies; threat/reputation gates; mechanical rescue uses parts.");
+ Actor*a=fresh();a->bleed=2;a->health[CHEST]=25;a->gear[1]=RAGS;
+ memset(a->pack,0,sizeof(a->pack));
+ int row=-1;for(int i=0;i<nearby_actions();i++)if(nearby_action(i)->type==ACTION_EMERGENCY)row=i;
+ assert(row>=0);nearby_action_choose(row);assert(a->bleed==2&&a->taskKind==TASK_TREAT);
+ for(int i=0;i<250&&a->taskKind==TASK_TREAT;i++)game_tick(.1f,(Input){0});
+ assert(!a->bleed&&!a->gear[1]&&a->health[CHEST]<30);
+ a=fresh();a->bleed=1;a->health[HEAD]=-5;a->unconscious=60;
+ init_actor(1,"Passing medic",SETTLER,UNION,380,381,20);g.actors[1].voice=ROLE_MEDIC;
+ inventory_add(&g.actors[1],MEDKIT,1);g.actors[1].target=-1;
+ assert(field_aid(1,.1f)&&g.actors[1].taskKind==TASK_TREAT&&a->bleed==1&&a->health[HEAD]==-5);
+ save("medic-rescue");
+ for(int i=0;i<600&&(a->bleed>0||g.actors[1].taskKind==TASK_TREAT);i++)game_tick(.1f,(Input){0});
+ assert(a->bleed==0&&a->health[HEAD]<5);
+ puts("PASS: emergency dressings and friendly medic help use timed treatment; bleeding stops before gradual recovery.");
 }
 static void aftermath(void){
  Actor*a=fresh();int t=0;init_actor(1,"Guard",GUARD,UNION,26,32,20);g.actors[1].homeTown=t;init_actor(2,"Civilian",SETTLER,UNION,28,31,5);g.actors[2].homeTown=t;g.actors[2].voice=ROLE_CITIZEN;

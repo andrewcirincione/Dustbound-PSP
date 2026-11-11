@@ -41,7 +41,10 @@ static void camps(void){
 static void depots(void){
  Actor*a=fresh();int depot[3],n=0;for(int b=0;b<g.buildingCount&&n<3;b++)if(depot_public(b))depot[n++]=b;assert(n>=2);
  for(int i=0;i<n;i++){int clerk=depot_clerk(depot[i]);assert(clerk>=0&&npc_role(&g.actors[clerk])==ROLE_DEPOT);int offered=0;for(int j=0;j<dialogue_count(clerk);j++)offered|=dialogue_action(clerk,j)==21;assert(offered);}
- memset(a->pack,0,sizeof(a->pack));inventory_add(a,IRONBAR,2);room(depot[0],3.4f,3.8f);int slot=slot_item(a,IRONBAR),fee=depot_fee(depot[0],0,slot),cash=g.money;
+ /* Opening services through the clerk must work even beyond counter reach. */
+ int clerk=depot_clerk(depot[0]);actor_enter_room(clerk,depot[0]);
+ g.depth.actors[clerk].rx=3.4f;g.depth.actors[clerk].ry=2.98f;
+ memset(a->pack,0,sizeof(a->pack));inventory_add(a,IRONBAR,2);room(depot[0],3.4f,4.2f);int slot=slot_item(a,IRONBAR),fee=depot_fee(depot[0],0,slot),cash=g.money;
  assert(fee>0&&storage_transfer(depot[0],0,slot));assert(g.money==cash-fee&&inventory_count(a,IRONBAR)==1);
  room(depot[1],3.4f,3.8f);int stored=-1;for(int i=0;i<storage_slots(depot[1]);i++)if(storage_stack(depot[1],i)->item==IRONBAR){stored=i;break;}assert(stored>=0);
  cash=g.money;fee=depot_fee(depot[1],1,stored);assert(storage_transfer(depot[1],1,stored));assert(g.money==cash-fee&&inventory_count(a,IRONBAR)==2);
@@ -76,12 +79,18 @@ static void shops_and_inns(void){
   if(inn_has_upstairs(b)){InteriorProp down[ROOM_PROPS],up[ROOM_PROPS];int n=interior_floor_props(b,0,down),m=interior_floor_props(b,1,up),asc=0,desc=0;for(int i=0;i<n;i++)asc|=down[i].action==ROOM_STAIRS&&down[i].art==ART_INN_STAIRS;for(int i=0;i<m;i++)desc|=up[i].action==ROOM_STAIRS&&up[i].art==ART_STAIRS_DOWN;assert(asc&&desc);upstairs++;}
   if(g.buildings[b].type==FORGE&&g.buildings[b].owner<0&&!ruined_building(b)){int t=building_town(b);if(t<0)continue;restock_town(t);int weapons=0,armor=0;for(int it=1;it<ITEMS;it++)if(g.frontier.venue[t][it]==TRADE_SMITH&&*market_stock(t,it)>0){weapons+=itemDefs[it].slot==0;armor+=itemDefs[it].slot>0&&itemDefs[it].slot<=4;}assert(weapons>=8&&armor>=6);smiths++;}
  }
- assert(upstairs&&smiths);printf("PASS markets open all 24 hours, %d smithies with expanded stock, %d inns with separate down stairwell.\n",smiths,upstairs);
+ assert(upstairs&&smiths);
+ for(int n=1;n<g.actorCount;n++)if(g.actors[n].kind==GUARD&&strcmp(g.actors[n].name,"Jailkeeper"))g.actors[n].active=0;
+ assert(!society_job_available(0,CONTRACT_PATROL));
+ printf("PASS markets open all 24 hours, %d smithies with expanded stock, %d inns with separate down stairwell.\n",smiths,upstairs);
 }
 static void corpse_cleanup(void){
  Actor*a=fresh();int n=add_actor("Discarded corpse",RAIDER,HOSTILE,1200,1200,2);assert(n>=0);Actor*p=&g.actors[n];p->dead=1;p->target=-1;p->bountyReward=0;g.time=500;g.plans.corpseSince[n]=1;
  population_prune_corpses();assert(!p->active&&g.living.owned[n]<0);
  int k=add_actor("Carried corpse",RAIDER,HOSTILE,a->x,a->y,2);assert(k>=0);p=&g.actors[k];p->dead=1;p->bountyReward=0;p->carriedBy=0;a->carrying=k;g.plans.corpseSince[k]=1;population_prune_corpses();assert(p->active);
+ int leader=add_actor("Fallen ruler",SETTLER,UNION,1200,1200,2);assert(leader>=0);
+ p=&g.actors[leader];p->dead=1;p->voice=ROLE_SEATED_LEADER;g.plans.corpseSince[leader]=1;
+ population_prune_corpses();assert(p->active&&g.living.owned[leader]>=0);
  puts("PASS distant unclaimed corpse slots recycle; carried bodies remain protected.");
 }
 static void migration(const char*path){

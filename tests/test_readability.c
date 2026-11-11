@@ -13,6 +13,7 @@ static void save(const char *name){char path[128];snprintf(path,sizeof(path),"bu
 static Actor*fresh(void){
  game_new(73819,0);Actor*a=&g.actors[g.selected];a->x=a->y=380;a->autoattack=0;g.money=1000;g.dayTime=12;ui.screen=SCREEN_WORLD;ui.feedCount=0;
  for(int n=1;n<g.actorCount;n++){g.actors[n].active=0;g.actors[n].target=-1;g.actors[n].attackPhase=0;}
+ int released=0;for(int n=1;n<g.actorCount&&released<8;n++)if(npc_role(&g.actors[n])==ROLE_CITIZEN&&civil_elite_index(n)<0&&depth_named(n)<0&&!regional_named(n)&&!politics_leader_title(n)){g.living.owned[n]=-1;released++;}
  for(int k=0;k<POP_GROUPS;k++){WorldEvent*e=&g.population.groups[k];float x=1250+k%8*15,y=1250+k/8*15,dx=x-e->x,dy=y-e->y;e->x=x;e->y=y;g.population.state[k].targetX=x;g.population.state[k].targetY=y;g.population.state[k].siteX=x;g.population.state[k].siteY=y;g.life.groups[k].goal=LIFE_SETTLED;for(int i=0;i<e->count;i++){e->reserve[i].x+=dx;e->reserve[i].y+=dy;}}
  return a;
 }
@@ -34,9 +35,16 @@ static void manual_pins(void){
 }
 static void service(void){
  assert(load_game("build/old-v13.sav"));assert(g.interiorBuilding>0);Actor*a=&g.actors[g.selected];a->autoattack=0;int money=g.money;ui.screen=SCREEN_WORLD;ui.paused=0;
+ int b=g.interiorBuilding-1,floor=inn_has_upstairs(b);if(floor)inn_change_floor(a,1);
+ InteriorProp props[ROOM_PROPS];int pc=interior_floor_props(b,floor,props),bed=-1;
+ for(int i=0;i<pc;i++)if(props[i].action==ROOM_REST&&room_bed_free(a,props[i].x,props[i].y,b+1,floor)){bed=i;break;}
+ assert(bed>=0);g.interiorX=g.depth.actors[g.selected].rx=props[bed].x-.7f;g.interiorY=g.depth.actors[g.selected].ry=props[bed].y;
+ actor_enter_room(1,b);g.innFloor[1]=floor;g.depth.actors[1].rx=g.interiorX;g.depth.actors[1].ry=g.interiorY+.8f;
+ g.actors[1].active=1;g.actors[1].dead=0;g.actors[1].unconscious=0;g.actors[1].prisonTime=0;g.actors[1].carriedBy=-1;
+ int price=regional_bed_cost(building_town(b));
  int row=-1,npc=0;nearby_actions();for(int i=0;i<nearby_actions();i++){const NearbyAction*x=nearby_action(i);if(x->kind==0)npc++;if(x->kind==5&&strstr(interior_prompt(),"SLEEP"))row=i;}
- assert(row>=0&&npc>0);save("inn-near-npc");nearby_action_choose(row);assert(a->taskKind==3&&ui.screen==SCREEN_WORLD&&g.money==money-25);shot("inn-rest");save("inn-rest");
- puts("PASS: migrated v13 inn save has an NPC within reach; choosing the bed starts rest and charges exactly 25 without opening dialogue.");
+ assert(row>=0&&npc>0);save("inn-near-npc");nearby_action_choose(row);assert(a->taskKind==3&&ui.screen==SCREEN_WORLD&&g.money==money-price);shot("inn-rest");save("inn-rest");
+ puts("PASS: migrated v13 inn save has an NPC within reach; choosing the bed starts rest and charges the current inn price without opening dialogue.");
 }
 static void sights(void){
  Actor*a=fresh();group(POP_PATROL,0);field_observe(0);assert(g.fieldNotes.group[0].serial&&field_notes_valid(&g));FieldSighting old=g.fieldNotes.group[0];
@@ -66,4 +74,4 @@ static void council(void){
  ui.screen=SCREEN_FACTIONS;shot("factions");
  puts("PASS: council has distinct named claimants, policy preview and one-time pledge spending; faction color legend renders safely.");
 }
-int main(void){setvbuf(stdout,NULL,_IONBF,0);Actor probe={0};probe.health[HEAD]=probe.health[CHEST]=species_health(&probe);probe.blood=100;assert(knockout_reserve(&probe)==100);probe.health[LARM]=probe.health[LLEG]=-100;assert(knockout_reserve(&probe)==100);probe.health[HEAD]=species_health(&probe)*.2f;assert(fabsf(knockout_reserve(&probe)-20)<.01f);probe.blood=24;assert(fabsf(knockout_reserve(&probe)-5)<.01f);probe.unconscious=30;assert(knockout_reserve(&probe)==0);manual_pins();service();sights();outfits();council();ui.feedCount=0;log_warn("Contract paid");int before=ui.feedCount;gain(&g.actors[g.selected],ATHLETICS,10000);assert(ui.feedCount==before+1&&!strcmp(ui.feed[0],"Contract paid")&&strstr(ui.feed[1],"reached"));puts("PASS: skill growth cannot crowd a critical outcome out of the feed.");printf("ALL V140 CHECKS PASSED; Game=%zu FieldNotes=%zu\n",sizeof(Game),sizeof(FieldNotes));}
+int main(void){setvbuf(stdout,NULL,_IONBF,0);Actor probe={0};probe.health[HEAD]=probe.health[CHEST]=species_health(&probe);probe.blood=100;assert(knockout_reserve(&probe)==100);probe.health[LARM]=probe.health[LLEG]=-100;assert(knockout_reserve(&probe)==100);probe.health[HEAD]=species_health(&probe)*.2f;assert(fabsf(knockout_reserve(&probe)-20)<.01f);probe.blood=24;assert(fabsf(knockout_reserve(&probe)-5)<.01f);probe.unconscious=30;assert(knockout_reserve(&probe)==0);manual_pins();service();sights();outfits();council();ui.feedCount=0;log_warn("Contract paid");int before=ui.feedCount;gain(&g.actors[g.selected],ATHLETICS,10000);assert(ui.feedCount==before&&!strcmp(ui.feed[0],"Contract paid"));puts("PASS: skill growth cannot crowd a critical outcome out of the feed.");printf("ALL V140 CHECKS PASSED; Game=%zu FieldNotes=%zu\n",sizeof(Game),sizeof(FieldNotes));}

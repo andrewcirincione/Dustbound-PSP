@@ -104,7 +104,8 @@ void population_prune_corpses(void) {
            g.time-g.plans.corpseSince[n]<180||observers(a->x,a->y)<32)continue;
         int own=population_owned(n)-1;
         if((living_owned(n)&&own<0)||depth_named(n)>=0||regional_named(n)||civil_elite_index(n)>=0||
-           politics_leader_title(n)||npc_role(a)==ROLE_DEPOT||npc_role(a)==ROLE_MERCENARY)continue;
+           politics_protected(n)||npc_role(a)==ROLE_DEPOT||npc_role(a)==ROLE_MERCENARY||
+           (own<0&&a->homeTown>=0&&a->kind!=RAIDER&&a->kind!=BEAST))continue;
         a->target=-1;a->attackPhase=0;
         if(pinned(n))continue;
         if(own>=0){

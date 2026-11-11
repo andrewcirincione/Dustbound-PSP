@@ -1,3 +1,15 @@
+# 1.0.0 — A place to settle
+
+- Choose campfire, bedroll and home furniture positions in a paused placement view. Move or remove furniture; doorways, walls and occupied spaces are protected. Camp placement clears foliage. Furniture is available without research. Camps expire after a day away, and packed bedroll slots are reused.
+- Start > Camp & Home replaces the public recipes and upkeep menus. Camp construction offers only campfires and bedrolls. Equipment forging stays inside smithies; prosthetic crafting is disabled. Research unlocks three forging tiers.
+- Reworked arm joints, anatomical draw order and armor proportions, including black brigand and two-handed grips. Reviewed 16 torso silhouettes and 39 weapon/unarmed families. Upstairs inns use a newly generated downward stairwell model. Some roadside rests again have tents.
+- Smithies stock roughly twice as much varied equipment. Markets operate all day. Towns offer more jobs, including better-paid dispatches across longer, more dangerous routes. Accepted dispatches give a sealed packet, tracked until arrival.
+- Check Health / Stats separates Health, Stats and Bounty tabs. Jail Environment actions accept carried bounties without finding a keeper. Looting removes weapons, armor and underlayers from the actual victim. Inventory and loot column dividers are repositioned.
+- Public depots have clerks, shared cross-town storage and quoted per-item fees in both directions. Clerk and counter access both permit transfers. Owned home chests remain a separate free shared stash.
+- Slightly busier hostile road traffic, more varied sparse loot and occasional useful gear. Ordinary distant corpses recycle actor slots; unique, carried and unpaid bounty bodies stay protected. Cooking, trade, placement and rest are not blocked merely by nearby enemies.
+- Removed nearby quick-buy actions. Outsider-hostile factions are red in the faction menu. Quieter footsteps, louder menu selection sounds, and a generated-art main menu background.
+- Save format v29 migrates prior furniture bays, partial supplies, inventory ownership and unfinished dispatches. Actual 0.18.8 and 0.19.0 saves were included in compatibility checks.
+
 # 0.19.0 — Dust
 
 - The game and PSP launcher now use the name Dust.

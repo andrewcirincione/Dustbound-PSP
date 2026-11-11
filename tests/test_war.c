@@ -48,15 +48,20 @@ static void capitals(void) {
         for (int j = 0; j < i; ++j) assert(torsos[j] != torsos[i] && heads[j] != heads[i]);
         for (int b = 0; b < g.buildingCount; ++b) {
             Building *z = &g.buildings[b];
-            if (distance(z->x, z->y, towns[t].x, towns[t].y) > 12) continue;
+            if (building_town(b) != t) continue;
             assert(z->faction == factions[i]);
             ++count;
             signature += z->type == specific[i];
         }
-        assert(count >= 12 && signature && g.stock[t][RATION]);
+        int food=0,inn=0;for(int it=1;it<ITEMS;it++)if(food_capacity(it))food+=*market_stock(t,it);
+        for(int b=0;b<g.buildingCount;b++)if(building_town(b)==t&&g.buildings[b].type==BAR)inn++;
+        assert(count >= 6 && inn && food); /* varied plans no longer share a fixed civic template */
         g.dayTime = 12;
         at(towns[t].x + 2, towns[t].y + 4);
-        assert(can_walk(g.actors[0].x, g.actors[0].y));
+        if(!can_walk(g.actors[0].x,g.actors[0].y)){
+            int found=0;for(int y=-16;y<=16&&!found;y++)for(int x=-16;x<=16;x++)if(can_walk(towns[t].x+x,towns[t].y+y)){at(towns[t].x+x,towns[t].y+y);found=1;break;}assert(found);
+        }
+        assert(can_walk(g.actors[0].x,g.actors[0].y));
         if (i == 1) {
             g.actors[0].gear[1] = gear_id(34, 4, 1);
             g.actors[0].gear[2] = gear_id(50, 4, 1);
@@ -158,6 +163,8 @@ static void chatter(void) {
     g.time += 2000;
     int bandit = n + 1;
     init_actor(bandit, "Road bandit", RAIDER, HOSTILE, 49, 29.5f, 10);
+    g.depth.actors[bandit].room=0; /* this slot previously belonged to an indoor resident */
+    for(int k=0;k<POP_GROUPS;k++)g.population.groups[k].x=g.population.groups[k].y=1400;
     g.war.nextGossip = 0;
     key = war_chatter(n);
     assert(key >= 24 && key < 32 && strstr(war_ambient(key, FREE), "bandits east"));

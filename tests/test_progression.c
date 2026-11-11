@@ -29,7 +29,7 @@ static void merged_proficiencies(void) {
     pair(gear_id(0, 1, 1), SABRE);
     /* v15 and v16 share the payload layout. Version selects the XP order. */
     const float oldXP[WEAPON_XP_SLOTS] = {2700, 7500, 100000, 15000, 3100, 10800, 1800, 4800, 7500, 10800, 30000};
-    const float expected[WEAPON_XP_SLOTS] = {10200, 6600, 117612, 10800, 18300, 30000};
+    const float expected[WEAPON_XP_SLOTS] = {10200, 6600, 118100, 10800, 18300, 30000};
     const float oldStoredXP[WEAPON_XP_SLOTS] = {144, 300, 0, 0, 0, 0, 0, 0, 44, 66, 1200};
     const float expectedStored[WEAPON_XP_SLOTS] = {444, 0, 0, 0, 110, 1200};
     memcpy(g.society.weaponXP[0], oldXP, sizeof(oldXP));

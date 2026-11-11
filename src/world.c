@@ -665,9 +665,14 @@ int storage_transfer(int b,int from,int slot) {
         InteriorProp props[ROOM_PROPS];int reach=0;
         if(actor_inside(a)==b+1){int n=interior_props(b,props);for(int i=0;i<n;i++)reach|=props[i].action==ROOM_HOME_STASH&&distance(depth_x(a),depth_y(a),props[i].x,props[i].y)<2;}
         if(!reach)return 0;
-    }else if(actor_inside(a)?nearby_station(STORE,1.7f)!=b:
-             distance(a->x,a->y,z->x,z->y)>1.7f&&building_door_distance(b,a->x,a->y)>DOOR_REACH){
-        log_msg("Walk to the depot before transferring goods.");return 0;
+    }else{
+        int clerk=depot_clerk(b);
+        int atClerk=clerk>=0&&conscious(&g.actors[clerk])&&
+                    depth_room(a)==depth_room(&g.actors[clerk])&&
+                    depth_distance(a,&g.actors[clerk])<=TALK_REACH;
+        int atDepot=actor_inside(a)?nearby_station(STORE,1.7f)==b:
+                    distance(a->x,a->y,z->x,z->y)<=1.7f||building_door_distance(b,a->x,a->y)<=DOOR_REACH;
+        if(!atClerk&&!atDepot){log_msg("Walk to the depot before transferring goods.");return 0;}
     }
     int fee=depot_fee(b,from,slot);
     if(g.money<fee){log_msg("The depot charges %d silver per item.",fee);return 0;}

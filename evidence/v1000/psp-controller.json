@@ -1,0 +1,149 @@
+{
+  "id": "final-psp",
+  "ok": true,
+  "responses": [
+    {
+      "image": "main-menu",
+      "screen": 13,
+      "frame": 2,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "depot-fees",
+      "screen": 21,
+      "frame": 50,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "depot-after-deposit",
+      "screen": 21,
+      "frame": 56,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "depot-withdraw",
+      "screen": 21,
+      "frame": 62,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "depot-after-withdraw",
+      "screen": 21,
+      "frame": 68,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "health-tab",
+      "screen": 50,
+      "frame": 134,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "stats-tab",
+      "screen": 50,
+      "frame": 140,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "bounty-tab",
+      "screen": 50,
+      "frame": 146,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "bounty-paid",
+      "screen": 0,
+      "frame": 164,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "furniture-catalog",
+      "screen": 45,
+      "frame": 242,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "home-placement",
+      "screen": 52,
+      "frame": 254,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        3.855,
+        3.145
+      ]
+    },
+    {
+      "image": "home-furnished",
+      "screen": 0,
+      "frame": 260,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        3.855,
+        3.145
+      ]
+    },
+    {
+      "image": "upstairs-stairwell",
+      "screen": 0,
+      "frame": 302,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    }
+  ]
+}

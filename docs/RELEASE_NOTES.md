@@ -1,16 +1,11 @@
-# Dustbound 0.16.0 — Weight and motion
+# Dust 1.0.0 — A place to settle
 
-- Weapon proficiency now speeds the actual strike, as well as preparation and recovery. Heavy weapons and arm injuries retain their handling penalties.
-- Separate relaxed carry and combat guards, with smooth transitions in the live world renderer, including layered armor.
-- Dedicated unarmed punches and bow draw/release; firearms keep their recoil. Swords, thrusting weapons and heavy overhead attacks retain distinct motion.
-- Continuous movement through the contact point and into follow-through. Rigid grips keep both hands attached without stretching arms beyond their reach. Long weapons stay clear of the ground in relaxed and finishing poses.
-- Walking cadence follows actual distance. Blocked indoor movement and active strikes no longer walk in place. Rear feet stay planted during attacks, and hit reactions lean away from impact.
-- Downed beasts use prone sprites. Combat role labels and knockout bars sit below the fighters, leaving raised weapons visible.
+Choose where to put campfires, bedrolls and home furniture. Start > Camp & Home groups placement and research; furniture needs no research. Camps expire after a day away. General recipes and upkeep are removed, while smithy forging and cooking remain.
 
-All 0.15 gameplay remains, including manual travel, combat health bars, permanent injuries and prosthetics, wandering armies and camps, recovery options, and faction succession.
+This release revises arm joints and armor proportions, restores tents at some camps, adds a generated downward stairwell and uses generated art behind the title menu. Footsteps are quieter and menu navigation is louder.
 
-Extract `Dustbound-0.16.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Preserve your saves before upgrading. The save format remains v15; animation state is transient and does not change existing characters or equipment.
+Smithies sell more varied equipment, markets stay open, road encounters are slightly more frequent and loot is more varied. Dispatch work gives an actual sealed packet. Health / Stats / Bounty tabs show nearby targets, and carried bounties can be handed in from the jail's Environment actions. Public depots share inventory and charge quoted fees both ways; owned-house storage stays free.
 
-[Validation](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/VALIDATION_V160.md) · [Recovery record](https://github.com/andrewcirincione/Dustbound-PSP/blob/main/docs/RECOVERY_V160.md)
+Extract `Dust-1.0.0-PSP.zip` to the memory-stick root, preserving `PSP/GAME/DUSTBOUND`. Back up existing saves before upgrading; format v29 reads earlier expeditions.
 
-Playable homebrew alpha. Physical PSP testing has not been performed.
+See [validation and feedback coverage](VALIDATION_V1000.md) for test results and PSP screenshots. Physical PSP hardware testing has not been performed.

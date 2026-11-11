@@ -1,0 +1,8 @@
+PASS home purchase furniture, free movement, overlap/door protection, extra slots, paused placement and save roundtrip.
+PASS chosen camp sites, bedroll item consumption, cooking beside a hostile, forbidden limb recipes, one-day camp expiry.
+PASS staffed depot dialogue, shared cross-town inventory, quoted fees both ways, atomic insufficient-money failure.
+PASS physical dispatch given on acceptance, pack-space check, delivered packet removed, return payment still required.
+PASS real enemy weapon, armor and underlayer removal; jail environment turn-in without any keeper; payout once.
+PASS markets open all 24 hours, 9 smithies with expanded stock, 7 inns with separate down stairwell.
+PASS distant unclaimed corpse slots recycle; carried bodies remain protected.
+PASS Dust 1.0.0 integration checks.

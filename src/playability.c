@@ -599,7 +599,7 @@ const char *skill_training(int s) {
         "Water and harvest crops. Every 30 farming levels adds one grain per harvest.",
         "Cook at a campfire. Every 35 cooking levels adds one ration per batch.",
         "Smelt and forge. Smithing unlocks higher equipment quality.",
-        "Build and make prosthetics. Every 30 engineering levels saves one timber per building.",
+        "Build campfires. Engineering reduces timber costs.",
         "Research at a bench. Every 5 science levels reduces research silver cost by 1%.",
         "Land ranged shots. Crossbows improves accuracy; bring matching ammunition.",
         "Discover settlements and finish contracts. Perception improves ranged accuracy."};

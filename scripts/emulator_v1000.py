@@ -16,7 +16,11 @@ def state():
  try:return json.loads((GAME/'DUST_STATE.json').read_text())
  except (FileNotFoundError,json.JSONDecodeError):return {}
 def number(k,fmt='I'):
- d=state();return struct.unpack('<'+fmt,bytes.fromhex(d[k+'_value']))[0]
+ for _ in range(100):
+  d=state()
+  if k+'_value' in d:return struct.unpack('<'+fmt,bytes.fromhex(d[k+'_value']))[0]
+  time.sleep(.005)
+ raise TimeoutError(('telemetry',k))
 async def frames(n=3):
  before=number('framecount');until=time.monotonic()+40
  while time.monotonic()<until:
@@ -45,7 +49,7 @@ async def main():
    async def read(k):
     if k+'_value' in state():return number(k)
     emu.state=state();return (await emu.read(k))[0]
-   async def key(k,n=3):
+   async def key(k,n=1):
     await emu.call('input.buttons.send',buttons={k:True});await frames(n)
     await emu.call('input.buttons.send',buttons={k:False});await frames(3)
    async def choose(n):
@@ -80,17 +84,18 @@ async def main():
       try:metadata=json.loads(meta.read_text());break
       except json.JSONDecodeError:pass
      await asyncio.sleep(.05)
-    assert pixels.exists() and meta.exists(),('capture',name)
+    assert metadata is not None,('capture',name)
     OUT.mkdir(parents=True,exist_ok=True)
     Image.frombytes('RGBA',(512,272),pixels.read_bytes()).crop((0,0,480,272)).convert('RGB').save(OUT/(name+'.png'))
     return metadata
    RESULT.write_text(json.dumps({'ready':True,'screen':await read('screen')}));print('BRIDGE_READY',await read('screen'),flush=True)
+   if len(sys.argv)>2:CONTROL.write_text(Path(sys.argv[2]).read_text())
    while True:
     if not CONTROL.exists():await asyncio.sleep(.1);continue
     cmd=json.loads(CONTROL.read_text());CONTROL.unlink();responses=[]
     try:
      for step in cmd.get('steps',[]):
-      if 'key' in step:await key(step['key'],step.get('frames',3))
+      if 'key' in step:await key(step['key'],step.get('frames',1))
       if 'choose' in step:await choose(step['choose'])
       if 'load' in step:await load_scene(step['load'])
       if 'wait' in step:await frames(step['wait'])

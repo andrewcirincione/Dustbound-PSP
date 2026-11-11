@@ -1,0 +1,1 @@
+PASS: 575 screen/biome/guide renders; 480x272 bounds and 512-pixel stride preserved.

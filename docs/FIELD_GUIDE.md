@@ -1,12 +1,12 @@
-# Dust field guide — 0.19.0
+# Dust field guide — 1.0.0
 
-The 25 chapters below match the in-game guide. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
+Use the contextual guide in any menu. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
 ## 1. Controls
 
 Analog: move. D-pad Up: toggle limb health, blood, food, fatigue and load. Down: skills. Left: worn gear. Right: squad management.
 
-![cross](../assets/ui/cross.svg): interact. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. Hold L + Square: choose someone to attack (also Start > Squad). ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): pause menu: ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) change Pause, Squad and World tabs. D-pad navigates menus.
+![cross](../assets/ui/cross.svg): interact. ![triangle](../assets/ui/triangle.svg): pack. ![square](../assets/ui/square.svg): fight/passive. Hold L + Square: choose someone to attack (also Start > Squad). ![circle](../assets/ui/circle.svg): sneak. ![l](../assets/ui/l.svg): next squad member. ![r](../assets/ui/r.svg): tactical pause. ![select](../assets/ui/select.svg): world atlas. ![start](../assets/ui/start.svg): pause menu: ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) change Pause, Squad, World and Camp & Home tabs. D-pad navigates menus.
 
 Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) switch members or guide pages. Cross opens nearby actions. Pause with R, choose an action to queue it, then R resumes. Four actions can wait; moving cancels them. Analog movement cancels work. Map pins never move you.
 
@@ -14,13 +14,13 @@ Menus pause time. ![select](../assets/ui/select.svg) opens help. ![l](../assets/
 
 New expedition opens character creation. Choose a name, origin, species, body, skin, hairstyle, hair color and beard. ![horizontal](../assets/ui/horizontal.svg) adjusts each choice. ![cross](../assets/ui/cross.svg) edits your name or begins.
 
-Origins change equipment, supplies and skills. Outlaws begin with a bounty. Caravan starts as a group of three. Species changes health, carry, speed, appetite and starting skills. The preview shows your starting values. Clockworks need spare parts, not food or bandages. A town barber can change your appearance later.
+Origins change equipment, supplies and skills. Outlaws begin with a bounty. Species changes health, carry, speed, appetite and starting skills. The preview shows your starting values. Clockworks need spare parts, not food or bandages. A town barber can change your appearance later.
 
 ## 3. The Borderlands
 
 The 1536 by 1536 borderlands contain nineteen settlements and nine terrain regions. Roads connect towns. Rivers have fords near roads; hills rise into mesas and snowfields.
 
-![select](../assets/ui/select.svg) opens the atlas. D-pad selects a known town; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) changes pages. The blue triangle is you; white squares are towns. World activity records last-seen sightings, not live tracking. ![cross](../assets/ui/cross.svg) places a reference pin. ![triangle](../assets/ui/triangle.svg) opens the local view. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Camps and depleted deposits persist.
+![select](../assets/ui/select.svg) opens the atlas. D-pad selects a known town; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) changes pages. The blue triangle is you; white squares are towns. World activity records last-seen sightings, not live tracking. ![cross](../assets/ui/cross.svg) places a reference pin. ![triangle](../assets/ui/triangle.svg) opens the local view. ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) selects known towns. ![square](../assets/ui/square.svg) reveals surveyed geography after buying a chart. Town ownership, prosperity and unrest change with world events. Depleted deposits persist; unattended player camps expire after a day.
 
 ## 4. Combat
 
@@ -38,7 +38,7 @@ Dress an injured body part before it can heal. Clotting stops blood loss. It sti
 
 Food is eaten below forty hunger. You eat what you need and save the remainder. Supplies come from your pack, then a nearby companion or owned depot within three meters. Water supports farms; tonics restore blood and treat exposure. Starvation damages the chest.
 
-An inn bed costs 25 silver and starts safe rest. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and helps dressed wounds heal. Severe hunger slows recovery. Move to wake. The sun completes a day in thirty minutes of simulation; menus and tactical pause stop time.
+An inn bed charges its listed lodging price. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and helps dressed wounds heal. Severe hunger slows recovery. Move to wake. The sun completes a day in thirty minutes of simulation; menus and tactical pause stop time.
 
 ## 7. Equipment
 
@@ -60,15 +60,17 @@ Enter a smithy and walk to the forge. Choose slot, design, material and quality 
 
 ## 10. Crafting
 
-Crafting recipes make supplies, refined metal, ammunition and prosthetics. A forge smelts ore and shapes weapons. A campfire cooks grain or meat with water. A research bench makes dressings.
+Enter a smithy to forge weapons or armor. Each ingredient shows HAVE/NEED, with green for enough and red for a shortage. Mechanical limbs must be bought or found. The general recipe list has been removed; cooking remains available at campfires, including when enemies are nearby.
 
-Stand close to the station. Enter a smithy before using its forge. Each ingredient shows HAVE/NEED: 6/3 means you own six and need three. Green means enough, including exact amounts; red means short. Research, station reach and fuel are also shown. ![square](../assets/ui/square.svg) switches recipes/equipment. Research consumes relics and silver in three tiers. Skills rise when crafting succeeds. A shared depot supplies worker jobs, but hand crafting uses the selected survivor's pack.
+Start > Camp & Home > Research shows three forging tiers. Research needs a nearby bench, a relic and silver. Furniture does not need research.
 
 ## 11. Your Outpost
 
-Build outside settlement boundaries. Choose a structure and place it beside the selected character. Buildings cannot overlap; materials are charged only after validation.
+Start > Camp & Home > Build camp offers Campfire and Bedroll. A fire needs timber; a bedroll must be in your inventory. Move the placement cursor with the analog stick or D-pad, then Cross to place. Red positions are blocked. Placement clears nearby foliage. Pack a bedroll through Nearby Actions. A camp disappears after a day without a squad member nearby.
 
-Shelters heal; farms need water and yield grain; wind pumps irrigate nearby crops. Forges and benches unlock production. Depots hold sixteen clean stacks. ![cross](../assets/ui/cross.svg) opens storage; ![horizontal](../assets/ui/horizontal.svg) switches sides; ![square](../assets/ui/square.svg) moves a full stack. Camps attract raiders, so keep medicine and a retreat route.
+Buy a house at its door, enter it, then choose Place furniture in Camp & Home. Buy and position a bed, chest, table, shelf or stove. Move / remove changes existing furniture without buying it again. Chests in every house you own share a free 64-stack stash.
+
+Public depots have a separate shared store across towns. Talk to the clerk or use the counter. The storage screen quotes the fee per item and per stack; both depositing and withdrawing cost silver. Left / Right switches sides, Cross moves one item and Square moves a full stack. Depots reject stolen goods.
 
 ## 12. Squad Jobs
 
@@ -169,3 +171,9 @@ Outer body covers 95% of chest hits and 65% of arm hits; headwear covers 85%, le
 Read equipment and formation to judge a group. Nearby labels show role, faction color and hostility. Start > World > Factions shows the color key and your standing. Hidden ambushers remain hidden until detected. Combat bars show remaining knockout reserve; no skill readouts appear from proximity.
 
 World activity records last-seen places and times. Cross locates a report on the map; Cross there sets a manual pin. Councils show named claimants and policies before a pledge.
+
+## 24. Dispatches and bounty hand-ins
+
+A dispatch job gives you a sealed packet. The Journal names its destination; the packet leaves your inventory when you arrive there. Return to the person who hired you for payment.
+
+Nearby Actions > Check Health / Stats has Health, Stats and Bounty tabs. The Bounty tab lists live/dead payouts and the accepting factions. Carry the target inside one of those factions' jails, open Nearby Actions, select Environment, then Turn in carried bounty. A jailkeeper does not need to be nearby.

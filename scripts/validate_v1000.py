@@ -28,6 +28,7 @@ for source in sorted((ROOT/'tests').glob('test_*.c')):
  args=[str(binary)]
  if name=='test_animation':args.append(str(OUT/'animation'))
  if name=='test_v1000':args.append(str(ROOT/'build/v0190-property.sav'))
+ if name=='test_save_compat':args += [str(ROOT/'build'/p.stem) for p in sorted((ROOT/'tests/fixtures').glob('*.gz'))] + [str(ROOT/'tests/fixtures/legacy-v01.dust')]
  try:
   run=subprocess.run(['stdbuf','-oL',*args],cwd=ROOT,capture_output=True,text=True,timeout=180)
   results[name]={'status':'passed' if run.returncode==0 else 'failed','exit':run.returncode,'output':run.stdout+run.stderr}

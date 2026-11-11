@@ -4,6 +4,7 @@ CORE=game society civilization limbs population politics content world expansion
 OBJS=$(addprefix build/v1000/obj/,$(addsuffix .o,$(CORE)))
 all: build/v1000/dust-native
 build/v1000/obj/%.o: src/%.c
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 build/v1000/dust-native: $(OBJS) build/v1000/obj/render.o build/v1000/obj/native_main.o
 	$(CC) $^ -lm -o $@

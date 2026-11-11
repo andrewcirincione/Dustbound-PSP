@@ -1,10 +1,14 @@
 # Dust — PSP frontier survival RPG
 
-## 0.19.0 — Ruined villages
+## 1.0.0 — A place to settle
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
 DustAmbient.mp3 loops across the title screen, gameplay and menus. The full soundtrack is built into the EBOOT and decoded ahead of playback.
+
+Start > Camp & Home contains camp placement, home furniture and research. Place a campfire or an inventory bedroll on open ground; placement clears nearby foliage. Camps disappear after a day without the squad nearby. Furniture can be moved or removed in homes you own. Smithies offer expanded stock and equipment forging; markets stay open all day. Public depots share storage across towns and charge a quoted fee on both deposits and withdrawals. Purchased-house chests share a separate free stash.
+
+[1.0.0 changes and validation](docs/VALIDATION_V1000.md)
 
 [Three Banners design](docs/FRONTIER_WAR.md) · [Field guide](docs/FIELD_GUIDE.md)
 
@@ -18,15 +22,15 @@ Painted buildings and furniture use measured foundations. Walls follow both isom
 
 Four ruined villages sit off the main roads. Raider crews occupy the wrecked buildings, and their abandoned trading posts hold finite salvage. Quiet routes draw fresh travelers, camps and encounters. Patrols from rival factions can clash, hunters track animal packs, and bandits go after caravans and pilgrims. Cleared areas replenish over time outside your squad's view.
 
-Read wanted posters at a jail to track a target and pin their last reported location. Three high-profile outlaws carry unique gear and stay dead once killed. Road warrants rotate as groups come and go. Carry the target to a jailkeeper from a paying faction. Live captures pay double.
+Read wanted posters at a jail to track a target and pin their last reported location. Three high-profile outlaws carry unique gear and stay dead once killed. Road warrants rotate as groups come and go. Carry the target inside a jail belonging to a paying faction, then use Environment > Turn in carried bounty. Live captures pay double.
 
-Residents return to their own homes. Buy a vacant house at its door. Deeds reflect the town’s importance, services and location. Furnish it with beds, chests, tables, shelves and stoves. Any chest in a purchased house opens the same squad stash. Existing expeditions can upgrade to save version 28.
+Residents return to their own homes. Buy a vacant house at its door. Deeds reflect the town’s importance, services and location. Furnish it with beds, chests, tables, shelves and stoves. Any chest in a purchased house opens the same squad stash. Choose each furniture position inside your owned home. Furniture costs silver and needs no research. Existing expeditions upgrade to save version 29.
 
 ![Nearby roles and military equipment](evidence/v150-psp-army.png)
 
 Ask an innkeeper for a stagecoach fare to a town you have visited. On foot, Cross on the map places a pin on both maps. Follow its line on the minimap. Iron, copper and timber have distinct minimap dots.
 
-Starving bandits carry poor weapons and wear incomplete clothing. Soldiers wear coordinated armor and move in three-wide formations. Elite duelists wear complete superior equipment. Nearby labels show a broad role in faction colors, with a red **!** for hostility. Enemy combat bars show knockout reserve from head, chest and blood. Nearby characters do not expose skill values or encounter tiers. Start > World > Factions shows the color key, reputation and wanted standing.
+Starving bandits carry poor weapons and wear incomplete clothing. Soldiers wear coordinated armor and move in three-wide formations. Elite duelists wear complete superior equipment. Nearby labels show a broad role in faction colors, with a red **!** for hostility. Enemy combat bars show knockout reserve from head, chest and blood. Nearby Actions > Check Health / Stats has separate health, skill and bounty tabs. Start > World > Factions shows the color key, reputation and wanted standing.
 
 New expeditions start in one of five settlements with different equipment, companions, and difficulty. The atlas and local map share the walking view's orientation. Nearby Actions lists self-treatment and shows why unavailable actions are disabled. First aid stops bleeding before dressing individual wounds. Food and dressings can be used in portions, and wounds recover after treatment. A bed speeds up recovery, and portable bedrolls can be deployed and packed away. Toughness determines the threshold for a recovery coma. Jail staff treat prisoners, and rare travelers can help injured strangers.
 
@@ -53,7 +57,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dust-0.19.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v28 reads earlier expeditions. Existing equipment, training and town control carry over.
+Extract `Dust-1.0.0-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v29 reads earlier expeditions. Existing equipment, training and town control carry over.
 
 ## Controls
 

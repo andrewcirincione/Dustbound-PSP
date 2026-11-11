@@ -2,7 +2,10 @@
 #include <assert.h>
 #include <time.h>
 static uint32_t canvas[512*272+64];
-static Actor *fresh(void){game_new(73819,0);assert(population_validate(&g));Actor*a=&g.actors[g.selected];a->x=a->y=400;a->autoattack=0;a->target=-1;g.money=1000;g.dayTime=12;for(int f=0;f<FACTIONS;f++)g.rep[f]=80;for(int n=0;n<g.actorCount;n++)if(n!=g.selected){g.actors[n].active=0;g.actors[n].target=-1;g.actors[n].attackPhase=0;}return a;}
+static Actor *fresh(void){game_new(73819,0);assert(population_validate(&g));Actor*a=&g.actors[g.selected];a->x=a->y=400;a->autoattack=0;a->target=-1;g.money=1000;g.dayTime=12;for(int f=0;f<FACTIONS;f++)g.rep[f]=80;for(int n=0;n<g.actorCount;n++)if(n!=g.selected){g.actors[n].active=0;g.actors[n].target=-1;g.actors[n].attackPhase=0;}
+/* These isolated group fixtures replace dormant generic townsfolk, so a full
+   16-person army is not limited by unrelated permanent town residents. */
+int released=0;for(int n=1;n<g.actorCount&&released<8;n++)if(npc_role(&g.actors[n])==ROLE_CITIZEN&&civil_elite_index(n)<0&&depth_named(n)<0&&!regional_named(n)&&!politics_leader_title(n)){g.living.owned[n]=-1;released++;}return a;}
 static void place(int k,float x,float y){WorldEvent*e=&g.population.groups[k];PopulationState*m=&g.population.state[k];float dx=x-e->x,dy=y-e->y;e->x=x;e->y=y;m->siteX+=dx;m->siteY+=dy;m->targetX=x+20;m->targetY=y;for(int i=0;i<e->count;i++){Actor*a=&e->reserve[i];a->x+=dx;a->y+=dy;a->homeX=a->tx=a->x;a->homeY=a->ty=a->y;}}
 static void isolate(void){for(int k=0;k<POP_GROUPS;k++)place(k,1250+(k%8)*12,1250+(k/8)*12);}
 static void clear_area(float *x,float*y){for(int yy=380;yy<460;yy+=4)for(int xx=380;xx<460;xx+=4){int clear=1;for(int j=-6;j<=6;j++)for(int i=-6;i<=6;i++)if(!can_walk(xx+i,yy+j))clear=0;if(clear){*x=xx;*y=yy;return;}}assert(!"no clear fixture ground");}
@@ -70,16 +73,16 @@ static void persistence(void){
  puts("PASS: full actor, damage, loot, stolen tags, fitted parts, class XP, trauma, corpses and finite supplies survive streaming/save reload; no limb duplication; split squads/carried actors pin; freed followers detach without joining the squad.");
 }
 static void camp_actions(void){
- Actor*a=fresh();isolate();prepared(0,POP_MERCHANTS);WorldEvent*e=&g.population.groups[0];PopulationState*m=&g.population.state[0];assert(population_materialize(0));int bed=m->beds;float x,y;assert(population_object(0,bed,&x,&y)==2);a->x=x;a->y=y;a->health[LARM]=40;a->fatigue=80;a->bleed=0;a->hunger=100;
+ Actor*a=fresh();isolate();prepared(0,POP_MERCHANTS);WorldEvent*e=&g.population.groups[0];PopulationState*m=&g.population.state[0];assert(population_materialize(0));int bed=m->beds;float x,y;assert(population_object(0,bed,&x,&y)==2);a->x=x;a->y=y;a->health[LARM]=40;dress_wounds(a);a->fatigue=80;a->bleed=0;a->hunger=100;
  int count=nearby_actions(),found=-1;for(int r=0;r<count;r++){const NearbyAction*act=nearby_action(r);if(act->type==ACTION_POPULATION&&act->kind==10+bed)found=r;}assert(found>=0);nearby_action_choose(found);assert(a->taskKind==3&&population_sleep_valid(a));for(int i=0;i<60;i++)game_tick(1.f/30,(Input){0});assert(a->health[LARM]>40&&a->fatigue<80);
  a->taskKind=0;population_object(0,0,&a->x,&a->y);int money=g.money,rations=inventory_count(a,RATION),stock=m->stock[0];assert(population_action(0,30)&&g.money==money-40&&inventory_count(a,RATION)==rations+1&&m->stock[0]==stock-1);
  inventory_add(a,MEAT,2);int meat=inventory_count(a,MEAT);rations=inventory_count(a,RATION);assert(population_action(0,1)&&inventory_count(a,MEAT)==meat-2&&inventory_count(a,RATION)==rations+1);
- a->x=e->x+20;a->y=e->y;money=g.money;assert(!population_action(0,30)&&g.money==money);a->x=x;a->y=y;g.actors[e->members[0]].faction=HOSTILE;g.actors[e->members[0]].x=x+1;g.actors[e->members[0]].y=y;assert(!population_action(0,10+bed));g.actors[e->members[0]].faction=SCAVENGERS;
+ a->x=e->x+20;a->y=e->y;money=g.money;assert(!population_action(0,30)&&g.money==money);a->x=x;a->y=y;g.actors[e->members[0]].faction=HOSTILE;g.actors[e->members[0]].x=x+1;g.actors[e->members[0]].y=y;assert(population_action(0,10+bed));g.actors[e->members[0]].faction=SCAVENGERS;
  /* Object reach follows the physical bed even when terrain displaced it from the camp center. */
  m->offsetX[bed]=12;population_object(0,bed,&a->x,&a->y);count=nearby_actions();found=-1;for(int r=0;r<count;r++){const NearbyAction*act=nearby_action(r);if(act->type==ACTION_POPULATION&&act->kind==10+bed)found=r;}assert(found>=0);m->offsetX[bed]=(bed-2)*3;
  a->x=e->x;a->y=e->y;Actor before=*a;for(int q=0;q<PACK;q++)a->pack[q]=(Stack){WOOD,999};a->pack[0]=(Stack){MEAT,3};money=g.money;stock=m->stock[0];assert(!population_action(0,1)&&inventory_count(a,MEAT)==3);assert(!population_action(0,30)&&g.money==money&&m->stock[0]==stock);*a=before;
- a->x=e->x;a->y=e->y;ui.paused=1;count=nearby_actions();found=-1;for(int r=0;r<count;r++){const NearbyAction*act=nearby_action(r);if(act->type==ACTION_POPULATION&&act->kind==30)found=r;}assert(found>=0);nearby_action_choose(found);assert(g.society.queueCount[g.selected]==1);assert(save_game("build/v120/queued-camp.sav")&&load_game("build/v120/queued-camp.sav"));assert(g.society.queueCount[g.selected]==1);
- puts("PASS: actual nearby-action bed rest heals and reduces fatigue; finite trader stock, exact payment, cooking deductions, safe/reach gates and paused camp actions save correctly.");
+ a->taskKind=0;population_object(0,0,&a->x,&a->y);inventory_add(a,MEAT,2);ui.paused=1;count=nearby_actions();found=-1;for(int r=0;r<count;r++){const NearbyAction*act=nearby_action(r);assert(act->type!=ACTION_POPULATION||act->kind<30);if(act->type==ACTION_POPULATION&&act->kind==1)found=r;}assert(found>=0);nearby_action_choose(found);assert(g.society.queueCount[g.selected]==1);assert(save_game("build/v120/queued-camp.sav")&&load_game("build/v120/queued-camp.sav"));assert(g.society.queueCount[g.selected]==1);
+ puts("PASS: actual nearby-action bed rest heals and reduces fatigue; finite trader stock, exact payment, cooking deductions, reach gates and resting beside a hostile and paused camp actions save correctly.");
 }
 static void offline(void){
  Actor*a=fresh();isolate();prepared(0,POP_PATROL);WorldEvent*e=&g.population.groups[0];PopulationState*m=&g.population.state[0];a->x=a->y=100;float before=e->x,memberx=e->reserve[0].x;for(int i=0;i<12;i++)population_tick(1);assert(fabsf(e->x-before)>1&&fabsf(e->reserve[0].x-memberx)>1&&!e->spawned);
@@ -101,7 +104,7 @@ static void fixtures(void){
  for(int type=0;type<POP_TYPES;type++){
   Actor*a=fresh();isolate();prepared(0,type);WorldEvent*e=&g.population.groups[0];PopulationState*m=&g.population.state[0];a->x=e->x+1;a->y=e->y+3;assert(population_materialize(0));
   a->autoattack=0;memset(a->pack,0,sizeof(a->pack));inventory_add(a,MEAT,6);inventory_add(a,MEDKIT,3);inventory_add(a,PARTS,3);inventory_add(a,RATION,1);
-  if(type==POP_MERCHANTS){population_object(0,m->beds,&a->x,&a->y);a->health[LARM]=40;a->fatigue=80;}
+  if(type==POP_MERCHANTS){population_object(0,m->beds,&a->x,&a->y);a->health[LARM]=40;dress_wounds(a);a->fatigue=80;}
   char path[120];snprintf(path,sizeof(path),"build/v120/encounter-%02d.sav",type);assert(save_game(path));char name[60];snprintf(name,sizeof(name),"encounter-%02d",type);ui.screen=SCREEN_WORLD;capture(name);ui.screen=SCREEN_ACTIONS;ui.selection=0;snprintf(name,sizeof(name),"actions-%02d",type);capture(name);
  }
  Actor*a=fresh();isolate();int owner=-1,part=-1,source=-1;for(int k=0;k<POP_GROUPS&&source<0;k++)for(int i=0;i<g.population.groups[k].count;i++)for(int l=LARM;l<=RLEG;l++)if(limb_installed(&g.population.groups[k].reserve[i],l)){source=k;owner=i;part=l;break;}

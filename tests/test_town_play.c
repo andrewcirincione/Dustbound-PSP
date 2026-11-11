@@ -197,20 +197,21 @@ static void escort_job(void) {
 }
 static void rest_food_and_locks(void) {
     Actor *a = fresh();
-    int bed = building_in(0, BED);
+    int bed = add_build(400,400,BED,FREE,0);assert(bed>=0);g.field.rolls[bed]=1;
     a->x = g.buildings[bed].x + 1;
     a->y = g.buildings[bed].y;
     int money = g.money;
-    assert(start_sleep(0) && a->x == g.buildings[bed].x && a->y == g.buildings[bed].y);
-    assert(a->taskKind == 3 && g.money == money - 25);
+    assert(start_sleep(-1) && a->x == g.buildings[bed].x && a->y == g.buildings[bed].y);
+    assert(a->taskKind == 3 && g.money == money);
 
     a = fresh();
     int inn = building_in(0, BAR);
     at_door(a, inn);
     assert(interior_enter(inn));
+    if(inn_has_upstairs(inn))inn_change_floor(a,1);
     fixture_service(ROOM_REST);
     InteriorProp props[ROOM_PROPS];
-    interior_props(inn, props);
+    interior_floor_props(inn,actor_floor(a),props);
     InteriorProp mattress = props[interior_context()];
     assert(save_game("build/v174/bed-ready.sav"));
     interior_interact();

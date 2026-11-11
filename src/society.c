@@ -374,6 +374,8 @@ static int service_actor(int town, int kind) {
         if (!conscious(a) || a->squad || living_owned(n) || civil_elite_index(n) >= 0 ||
             a->prisonTime > 0 || g.depth.actors[n].captive)
             continue;
+        if(kind==CONTRACT_PATROL&&(!strcmp(a->name,"Jailkeeper")||
+           npc_role(a)==ROLE_MERCENARY||depth_room(a)||a->target>=0))continue;
         int match = kind == CONTRACT_BOUNTY ? a->kind == RAIDER && a->bountyReward > 0 :
             a->homeTown == town && a->kind == (kind == CONTRACT_ESCORT ? CARAVAN : GUARD) &&
             a->faction == g.townOwner[town] &&
@@ -444,7 +446,7 @@ void society_contract_text(int n, char *out, int size) {
                  itemDefs[c->item].name, towns[c->target].name, c->needed,
                  contract_item_count(c->item, -1), c->needed, c->reward, S.jobBond[n]);
     else if (c->type == CONTRACT_BOUNTY)
-        snprintf(out, size, "%s is wanted for road raids. Carry them to a paying jailkeeper. See their belongings for the list.",
+        snprintf(out, size, "%s is wanted for road raids. Carry them inside a jail owned by a faction listed on their bounty.",
                  name);
     else if (contract_ready(n))
         snprintf(out, size, "Job complete. Speak to your contact in %s.",
@@ -464,7 +466,7 @@ void society_contract_text(int n, char *out, int size) {
 int society_complete(int n){if(n<0||n>=CONTRACTS||g.contracts[n].active!=1)return 0;Contract*c=&g.contracts[n];Actor*a=&g.actors[g.selected];int town=contract_turn_in(n);if(town_near(a->x,a->y,14)!=town){log_msg("Claim at %s.",towns[town].name);return 0;}
  int reward=c->reward+S.jobBond[n];
  if(c->type==4){if(!contract_use_items(c->item,c->needed,town)){log_msg("Bring the full shipment and its carriers.");return 0;}g.stock[town][c->item]+=c->needed;}
- else if(c->type==CONTRACT_BOUNTY){log_msg("Take the target to a jailkeeper.");return 0;}
+ else if(c->type==CONTRACT_BOUNTY){log_msg("Take the target inside a paying faction's jail.");return 0;}
  else if(!c->progress){log_msg("Complete the escort or patrol first.");return 0;}
  c->active=2;c->completed=1;remember_contract(c);g.money+=reward;g.contractsDone++;faction_goodwill(g.townOwner[town],5);S.jobBond[n]=0;log_level("%s paid %d silver for %s.", towns[town].name, reward, contract_title(c->type));return 1;
 }

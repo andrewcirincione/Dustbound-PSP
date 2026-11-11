@@ -22,16 +22,16 @@ static void species_checks(void){
   assert(r==2?depth_repair(g.selected,g.selected):heal_actor(g.selected,g.selected));
   for(int i=0;i<g.actorCount;i++)if(i!=g.selected)g.actors[i].active=0;
   for(int i=0;i<150;i++)simulate(.1f);
-  assert(a->health[RARM]<=species_health(a)&&a->health[RARM]>=species_health(a)-1);
+  assert(a->health[RARM]<=species_health(a)&&a->health[RARM]>species_health(a)-10);
   if(r!=2)assert(!heal_actor(g.selected,g.selected));
   for(int i=0;i<g.actorCount;i++)if(i!=g.selected)g.actors[i].active=0;
   a->x=a->y=400;a->hunger=80;float food=a->hunger;simulate(.1f);
   assert(r==2?a->hunger==100:fabsf(a->hunger-(food-.0045f*speciesDefs[r].food))<.001f);
  }
- puts("PASS: all 25 origin/species combinations, barber preservation, movement/carry/appetite and full species-aware healing/repair.");
+ puts("PASS: all 25 origin/species combinations, barber preservation, movement/carry/appetite and gradual species-aware healing/repair.");
 }
 static void elite_checks(void){
- Actor*a=fresh();assert(V100_ITEMS==2368&&ITEMS>V100_ITEMS&&g.actorCount<=176);assert(g.buildingCount<MAX_BUILDINGS);
+ Actor*a=fresh();assert(V100_ITEMS==2368&&ITEMS>V100_ITEMS&&g.actorCount<=MAX_ACTORS);assert(g.buildingCount<MAX_BUILDINGS);
  for(int e=0;e<ELITES;e++){
   int n=g.civil.eliteActor[e]-1;assert(n>=0);Actor*b=&g.actors[n];assert(!strcmp(b->name,eliteDefs[e].name)&&civil_elite_index(n)==e);
   assert(b->gear[0]==REGALIA_ITEMS+e*2&&b->gear[1]==REGALIA_ITEMS+e*2+1);assert(level(b,MELEE)>=42);

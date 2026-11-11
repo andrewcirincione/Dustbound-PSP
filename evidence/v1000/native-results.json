@@ -1,0 +1,197 @@
+{
+  "test_action_feedback": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: map pins remain manual; urgent alerts surface immediately and crowded ticker drains faster.\n"
+  },
+  "test_animation": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: 2868 weapon/unarmed motion sets, 14317056 grip/reach combinations, continuous phase/contact poses.\nPASS: each motion has a distinct speed; proficiency accelerates every actual stroke; heavy blades and arm injuries retain their timing penalties.\nCovered 2868 catalog weapon/unarmed motion timings.\nPASS: 12 live strikes cycle through all three motions without adjacent repeats or mid-strike changes.\nPASS: gait follows distance; blocked indoor movement and active strikes do not walk in place.\nPASS: bounded sprite filtering matches full-raster reference, including prone and crawling poses and cache reuse.\nPASS: production-renderer pose sheets for all three motions of 39 weapon/unarmed families, plus ordinary PSP test saves.\nPASS: layered armor preserves live combat stance through the world sprite cache; framebuffer guard intact; downed beast differs; save roundtrip resets transient pose state.\n"
+  },
+  "test_atlas": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: atlas discovery filtering, named town selection, wraparound, zoom context, exact travel destination, events never enter atlas lists and D-pad preserves player position.\n"
+  },
+  "test_attachments": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: 288 asymmetric weapon raster reflections preserve edge orientation.\nPASS: 1152 backpack/body/torso/facing/pose renders keep visible loads on the upper back.\nPASS: 72 headwear/body/facing renders overlap the brow and stay within fitted head bounds.\nAttachment visual sheets rendered.\n"
+  },
+  "test_audit": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: 75 critical inventory, navigation, rescue, job, skill and range checks.\n"
+  },
+  "test_backpacks": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: 192 real backpack swaps match load preview; 16 stocked markets; cargo/speed/medical effects; one-time and genuine v5 migration; journal target/return tracking preserves travel.\n"
+  },
+  "test_civilization": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: all 25 origin/species combinations, barber preservation, movement/carry/appetite and gradual species-aware healing/repair.\nPASS: 18 distinct owners, 36 physical named items, 96 armor variants, traveling elites, no loot refill after death/load; 180 actors / 375 buildings.\nPASS: all 15 rebuilt settlements have accessible services; both fortress gate axes remain open.\nPASS: actual v9 -> v10 migration, repeated reload idempotence, player-built structures preserved; Game=2596236 bytes.\nALL CIVILIZATION CHECKS PASSED\n"
+  },
+  "test_clothing": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: 1056 clothing variants preserve quality progression, live bonuses and 96 heavy/light tradeoffs.\n"
+  },
+  "test_crafting": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: displayed recipe quantities, alternate cooking inputs, missing materials/fuel, rollback, output counts, exact forging deductions, all 38 weapon/20 torso designs, named regalia cannot be forged.\n"
+  },
+  "test_depth": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: 622488 depth checks, seven-day campaign, all catalog price spreads.\n"
+  },
+  "test_encounters": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: recent clear stays empty, a nearby squad preserves old bodies, and a replacement ahead persists on reload.\nPASS: recent clear stays empty, a nearby squad preserves old bodies, and a replacement ahead persists on reload.\nPASS: quiet day-42 travel renewed 10 encounter types over 20 seeds without growing the population.\nPASS: hunts, rival patrol combat, road raids and 9 new camps across 64 late-game route rolls.\n"
+  },
+  "test_expansion": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS 01: all catalog and specialist gear have valid slots, effects and prices\nPASS 02: catalog boundaries are checked\nPASS 03: creator applies appearance, ancestry and ronin origin\nPASS 04: barber preserves expedition progress\nPASS 05: context guide opens the forging chapter\nPASS 06: guide returns to originating screen\nPASS 07: enter the town smithy\nPASS 08: master relic armor consumes exact forging ingredients\nPASS 09: forged armor equips into its visible body slot\nPASS 10: locked forging is atomic\nPASS 11: removed depot construction is unavailable\nPASS 12: legacy player depot fixture is available\nPASS 13: depot deposits inventory resources\nPASS 14: depot withdrawal restores inventory\nPASS 15: stolen goods cannot lose ownership through storage\nPASS 16: journal rejects a duplicate active contract\nPASS 17: supply contract consumes goods and pays silver and reputation\nPASS 18: completed contract cannot pay twice\nPASS 19: delivery contract can be accepted\nPASS 20: delivery records reaching the destination\nPASS 21: delivery requires returning to the issuer\nPASS 22: delivery pays on returning to the issuing town\nPASS 23: local prosperity affects displayed market prices\nPASS 24: weapon market filter maps to available stock\nPASS 25: stolen ownership survives equipping and removing gear\nPASS 26: selling to the victim faction is rejected\nPASS 27: Black Mesa can fence stolen gear\nPASS 28: doctor begins care before healing or charging\nPASS 29: doctor treats wounds over time for the stated fee\nPASS 30: enter the inn\nPASS 31: bedside interaction starts paid rest\nPASS 32: sleep restores wounds and fatigue\nPASS 33: snow exposure rises outside shelter\nPASS 34: sealed equipment reduces environmental exposure\nPASS 35: law guards carry defeated wanted survivors\nPASS 36: the watch delivers the prisoner to a jail cell\nPASS 37: custody prevents walking out of the holding area\nPASS 38: custody dialogue accepts bail and clears bounty\nPASS 39: starting an attack winds up without instant damage\nPASS 40: short blades wind up faster than heavy nodachi\nPASS 41: leaving reach before contact avoids the strike\nPASS 42: a missing right arm transfers the weapon to the remaining hand\nPASS 43: no hit before the blade reaches the contact marker\nPASS 44: hit or block resolves at visible blade contact\nPASS 45: follow-through cannot resolve the same strike twice\nPASS 46: all 32 weapon families join preparation, strike and recovery without pose snapping\nPASS 47: expanded expedition writes successfully\nPASS 48: save roundtrip preserves appearance, gear, custody, weather, contracts and ownership\nPASS 49: legacy layout matches the shipped v0.1 save payload\nPASS 50: real v0.1 outpost fixture migrates equipment, buildings and research\nPASS 51: migrated expedition can be saved and reloaded as v0.2\nPASS 52: invalid legacy data cannot alter the live expedition\nPASS 53: dismissing a fallen leader selects another roster member even when all are dead\nPASS 54: last fallen survivor remains a valid saveable expedition\nPASS 55: town ownership events update settlement faction banners\n\n55/55 expansion checks passed\n"
+  },
+  "test_field_survival": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: start gear, ore spacing, soft weapon handling, deployable beds, chest contents, treated wounds, stealth, custody, shackles, pursuit, road trade, warnings and pin arrival.\n"
+  },
+  "test_frontier": {
+    "status": "passed",
+    "exit": 0,
+    "output": "World actors 180, contract guards 4\nPASS: frontier roles, 4 new families, regional stock, strength/injury penalties, hire/range/payment/follow/expiry/dismissal and genuine v4 migration.\n"
+  },
+  "test_frontier_life": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: buy homes in two towns, furnish both, use a free bed, and withdraw the same marked partial items after reload.\nPASS: four raider-held villages, enterable ruins and finite salvage after save and reload.\nPASS: three named elites, posted lead, wrong-jail rejection, permanent death, one-time payment, and live custody after reload.\n"
+  },
+  "test_frontier_review": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: actual knockout thresholds, two simultaneous AI melee strikes, readable windup floor, passive cancellation with recovery cost, combat framebuffer bounds.\nPASS: six persistent shelters, idempotent initialization, open central lanes and bypasses, rock collision blocks projectiles, free bed recovery and save/reload.\nPASS: emergency dressings and friendly medic help use timed treatment; bleeding stops before gradual recovery.\nPASS: conquest reassigns surviving guard posts and displaces civilians; relief medic actually walks to post; changes persist without respawning unique owners.\nPASS: v0.1 outpost retains equipment/research and existing structures; full building capacity safely omits additions; repeated reload remains valid.\nPASS: genuine v14 PSP save migration, unchanged position, no duplicate shelters/supplies; invalid shelter references rejected without replacing current state.\nPASS: long guide chapters expose all recovery text through bounded left/right paging; chapter changes reset position.\nALL V150 CHECKS PASSED Game=2596236\n"
+  },
+  "test_game": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS 01: world includes sixteen towns, residents, hostiles and resources\nPASS 02: wanderer starts with one member and 650 silver\nPASS 03: player starts on walkable ground\nPASS 04: buildings and map boundaries block movement\nPASS 05: inventory can add and count a stack\nPASS 06: insufficient removal is atomic\nPASS 07: removal clears an exhausted slot\nPASS 08: full inventory rejects new items\nPASS 09: failed purchase does not consume money or shop stock\nPASS 10: buying updates money, stock and inventory\nPASS 11: equipping armor swaps old armor back into pack\nPASS 12: selling pays the displayed resale price\nPASS 13: unaffordable trade cannot alter stock\nPASS 14: recruitment creates a controllable squad member\nPASS 15: same companion cannot be recruited twice\nPASS 16: L cycles the controlled squad member\nPASS 17: squad recruitment enforces eight-member cap\nPASS 18: movement trains athletics\nPASS 19: heavy loads slow movement\nPASS 20: a missing leg severely reduces movement\nPASS 21: equipping a prosthetic restores leg function\nPASS 22: melee causes body-part damage and skill XP\nPASS 23: cutting weapons cause bleeding\nPASS 24: first aid takes time, stops bleeding and starts gradual healing\nPASS 25: hungry squad automatically eats rations\nPASS 26: knockout recovery does not damage healthy body parts\nPASS 27: blood loss causes unconsciousness\nPASS 28: fatal blood loss causes persistent death\nPASS 29: crossbow attacks consume ammunition at range\nPASS 30: empty crossbow is retained and switches to unarmed\nPASS 31: town boundary prevents unauthorized construction\nPASS 32: camp construction consumes materials and establishes an outpost\nPASS 33: campfire consumes exactly three timber\nPASS 34: construction prevents overlapping structures\nPASS 35: campfire recipe supports meat substitution\nPASS 36: crafting requires a nearby workstation\nPASS 37: smithies are absent from the camp menu\nPASS 38: forge requires entry\nPASS 39: use the forge door\nPASS 40: forge smelts three ore into one iron bar\nPASS 41: research benches are absent from the camp menu\nPASS 42: research consumes relic and money and unlocks a tier\nPASS 43: return to the forge\nPASS 44: research unlocks sabre crafting\nPASS 45: an iron seam remains outside the settlement\nPASS 46: resource context finds nearby iron deposit\nPASS 47: gathering completes, consumes node stock, trains labour\nPASS 48: lock tools can open sealed ruins and train lockpicking\nPASS 49: triangle opens inventory\nPASS 50: R preserves the character screen while switching members\nPASS 51: world D-pad Down opens skills\nPASS 52: circle closes an overlay\nPASS 53: tactical pause stops simulation\nPASS 54: menus stop simulation\nPASS 55: select opens world map\nPASS 56: map places a manual navigation pin\nPASS 57: dialogue directional input preserves recruit identity\nPASS 58: healthy followers do not intercept nearby loot\nPASS 59: injured followers remain available for first aid\nPASS 60: save creates a complete expedition file\nPASS 61: save/load preserves economy, time, armor and skill progress\nPASS 62: corrupted save is rejected without altering live state\nPASS 63: missing save is handled safely\nPASS 64: 1000-second whole-world simulation keeps actors finite and in bounds\nPASS 65: long simulation advances world time\n\n65/65 passed\n"
+  },
+  "test_life": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: one death no longer stops survivors; corpse locations stay fixed; actual dressings and carry links survive streaming/save/reload; recovered companions are put down.\nPASS: hunters pursue actual packs and transfer finite carcass loot; ambushers hide, trigger and flank; refugees pack, reach safety and become recruitable without joining automatically.\nPASS: depleted camps pack, withdraw exact real town stock, relocate and preserve supplies; armies choose needs-based duties and fight actual garrisons without player reward.\nPASS: succession pledges and relief spend once, resolution changes ownership/policy without reviving rulers; v12 migration; Reinforced and Precision each outperform Relic in their specialty.\nPASS: distinct camp layouts and council/activity screens respect framebuffer bounds; prepared controller saves generated.\nPASS: cyclic carriers, missing mission towns and non-finite timers are rejected.\nFULL SIM: 20 simulated minutes / 12000 full ticks; alive=351 down=2 hungry=0 settled groups=10; player money 650->650, kills=0; 1.51s host CPU.\nENDURANCE: 10 game days / 5 simulated hours; rescues=19 hunts=2 resupplies=0 relocations=0 refugees=21 missions=62 conflicts=103; 3.91s host CPU.\nALL LIFE CHECKS PASSED; Game=2596236 Life=17708 Actor=932\n"
+  },
+  "test_limbs": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: cutting trauma removes limbs, blunt trauma does not sever flesh, severed limbs appear on the ground, missing legs crawl, dressing cannot regrow limbs.\nPASS: either missing arm keeps the remaining hand usable and applies two-handed damage, accuracy and attack-delay penalties.\nPASS: all five grades fit all four sockets, bonuses affect effective stats, copies retain grade/ownership, mechanical HP survives ticking, repairs require parts and broken metal does not bleed.\nPASS: wrong socket, natural limb, insufficient parts and full-pack swaps fail atomically; detachment cannot be used for free healing.\nPASS: Venn requires safe nearby access and payment, removal is permanent and bandaged; specialized towns sell the intended grades through a dedicated market filter.\nPASS: fitted wanderer limbs can be looted exactly once, the owner loses their function, and loss/ownership persists through save/reload; real v10 saves migrate.\nPASS: all new screens remain within the 480x272 framebuffer; prepared emulator saves generated.\nALL LIMB CHECKS PASSED; Game=2596236 Actor=932\n"
+  },
+  "test_living": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: 1,200 event generations, all 32 mechanic/condition combinations, runtime renewal, 16-member formation, reward/loot gates, target retaliation, v7 migration and v8 persistence.\n"
+  },
+  "test_overhaul": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: 26649 interior, save migration and rigid grip checks.\n"
+  },
+  "test_playability": {
+    "status": "passed",
+    "exit": 0,
+    "output": "Closest towns 134.2m; wilderness enemies 40.\nPASS: 1951 playability checks.\n"
+  },
+  "test_playability_pass": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: Follow changes lead across formations; priorities tab; selected medic waits for idle and passive stance.\nPASS: unavailable recipients cannot take items; handoff to the requested ally; self-aid and treated recovery persist.\nPASS: camp cook availability has no side effects; ownership is visible; first scavenger warning and repeat bounty.\nPASS: injured scavenger holds ground. Urgent news takes priority.\nPASS: every scenario is walkable and inland; world and map cursor use the same isometric axes.\n"
+  },
+  "test_population": {
+    "status": "passed",
+    "exit": 0,
+    "output": "WORLD 0: 365 generated NPCs, 18 prosthetic wearers, 20 preserved wilderness NPCs\nWORLD 1: 366 generated NPCs, 28 prosthetic wearers, 20 preserved wilderness NPCs\nWORLD 2: 371 generated NPCs, 27 prosthetic wearers, 20 preserved wilderness NPCs\nWORLD 3: 356 generated NPCs, 19 prosthetic wearers, 19 preserved wilderness NPCs\nWORLD 4: 363 generated NPCs, 24 prosthetic wearers, 18 preserved wilderness NPCs\nWORLD 5: 368 generated NPCs, 23 prosthetic wearers, 19 preserved wilderness NPCs\nRARITY tier 0: 826/20000 wearers; 0 Relic parts\nRARITY tier 1: 826/20000 wearers; 0 Relic parts\nRARITY tier 2: 1439/20000 wearers; 0 Relic parts\nRARITY tier 3: 2031/20000 wearers; 5 Relic parts\nPASS: persistent groups cover all 16 situations and several regions; ordinary prosthetics are uncommon and beasts have none.\nPASS: eight small roaming gangs have weak fighters, sparse supplies and persistent saves.\nPASS: full actor, damage, loot, stolen tags, fitted parts, class XP, trauma, corpses and finite supplies survive streaming/save reload; no limb duplication; split squads/carried actors pin; freed followers detach without joining the squad.\nPASS: actual nearby-action bed rest heals and reduces fatigue; finite trader stock, exact payment, cooking deductions, reach gates and resting beside a hostile and paused camp actions save correctly.\nPASS: off-screen groups actually travel, gather finite world resources and fight other factions; injuries persist without awarding player money, kills or participation rewards.\nPASS: actor exhaustion defers whole groups without recycling protected NPCs; actual v11 migration and v12 reload pass; malformed population data is rejected.\nROLLED LIMB FIXTURE: group type 8 owner Nox Vale limb 3 item 2368\nBENCH: 1000 population-enabled ticks 0.021s native CPU; not physical PSP performance.\nPASS: all sixteen world/action layouts stay within 480x272; ordinary prepared saves and a naturally rolled prosthetic-owner fixture are ready for PSP controller review.\nALL POPULATION CHECKS PASSED; Game=2596236 Population=1706468 Actor=932\n"
+  },
+  "test_progression": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: all six class mappings, shared XP, capped v15 migration of live and stored actors, and v17 reload.\nPASS: combat strength/dexterity/melee/class XP; hit toughness and defense; reduced blocked XP; unarmed and stagger dodge; load penalty; harder-opponent multipliers; armor-safe toughness training; persistent independent class progress and handling benefit.\n"
+  },
+  "test_readability": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: map pin and R+Cross do not move the player or start group travel; stale routes clear; analog walks with pin retained.\nPASS: migrated v13 inn save has an NPC within reach; choosing the bed starts rest and charges the current inn price without opening dialogue.\nPASS: visible groups create persistent last-seen snapshots; remote movement does not update pins; hidden ambushers do not generate sightings; invalid coordinates rejected.\nPASS: poor bandits carry low-quality weapons and missing clothing; armies have matching real armor and three-wide formation; elites wear full equipment; frame guards intact.\nPASS: council has distinct named claimants, policy preview and one-time pledge spending; faction color legend renders safely.\nPASS: skill growth cannot crowd a critical outcome out of the feed.\nALL V140 CHECKS PASSED; Game=2596236 FieldNotes=5824\n"
+  },
+  "test_recovery": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: Toughness changes coma threshold; ordinary knockouts wake; severe chest trauma can recover; head trauma and bleeding can kill.\nPASS: cuts worsen and untreated wounds retain damage; field dressings, repairs and clinic care are timed; movement cancels treatment and saves retain it.\nPASS: jail intake always begins gradual care, including when the guard leaves. Timed lockpicking supports tools, wire, save/load and failed attempts.\nPASS: a trained runner opens a gap against an active pursuer.\nPASS: rescue rolls are rare and non-repeating; a traveler physically approaches, treats and carries the patient to an available bed.\nALL RECOVERY CHECKS PASSED\n"
+  },
+  "test_render": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: 575 screen/biome/guide renders; 480x272 bounds and 512-pixel stride preserved.\n"
+  },
+  "test_rescue": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: two paused rescues execute serially, persist mid-work and after release; freed NPCs choose following or flight without squad membership, followers can be dismissed to refuge, and join only through Recruit; full squad does not block freedom.\nPASS: nearby conscious guards catch rescue attempts and create faction charges; distance, rooms and dead-target checks prevent remote or invalid rescues.\nSTATE: Game=2596236 bytes; 182 actors in fresh rescue fixture.\n"
+  },
+  "test_save_compat": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/build/v0188-property.sav, inventory/gear/XP/money/position roundtrip.\nPASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/build/v0190-property.sav, inventory/gear/XP/money/position roundtrip.\nPASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/build/v030-frontier.sav, inventory/gear/XP/money/position roundtrip.\nPASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/build/v041-outpost.sav, inventory/gear/XP/money/position roundtrip.\nPASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/build/v050-expedition.sav, inventory/gear/XP/money/position roundtrip.\nPASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/build/v081-migration.sav, inventory/gear/XP/money/position roundtrip.\nPASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/build/v090-migration.sav, inventory/gear/XP/money/position roundtrip.\nPASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/build/v100-migration.sav, inventory/gear/XP/money/position roundtrip.\nPASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/build/v110-migration.sav, inventory/gear/XP/money/position roundtrip.\nPASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/build/v120-migration.sav, inventory/gear/XP/money/position roundtrip.\nPASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/build/v130-migration.sav, inventory/gear/XP/money/position roundtrip.\nPASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/build/v140-migration.sav, inventory/gear/XP/money/position roundtrip.\nPASS archived save /workspace/scratch/edaa0927ec0b/dustbound-source.w4vvU7wJ/repo/tests/fixtures/legacy-v01.dust, inventory/gear/XP/money/position roundtrip.\n"
+  },
+  "test_society": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: 48 new weapon variants, one-handed rapier thrusts, regional profit, no same-town price arbitrage, offscreen production.\nPASS: faction-specific warrants, restricted gates, matching disguise, recognition, prosthetic inspection, contextual wanted alert and prioritized deduplicated log.\nPASS: freight deposit/refund and atomic full-pack rejection; no double claims; employer warning/cooldown/recovery, wages only for following movement, patrol completion, death failure.\nPASS: paused lockpick/open FIFO, locked open rejection, town-only atlas.\nPASS: physical cannibal capture, binding, eating damage, v9 captive persistence, escape with guards away.\nPASS: actual v0.8.1 save migration.\nBENCH: 1000 full-world simulation ticks / 190 actors: 0.117s native CPU (not PSP hardware).\nALL SOCIETY CHECKS PASSED\n"
+  },
+  "test_succession": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: successive appointments in all three capitals, rival wins at older towns, regalia stays unique, full rosters retry, saves preserve vacancies and incumbents.\n"
+  },
+  "test_town_play": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: all nineteen settlements have walkable doors, spaced buildings, regional ore and tiered markets.\nPASS: shared lodge access, skill caps, placement on a bed and a single bounty payout through the jailkeeper.\nPASS: per-person tabs, read-only limb health, cancel and confirm execution, and single hunt credit.\nPASS: Dry Market spacing, local ore, owned stock, chest persistence and replenishment, pocket search and expiry.\nPASS: homes can have occupants, be vacant, or have no loot chest; work contacts belong to their town.\nPASS: Dry Market guests occupy separate places and return to the street while the keeper stays close.\nPASS: a saved chest moves clear of a building and keeps its contents and owner.\nPASS: escorts wait to rendezvous, give a live marker, pause on separation and resume with the squad.\nPASS: actual bed placement and wake-up, shared auto-eating, lockpicking without tools, treatment severity and menu pause.\nPASS: sparse postings and counted local defeats, progress and single payment in the right town.\nPASS: town guards and armed allies defend, injuries slow movement, Fight repeats at cooldown, Passive cancels.\n"
+  },
+  "test_town_watch": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: charges, review without payment, the watch, theft detection and sale odds, inn and smithy, carried bodies and prone recovery.\n"
+  },
+  "test_travel_and_lodging": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: inn floors, occupied beds, medic recovery, crawling, NPC aid, dropped gear, coach fares and save time.\n"
+  },
+  "test_v1000": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS home purchase furniture, free movement, overlap/door protection, extra slots, paused placement and save roundtrip.\nPASS chosen camp sites, bedroll item consumption, cooking beside a hostile, forbidden limb recipes, one-day camp expiry.\nPASS staffed depot dialogue, shared cross-town inventory, quoted fees both ways, atomic insufficient-money failure.\nPASS physical dispatch given on acceptance, pack-space check, delivered packet removed, return payment still required.\nPASS real enemy weapon, armor and underlayer removal; jail environment turn-in without any keeper; payout once.\nPASS markets open all 24 hours, 9 smithies with expanded stock, 7 inns with separate down stairwell.\nPASS distant unclaimed corpse slots recycle; carried bodies remain protected.\nPASS actual v0.19.0 save migration: home bays, shared stash, stolen ownership, partial medical stock/venue, pending dispatch, v29 roundtrip.\nPASS Dust 1.0.0 integration checks.\n"
+  },
+  "test_war": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: all three capitals have walkable approaches, separate civic layouts, merchants, food, distinct uniforms and starting armies.\nPASS: garrison resists, conquerors post an actual soldier, prisoners and owned weapons persist, guarded labor produces goods, rescue and regime change free captives.\nPASS: distant news takes time, speakers react to actual owners, spam is throttled, nearby bandits produce directional warnings and old news expires.\nPASS: released older saves open with their original state; reloading the new format creates no duplicate capital buildings or residents.\n"
+  },
+  "test_weapon_art": {
+    "status": "passed",
+    "exit": 0,
+    "output": "PASS: 5760 painted grip samples; 14976 attack poses fit actor cache; 36 bounded, cache-stable comparison pairs. Bounds x=-100..107 y=-130..16 at 2x.\n"
+  },
+  "test_weapon_variants": {
+    "status": "passed",
+    "exit": 0,
+    "output": "VISUAL: Katana: 12 monochrome silhouettes / 24 variants\nVISUAL: Wakizashi: 12 monochrome silhouettes / 24 variants\nVISUAL: Nodachi: 12 monochrome silhouettes / 24 variants\nVISUAL: Tanto: 12 monochrome silhouettes / 24 variants\nVISUAL: Naginata: 12 monochrome silhouettes / 24 variants\nVISUAL: Yari: 12 monochrome silhouettes / 24 variants\nVISUAL: Nagamaki: 12 monochrome silhouettes / 24 variants\nVISUAL: Kusarigama: 12 monochrome silhouettes / 24 variants\nVISUAL: Frontier sabre: 12 monochrome silhouettes / 24 variants\nVISUAL: Bowie knife: 12 monochrome silhouettes / 24 variants\nVISUAL: Trail machete: 12 monochrome silhouettes / 24 variants\nVISUAL: Butcher cleaver: 12 monochrome silhouettes / 24 variants\nVISUAL: War pick: 12 monochrome silhouettes / 24 variants\nVISUAL: Boarding axe: 12 monochrome silhouettes / 24 variants\nVISUAL: Kanabo: 12 monochrome silhouettes / 24 variants\nVISUAL: Tetsubo: 12 monochrome silhouettes / 24 variants\nVISUAL: Quarterstaff: 12 monochrome silhouettes / 24 variants\nVISUAL: Hook blade: 12 monochrome silhouettes / 24 variants\nVISUAL: Ring sabre: 12 monochrome silhouettes / 24 variants\nVISUAL: Broken falchion: 12 monochrome silhouettes / 24 variants\nVISUAL: Horse cutter: 12 monochrome silhouettes / 24 variants\nVISUAL: Saw sword: 12 monochrome silhouettes / 24 variants\nVISUAL: Twin sickle: 12 monochrome silhouettes / 24 variants\nVISUAL: Spiked club: 12 monochrome silhouettes / 24 variants\nVISUAL: Scout bow: 12 monochrome silhouettes / 24 variants\nVISUAL: Repeater bow: 12 monochrome silhouettes / 24 variants\nVISUAL: Heavy arbalest: 12 monochrome silhouettes / 24 variants\nVISUAL: Hand crossbow: 12 monochrome silhouettes / 24 variants\nVISUAL: Longbow: 12 monochrome silhouettes / 24 variants\nVISUAL: Ranger rifle: 12 monochrome silhouettes / 24 variants\nVISUAL: Dragoon pistol: 12 monochrome silhouettes / 24 variants\nVISUAL: Scattergun: 12 monochrome silhouettes / 24 variants\nVISUAL: Greatsword: 12 monochrome silhouettes / 24 variants\nVISUAL: Railway maul: 12 monochrome silhouettes / 24 variants\nVISUAL: Crescent glaive: 12 monochrome silhouettes / 24 variants\nVISUAL: Anchor cleaver: 12 monochrome silhouettes / 24 variants\nVISUAL: Scimitar: 12 monochrome silhouettes / 24 variants\nVISUAL: Rapier: 12 monochrome silhouettes / 24 variants\nPASS: all 38 weapon types have at least 12 monochrome silhouettes; 14592 equipped direction/phase renders.\n"
+  }
+}
