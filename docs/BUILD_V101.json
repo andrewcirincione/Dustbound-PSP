@@ -1,0 +1,14 @@
+{
+  "version": "1.0.1",
+  "build_commit": "faff99408cec266a2b72003cb4ebb5ad7f5f34aa",
+  "build_run": "https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/43094247174",
+  "artifact_id": 13890845852,
+  "artifact_sha256": "5d2ee1ac8c1d3e0549e4f7abe016947ee4a14e24ef6f6003e4a9b1c824e35903",
+  "eboot_bytes": 10981144,
+  "eboot_sha256": "5e79af85108f09303f41f4c5eb6fc109e3105977e5882e82fa6374c6ca39b554",
+  "native_validation_run": "https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/43094247400",
+  "native_suites_passed": 41,
+  "emulator_status": "pending",
+  "emulator_retry": "https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/43097036367",
+  "note": "The executable compiled successfully. All 41 native suites passed. The initial emulator harness had incorrect memory-stick/resource paths; the corrected retry has not started because of GitHub runner startup errors. No successful emulator result is claimed. Runtime source, art and build configuration are unchanged since the successful compile."
+}

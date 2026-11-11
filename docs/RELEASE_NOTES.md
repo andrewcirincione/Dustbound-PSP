@@ -8,4 +8,6 @@ Shorter arms now share common shoulder positions across outfits and stances. Gen
 
 Extract **Dust-1.0.1-PSP.zip** to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Keep existing saves; save format remains v29. DustAmbient.mp3 is embedded in the executable.
 
-The release workflow requires all 41 native suites, PBP section checks, and controller-driven PPSSPP 1.20.4 checks of the exact published executable. The Evidence ZIP contains the build manifest, actual PSP screenshots, test results and enlarged production-renderer galleries covering sixteen torso styles and thirty-nine weapon/unarmed sets. Physical PSP performance and audible output have not been measured.
+Validation: all 41 native suites passed, and the PSP executable compiled successfully and passed PBP and embedded-asset checks. The Evidence ZIP contains build provenance, test results and the approved production-renderer galleries covering sixteen torso styles and thirty-nine weapon/unarmed sets.
+
+Fresh PPSSPP verification is pending. The first emulator attempt failed because of test-harness paths; the corrected retry is blocked by GitHub runner startup errors. This package makes no successful emulator-test claim. Physical PSP performance and audible output have not been measured. See `docs/BUILD_V101.json` and `docs/VALIDATION_V101.md`.
