@@ -1,3 +1,11 @@
+# 1.0.1 — Character fit
+
+- Shorter common upper arms and forearms, connected painted elbows and wrists, and fitted shoulder openings across all sixteen torso styles.
+- Consistent rear-arm occlusion and mirrored left/right staging for passive poses, attacks and two-handed grips. Resting and crawling use the same fitted attachments.
+- Smaller head and fitted headwear, centred torso/hip movement, a narrower brigandine, relaxed arms at the sides, and closer vertical weapon stow.
+- Revised melee hand paths and a stable naginata grip. Bows extend before drawing without folding a hand through its shoulder.
+- Production-renderer review sheets and slowed three-variation clips accompany the release. Save format remains v29.
+
 # 1.0.0 — A place to settle
 
 - Choose campfire, bedroll and home furniture positions in a paused placement view. Move or remove furniture; doorways, walls and occupied spaces are protected. Camp placement clears foliage. Furniture is available without research. Camps expire after a day away, and packed bedroll slots are reused.

@@ -111,6 +111,7 @@ int main(void) {
                                     : family == 25 || family == 26 ? 5
                                     : family == 24                 ? 6
                                     : family == 28                 ? 11.5f
+                                    : family == 14 || family == 15 ? 3.2f
                                                                    : 4;
                     CHECK(fabsf(hypotf(x1 - x0, y1 - y0) - support * 3) < .001f);
                     CHECK(fabsf((x1 - x0) * sinf(an) - (y1 - y0) * cosf(an)) < .001f);

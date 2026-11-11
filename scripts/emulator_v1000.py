@@ -32,7 +32,10 @@ async def main():
  env=os.environ|{'XDG_CONFIG_HOME':str(RUN/'xdg'),'SDL_VIDEODRIVER':'offscreen','SDL_AUDIODRIVER':'dummy','LIBGL_ALWAYS_SOFTWARE':'1'}
  for p in [GAME/'DUST_STATE.json',RESULT,CONTROL]:p.unlink(missing_ok=True)
  log=(GAME/'ppsspp.log').open('w')
- proc=subprocess.Popen([str(app/'shared/lib/ld-linux-x86-64.so.2'),'--library-path',str(app/'shared/lib'),str(app/'shared/bin/PPSSPPSDL'),str(GAME/'EBOOT.PBP')],cwd=GAME,env=env,stdout=log,stderr=subprocess.STDOUT)
+ args=[str(app/'shared/lib/ld-linux-x86-64.so.2'),'--library-path',str(app/'shared/lib'),str(app/'shared/bin/PPSSPPSDL')]
+ if os.environ.get('DUST_PPSSPP_CONFIG'):args.append('--appendconfig='+os.environ['DUST_PPSSPP_CONFIG'])
+ args.append(str(GAME/'EBOOT.PBP'))
+ proc=subprocess.Popen(args,cwd=GAME,env=env,stdout=log,stderr=subprocess.STDOUT)
  try:
   ws=None
   for _ in range(250):

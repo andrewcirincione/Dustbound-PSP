@@ -1,0 +1,83 @@
+name: Dust 1.0.1 PSP release
+
+on:
+  push:
+    branches: [release-1.0.1]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dust-release-1.0.1
+  cancel-in-progress: false
+
+jobs:
+  qualify-and-publish:
+    if: github.ref == 'refs/heads/release-1.0.1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install review dependencies
+        run: python -m pip install Pillow==11.3.0 websockets==15.0.1
+      - name: Run current native regression suites
+        run: |
+          python scripts/validate_v1000.py
+          python -c "import json; r=json.load(open('build/v1000/native-results.json')); assert len(r)>=41 and all(x['status']=='passed' for x in r.values()), r"
+      - name: Install verified PSPDEV toolchain
+        run: |
+          curl -L --fail --retry 3 -o "$RUNNER_TEMP/pspdev.tar.gz" https://github.com/pspdev/pspdev/releases/download/v20261101/pspdev-ubuntu-latest-x86_64.tar.gz
+          echo "5dc9d785a5fd490ee9d5204b90f715efb6c46940ba3944036bbef9c993c17713  $RUNNER_TEMP/pspdev.tar.gz" | sha256sum -c -
+          tar --no-same-owner -xzf "$RUNNER_TEMP/pspdev.tar.gz" -C "$RUNNER_TEMP"
+          echo "PSPDEV=$RUNNER_TEMP/pspdev" >> "$GITHUB_ENV"
+          echo "$RUNNER_TEMP/pspdev/bin" >> "$GITHUB_PATH"
+      - name: Compile and validate PSP executable
+        run: |
+          make -j2
+          python scripts/validate_pbp.py EBOOT.PBP --assets assets
+      - name: Install verified PPSSPP 1.20.4
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libegl1 libgl1-mesa-dri libopengl0
+          mkdir -p "$RUNNER_TEMP/ppsspp"
+          cd "$RUNNER_TEMP/ppsspp"
+          curl -L --fail --retry 3 -o ppsspp.AppImage https://github.com/hrydgard/ppsspp/releases/download/v1.20.4/PPSSPP-v1.20.4-anylinux-x86_64.AppImage
+          echo '661c098e6b7f7610171a57b7c533ce8bba6f2312b71e76d61e850461973eba21  ppsspp.AppImage' | sha256sum -c -
+          chmod +x ppsspp.AppImage
+          ./ppsspp.AppImage --appimage-extract > extract.log
+          echo "PPSSPP_APP=$RUNNER_TEMP/ppsspp/squashfs-root" >> "$GITHUB_ENV"
+      - name: Verify PSP boot, equipment and combat
+        run: python scripts/emulator_v101.py "$PPSSPP_APP"
+      - name: Generate production-renderer review galleries
+        run: |
+          python scripts/prepare_pose_review.py
+          python scripts/character_pose_review.py build/v101/pose-frames evidence/v101/review
+      - name: Package tested executable and evidence
+        run: python scripts/package_v101.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dust-1.0.1-tested-release
+          path: |
+            dist/EBOOT.PBP
+            dist/Dust-1.0.1-PSP.zip
+            dist/Dust-1.0.1-Evidence.zip
+            dist/SHA256SUMS-1.0.1.txt
+      - name: Publish qualified GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/publish_v101.py
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: Dust-1.0.1-failure-logs
+          path: |
+            build/v1000/native-results.json
+            build/v101/emu/**/ppsspp.log
+            build/v101/emu/result.json
+            evidence/v101/

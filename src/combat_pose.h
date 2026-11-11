@@ -48,6 +48,7 @@ static inline float weapon_support_distance(int weapon) {
         return -6.f;
     if (f == 28)
         return -11.5f;
+    if(f==14||f==15)return -3.2f;
     return -4.f;
 }
 static inline void weapon_hand(WeaponGrip g0, int weapon, int secondary, float *x, float *y) {

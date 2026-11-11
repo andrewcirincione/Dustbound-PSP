@@ -1,11 +1,9 @@
 # Publication status
 
-The release target is **0.16.0 — Weight and motion**.
+The current release target is **Dust 1.0.1 — Character fit**, based on the published 1.0.0 release commit `d115b2e4d3ed0b17a19308c1cab2d50447596af7`.
 
-The implementation and native validation were checkpointed on `animation-recovery-0.16.0`. Completed emulator evidence and the release manifest are included with this release checkpoint. No gameplay source was changed after the audited executable was built.
+The `release-1.0.1` branch builds with pinned PSPDEV v20261101, runs the current native suites, validates the PBP and embedded assets, and exercises the compiled PSP executable in official PPSSPP 1.20.4. Packaging requires the emulator-tested EBOOT hash. The workflow uploads a draft release, verifies each asset's GitHub SHA-256 digest, then publishes it.
 
-The qualified EBOOT is 1,786,886 bytes. Its SHA-256 is `1300d97fbfb5ff597d8a95bf98951b39e4ed518c05381b8ad18cf95eaadcccd7`; a clean local rebuild matched it exactly. The controller audit completed 39 cases and 9,360 frames. See [validation](VALIDATION_V160.md) for scope and limitations.
+The release contains `EBOOT.PBP`, `Dust-1.0.1-PSP.zip`, `Dust-1.0.1-Evidence.zip` and `SHA256SUMS-1.0.1.txt`. Installation remains `PSP/GAME/DUSTBOUND/EBOOT.PBP`, with the same v29 save format.
 
-The `[publish-only]` workflow on main reruns the v080–v160 regression gates, compiles with pinned PSPDEV v20261101, validates the PBP, and verifies build-input, evidence and executable hashes against `evidence/v160-build-manifest.json`. It publishes only if those checks pass; it does not rerun PPSSPP.
-
-The [0.16.0 release](https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v0.16.0) receives `EBOOT.PBP`, `Dustbound-0.16.0-PSP.zip`, `Dustbound-0.16.0-Screenshots.zip` and `SHA256SUMS-0.16.0.txt`. Use those assets for installation. Files under `dist/` belong to historical releases.
+See [validation](VALIDATION_V101.md). Older `dist/` files and historical manifests belong to their original releases.
