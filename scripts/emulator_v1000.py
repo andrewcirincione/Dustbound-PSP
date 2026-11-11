@@ -49,6 +49,10 @@ async def main():
    for _ in range(400):
     if state():break
     await asyncio.sleep(.1)
+   if not state():
+    log.flush()
+    print((GAME/'ppsspp.log').read_text(errors='replace')[-8000:],flush=True)
+    raise RuntimeError('PSP game did not write startup telemetry; inspect the PPSSPP boot log')
    async def read(k):
     if k+'_value' in state():return number(k)
     emu.state=state();return (await emu.read(k))[0]

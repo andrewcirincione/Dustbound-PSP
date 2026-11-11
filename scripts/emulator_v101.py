@@ -14,12 +14,20 @@ import emulator_v1000 as bridge
 ROOT=Path(__file__).resolve().parents[1]
 RUN=ROOT/'build/v101/emu'
 OUT=ROOT/'evidence/v101'
-GAME=RUN/'PSP/GAME/DUSTBOUND'
+MEMSTICK=RUN/'xdg/ppsspp'
+GAME=MEMSTICK/'PSP/GAME/DUSTBOUND'
 
 def main():
     app=Path(sys.argv[1]).resolve()
     GAME.mkdir(parents=True,exist_ok=True)
+    (MEMSTICK/'PSP/SYSTEM').mkdir(parents=True,exist_ok=True)
     OUT.mkdir(parents=True,exist_ok=True)
+    # SDL maps ms0: to XDG_CONFIG_HOME/ppsspp. Keep the executable there,
+    # and expose the AppImage's own resources to its relative VFS search.
+    resources=list(app.rglob('font_atlas.zim'))
+    assert resources,'PPSSPP AppImage assets are missing'
+    asset_link=GAME/'assets'
+    if not asset_link.exists():asset_link.symlink_to(resources[0].parent,target_is_directory=True)
     fixtures=ROOT/'build/v1000/fixtures'
     fixtures.mkdir(parents=True,exist_ok=True)
     objects=[p for p in (ROOT/'build/v1000/obj').glob('*.o') if p.stem not in ('render','native_main')]
@@ -45,6 +53,8 @@ InternalResolution = 1
 Enable = False
 ''')
     os.environ['DUST_PPSSPP_CONFIG']=str(config.resolve())
+    print('PPSSPP memory stick:',MEMSTICK,flush=True)
+    print('PPSSPP resources:',resources[0].parent,flush=True)
     bridge.RUN=RUN
     bridge.GAME=GAME
     bridge.OUT=OUT
