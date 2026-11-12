@@ -448,9 +448,11 @@ int item_price(int town, int it, int selling) {
     return (int)fmaxf(1, item->price * rate * mod * market_factor(town,it) * politics_price(town,it));
 }
 unsigned char *market_venue(int town,int item) {
+    if(item>=WEAPON_ITEMS)return &g.arsenal.venue[town][item-WEAPON_ITEMS];
     return item>=ARMOR_SET_ITEMS?&g.armor.venue[town][item-ARMOR_SET_ITEMS]:&g.frontier.venue[town][item];
 }
 int *market_stock(int town, int item) {
+    if(item>=WEAPON_ITEMS)return &g.arsenal.stock[town][item-WEAPON_ITEMS];
     if(item>=ARMOR_SET_ITEMS)return &g.armor.stock[town][item-ARMOR_SET_ITEMS];
     if (item < TOWN_STOCK_ITEMS)
         return &g.stock[town][item];

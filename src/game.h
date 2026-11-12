@@ -2,7 +2,7 @@
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
 #define GAME_NAME "Dust"
-#define VERSION "1.0.2"
+#define VERSION "1.0.3"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -44,7 +44,9 @@
 #define ARMOR_SETS 30
 #define ARMOR_SET_PIECES 4
 #define ARMOR_EXTRA_ITEMS (ARMOR_SETS*ARMOR_SET_PIECES)
-#define ITEMS (ARMOR_SET_ITEMS+ARMOR_EXTRA_ITEMS)
+#define WEAPON_ITEMS (ARMOR_SET_ITEMS+ARMOR_EXTRA_ITEMS)
+#define ARSENAL_WEAPONS 100
+#define ITEMS (WEAPON_ITEMS+ARSENAL_WEAPONS)
 #define LODGES 3
 #define COMPLETED_CONTRACTS 32
 #define HOME_BAYS 6
@@ -407,6 +409,12 @@ typedef struct {
         int stock[TOWNS][ARMOR_EXTRA_ITEMS];
         unsigned char venue[TOWNS][ARMOR_EXTRA_ITEMS];
     } armor;
+    /* v31 appends generated weapon stock, preserving v30 saves and item IDs. */
+    struct {
+        int version;
+        int stock[TOWNS][ARSENAL_WEAPONS],stockDay[TOWNS];
+        unsigned char venue[TOWNS][ARSENAL_WEAPONS];
+    } arsenal;
 } Game;
 enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH, ROOM_STAIRS, ROOM_RESEARCH };
@@ -511,6 +519,14 @@ int *market_stock(int town, int item);
 unsigned char *market_venue(int town, int item);
 void armor_content(void);
 void armor_world_init(void);
+int arsenal_index(int item);
+int arsenal_type(int item);
+int arsenal_tier(int item);
+int arsenal_level_tier(const Actor *actor);
+void arsenal_content(void);
+void arsenal_outfit(Actor *actor,unsigned seed,int tier);
+void arsenal_stock(int town);
+void arsenal_world_init(void);
 void armor_stock(int town);
 int armor_item_set(int item);
 int armor_set_item(int set, int piece);

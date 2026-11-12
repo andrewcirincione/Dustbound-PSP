@@ -207,7 +207,9 @@ static const uint32_t *weapon_palette(int id, const ItemDef *item, float li) {
             min = b;
         // Neutral texels are iron/steel. Warm wood, rust and leather retain their
         // painted colour; subtle material staining still distinguishes staffs.
-        if (max - min < 28) {
+        if(id>=ARSENAL_ART_FIRST){
+            /* Material color is authored into each new drawing. */
+        } else if (max - min < 28) {
             r = r * (64 + (item->color >> 16)) / 192;
             green = green * (64 + ((item->color >> 8) & 255)) / 192;
             b = b * (64 + (item->color & 255)) / 192;
@@ -230,11 +232,19 @@ static int weapon_family(int item) {
         f = item == STAFF ? 16 : item == CROSSBOW ? 25 : item == CLEAVER ? 11 : item == SABRE ? 8 : 0;
     return f >= 84 && f < FAMILIES ? f - 52 : f < 32 ? f : 0;
 }
+static int weapon_art_id(int item){
+    int i=arsenal_index(item);
+    return i>=0&&arsenalSprites[i].w?ARSENAL_ART_FIRST+i:WEAPON_ART_FIRST+weapon_family(item);
+}
+static const WeaponArt* weapon_art_for_item(int item){
+    int i=arsenal_index(item);
+    return i>=0&&arsenalSprites[i].w?&arsenalWeaponArt[i]:&weaponArt[weapon_family(item)];
+}
 /* Find the painted blade/barrel at a longitudinal station. Curved blades do
    not lie on the grip axis; a fitting must meet the metal, not float beside it. */
 static float weapon_center(int item,float along){
-    if(weapon_rapier(item)||along<4)return 0;
-    int f=weapon_family(item);const ArtSprite*s=&artSprites[WEAPON_ART_FIRST+f];const WeaponArt*w=&weaponArt[f];
+    if((weapon_rapier(item)&&arsenal_index(item)<0)||along<4)return 0;
+    int id=weapon_art_id(item);const ArtSprite*s=actor_sprite(id);const WeaponArt*w=weapon_art_for_item(item);
     WeaponDesign d=weapon_design(item);float a=weapon_design_unalong(along,weapon_design_anchor(item),d);
     int row=(int)(w->gripY-a/w->scale);if(row<0)row=0;if(row>=s->h)row=s->h-1;
     int lo=s->rows[row*3+1],hi=s->rows[row*3+2];float total=0,weighted=0;
@@ -298,14 +308,14 @@ static WeaponScanSpan weapon_scan_span(float low, float high, float x, int sc,
 static void weapon_sprite(int item, float x, float y, int sc, float angle, int face, float li) {
     if (!item)return;
     WeaponDesign design=weapon_design(item);float ca=cosf(angle),sa=sinf(angle),anchor=weapon_design_anchor(item);
-    if(weapon_rapier(item)){
+    if(weapon_rapier(item)&&arsenal_index(item)<0){
         float len=24*design.length;uint32_t steel=shade(itemDefs[item].color,li);
         for(int i=0;i<(design.pattern==1?2:1)*sc;i++)painted_line(x+ca*3*sc-sa*i*face,y+sa*3*sc+ca*i*face,x+ca*len*sc,y+sa*len*sc,steel);
         painted_line(x,y,x-ca*4*sc,y-sa*4*sc,0x614a38);
         weapon_fitting(item,x,y,sc,angle,face,li,len);return;
     }
-    int f=weapon_family(item),id=WEAPON_ART_FIRST+f;
-    const ArtSprite *s=actor_sprite(id);const WeaponArt *w=&weaponArt[f];
+    int id=weapon_art_id(item);
+    const ArtSprite *s=actor_sprite(id);const WeaponArt *w=weapon_art_for_item(item);
     float scale=w->scale,tip=weapon_design_along(w->gripY*scale,anchor,design);
     int parity=w->edgeSide*face;
     float left=1e6f,top=1e6f,right=-1e6f,bottom=-1e6f;
@@ -370,7 +380,7 @@ static void weapon_sprite(int item, float x, float y, int sc, float angle, int f
             rgba_over(row + xx, palette[s->pixels[s->rows[sy * 3] + sx - lo]]);
         }
     }
-    weapon_fitting(item,x,y,sc,angle,face,li,tip);
+    if(arsenal_index(item)<0)weapon_fitting(item,x,y,sc,angle,face,li,tip);
 }
 typedef struct {
     float offset, top, bottom, width;
@@ -612,8 +622,8 @@ static void painted_gripping_hand(const Actor *a,int i,const float shoulder[2],c
 }
 static float painted_weapon_length(int weapon) {
     WeaponDesign design = weapon_design(weapon);
-    const WeaponArt *art = &weaponArt[weapon_family(weapon)];
-    return weapon_rapier(weapon) ? 24 * design.length
+    const WeaponArt *art = weapon_art_for_item(weapon);
+    return weapon_rapier(weapon)&&arsenal_index(weapon)<0 ? 24 * design.length
         : weapon_design_along(art->gripY * art->scale, weapon_design_anchor(weapon), design);
 }
 static float blade_clearance(int weapon, float angle, float height) {

@@ -1,12 +1,12 @@
 TARGET = dustbound
-OBJS = src/psp_main.o src/game.o src/render.o src/content.o src/armor.o src/world.o src/expansion.o src/interior.o src/playability.o src/audio.o src/depth.o src/depth_combat.o src/society.o src/civilization.o src/limbs.o src/population.o src/politics.o
+OBJS = src/psp_main.o src/game.o src/render.o src/content.o src/armor.o src/arsenal.o src/world.o src/expansion.o src/interior.o src/playability.o src/audio.o src/depth.o src/depth_combat.o src/society.o src/civilization.o src/limbs.o src/population.o src/politics.o
 PSPDEV ?= /usr/local/pspdev
 PSPSDK := $(PSPDEV)/psp/sdk
 INCDIR = src
 CFLAGS = -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation
 LIBS = -lm -lpsppower -lpspaudio
 EXTRA_TARGETS = EBOOT.PBP
-PSP_EBOOT_TITLE = Dust 1.0.2
+PSP_EBOOT_TITLE = Dust 1.0.3
 PSP_EBOOT_ICON = assets/ICON0.png
 PSP_EBOOT_PIC1 = assets/PIC1.png
 PSP_EBOOT_PSAR = assets/DustAmbient.mp3
@@ -43,3 +43,6 @@ src/population.o: src/population_behavior.h src/settlement_art_ids.h
 src/audio.o: src/vendor/minimp3.h
 
 src/world.o: src/frontier_towns.h src/structure_models.h src/settlement_art_ids.h
+
+src/arsenal.o: src/arsenal_data.h
+src/render.o: src/arsenal_art_data.h

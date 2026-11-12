@@ -208,6 +208,7 @@ static void make_actor(int k,int i){
     }
     if(e->type==POP_WOUNDED){a->health[CHEST]=species_health(a)*.38f;a->health[LLEG]=24;a->bleed=.08f;inventory_remove(a,MEDKIT,99);}
     if(e->type==POP_BATTLEFIELD){a->dead=i<e->count-1;a->blood=a->dead?0:42;a->health[CHEST]=a->dead?-80:22;a->unconscious=a->dead?0:120;a->bleed=a->dead?0:.04f;}
+    arsenal_outfit(a,seed,tier);
     if(e->type==POP_PRISONERS&&i>=e->count-2){a->kind=SETTLER;a->faction=FREE;a->gear[0]=0;a->gear[1]=RAGS;a->gear[2]=0;z->captive=1;P.social[k][i].captorFaction=e->faction;}
 }
 typedef struct {

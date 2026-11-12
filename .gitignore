@@ -12,3 +12,6 @@ __pycache__/
 
 # Uncompressed intermediate recording; the release includes v060-combat.mp4.
 evidence/v060-15-combat.gif
+
+# Full generation originals are preserved by ImageGen; game-ready sprites are versioned.
+/assets/art/arsenal-expansion/*.png

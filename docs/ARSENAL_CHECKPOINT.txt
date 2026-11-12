@@ -1,0 +1,24 @@
+Dust 1.0.3 / 100-weapon expansion checkpoint — 2026-11-12
+
+Authorized: add 100 independently drawn weapons across all 38 types; enemy equipment
+follows strength/rank, shops follow settlement importance; compile/test/publish.
+Latest user revision: 15–45 combined weapon and armor options per smithy, refreshed
+at the beginning of each day. Strong variation in shapes, materials and mechanisms;
+very few plain wood/wrapped handles. Check actual held orientation and grips.
+
+Current work: 100 definitions and individual prompts in assets/art/arsenal-expansion/
+weapons.json. Four utilitarian first-pass designs retained; 96 revised following the
+user's feedback about repetitive rusty wood/cloth designs. Generation ongoing.
+The JSON generation order lists every pending design; pack_arsenal.py derives progress
+from actual files. Full ImageGen originals remain under generated_images and the art
+working directory; game-ready PNGs, calibrated pivots and indexed sprites are committed.
+
+Source branch: arsenal-1.0.3. Base public main eb35b768b4a2e293085db2ff7a3612d037401321.
+PSPDEV: /workspace/scratch/c30f2d0204c9/psp-toolchain/pspdev
+PPSSPP: /workspace/scratch/c30f2d0204c9/emulator/AppDir
+
+Implemented, pending tests: appended save v31 IDs and stock; new catalog/stats;
+level-based NPC selection and preserved named-owner IDs; daily regional 15/25/35/45
+smith budgets; color-preserving painted weapon renderer and authored grip anchors.
+Do not publish until all 100 assets, orientation audits, stock/save tests, regression
+suites, PSP build and PPSSPP checks pass. Latest released game remains v1.0.2.

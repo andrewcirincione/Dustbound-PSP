@@ -2,61 +2,61 @@
 set -eu
 cd "$(dirname "$0")/.."
 mkdir -p build
-cc -O2 -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c src/render.c src/native_main.c -lm -o build/dustbound-native
-cc -O1 -g -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_game.c -lm -o build/test-game
+cc -O2 -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c src/render.c src/native_main.c -lm -o build/dustbound-native
+cc -O1 -g -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_game.c -lm -o build/test-game
 ./build/test-game
 
-cc -O1 -g -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_expansion.c -lm -o build/test-expansion
+cc -O1 -g -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_expansion.c -lm -o build/test-expansion
 ./build/test-expansion
-cc -O1 -g -std=gnu99 -Wall -Wextra -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c src/render.c tests/test_render.c -lm -o build/test-render
+cc -O1 -g -std=gnu99 -Wall -Wextra -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c src/render.c tests/test_render.c -lm -o build/test-render
 ./build/test-render
 mkdir -p build/v174
-cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_recovery.c -lm -o build/test-recovery
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_recovery.c -lm -o build/test-recovery
 ./build/test-recovery
-cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_town_play.c -lm -o build/test-town-play
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_town_play.c -lm -o build/test-town-play
 ./build/test-town-play
 python3 scripts/audit_catalog.py
-cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_overhaul.c -lm -o build/test-overhaul
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_overhaul.c -lm -o build/test-overhaul
 ./build/test-overhaul
 python3 -c "import gzip,pathlib; pathlib.Path('build/v030-frontier.sav').write_bytes(gzip.open('tests/fixtures/v030-frontier.sav.gz','rb').read())"
 mkdir -p build/v172
-cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_playability_pass.c -lm -o build/test-playability-pass
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_playability_pass.c -lm -o build/test-playability-pass
 ./build/test-playability-pass
-cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_playability.c -lm -o build/test-playability
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_playability.c -lm -o build/test-playability
 ./build/test-playability
-cc -O2 -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_weapon_art.c -lm -o build/test-weapon-art
+cc -O2 -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_weapon_art.c -lm -o build/test-weapon-art
 ./build/test-weapon-art
 
 python3 -c "import gzip,pathlib; pathlib.Path('build/v041-outpost.sav').write_bytes(gzip.open('tests/fixtures/v041-outpost.sav.gz','rb').read())"
-cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_frontier.c -lm -o build/test-frontier
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_frontier.c -lm -o build/test-frontier
 ./build/test-frontier
 
 python3 -c "import gzip,pathlib; pathlib.Path('build/v050-expedition.sav').write_bytes(gzip.open('tests/fixtures/v050-expedition.sav.gz','rb').read())"
 for suite in backpacks attachments clothing; do
-    cc -O2 -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_${suite}.c -lm -o build/test-${suite}
+    cc -O2 -std=gnu99 -Wall -Wextra -Wno-misleading-indentation -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_${suite}.c -lm -o build/test-${suite}
     build/test-${suite}
 done
 
-cc -O2 -std=gnu99 -Wall -Wextra -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_audit.c -lm -o build/test-audit
+cc -O2 -std=gnu99 -Wall -Wextra -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_audit.c -lm -o build/test-audit
 ./build/test-audit
 
-cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c src/render.c tests/test_depth.c -lm -o build/test-depth
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c src/render.c tests/test_depth.c -lm -o build/test-depth
 ./build/test-depth
 
-cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_action_feedback.c -lm -o build/test-action-feedback
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_action_feedback.c -lm -o build/test-action-feedback
 ./build/test-action-feedback
 
-cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_field_survival.c -lm -o build/test-field-survival
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_field_survival.c -lm -o build/test-field-survival
 ./build/test-field-survival
 
-cc -O2 -std=gnu99 -Wall -Wextra -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_town_watch.c -lm -o build/test-town-watch
+cc -O2 -std=gnu99 -Wall -Wextra -Wno-missing-field-initializers -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_town_watch.c -lm -o build/test-town-watch
 ./build/test-town-watch
 
-cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_encounters.c -lm -o build/test-encounters
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_encounters.c -lm -o build/test-encounters
 ./build/test-encounters
 
-cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_frontier_life.c -lm -o build/test-frontier-life
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_frontier_life.c -lm -o build/test-frontier-life
 ./build/test-frontier-life
 
-cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_travel_and_lodging.c -lm -o build/test-travel-and-lodging
+cc -O2 -std=gnu99 -Isrc src/game.c src/society.c src/civilization.c src/limbs.c src/population.c src/politics.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c tests/test_travel_and_lodging.c -lm -o build/test-travel-and-lodging
 ./build/test-travel-and-lodging

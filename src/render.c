@@ -5,6 +5,7 @@
 #include "actor_attachments.h"
 #include "armor_sets_data.h"
 #include "armor_art_data.h"
+#include "arsenal_art_data.h"
 #include "settlement_art_ids.h"
 #include "settlement_art.h"
 #include "structure_art.h"
@@ -19,6 +20,7 @@ _Static_assert(ART_COUNT == SETTLEMENT_ART_FIRST, "Settlement sprite IDs must fo
 #include <string.h>
 
 static const ArtSprite *actor_sprite(int id) {
+    if(id>=ARSENAL_ART_FIRST&&id<ARSENAL_ART_FIRST+ARSENAL_WEAPONS)return &arsenalSprites[id-ARSENAL_ART_FIRST];
     if(id>=ARMOR_ART_FIRST && id<ARMOR_ART_FIRST+ARMOR_SETS*6){
         const ArtSprite *s=&armorSprites[id-ARMOR_ART_FIRST];
         if(s->w)return s;

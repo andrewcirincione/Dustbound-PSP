@@ -6,7 +6,7 @@
 static char armorNames[ARMOR_EXTRA_ITEMS][40],armorDescriptions[ARMOR_EXTRA_ITEMS][112];
 
 int armor_item_set(int item) {
-    if(item>=ARMOR_SET_ITEMS && item<ITEMS)return (item-ARMOR_SET_ITEMS)/4;
+    if(item>=ARMOR_SET_ITEMS && item<WEAPON_ITEMS)return (item-ARMOR_SET_ITEMS)/4;
     if(item>=REGALIA_ITEMS && item<REGALIA_ITEMS+36 && (item-REGALIA_ITEMS)%2)
         for(int s=0;s<ARMOR_SETS;s++)if(armorSets[s].owner==(item-REGALIA_ITEMS)/2)return s;
     return -1;

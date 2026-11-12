@@ -10,6 +10,7 @@ static inline WeaponDesign weapon_design(int item){
  int f=gear_family(item),owner=regalia_owner(item),p=owner>=0?(owner*7+3)%12:(itemDefs[item].material*2+itemDefs[item].quality/2)%12;
  if(item<BASE_ITEMS)p=0;
  int group=f>=29&&f<=31?3:f>=24&&f<=28?2:f==4||f==5||f==6||f==12||f==13||f==14||f==15||f==16||f==23||f==85||f==86?1:0;
+ if(arsenal_index(item)>=0)return (WeaponDesign){1,1,0,0,group};
  return (WeaponDesign){length[p],width[p],sweep[p],p,group};
 }
 static inline const char *weapon_design_name(int item){

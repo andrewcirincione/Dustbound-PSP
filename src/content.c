@@ -52,7 +52,7 @@ int gear_id(int f, int m, int q) {
 int gear_family(int it) {
     return it >= CATALOG_ITEMS && it < ITEMS ? itemDefs[it].family : it >= BASE_ITEMS && it < CATALOG_ITEMS ? (it - BASE_ITEMS) / (MATERIALS * QUALITIES) : -1;
 }
-int weapon_rapier(int it) { return (it>=RAPIER_ITEMS&&it<RAPIER_ITEMS+24)||it==UNIQUE_ITEMS+1; }
+int weapon_rapier(int it) { return (it>=WEAPON_ITEMS&&arsenal_type(it)==37)||(it>=RAPIER_ITEMS&&it<RAPIER_ITEMS+24)||it==UNIQUE_ITEMS+1; }
 int weapon_ranged(int it) { return it == CROSSBOW || (gear_family(it) >= 24 && gear_family(it) < 32); }
 int gear_bonus(const Actor *a, int stat) {
     int v = 0;
@@ -270,6 +270,7 @@ void content_init(void) {
         if(!weapon_ranged(i))itemDefs[i].range*=1+(d.length-1)*.6f;
         itemDefs[i].cooldown*=1+(d.length-1)*.18f+(d.width-1)*.08f;
     }
+    arsenal_content();
 }
 
 const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE BORDERLANDS",    "COMBAT",

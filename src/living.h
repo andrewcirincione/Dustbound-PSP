@@ -21,6 +21,7 @@ void living_gear(Actor*a,int role,int tier,int n){
         memset(a->stolen, 0, sizeof(a->stolen));
         raider_scraps(a,g.seed+(unsigned)n*37u);
         armor_wanderer(a,(unsigned)n*7919u,tier);
+        arsenal_outfit(a,(unsigned)n*7919u,tier);
         return;
     }
     static const int weapons[8]={8,3,85,29,5,87,0,16},armor[8]={45,43,38,32,34,36,47,39};
@@ -38,6 +39,7 @@ void living_gear(Actor*a,int role,int tier,int n){
     if(role==3)inventory_add(a,PARTS,1+tier);
     if(role==7)inventory_add(a,TONIC,1+tier);
     if(tier>=3)inventory_add(a,RELIC,tier-2);
+    arsenal_outfit(a,(unsigned)n*7919u,tier);
     if(a->kind==BEAST){memset(a->gear,0,sizeof(a->gear));memset(a->pack,0,sizeof(a->pack));inventory_add(a,HIDE,2+tier);inventory_add(a,MEAT,2+tier);if(tier>=3)inventory_add(a,CATALOG_ITEMS+22,1);}
 }
 void living_loot(int n,int role,int tier){living_gear(&g.actors[n],role,tier,n);}
