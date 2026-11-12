@@ -2,7 +2,7 @@
 
 ## 1.0.4 — A hundred weapons
 
-100 new independently drawn weapons across all 38 types, with strength-based enemy equipment and eight legendary designs. Smithies offer 15–45 weapon and armor options by settlement importance and refresh at midnight. New primary/support grips and edge/aim orientation are verified on equipped characters.
+120 independently drawn expansion weapons across all 38 types, including 23 greatswords and 12 legendary designs, with strength-based enemy equipment. Version 1.0.4 adds 20 greatswords, correct shoulder-rest layering, and selected-item pictures at smiths and armorers. Smithies offer 15–45 weapon and armor options by settlement importance and refresh at midnight. New primary/support grips and edge/aim orientation are verified on equipped characters.
 
 [Weapon distribution and validation](docs/ARSENAL_DISTRIBUTION.md) · [Armor expansion](docs/ARMOR_DISTRIBUTION.md)
 
