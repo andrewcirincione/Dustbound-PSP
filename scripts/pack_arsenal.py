@@ -49,7 +49,7 @@ for w in weapons:
     fits[key]['support']=[sx,sy];fits[key]['support_offset']=[along,across]
     q=im.quantize(colors=64,method=Image.Quantize.FASTOCTREE,dither=Image.Dither.NONE)
     pal=q.getpalette('RGBA');pal += [0]*(1024-len(pal));palette=[pal[j]|pal[j+1]<<8|pal[j+2]<<16|pal[j+3]<<24 for j in range(0,1024,4)]
-    pixels=list(q.get_flattened_data());data=[];rows=[]
+    pixels=list(q.getdata());data=[];rows=[]
     for y in range(im.height):
         row=pixels[y*im.width:(y+1)*im.width];vis=[x for x,p in enumerate(row) if palette[p]>>24]
         lo,hi=(min(vis),max(vis)+1) if vis else (0,0);rows.extend((len(data),lo,hi));data+=row[lo:hi]
