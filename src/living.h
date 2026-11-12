@@ -20,6 +20,7 @@ void living_gear(Actor*a,int role,int tier,int n){
         memset(a->pack, 0, sizeof(a->pack));
         memset(a->stolen, 0, sizeof(a->stolen));
         raider_scraps(a,g.seed+(unsigned)n*37u);
+        armor_wanderer(a,(unsigned)n*7919u,tier);
         return;
     }
     static const int weapons[8]={8,3,85,29,5,87,0,16},armor[8]={45,43,38,32,34,36,47,39};
@@ -134,7 +135,7 @@ static int materialize(int slot){
         Actor*a=&g.actors[n];population_roll_limbs(a,e->seed^(i*73819u),tier);
         if(e->modifier==1)a->hunger=25;
         if(e->modifier==2&&a->kind!=BEAST)a->gear[1]=gear_id(38,3,tier>=3?3:tier);
-        if(e->type==6)armor_equip(a,armor_uniform_set(e->faction,i==0?2:i%4==0?1:0));
+        if(e->type==6)armor_unit_outfit(a,i==0?2:i%4==0?1:0);
         if(e->type==4){a->health[CHEST]=35;a->health[LLEG]=25;a->bleed=.1f;}
         e->members[i]=n;LW.owned[n]=slot+1;LW.anger[n]=0;LW.command[n]=-1;
     }e->spawned=1;return 1;
@@ -199,7 +200,7 @@ void living_action(int k){if(k<0||k>=EVENTS)return;WorldEvent*e=&LW.events[k];Ac
     if(e->status){log_msg("This incident has ended.");return;}
     if(!conscious(a)||distance(a->x,a->y,e->x,e->y)>(e->type==2?14:3)){log_msg("Reach the marked incident before acting.");return;}
     if(e->type==2){int it=e->modifier==1?RATION:e->modifier==2?PARTS:MEDKIT;if(!inventory_remove(a,it,3+e->tier)){log_msg("Bring %d %s.",3+e->tier,itemDefs[it].name);return;}g.stock[e->town][it]+=12+e->tier*3;}
-    else if(e->type==3){int it=e->tier>=3?CATALOG_ITEMS+16+event_random(e)%8:CATALOG_ITEMS+event_random(e)%16;if(!inventory_add(a,it,1)){log_msg("Make room in your pack first.");return;}}
+    else if(e->type==3){int it=armor_cache_item(g.seed^(unsigned)e->serial*2654435761u,e->tier);if(!inventory_add(a,it,1)){log_msg("Make room in your pack first.");return;}}
     else if(e->type==4){if(!e->spawned){log_msg("Approach the pilgrim first.");return;}Actor*b=&g.actors[e->members[0]];if(b->dead||b->health[CHEST]<65||b->bleed>.01f){log_msg("Bandage the pilgrim before helping them depart.");return;}b->homeX=towns[e->town].x;b->homeY=towns[e->town].y;}
     else{log_msg("This incident resolves through escort or combat.");return;}
     e->participated=1;finish_event(e,1);

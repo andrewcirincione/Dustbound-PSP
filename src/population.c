@@ -170,6 +170,7 @@ static void make_actor(int k,int i){
     int poor = a->kind == RAIDER && e->modifier == 1;
     living_gear(a,i%8,poor ? 0 : tier,(int)(seed%10000));
     if(e->type!=POP_REFUGEES && e->type!=POP_WOUNDED && !poor)armor_wanderer(a,seed,tier);
+    if(a->kind==RAIDER)z->upkeep=35+(seed>>10)%36;
     if (i == vendor_member(e)) {
         inventory_add(a, RATION, 3 + tier);
         inventory_add(a, portion_item(MEDKIT, seed % 23 == 0 ? 100 : 40 + seed % 48), 1);
@@ -193,6 +194,7 @@ static void make_actor(int k,int i){
     if((e->type==POP_RAIDERS||e->type==POP_AMBUSH)&&e->modifier==1){
         a->gear[0]=gear_id(i%2?14:0,0,0);a->gear[1]=i%3?RAGS:0;a->gear[2]=a->gear[3]=a->gear[5]=0;a->gear[4]=gear_id(68,0,0);
     }
+    if(poor)armor_wanderer(a,seed,0);
     if ((e->type == POP_PILGRIMS || e->type == POP_MERCHANTS || e->type == POP_REFUGEES) &&
         (i + e->serial) % 4 == 0) {
         int supply = a->race == 2 ? PARTS : MEDKIT;
@@ -256,6 +258,7 @@ static void generate_population(int k,int type,const EncounterSite *site){
     m->siteX=e->x;m->siteY=e->y;m->opponent=-1;m->generation=e->serial;m->phase=camp_type(k)?POP_REST:e->type==POP_BATTLEFIELD?POP_RUINS:POP_TRAVEL;m->clock=100+random_step(&e->seed)%160;
     m->stock[0]=4+random_step(&e->seed)%6;m->stock[1]=1+random_step(&e->seed)%3;m->stock[2]=1+random_step(&e->seed)%3;
     m->cacheItem=e->type==POP_SALVAGE?PARTS:e->type==POP_HUNTERS?HIDE:e->type==POP_BATTLEFIELD?MEDKIT:e->type==POP_SMUGGLERS?TONIC:RATION;m->cacheQty=1+random_step(&e->seed)%3;
+    if(e->type==POP_SALVAGE && e->tier>=1 && e->seed%5==0){m->cacheItem=armor_cache_item(e->seed,e->tier);m->cacheQty=1;}
     for(int i=0;i<5;i++){float x=e->x+(i==0?0:i==4?4:(i-2)*3),y=e->y+(i==0?0:i==4?-3:3);clear_position(&x,&y);m->offsetX[i]=x-e->x;m->offsetY[i]=y-e->y;}
     set_destination(k,e->town);for(int i=0;i<e->count;i++)make_actor(k,i);e->stored=1;life_seed(k);
     warrant_register(k);

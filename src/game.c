@@ -2791,7 +2791,7 @@ static int validate_game(const Game *t) {
             if (t->frontier.venue[i][j] > TRADE_APOTHECARY)
                 return 0;
     }
-    if (t->armor.version<0 || t->armor.version>1) return 0;
+    if (t->armor.version<0 || t->armor.version>2) return 0;
     for(int town=0;town<TOWNS;town++)for(int it=0;it<ARMOR_EXTRA_ITEMS;it++)
         if(t->armor.stock[town][it]<0 || t->armor.venue[town][it]>TRADE_APOTHECARY)return 0;
     for (int i = 0; i < CONTRACTS; i++) {

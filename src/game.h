@@ -516,6 +516,8 @@ int armor_item_set(int item);
 int armor_set_item(int set, int piece);
 int armor_uniform_set(int faction, int rank);
 void armor_equip(Actor *actor, int set);
+void armor_unit_outfit(Actor *actor, int rank);
+int armor_cache_item(unsigned seed, int tier);
 void armor_wanderer(Actor *actor, unsigned seed, int tier);
 int armor_coverage(int item);
 int armor_set_faction(int set);

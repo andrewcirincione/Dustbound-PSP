@@ -195,7 +195,7 @@ void war_outfit(Actor *a, int role, int variation, int quality) {
  a->gear[3]=gear_id(side==1?63:side==2?61:60,m,quality);
  a->gear[4]=gear_id(side==2?73:69,m,quality);
  a->gear[5]=role==ROLE_MEDIC?gear_id(78,m,1):NONE;
- if(guard)armor_equip(a,armor_uniform_set(a->faction,quality>=3?2:quality>=2?1:0));
+ if(guard)armor_unit_outfit(a,quality>=3?2:quality>=2?1:0);
  if(weapon_ranged(a->gear[0])){
   int ammo=gear_family(a->gear[0])>=29?CARTRIDGE:BOLTS;
   if(!inventory_count(a,ammo))inventory_add(a,ammo,24);
