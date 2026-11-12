@@ -52,6 +52,9 @@ Enable = False
                   {'key':'triangle'},{'expect':{'screen':1},'capture':f'greatsword-{s:03d}-inventory'},{'key':'circle'},
                   {'key':'square'},{'attack':2},{'capture':f'greatsword-{s:03d}-combat'},
                   {'key':'square'},{'wait':5},{'capture':f'greatsword-{s:03d}-passive'}]
+    shop=json.loads((fixtures/'smith-preview.json').read_text())
+    steps += [{'load':'smith-preview'},{'key':'cross'},{'key':'cross'},{'expect':{'screen':shop['screen']}},
+              {'choose':shop['weapon_row']},{'capture':'smith-weapon-preview'},{'choose':shop['armor_row']},{'capture':'smith-armor-preview'},{'key':'circle'}]
     steps += [{'analog':[.55,0],'frames':8},{'capture':'v104-walking'}]
     request=RUN/'release-check.json';request.write_text(json.dumps({'id':'weapon-1.0.4','steps':steps,'stop':True}))
     sys.argv=[str(Path(bridge.__file__)),str(app),str(request)]
@@ -70,7 +73,7 @@ Enable = False
     assert result['state']['version']=='1.0.4',result['state']
     record={k:v for k,v in result.items() if k!='state'}
     record.update(eboot_sha256=hashlib.sha256(eboot.read_bytes()).hexdigest(),emulator='Official PPSSPP 1.20.4',
-                  weapons_tested=len(selected),new_greatswords_tested=len(selected),combat_verified=True,combat_weapons_tested=len(selected),physical_psp_tested=False)
+                  weapons_tested=len(selected),new_greatswords_tested=len(selected),combat_verified=True,combat_weapons_tested=len(selected),smith_previews_verified=True,physical_psp_tested=False)
     (OUT/('quick-controller.json' if quick else 'psp-controller.json')).write_text(json.dumps(record,indent=2)+'\n')
     print('PASS: actual release EBOOT booted and reviewed in PPSSPP.',flush=True)
 

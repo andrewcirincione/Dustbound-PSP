@@ -11,3 +11,18 @@ Pending: all 20 drawings, full 46 suites, two-facing held/attack reviews, PSP bu
 actual in-game previews and PPSSPP equipped/combat qualification for all 20; publish v1.0.4.
 PSPDEV /workspace/scratch/c30f2d0204c9/psp-toolchain/pspdev
 PPSSPP /workspace/scratch/c30f2d0204c9/emulator/AppDir
+
+All 20 final drawings now packed. All 46 local suites passed; 3,840 grip raster
+checks, 8,640 equipped anatomy cases, 9,600 new greatsword cache-bound poses;
+all 40 new held/contact review frames visually examined. Local PSP build valid:
+11,774,488 bytes, SHA256 38ebf9ebec089ade4c8c3d4305ef2df4b005ee2e9307e8848b1d08cb46db1702.
+Three actual PPSSPP equipped/combat preview loadouts passed (100,109,119).
+Final full 20-weapon PPSSPP release qualification and public upload remain pending.
+
+Latest user corrections: greatswords resting at shoulder must draw in front of
+body/head/rear arm, with leading arm over sword. Fixed in painted_actor.h and
+covered by pixel occlusion test: 2,700 blade-over-body pixels, 3,322 leading-arm
+overlap pixels across all 20 new models and both facings. Added standalone weapon
+and armor pictures to smith/armorer trading pane; item pictures verified bounded
+and distinct. Final qualification now requires 47 suites and real smith menu captures.
+Old pre-fix preview/build hash above is superseded; do not publish it.

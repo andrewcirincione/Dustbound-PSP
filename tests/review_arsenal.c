@@ -15,6 +15,11 @@ int main(int argc,char**argv){const char*root=argc>1?argv[1]:"build/arsenal/revi
   rect(0,0,480,272,PANEL);text(10,9,itemDefs[item].name,TEXT,2);text(10,32,"REAL ATTACK POSES / BOTH FACINGS",GOLD,1);
   for(int c=0;c<6;c++){Actor a=actor(item,c%2);a.autoattack=1;a.attackPhase=2;a.attackDuration=1;a.attackClock=1-STRIKE_CONTACT;a.attackAngle=a.facing?0:3.14159265f;actor_painted_stance(&a,42+c*80,212,2,1,1,c/2,0);}
   save_frame(root,n,"attack");
+  if(n>=100){
+   rect(0,0,480,272,PANEL);text(10,9,itemDefs[item].name,TEXT,2);text(10,32,"SHOULDER REST / BOTH FACINGS",GOLD,1);
+   for(int c=0;c<2;c++){Actor a=actor(item,c);a.autoattack=1;actor_painted_stance(&a,125+c*230,230,3,1,0,0,0);}
+   save_frame(root,n,"shoulder");
+  }
  }
  puts("Captured independently drawn weapons held on the actual rig in both facings, carry, guard and all three contact variants.");return 0;
 }

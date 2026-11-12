@@ -122,6 +122,6 @@ static const ArsenalDef arsenalDefs[ARSENAL_WEAPONS]={
 {"Crown of Dawn",32,84,4,UNION,80,17,25,13,16500,2.310f,1.620f},
 {"Ninefold Eclipse",32,84,4,SHOGUN,78,15,26,11,16456,2.345f,1.540f},
 {"Grave Orchard",32,84,4,MONKS,75,14,24,12,16390,2.240f,1.490f},
-{"Furnace Sovereign",32,84,4,OUTLAWS,82,21,23,13,16544,2.275f,1.930f},
+{"Atlas Meridian",32,84,4,UNION,82,18,23,13,16544,2.275f,1.690f},
 };
 #endif

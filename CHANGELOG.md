@@ -1,6 +1,8 @@
 # 1.0.3 — A hundred weapons
 
 ## 1.0.4
+- Corrected greatsword shoulder-rest depth: body/head/rear arm, then sword, then leading arm.
+- Added actual selected-item pictures to smith/armorer trading screens.
 - Added 20 independently drawn greatswords across five equipment tiers and regional styles, with calibrated two-handed grips.
 - Daily smith inventories include a new greatsword (two at fortresses/capitals), inside the existing 15–45 equipment budget.
 - Save format 32 preserves the complete v31 layout, existing item IDs and purchased equipment.

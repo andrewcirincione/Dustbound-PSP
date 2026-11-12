@@ -1060,9 +1060,12 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     int nearReaching = !relaxed && (!weapon || twoHands || primary == nearArm);
     painted_arm(a,farArm,shoulders[farArm],wrists[farArm],sc,face,race,skin,cloth,li,
                 !weapon&&!relaxed,!farReaching,ARM_BOTH);
-    int farWeapon=weapon&&arms&&primary==farArm;
+    /* A greatsword held at the shoulder crosses the visible body plane.
+       Stage it after the head/torso, beneath the leading arm, in both views. */
+    int frontGreatsword=weapon&&gear_family(weapon)==84;
+    int farWeapon=weapon&&arms&&primary==farArm&&!frontGreatsword;
     if(farWeapon)weapon_sprite(weapon,grip.x,grip.y,sc,angle,face,li);
-    if(weapon&&arms&&(twoHands||primary==farArm))
+    if(weapon&&arms&&!frontGreatsword&&(twoHands||primary==farArm))
         painted_gripping_hand(a,farArm,shoulders[farArm],wrists[farArm],sc,face,race,skin,cloth,li);
     for (int side = 0; side < 2; side++) {
         int i=face>0?1-side:side;
@@ -1113,12 +1116,18 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         head_attachment(hf,headArt,&wide,&top,&bottom);
         PART(headArt, 0, top, 0, bottom, wide, itemDefs[head].color, itemDefs[head].quality);
     }
+    if(frontGreatsword&&arms)
+        weapon_sprite(weapon,grip.x,grip.y,sc,angle,face,li);
     painted_arm(a, nearArm, shoulders[nearArm], wrists[nearArm], sc, face, race, skin, cloth, li,
                 !weapon && !relaxed, !nearReaching, ARM_BOTH);
+    if(frontGreatsword&&arms==1&&limb_missing(a,LARM+nearArm)){
+        painted_arm(a,farArm,shoulders[farArm],wrists[farArm],sc,face,race,skin,cloth,li,0,0,ARM_BOTH);
+        painted_gripping_hand(a,farArm,shoulders[farArm],wrists[farArm],sc,face,race,skin,cloth,li);
+    }
     /* The near shoulder and upper arm remain in front of the garment.
        Repainting a collar-sized torso patch here clipped the entire deltoid. */
     if (weapon && arms) {
-        if (!farWeapon)
+        if (!farWeapon&&!frontGreatsword)
             weapon_sprite(weapon, grip.x, grip.y, sc, angle, face, li);
         if(twoHands||primary==nearArm)
             painted_gripping_hand(a,nearArm,shoulders[nearArm],wrists[nearArm],sc,face,race,skin,cloth,li);

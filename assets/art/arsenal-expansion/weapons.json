@@ -3337,17 +3337,17 @@
   },
   {
     "index": 119,
-    "name": "Furnace Sovereign",
-    "slug": "furnace-sovereign",
+    "name": "Atlas Meridian",
+    "slug": "atlas-meridian",
     "type": 32,
     "type_name": "Greatsword",
     "family": 84,
     "tier": 4,
-    "faction": "OUTLAWS",
+    "faction": "UNION",
     "profile": 0,
     "power": 82,
-    "weight": 21,
-    "cooldown": 1.93,
+    "weight": 18,
+    "cooldown": 1.69,
     "penetration": 23,
     "accuracy": 13,
     "range": 2.275,
@@ -3358,9 +3358,9 @@
       0.74
     ],
     "subject": "long double-edged two-handed greatsword",
-    "design": "very broad long pointed black steel greatsword blade with glowing-looking orange enamel channels and polished silver double cutting edges, heavy rectangular brass guard, long fluted black ceramic grip separated by brass collars and substantial copper faceted pommel; no flames or particles",
+    "design": "very long slender diamond-point silver blade with a deep navy enamel central fuller, broad architectural ivory and silver crossguard, long cobalt porcelain hilt and a blue glass wheel pommel",
     "price": 16544,
-    "source": "Furnace Sovereign.png",
-    "prompt": "Use case: stylized-concept. Asset type: one production 2D weapon sprite for the isometric post-apocalyptic RPG Dust. Draw exactly one distinct two-handed GREAT SWORD named Furnace Sovereign: very broad long pointed black steel greatsword blade with glowing-looking orange enamel channels and polished silver double cutting edges, heavy rectangular brass guard, long fluted black ceramic grip separated by brass collars and substantial copper faceted pommel; no flames or particles. Painterly realistic metal, ceramic, bone, stone and enamel material shading, crisp readable silhouette and disciplined detail for a small PSP sprite. This is an actual long sword, with a long blade, a crossguard, a clear unobstructed TWO-HAND hilt below it, and a pommel. Hands must fit comfortably on the hilt; no spikes, blades, knobs or chains in the hand area. Blade is at least twice the hilt length. Long hilt centered near x50%, between y69% and y90%. Main palm centered x50% y74%, support palm lower toward pommel; no hands drawn. Full isolated object, vertical with blade tip UP and pommel DOWN, blade front face clearly visible, symmetrical double cutting edges; overall object occupies about 85% of image height with safe padding. Genuine transparent background. No character, no scene, no shadow, no floor, no text, no label, no border, no sheath, no second weapon. Do not use plain wooden or cloth-wrapped hilt; use the specified smooth sculpted material. The 20 greatswords in this project must differ in blade outline, guard, pommel, proportions and materials, not merely colors."
+    "source": "Atlas Meridian.png",
+    "prompt": "Use case: stylized-concept. Create one original fantasy ceremonial display greatsword called Atlas Meridian as a transparent-background 2D painted game collectible sprite. Very long slender diamond-point silver blade with a deep navy enamel central fuller, broad architectural ivory and silver crossguard, long cobalt porcelain hilt for two hands and a blue glass wheel pommel. Elegant balanced proportions and realistic dimensional material shading. Full isolated object vertical with tip UP and pommel DOWN. Center x50%, main hilt position y74%; long clean hilt between y69% and y90% with no sharp fittings in its grip area. Crisp readable outline, subdued 2D painterly realistic game-asset style. One sword only; no people, action, scenery, text, labels, borders, aura, glow or cast shadow. Genuine transparent background, clean alpha. Preserve padding around the entire sword."
   }
 ]

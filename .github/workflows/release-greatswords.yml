@@ -31,7 +31,7 @@ jobs:
       - name: Run current native regression suites
         run: |
           python scripts/validate_v1000.py
-          python -c "import json; r=json.load(open('build/v1000/native-results.json')); assert len(r)>=46 and all(x['status']=='passed' for x in r.values()), r"
+          python -c "import json; r=json.load(open('build/v1000/native-results.json')); assert len(r)>=47 and all(x['status']=='passed' for x in r.values()), r"
       - name: Install verified PSPDEV toolchain
         run: |
           curl -L --fail --retry 3 -o "$RUNNER_TEMP/pspdev.tar.gz" https://github.com/pspdev/pspdev/releases/download/v20261101/pspdev-ubuntu-latest-x86_64.tar.gz
@@ -56,6 +56,8 @@ jobs:
           echo "PPSSPP_APP=$RUNNER_TEMP/ppsspp/squashfs-root" >> "$GITHUB_ENV"
       - name: Verify PSP boot, equipment and combat
         run: python scripts/emulator_v104.py "$PPSSPP_APP"
+      - name: Arrange actual in-game previews
+        run: python scripts/preview_greatswords_v104.py
       - name: Generate production-renderer review galleries
         run: |
           python scripts/review_arsenal_v104.py

@@ -6,10 +6,10 @@ ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'dist';EV=ROOT/'evidence/v104'
 def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 subprocess.run(['python3','scripts/validate_pbp.py','EBOOT.PBP','--assets','assets'],cwd=ROOT,check=True)
 eboot=ROOT/'EBOOT.PBP';controller=json.loads((EV/'psp/psp-controller.json').read_text())
-assert controller['ok'] and controller['eboot_sha256']==digest(eboot) and controller['weapons_tested']==20 and controller['combat_verified'] and controller['combat_weapons_tested']==20
+assert controller['ok'] and controller['eboot_sha256']==digest(eboot) and controller['weapons_tested']==20 and controller['combat_verified'] and controller['combat_weapons_tested']==20 and controller['smith_previews_verified']
 results=json.loads((ROOT/'build/v1000/native-results.json').read_text())
-assert len(results)>=46 and all(x['status']=='passed' for x in results.values()),'Native qualification failed'
-assert len(list((EV/'review').glob('weapon-*.png')))==240
+assert len(results)>=47 and all(x['status']=='passed' for x in results.values()),'Native qualification failed'
+assert len(list((EV/'review').glob('weapon-*.png')))==260
 pbp=eboot.read_bytes();offsets=struct.unpack_from('<8I',pbp,8);sfo=pbp[offsets[0]:offsets[1]]
 _,_,keys,values,count=struct.unpack_from('<4s4I',sfo);fields={}
 for n in range(count):
@@ -19,7 +19,7 @@ for n in range(count):
 assert fields['TITLE']=='Dust '+VERSION and fields['MEMSIZE']==0,fields
 manifest={'version':VERSION,'commit':os.environ.get('GITHUB_SHA') or subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
 'eboot_bytes':len(pbp),'eboot_sha256':digest(eboot),'prx_sha256':hashlib.sha256(pbp[offsets[6]:offsets[7]]).hexdigest(),
-'native_suites_passed':len(results),'new_weapon_models':20,'catalog_models':120,'new_greatswords':20,'weapon_types_covered':38,'production_render_reviews':240,
+'native_suites_passed':len(results),'new_weapon_models':20,'catalog_models':120,'new_greatswords':20,'weapon_types_covered':38,'production_render_reviews':260,
 'save_format':32,'sfo':fields,'pspdev':'v20261101 / GCC 15.2.0','emulator':controller['emulator'],
 'emulator_verified':True,'physical_psp_tested':False,
 'runtime_sources':{str(p.relative_to(ROOT)):digest(p) for p in sorted((ROOT/'src').glob('*')) if p.suffix in ('.c','.h','.inc')}}

@@ -2336,6 +2336,35 @@ static void map_screen(void) {
 #undef INMAP
 }
 
+/* Cache a picture of the actual selected equipment, without a mannequin. */
+static void shop_item_picture(int item,int x,int y,int width,int height){
+    enum { W=192,H=224 };static uint32_t pixels[W*H];static int cached=-1,left,top,right,bottom;
+    if(item<=0||item>=ITEMS||itemDefs[item].slot<0||itemDefs[item].slot>4)return;
+    if(cached!=item){
+        cached=item;memset(pixels,0,sizeof(pixels));
+        ItemDef*d=&itemDefs[item];int f=gear_family(item);
+        if(d->slot==0){
+            uint32_t*oldfb=fb;int oldpitch=pitch;PaintBounds oldClip={clipLeft,clipTop,clipRight,clipBottom};PaintBounds*oldPaint=trackedPaint;
+            fb=pixels;pitch=W;clipLeft=clipTop=0;clipRight=W;clipBottom=H;trackedPaint=NULL;
+            weapon_sprite(item,W/2,128,2,-1.5707963f,1,1);
+            fb=oldfb;pitch=oldpitch;clipLeft=oldClip.left;clipTop=oldClip.top;clipRight=oldClip.right;clipBottom=oldClip.bottom;trackedPaint=oldPaint;
+        }else{
+            int part=d->slot==1?0:d->slot==2?1:d->slot==4?2:3;
+            int fallback=part==0?(f>=32&&f<48?f:33):part==1?(f>=48&&f<60?f:50):part==2?(f>=68&&f<76?64+f-68:65):(f>=60&&f<68?80+f-60:80);
+            int id=armor_actor_art(item,part,fallback);const ArtSprite*a=actor_sprite(id);const uint32_t*pal=part_palette(id,d->color,1,d->quality);
+            for(int yy=0;yy<a->h&&yy<H;yy++){int lo=a->rows[yy*3+1],hi=a->rows[yy*3+2];for(int xx=lo;xx<hi&&xx<W;xx++)pixels[yy*W+xx]=pal[a->pixels[a->rows[yy*3]+xx-lo]];}
+        }
+        left=W;top=H;right=bottom=0;
+        for(int yy=0;yy<H;yy++)for(int xx=0;xx<W;xx++)if(pixels[yy*W+xx]>>24>=32){left=left<xx?left:xx;right=right>xx+1?right:xx+1;top=top<yy?top:yy;bottom=bottom>yy+1?bottom:yy+1;}
+    }
+    if(right<=left||bottom<=top)return;
+    float scale=fminf((width-8.f)/(right-left),(height-8.f)/(bottom-top));int w=(right-left)*scale,h=(bottom-top)*scale;
+    int dx=x+(width-w)/2,dy=y+(height-h)/2;
+    for(int yy=0;yy<h;yy++)for(int xx=0;xx<w;xx++){
+        int tx=dx+xx,ty=dy+yy;if(tx<clipLeft||tx>=clipRight||ty<clipTop||ty>=clipBottom)continue;
+        int sx=left+(xx+.5f)/scale,sy=top+(yy+.5f)/scale;rgba_over(fb+ty*pitch+tx,pixels[sy*W+sx]);
+    }
+}
 static void trade_screen(void) {
     char b[100], v[70];
     static const char *titles[] = {"BUY / ALL STOCK", "BUY / SUPPLIES", "BUY / WEAPONS", "BUY / ARMOR",
@@ -2346,25 +2375,28 @@ static void trade_screen(void) {
                    ui.tradeSmith == TRADE_APOTHECARY ? "SURGEON / SUPPLIES" : titles[ui.shopFilter],
                    ui.sell ? "\014 BUY-SELL   \001 SELL ONE"
                            : "\014 BUY-SELL   \005/\006 FILTER   \001 BUY ONE");
+    int pictured=ui.tradeSmith==TRADE_SMITH||ui.tradeSmith==TRADE_ARMORER;
     int count = ui.sell ? item_view_count() : shop_count(), first = start_row(ui.sell ? item_view_row(ui.selection) : ui.selection, count, 6);
     for (int j = 0; j < 6 && first + j < count; j++) {
         int i = ui.sell ? item_view_slot(first+j) : first+j, it = ui.sell ? g.actors[g.selected].pack[i].item : shop_item(i);
         int y = 84 + j * 13;
         int stolen = ui.sell && g.actors[g.selected].stolen[i];
-        row(y,i==ui.selection,"",NULL);
-        if (stolen) text(31,y,"!",RED,1);
-        clipped(42,y,itemDefs[it].name,35,stolen?RED:i==ui.selection?TEXT:MUTED);
-        snprintf(v,sizeof(v),"%d",ui.sell?g.actors[g.selected].pack[i].qty:market_quantity(ui.tradeTown, it));text(263,84+j*13,v,MUTED,1);
-        snprintf(v,sizeof(v),"%d S",item_price(ui.tradeTown,it,ui.sell));text(301,84+j*13,v,GOLD,1);
+        if(pictured){if(i==ui.selection){rect(136,y-3,314,14,0x4a4030);rect(136,y-3,2,14,TEAL);}}
+        else row(y,i==ui.selection,"",NULL);
+        if (stolen) text(pictured?137:31,y,"!",RED,1);
+        clipped(pictured?145:42,y,itemDefs[it].name,pictured?24:35,stolen?RED:i==ui.selection?TEXT:MUTED);
+        snprintf(v,sizeof(v),"%d",ui.sell?g.actors[g.selected].pack[i].qty:market_quantity(ui.tradeTown, it));text(pictured?296:263,84+j*13,v,MUTED,1);
+        snprintf(v,sizeof(v),"%d S",item_price(ui.tradeTown,it,ui.sell));text(pictured?326:301,84+j*13,v,GOLD,1);
         if (stolen) {
             snprintf(v,sizeof(v),"%.0f%% CLEAR",stolen_sale_chance(ui.tradeTown,i)*100);
-            text(375,y,v,RED,1);
+            text(pictured?386:375,y,v,RED,1);
         } else {
             int pct=market_percent(ui.tradeTown,it,ui.sell);snprintf(v,sizeof(v),"%+d%%",pct);
             text(400,y,v,pct==0?MUTED:((ui.sell?pct>0:pct<0)?0x73c58b:0xde8375),1);
         }
     }
     int it = ui.sell ? g.actors[g.selected].pack[ui.selection].item : shop_item(ui.selection);
+    if(pictured){rect(28,81,103,85,INK);line(133,81,133,166,EDGE);shop_item_picture(it,28,81,103,85);}
     equipment_comparison(it, 173);
     text(ui.sell ? 205 : 290,237,ui.sell ? "! STOLEN / % CHANCE OF SALE" : "GREEN GOOD / RED POOR",MUTED,1);
     snprintf(b, sizeof(b), "%d SILVER", g.money);
