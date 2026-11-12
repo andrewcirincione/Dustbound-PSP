@@ -15,8 +15,11 @@ static PaintPalette paintPalettes[PALETTE_SETS][PALETTE_WAYS];
 static unsigned char paletteNext[PALETTE_SETS];
 
 static uint32_t *palette_slot(int id, uint32_t tint, uint32_t hair, unsigned brightness, int *fresh) {
-    uint64_t key = (uint64_t)(id + 1) << 56 | (uint64_t)(hair & 0xffffff) << 32 |
-                   (uint64_t)(brightness & 255) << 24 | (tint & 0xffffff);
+    uint64_t key=1469598103934665603ull;
+    key=(key^(unsigned)(id+1))*1099511628211ull;
+    key=(key^hair)*1099511628211ull;
+    key=(key^brightness)*1099511628211ull;
+    key=(key^tint)*1099511628211ull;
     uint32_t hash = (uint32_t)key ^ (uint32_t)(key >> 32);
     hash = (hash ^ (hash >> 16)) * 0x7feb352du;
     unsigned set = (hash ^ (hash >> 15)) & (PALETTE_SETS - 1);
@@ -120,7 +123,7 @@ static const uint32_t *part_palette(int id, uint32_t tint, float li, int quality
     if (!fresh)
         return palette;
     for (int i = 0; i < 256; i++) {
-        uint32_t c = artSprites[id].palette[i];
+        uint32_t c = actor_sprite(id)->palette[i];
         int r = c & 255, g0 = (c >> 8) & 255, b = (c >> 16) & 255;
         if (head) {
             if (id != 61 && r < 78 && g0 < 70) {
@@ -148,7 +151,7 @@ static const uint32_t *part_palette(int id, uint32_t tint, float li, int quality
 }
 static void part(int id, float ax, float ay, float bx, float by, float width, uint32_t tint, float li,
                  int quality, int flip, float v0, float v1) {
-    const ArtSprite *s = &artSprites[id];
+    const ArtSprite *s = actor_sprite(id);
     float dx = bx - ax, dy = by - ay, length = sqrtf(dx * dx + dy * dy);
     if (length < .1f || width < .1f)
         return;
@@ -194,7 +197,7 @@ static const uint32_t *weapon_palette(int id, const ItemDef *item, float li) {
     if (!fresh)
         return palette;
     for (int i = 0; i < 256; i++) {
-        uint32_t c = artSprites[id].palette[i];
+        uint32_t c = actor_sprite(id)->palette[i];
         int r = c & 255, green = (c >> 8) & 255, b = (c >> 16) & 255;
         int max = r > green ? r : green;
         if (b > max)
@@ -302,7 +305,7 @@ static void weapon_sprite(int item, float x, float y, int sc, float angle, int f
         weapon_fitting(item,x,y,sc,angle,face,li,len);return;
     }
     int f=weapon_family(item),id=WEAPON_ART_FIRST+f;
-    const ArtSprite *s=&artSprites[id];const WeaponArt *w=&weaponArt[f];
+    const ArtSprite *s=actor_sprite(id);const WeaponArt *w=&weaponArt[f];
     float scale=w->scale,tip=weapon_design_along(w->gripY*scale,anchor,design);
     int parity=w->edgeSide*face;
     float left=1e6f,top=1e6f,right=-1e6f,bottom=-1e6f;
@@ -395,15 +398,20 @@ static float head_y(float y) {
 static float head_width(int race) {
     return headScale * (race == 4 ? 6.7f : race == 3 ? 5.1f : 5.8f);
 }
-static void head_attachment(int family, float *width, float *top, float *bottom) {
+static void head_attachment(int family, int sprite, float *width, float *top, float *bottom) {
     // Calibrated brow/brim rows in each cropped sprite. Chin straps, cheek
     // guards and crests must not be treated as the hat's contact with the head.
     static const float widths[12] = {11, 10.4f, 9.6f, 7.4f, 7.4f, 8.4f, 7.8f, 7.8f, 10.2f, 7.8f, 11, 9.2f};
     static const float brow[12] = {.61f, .86f, .54f, .40f, .55f, .46f, .32f, .42f, .82f, .36f, .43f, .53f};
-    const ArtSprite *s = &artSprites[family];
-    *width = widths[family - 48] * headScale;
+    const ArtSprite *s = actor_sprite(sprite);
+    float widthUnits=widths[family-48],browY=brow[family-48];
+    if(sprite>=ARMOR_ART_FIRST){
+        int set=(sprite-ARMOR_ART_FIRST)/6;
+        if(armorHeadFits[set][0]>0){widthUnits=armorHeadFits[set][0];browY=armorHeadFits[set][1];}
+    }
+    *width = widthUnits * headScale;
     float height = *width * s->h / s->w;
-    *top = head_y(-30.2f) - brow[family - 48] * height;
+    *top = head_y(-30.2f) - browY * height;
     *bottom = *top + height;
 }
 enum { ARM_UPPER = 1, ARM_LOWER = 2, ARM_BOTH = ARM_UPPER | ARM_LOWER };
@@ -416,7 +424,7 @@ static ArtBinding bind_art(int id,const float source[4],float ax,float ay,float 
     float dx=bx-ax,dy=by-ay,len=fmaxf(.1f,hypotf(dx,dy));
     return (ArtBinding){id,ax,ay,dx/len,dy/len,dy/len,-dx/len,source[0],source[1],
         (source[2]-source[0])/(source[3]-source[1]),len/(source[3]-source[1]),
-        width/artSprites[id].w*(flip?-1:1)};
+        width/actor_sprite(id)->w*(flip?-1:1)};
 }
 static void art_point(ArtBinding b,float sx,float sy,float *x,float *y){
     float along=(sy-b.srcY)*b.stretch;
@@ -424,7 +432,7 @@ static void art_point(ArtBinding b,float sx,float sy,float *x,float *y){
     *x=b.ax+b.ux*along+b.vx*across;*y=b.ay+b.uy*along+b.vy*across;
 }
 static void paint_bound_region(ArtBinding b,uint32_t tint,float li,int quality,float sourceTop,int half){
-    const ArtSprite *s=&artSprites[b.id];
+    const ArtSprite *s=actor_sprite(b.id);
     float left=1e9f,top=1e9f,right=-1e9f,bottom=-1e9f;
     for(int k=0;k<4;k++){
         float x,y;art_point(b,(k&2)?s->w:0,(k&1)?s->h:0,&x,&y);
@@ -498,7 +506,11 @@ static void joint_sprite_region(int id,float ax,float ay,float bx,float by,float
         {8.5f,6.5f,13.5f,26.0f}, {6.0f,4.5f,12.5f,26.5f}
     };
     if(hypotf(bx-ax,by-ay)<.1f)return;
-    const float *j=joints[id-72];
+    const float *j;
+    if(id>=ARMOR_ART_FIRST){
+        int set=(id-ARMOR_ART_FIRST)/6,part=(id-ARMOR_ART_FIRST)%6;
+        j=part==4?armorArmFits[set].upper:armorArmFits[set].lower;
+    }else j=joints[id-72];
     ArtBinding binding=bind_art(id,j,ax,ay,bx,by,width,flip);
     paint_bound_region(binding,tint,li,0,coveredCap?j[1]-1:0,0);
 }
@@ -507,24 +519,34 @@ static void joint_sprite(int id,float ax,float ay,float bx,float by,float width,
     joint_sprite_region(id,ax,ay,bx,by,width,tint,li,flip,0);
 }
 typedef struct {float x,y;} ArmElbow;
-typedef struct {int upper,lower,flip;uint32_t upperTint,lowerTint,handTint;} ArmArt;
+typedef struct {int upper,lower,flip;uint32_t upperTint,lowerTint,handTint;float upperWidth,lowerWidth;} ArmArt;
 static ArmArt arm_art(const Actor *a,int i,int face,int race,uint32_t skin,uint32_t cloth){
     int grade=limb_item_grade(limb_installed(a,LARM+i)),mech=race==2||grade>=0;
     int torso=a->gear[1],family=gear_family(torso);
     if(family<32||family>47)family=torso==DUSTER?32:torso==PLATE?38:torso==LEATHER?35:(torso==RAGS||torso==SLAVE_GARB)?46:torso?33:-1;
     int sleeve=family==33||family==39||family==40||family==41||family==42||family==44||family==47;
+    int set=armor_item_set(torso);
+    if(set>=0 && armorSprites[set*6+4].w){
+        float uw=armorSets[set].heavy?3.0f:2.5f,lw=armorSets[set].heavy?2.6f:2.2f;
+        return (ArmArt){ARMOR_ART_FIRST+set*6+4,ARMOR_ART_FIRST+set*6+5,i^(face<0),
+                         0x808080,0x808080,mech?(grade>=0?limbGrades[grade].color:cloth):skin,uw,lw};
+    }
+    if(set>=0 && set<5){
+        static const uint32_t armTint[]={0x7e8066,0xc8bca3,0x694332,0x8f743b,0x4b5661};
+        cloth=armTint[set];sleeve=0;
+    }
     int bracer=torso&&itemDefs[torso].armor>=18;
     uint32_t tint=grade>=0?limbGrades[grade].color:cloth;
     return (ArmArt){mech?76:sleeve?72:74,mech?77:bracer?73:75,i^(face<0),
-                    mech||sleeve?tint:skin,mech||bracer?tint:skin,mech?tint:skin};
+                    mech||sleeve?tint:skin,mech||bracer?tint:skin,mech?tint:skin,2.5f,2.2f};
 }
 /* Laid-out and crawling figures use their projected joints, with the same
    authored painted anchors and arm materials as the standing figure. */
 static void grounded_arm(ArmArt art,float sx,float sy,float ex,float ey,float hx,float hy,
                          int sc,float li,int pieces,int covered){
-    if(pieces&ARM_UPPER)joint_sprite_region(art.upper,sx,sy,ex,ey,2.5f*sc,art.upperTint,li,art.flip,covered);
+    if(pieces&ARM_UPPER)joint_sprite_region(art.upper,sx,sy,ex,ey,(art.upperWidth?art.upperWidth:2.5f)*sc,art.upperTint,li,art.flip,covered);
     if(pieces&ARM_LOWER){
-        joint_sprite(art.lower,ex,ey,hx,hy,2.2f*sc,art.lowerTint,li,art.flip);
+        joint_sprite(art.lower,ex,ey,hx,hy,(art.lowerWidth?art.lowerWidth:2.2f)*sc,art.lowerTint,li,art.flip);
         float d=fmaxf(.1f,hypotf(hx-ex,hy-ey)),ux=(hx-ex)/d*sc,uy=(hy-ey)/d*sc;
         part(79,hx-ux*.2f,hy-uy*.2f,hx+ux*1.4f,hy+uy*1.4f,2.0f*sc,art.handTint,li,0,art.flip,0,1);
     }
@@ -560,13 +582,13 @@ static void painted_arm(const Actor *a, int i, const float shoulder[2], const fl
     ArmArt art=arm_art(a,i,face,race,skin,cloth);
     art.flip=i; /* Near/far roles swap on reflection, as does sprite parity. */
     if (pieces & ARM_UPPER)
-        joint_sprite_region(art.upper,sx,sy,ex,ey,2.5f*sc,art.upperTint,li,art.flip,
+        joint_sprite_region(art.upper,sx,sy,ex,ey,(art.upperWidth?art.upperWidth:2.5f)*sc,art.upperTint,li,art.flip,
                             a->gear[1]&&i==(face>0?1:0));
     if (!(pieces & ARM_LOWER))
         return;
     float lower=fmaxf(.1f,hypotf(hx-ex,hy-ey)),wx=(hx-ex)/lower,wy=(hy-ey)/lower;
     float overlap=relaxed?0:.65f*sc;
-    joint_sprite(art.lower,ex,ey,hx-wx*overlap,hy-wy*overlap,2.2f*sc,art.lowerTint,li,art.flip);
+    joint_sprite(art.lower,ex,ey,hx-wx*overlap,hy-wy*overlap,(art.lowerWidth?art.lowerWidth:2.2f)*sc,art.lowerTint,li,art.flip);
     if(relaxed){
         part(79,hx-wx*.2f*sc,hy-wy*.2f*sc,hx+wx*1.4f*sc,hy+wy*1.4f*sc,2.0f*sc,art.handTint,li,0,art.flip,0,1);
     }
@@ -808,7 +830,11 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     if(!torso||torso==RAGS)bw*=.90f;
     else if(tf==36||tf==38||tf==42||tf==47)bw*=1.04f;
     bw*=race==3?.85f:race==4?1.18f:1;
-    const TorsoFit *fit=tf>=32&&tf<=47?&torsoFits[tf-32]:&bareTorsoFit;
+    int torsoSet=armor_item_set(torso);
+    int torsoArt=armor_actor_art(torso,0,tf),headArt=armor_actor_art(head,1,hf);
+    int legArt=armor_actor_art(legs,2,64+lf-68),bootArt=armor_actor_art(boots,3,80+ff-60);
+    int coveredLegs=armor_item_set(legs)>=0;
+    const TorsoFit *fit=torsoSet>=0 && armorSprites[torsoSet*6].w?&armorTorsoFits[torsoSet]:tf>=32&&tf<=47?&torsoFits[tf-32]:&bareTorsoFit;
     float bodyWidth=(a->body==1?1.08f:a->body==2?.90f:1)*(race==3?.90f:race==4?1.14f:1);
 #define RX(xx, yy) (x + ((xx) * (1 + rig.twist*.55f) + weightShift + lean * fminf(1, fmaxf(0, (-(yy)-14) / 12.f))) * sc)
 #define RY(yy) (y + ((yy) + crouch * fminf(1, fmaxf(0, -(yy) / 13.f))) * sc)
@@ -817,7 +843,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     uint32_t cloth = torso ? itemDefs[torso].color : 0x9b8670, lc = legs ? itemDefs[legs].color : 0x786d5e;
     float bodySockets[2][2];
     float waist=torso?-16.4f:-13.f;
-    TorsoBinding chest=pose_torso(tf,fit,RX(0,-23.8f),RY(-23.8f),RX(0,waist),RY(waist),
+    TorsoBinding chest=pose_torso(torsoArt,fit,RX(0,-23.8f),RY(-23.8f),RX(0,waist),RY(waist),
                                  bodyWidth*(1+rig.twist*.55f),sc,face,bodySockets);
     if (a->dead || a->unconscious > 0 || a->taskKind == 3 || playing_dead(a)) {
         int bed = actor_in_bed(a), dir = bed ? bed_head_direction(a) : face;
@@ -835,14 +861,14 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         for (int i = 0; i < 2; i++) {
             int limb = LLEG + i;
             if (limb_missing(a,limb)) continue;
-            int grade = limb_item_grade(limb_installed(a,limb)), mech = race == 2 || grade >= 0;
-            int artId = mech ? 76 : 64 + lf - 68;
+            int grade = limb_item_grade(limb_installed(a,limb)), mech = (race == 2 || grade >= 0) && !coveredLegs;
+            int artId = mech ? 76 : legArt;
             float hip = i ? 2.1f : -2.05f, knee = hip + (bed ? 0 : i ? 2.1f : -.6f);
             float foot = bed ? -15.2f : i ? -12.9f : -15.4f;
-            uint32_t tint = grade >= 0 ? limbGrades[grade].color : lc;
-            LA(artId,-1,hip,2.6f,-7,knee,1.2f,4.65f,tint,itemDefs[legs].quality,0,mech?1:.54f);
-            LA(mech?77:artId,-6.5f,knee,1.3f,foot+2,hip,.6f,4,tint,itemDefs[legs].quality,mech?0:.48f,1);
-            LA(mech?87:80+ff-60,foot+3.5f,hip,.8f,foot,hip,.6f,5,boots?itemDefs[boots].color:skin,
+            uint32_t tint = grade >= 0 && !coveredLegs ? limbGrades[grade].color : lc;
+            LA(artId,-1,hip,2.6f,-7,knee,1.2f,3.6f,tint,itemDefs[legs].quality,0,mech?1:.54f);
+            LA(mech?77:artId,-6.5f,knee,1.3f,foot+2,hip,.6f,3.15f,tint,itemDefs[legs].quality,mech?0:.48f,1);
+            LA(mech?87:bootArt,foot+3.5f,hip,.8f,foot,hip,.6f,5,boots?itemDefs[boots].color:skin,
                itemDefs[boots].quality,0,1);
         }
         if (!bed && back) {
@@ -851,7 +877,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         }
         float restSockets[2][2];
         float nx=LX(9.8f,0),ny=LY(9.8f,0,2.5f),wx=LX(1.8f,0),wy=LY(1.8f,0,2);
-        TorsoBinding resting=pose_torso(tf,fit,nx,ny,wx,wy,bodyWidth,sc,dir,restSockets);
+        TorsoBinding resting=pose_torso(torsoArt,fit,nx,ny,wx,wy,bodyWidth,sc,dir,restSockets);
         float len=fmaxf(.1f,hypotf(wx-nx,wy-ny)),ux=(wx-nx)/len,uy=(wy-ny)/len,vx=uy,vy=-ux;
         float restElbow[2][2],restWrist[2][2];
         for(int i=0;i<2;i++){
@@ -870,8 +896,8 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         LA(61,chin+7*headScale,0,2.2f,chin,0,2.5f,head_width(race),skin,0,0,1);
         if (!bed && head && hf >= 48) {
             float wide, top, bottom;
-            head_attachment(hf, &wide, &top, &bottom);
-            LA(hf,chin+(headChin-top)*.875f,-.15f,2.45f,chin+(headChin-bottom)*.875f,-.15f,2.45f,wide,itemDefs[head].color,
+            head_attachment(hf,headArt,&wide,&top,&bottom);
+            LA(headArt,chin+(headChin-top)*.875f,-.15f,2.45f,chin+(headChin-bottom)*.875f,-.15f,2.45f,wide,itemDefs[head].color,
                itemDefs[head].quality,0,1);
         }
         if(!limb_missing(a,LARM+near))grounded_arm(arm_art(a,near,dir,race,skin,cloth),
@@ -894,12 +920,12 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
             int l=LLEG+i;if(limb_missing(a,l))continue;int it=limb_installed(a,l),grade=limb_item_grade(it),mech=race==2||it;
             uint32_t tint=grade>=0?limbGrades[grade].color:lc;
             float yy=-3+(i?1:-1),end=-face*(17+(i?cycle:-cycle));
-            part(mech?76:64+lf-68,x-face*5*sc,y-5*sc,x-face*11*sc,y+yy*sc,4.5f*sc,tint,li,0,face<0,0,mech?1:.54f);
-            part(mech?77:64+lf-68,x-face*11*sc,y+yy*sc,x+end*sc,y-1*sc,3.8f*sc,tint,li,0,face<0,mech?0:.48f,1);
+            part(mech?76:legArt,x-face*5*sc,y-5*sc,x-face*11*sc,y+yy*sc,3.6f*sc,tint,li,0,face<0,0,mech?1:.54f);
+            part(mech?77:legArt,x-face*11*sc,y+yy*sc,x+end*sc,y-1*sc,3.15f*sc,tint,li,0,face<0,mech?0:.48f,1);
         }
         if(back){int bid=bf>=76&&bf<=83?88+bf-76:88;part(bid,x-face*4*sc,y-12*sc,x+face*4*sc,y-14*sc,9*sc,itemDefs[back].color,li,itemDefs[back].quality,face>0,0,1);}
         float crawlSockets[2][2];
-        TorsoBinding crawling=pose_torso(tf,fit,x+face*6*sc,y-10*sc,x-face*sc,y-6.7f*sc,
+        TorsoBinding crawling=pose_torso(torsoArt,fit,x+face*6*sc,y-10*sc,x-face*sc,y-6.7f*sc,
                                           bodyWidth,sc,face,crawlSockets);
         float handx=0,handy=0,crawlWrist[2][2];ArmElbow crawlElbow[2];
         int near=face>0?0:1,far=1-near;
@@ -924,8 +950,8 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         painted_head(a, browX, chinY - 8 * headScale * sc, chinX, chinY, head_width(race) * sc, skin, li, face);
         if (head && hf >= 48) {
             float wide, top, bottom;
-            head_attachment(hf, &wide, &top, &bottom);
-            part(hf, browX, chinY + (top - headChin) * sc, browX, chinY + (bottom - headChin) * sc,
+            head_attachment(hf,headArt,&wide,&top,&bottom);
+            part(headArt, browX, chinY + (top - headChin) * sc, browX, chinY + (bottom - headChin) * sc,
                  wide * sc, itemDefs[head].color, li, itemDefs[head].quality, face < 0, 0, 1);
         }
         if(limb_arms(a)&&weapon&&primary==0)weapon_sprite(weapon,handx,handy,sc,face>0?-.18f:3.32f,face,li);
@@ -945,38 +971,6 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         // wearer so straps meet the torso and the load projects behind it.
         part(bid, RX(bx, mount.top), RY(mount.top), RX(bx, mount.bottom), RY(mount.bottom), mount.width * sc,
              itemDefs[back].color, li, itemDefs[back].quality, face > 0, 0, 1);
-    }
-    for (int side = 0; side < 2; side++) {
-        int i=face>0?1-side:side;
-        int limb = i ? RLEG : LLEG;
-        if (missing & (1 << limb))
-            continue;
-        int legSide=face>0?i:1-i;
-        float xx = face*(legSide ? 2 : -2.5f);
-        float stride = feet[i].stride * walk * (a->sneaking ? 5.3f : 7.3f) *
-                       (limping && weakLeg == i ? .28f : 1);
-        float groundY = stride * walkY * .5f;
-        float step = i == leadLeg ? rig.step + kick * .72f : weapon ? 0 : -1.4f * blend;
-        float foot = xx + step * forward + stride * walkX;
-        float lift = feet[i].lift * walk * (limping && weakLeg == i ? .45f : 2.7f);
-        float knee = xx + (step * .55f + rig.shift * .40f) * forward +
-                     stride * walkX * .50f + lift * walkX * .48f;
-        float kneeY = -7 + groundY * .52f - lift * .52f;
-        if (i == leadLeg)
-            lift += plantLift + kick * .85f;
-        float ankle = groundY - lift;
-        int grade=limb_item_grade(limb_installed(a,limb));
-        uint32_t limbTint=grade>=0?limbGrades[grade].color:lc;
-        int mech = race==2 || (a->prostheticMask & (1 << limb)), id = mech ? 76 : 64 + lf - 68;
-        part(id, RX(xx, -14), RY(-14), RX(knee, kneeY), RY(kneeY), 4.8f * sc, limbTint, li, itemDefs[legs].quality,
-             face < 0, 0, mech ? 1 : .54f);
-        /* The boot anchors are in ground space, outside torso lean and twist. */
-        part(mech ? 77 : id, RX(knee, kneeY - .35f), RY(kneeY - .35f),
-             x + foot * sc, y + (ankle - 2) * sc, 4.1f * sc, limbTint,
-             li, itemDefs[legs].quality, face < 0, mech ? 0 : .48f, 1);
-        part(mech ? 87 : 80 + ff - 60, x + foot * sc, y + (ankle - 5) * sc,
-             x + (foot + face * .6f) * sc, y + (ankle - .2f) * sc, 5.4f * sc,
-             boots ? itemDefs[boots].color : skin, li, itemDefs[boots].quality, face < 0, 0, 1);
     }
     int ranged = weapon_ranged(weapon);
     float angle = (ranged ? aim : (face > 0 ? 0 : 3.14159265f) + face * .42f * depth) + face * rig.blade;
@@ -1057,6 +1051,43 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     if(farWeapon)weapon_sprite(weapon,grip.x,grip.y,sc,angle,face,li);
     if(weapon&&arms&&(twoHands||primary==farArm))
         painted_gripping_hand(a,farArm,shoulders[farArm],wrists[farArm],sc,face,race,skin,cloth,li);
+    for (int side = 0; side < 2; side++) {
+        int i=face>0?1-side:side;
+        int limb = i ? RLEG : LLEG;
+        if (missing & (1 << limb))
+            continue;
+        int legSide=face>0?i:1-i;
+        float xx = face*(legSide ? 1.65f : -1.8f);
+        float stride = feet[i].stride * walk * (a->sneaking ? 5.3f : 7.3f) *
+                       (limping && weakLeg == i ? .28f : 1);
+        float groundY = stride * walkY * .5f;
+        float step = i == leadLeg ? rig.step + kick * .72f : weapon ? 0 : -1.4f * blend;
+        float foot = xx + step * forward + stride * walkX;
+        float lift = feet[i].lift * walk * (limping && weakLeg == i ? .45f : 2.7f);
+        float knee = xx + (step * .55f + rig.shift * .40f) * forward +
+                     stride * walkX * .50f + lift * walkX * .48f;
+        float kneeY = -7 + groundY * .52f - lift * .52f;
+        if (i == leadLeg)
+            lift += plantLift + kick * .85f;
+        float ankle = groundY - lift;
+        int grade=limb_item_grade(limb_installed(a,limb));
+        uint32_t limbTint=grade>=0&&!coveredLegs?limbGrades[grade].color:lc;
+        int mech = (race==2 || (a->prostheticMask & (1 << limb))) && !coveredLegs, id = mech ? 76 : legArt;
+        part(id, RX(xx, -15.2f), RY(-15.2f), RX(knee, kneeY), RY(kneeY), 3.6f * sc, limbTint, li, itemDefs[legs].quality,
+             face < 0, 0, mech ? 1 : .54f);
+        /* The boot anchors are in ground space, outside torso lean and twist. */
+        part(mech ? 77 : id, RX(knee, kneeY - .35f), RY(kneeY - .35f),
+             x + foot * sc, y + (ankle - 2) * sc, 3.15f * sc, limbTint,
+             li, itemDefs[legs].quality, face < 0, mech ? 0 : .48f, 1);
+        part(mech ? 87 : bootArt, x + foot * sc, y + (ankle - 5) * sc,
+             x + (foot + face * .6f) * sc, y + (ankle - .2f) * sc, 5.4f * sc,
+             boots ? itemDefs[boots].color : skin, li, itemDefs[boots].quality, face < 0, 0, 1);
+    }
+    /* Pants and the hip band occlude the far arm. The hip band samples solid
+       upper-trouser fabric so transparent waist openings cannot detach legs. */
+    if (!(missing & ((1<<LLEG)|(1<<RLEG))))
+        part(legArt,RX(0,-16.0f),RY(-16.0f),RX(0,-12.8f),RY(-12.8f),
+             5.7f*bodyWidth*sc,lc,li,itemDefs[legs].quality,face<0,.12f,.29f);
     PART(74,0,headChin-.3f,0,-22.9f,2.0f,skin,0);
     paint_torso(chest,torso?cloth:skin,li,itemDefs[torso].quality);
     float scalp = head_y(-33.f);
@@ -1066,19 +1097,13 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
                      RX(face * 1.5f * headScale, head_y(-27)), RY(head_y(-27)), shade(0x874b38, li));
     if (head && hf >= 48) {
         float wide, top, bottom;
-        head_attachment(hf, &wide, &top, &bottom);
-        PART(hf, 0, top, 0, bottom, wide, itemDefs[head].color, itemDefs[head].quality);
+        head_attachment(hf,headArt,&wide,&top,&bottom);
+        PART(headArt, 0, top, 0, bottom, wide, itemDefs[head].color, itemDefs[head].quality);
     }
     painted_arm(a, nearArm, shoulders[nearArm], wrists[nearArm], sc, face, race, skin, cloth, li,
                 !weapon && !relaxed, !nearReaching, ARM_BOTH);
-    if(torso && !limb_missing(a,LARM+nearArm)){
-        int oldL=clipLeft,oldR=clipRight,oldT=clipTop,oldB=clipBottom;
-        float sx=shoulders[nearArm][0],sy=shoulders[nearArm][1];
-        clipLeft=fmaxf(oldL,floorf(sx-2*sc));clipRight=fminf(oldR,ceilf(sx+2*sc));
-        clipTop=fmaxf(oldT,floorf(sy-2*sc));clipBottom=fminf(oldB,ceilf(sy+sc));
-        paint_torso(chest,cloth,li,itemDefs[torso].quality);
-        clipLeft=oldL;clipRight=oldR;clipTop=oldT;clipBottom=oldB;
-    }
+    /* The near shoulder and upper arm remain in front of the garment.
+       Repainting a collar-sized torso patch here clipped the entire deltoid. */
     if (weapon && arms) {
         if (!farWeapon)
             weapon_sprite(weapon, grip.x, grip.y, sc, angle, face, li);

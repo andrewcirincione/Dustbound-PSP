@@ -443,11 +443,15 @@ int item_price(int town, int it, int selling) {
     mod = limit(mod, .65f, 1.6f);
     const ItemDef *item = &itemDefs[it];
     float rate = selling ? .75f : item->slot >= 0 ? 1.52f : 1.38f;
-    if (!selling && g.frontier.venue[town][it] == TRADE_SMITH && item->quality >= 2)
+    if (!selling && *market_venue(town,it) == TRADE_SMITH && item->quality >= 2)
         rate *= item->quality == 3 ? 1.65f : 1.4f;
     return (int)fmaxf(1, item->price * rate * mod * market_factor(town,it) * politics_price(town,it));
 }
+unsigned char *market_venue(int town,int item) {
+    return item>=ARMOR_SET_ITEMS?&g.armor.venue[town][item-ARMOR_SET_ITEMS]:&g.frontier.venue[town][item];
+}
 int *market_stock(int town, int item) {
+    if(item>=ARMOR_SET_ITEMS)return &g.armor.stock[town][item-ARMOR_SET_ITEMS];
     if (item < TOWN_STOCK_ITEMS)
         return &g.stock[town][item];
     if (item < V23_ITEMS)
@@ -484,7 +488,7 @@ static int shop_list(int index) {
         for (int step = 1; step < ITEMS; step++) {
             int it = ui.shopFilter == 2 ? BASE_ITEMS + step - 1 : step;
             if (it >= ITEMS) it -= ITEMS - 1;
-            if (*market_stock(town, it) > 0 && g.frontier.venue[town][it] == ui.tradeSmith &&
+            if (*market_stock(town, it) > 0 && *market_venue(town,it) == ui.tradeSmith &&
                 shop_visible(it) && count++ == index)
                 return it;
         }

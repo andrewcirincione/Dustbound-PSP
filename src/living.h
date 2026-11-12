@@ -30,6 +30,7 @@ void living_gear(Actor*a,int role,int tier,int n){
     if(tier>=3)a->gear[role>=4?1:0]=CATALOG_ITEMS+16+role;
     if(role==0&&tier<3)a->gear[0]=SCIMITAR_ITEMS+(tier*7+n)%24;
     if(role==1&&tier<3)a->gear[0]=RAPIER_ITEMS+(tier*7+n)%24;
+    armor_wanderer(a,(unsigned)n*7919u,tier);
     inventory_add(a,RATION,1+tier);inventory_add(a,MEDKIT,1+tier/2);
     if(weapon_ranged(a->gear[0]))inventory_add(a,gear_family(a->gear[0])>=29?CARTRIDGE:BOLTS,12+tier*8);
     if(role==2)inventory_add(a,IRONBAR,3+tier);
@@ -120,6 +121,7 @@ static int materialize(int slot){
         float x=e->x+(i%4)*1.6f,y=e->y+(i/4)*1.7f;regional_clear(&x,&y);
         static const char *roles[8]={"VANGUARD","SCOUT","BREAKER","GUNNER","SPEAR GUARD","REAVER","CAPTAIN","MEDIC"};
         char name[16];snprintf(name,sizeof(name),"%s %s",e->modifier==3?"VET":"ROAD",i==0&&e->type==7?"WARLORD":roles[i%8]);
+        if(e->type==6)snprintf(name,sizeof(name),i==0?"ARMY CAPTAIN":i%4==0?"ARMY VETERAN":"ARMY SOLDIER");
         if(e->stored){
             society_actor_reset(n);g.actors[n]=e->reserve[i];g.depth.actors[n]=e->reserveDepth[i];
             Actor*a=&g.actors[n];a->x=x;a->y=y;a->active=1;a->target=a->attackTarget=-1;a->attackPhase=0;a->routeLen=a->routePos=0;
@@ -128,9 +130,11 @@ static int materialize(int slot){
         int tier=i==0?e->tier:(int)fmaxf(0,e->tier-1),skill=5+tier*12+(e->modifier==3?7:0);
         init_actor(n,name,e->type==5?BEAST:e->type==4?SETTLER:GUARD,e->faction,x,y,skill);
         memset(&g.depth.actors[n],0,sizeof(DepthActor));g.depth.actors[n].upkeep=100;
-        living_loot(n,i%8,tier);Actor*a=&g.actors[n];population_roll_limbs(a,e->seed^(i*73819u),tier);
+        living_loot(n,i%8,tier);
+        Actor*a=&g.actors[n];population_roll_limbs(a,e->seed^(i*73819u),tier);
         if(e->modifier==1)a->hunger=25;
         if(e->modifier==2&&a->kind!=BEAST)a->gear[1]=gear_id(38,3,tier>=3?3:tier);
+        if(e->type==6)armor_equip(a,armor_uniform_set(e->faction,i==0?2:i%4==0?1:0));
         if(e->type==4){a->health[CHEST]=35;a->health[LLEG]=25;a->bleed=.1f;}
         e->members[i]=n;LW.owned[n]=slot+1;LW.anger[n]=0;LW.command[n]=-1;
     }e->spawned=1;return 1;

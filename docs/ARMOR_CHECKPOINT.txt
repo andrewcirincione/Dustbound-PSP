@@ -1,0 +1,9 @@
+Dust 1.0.2 distribution checkpoint — 2026-11-12
+Recovered commit 0c4dc14: all 30 generated sets and fitting fixes.
+User approved world distribution and compile/publish.
+Pending: worn mixed raiders, faction/unit/rank outfits, named elites, rare regional shops/caches, pricing, tests, PPSSPP, release.
+Source path: /workspace/scratch/04803d41d4a2/dust-release
+PSPDEV: /workspace/scratch/c30f2d0204c9/psp-toolchain/pspdev
+PPSSPP: /workspace/scratch/c30f2d0204c9/emulator/AppDir
+Checkpoint branch: armor-world-1.0.2
+Use scripts/validate_v1000.py for all native suites.

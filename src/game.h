@@ -2,7 +2,7 @@
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
 #define GAME_NAME "Dust"
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -39,7 +39,12 @@
 #define PORTION_TYPES 6
 #define V28_ITEMS (PORTION_ITEMS+PORTION_TYPES*99)
 #define DISPATCH_ITEM V28_ITEMS
-#define ITEMS (V28_ITEMS+1)
+#define V29_ITEMS (V28_ITEMS+1)
+#define ARMOR_SET_ITEMS V29_ITEMS
+#define ARMOR_SETS 30
+#define ARMOR_SET_PIECES 4
+#define ARMOR_EXTRA_ITEMS (ARMOR_SETS*ARMOR_SET_PIECES)
+#define ITEMS (ARMOR_SET_ITEMS+ARMOR_EXTRA_ITEMS)
 #define LODGES 3
 #define COMPLETED_CONTRACTS 32
 #define HOME_BAYS 6
@@ -374,8 +379,8 @@ typedef struct {
         float taskTotal[MAX_ACTORS];
         unsigned char treatmentDose[MAX_ACTORS];
         signed char treatmentPhase[MAX_ACTORS]; /* 0 bleeding, 1..6 limbs, -1 other */
-        int stock[TOWNS][ITEMS - V23_ITEMS];
-        unsigned char venue[TOWNS][ITEMS];
+        int stock[TOWNS][V29_ITEMS - V23_ITEMS];
+        unsigned char venue[TOWNS][V29_ITEMS];
         unsigned char knownSites[LANDMARKS], tollKnown, knownLodges[LODGES];
     } frontier; /* v24 extension */
     Homes homes; /* v26 extension */
@@ -396,6 +401,12 @@ typedef struct {
         unsigned short depotClerk[TOWNS];
         unsigned char dispatchPending[CONTRACTS];
     } plans;
+    /* v30 appends stock without moving any v29 save fields or item IDs. */
+    struct {
+        int version;
+        int stock[TOWNS][ARMOR_EXTRA_ITEMS];
+        unsigned char venue[TOWNS][ARMOR_EXTRA_ITEMS];
+    } armor;
 } Game;
 enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH, ROOM_STAIRS, ROOM_RESEARCH };
@@ -497,6 +508,17 @@ int lay_carried_in_bed(Actor *carrier, int place);
 void frontier_world_init(void);
 int field_validate(const Game *save);
 int *market_stock(int town, int item);
+unsigned char *market_venue(int town, int item);
+void armor_content(void);
+void armor_world_init(void);
+void armor_stock(int town);
+int armor_item_set(int item);
+int armor_set_item(int set, int piece);
+int armor_uniform_set(int faction, int rank);
+void armor_equip(Actor *actor, int set);
+void armor_wanderer(Actor *actor, unsigned seed, int tier);
+int armor_coverage(int item);
+int armor_set_faction(int set);
 int home_occupant(int building);
 int rest_at(Actor *a, int bed, float x, float y, int room, int price);
 int actor_in_bed(const Actor *a);

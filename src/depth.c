@@ -284,7 +284,7 @@ int depth_coverage(int item, int limb) {
     if (slot == 2)
         return limb == HEAD ? 85 : 0;
     if (slot == 1)
-        return limb == CHEST ? 95 : limb == LARM || limb == RARM ? 65 : 0;
+        return limb == CHEST ? 95 : limb == LARM || limb == RARM ? armor_coverage(item) : 0;
     if (slot == 4)
         return limb >= LLEG ? 90 : 0;
     if (slot == 3)

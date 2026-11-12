@@ -668,7 +668,7 @@ void add_node(float x, float y, int type, int owner, int item, int qty) {
 }
 static void offer_stock(int town, int item, int qty, int venue) {
     *market_stock(town, item) = qty;
-    g.frontier.venue[town][item] = venue;
+    *market_venue(town,item) = venue;
 }
 void restock_town(int t) {
     const TownDesign *plan = town_design(t);
@@ -723,6 +723,7 @@ void restock_town(int t) {
         for (int n = 0; n < 5; n++)
             offer_stock(t, gear_id(32 + (t * 5 + n * 7 + g.day) % 36, 3 + n % 2,
                                    n == 0 && roll % 5 == 0 ? 3 : 2), 1, TRADE_ARMORER);
+    if(g.armor.version)armor_stock(t);
     if (tier == 2 || t == 7 || t == 12) {
         offer_stock(t, PARTS, 2, TRADE_APOTHECARY);
         offer_stock(t, LIMB_ITEMS + (roll % 8), 1, TRADE_APOTHECARY);
@@ -855,6 +856,7 @@ void game_new(uint32_t seed, int scenario) {
     field_init();
     frontier_world_init();
     placement_init();
+    armor_world_init();
     find_context();
 }
 
@@ -1589,7 +1591,7 @@ int sell_item(int town, int s) {
         return 0;
     inventory_remove_slot(a, s, 1);
     g.money += price;
-    if (!*market_stock(town, it)) g.frontier.venue[town][it] = ui.tradeSmith;
+    if (!*market_stock(town, it)) *market_venue(town,it) = ui.tradeSmith;
     (*market_stock(town, it))++;
     trade_goodwill(g.townOwner[town], price);
     log_msg("Sold %s for %d silver.", itemDefs[it].name, price);
@@ -2662,7 +2664,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 29, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
+enum { SAVE_VERSION = 30, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -2782,13 +2784,16 @@ static int validate_game(const Game *t) {
         for (int j = 0; j < TOWN_STOCK_ITEMS; j++)
             if (t->stock[i][j] < 0)
                 return 0;
-        for (int j = 0; j < ITEMS - V23_ITEMS; j++)
+        for (int j = 0; j < V29_ITEMS - V23_ITEMS; j++)
             if (t->frontier.stock[i][j] < 0)
                 return 0;
-        for (int j = 0; j < ITEMS; j++)
+        for (int j = 0; j < V29_ITEMS; j++)
             if (t->frontier.venue[i][j] > TRADE_APOTHECARY)
                 return 0;
     }
+    if (t->armor.version<0 || t->armor.version>1) return 0;
+    for(int town=0;town<TOWNS;town++)for(int it=0;it<ARMOR_EXTRA_ITEMS;it++)
+        if(t->armor.stock[town][it]<0 || t->armor.venue[town][it]>TRADE_APOTHECARY)return 0;
     for (int i = 0; i < CONTRACTS; i++) {
         const Contract *c = &t->contracts[i];
         if (c->active && (c->town < 0 || c->town >= TOWNS || c->target < 0 || c->target >= TOWNS ||
@@ -2988,7 +2993,7 @@ static int save_shape(uint32_t version,uint32_t size) {
         }
         return size == ends[version - 17] - expansion;
     }
-    return (version == 28 && size == offsetof(Game, plans) - (sizeof(g.frontier) - V28_FRONTIER_BYTES)) || (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version == 28 && size == offsetof(Game, plans) - (sizeof(g.frontier) - V28_FRONTIER_BYTES)) || (version==29 && size==offsetof(Game,armor)) || (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -3012,7 +3017,7 @@ static void read_save_array(SaveReader *reader, void *array, size_t oldBytes, si
 }
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if (version == SAVE_VERSION) memcpy(out, data, size);
+    if (version == SAVE_VERSION || version == 29) memcpy(out, data, size);
     else {
         SaveReader reader = {data, (unsigned char *)out, size};
 #define WIDEN(field, count) read_save_array(&reader, out->field, (count) * sizeof(out->field[0]), sizeof(out->field))
@@ -3177,6 +3182,7 @@ int load_game(const char *path) {
         field_init();
     frontier_world_init();
     placement_init();
+    armor_world_init();
         if (h.version < 27) {
             if (g.weather) g.weatherTimer = fminf(g.weatherTimer, 100);
             for (int t = 0; t < TOWNS; t++) {

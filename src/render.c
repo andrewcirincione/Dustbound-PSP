@@ -2,6 +2,9 @@
 #include "menu_art.h"
 #include "combat_pose.h"
 #include "art_data.h"
+#include "actor_attachments.h"
+#include "armor_sets_data.h"
+#include "armor_art_data.h"
 #include "settlement_art_ids.h"
 #include "settlement_art.h"
 #include "structure_art.h"
@@ -15,6 +18,20 @@ _Static_assert(ART_COUNT == SETTLEMENT_ART_FIRST, "Settlement sprite IDs must fo
 #include <stdlib.h>
 #include <string.h>
 
+static const ArtSprite *actor_sprite(int id) {
+    if(id>=ARMOR_ART_FIRST && id<ARMOR_ART_FIRST+ARMOR_SETS*6){
+        const ArtSprite *s=&armorSprites[id-ARMOR_ART_FIRST];
+        if(s->w)return s;
+        int set=(id-ARMOR_ART_FIRST)/6,part=(id-ARMOR_ART_FIRST)%6;
+        const ArmorSetDef *z=&armorSets[set];
+        int fallback=part==0?z->family[0]:part==1?z->family[1]:part==2?64+z->family[2]-68:part==3?80+z->family[3]-60:part==4?72:73;
+        return &artSprites[fallback];
+    }
+    return &artSprites[id];
+}
+static int armor_actor_art(int item,int part,int fallback){
+    int set=armor_item_set(item);return set<0?fallback:ARMOR_ART_FIRST+set*6+part;
+}
 /* Shared, allocation-free software rasterizer. PSP stages in cached main RAM.
    No external asset files are required at runtime. */
 static uint32_t *fb;

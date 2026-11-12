@@ -1,0 +1,203 @@
+{
+  "mode": "built-in image generation",
+  "layout": "Original five: two columns/two rows. New 25: two columns/three rows. All actual alpha transparency.",
+  "parts": [
+    "torso",
+    "headwear",
+    "one narrow leg",
+    "boot",
+    "upper-arm armor/sleeve",
+    "forearm armor/sleeve"
+  ],
+  "source_count": 30,
+  "new_heavy_count": 15,
+  "prompt_constraints": [
+    "weathered painted Japanese and industrial desert frontier",
+    "six isolated hollow clothing parts, no character/mannequin",
+    "compact shoulders, narrow human leg, fitted elbow and wrist",
+    "transparent background, no grid/text/shadow",
+    "two-column three-row atlas for articulated rig"
+  ],
+  "set_prompts": [
+    {
+      "name": "Cinder Scout",
+      "slug": "cinder-scout",
+      "class": "light",
+      "brief": "Light weathered sage canvas short sleeveless vest with tan leather bindings, narrow crossed straps and a short dusty scarf; compact soft scout cap; patched sage trouser leg; ankle boot."
+    },
+    {
+      "name": "Salt Runner",
+      "slug": "salt-runner",
+      "class": "light",
+      "brief": "Bleached ivory wrapped sleeveless tunic with a narrow coral sash and layered dust veil; small wrapped headcloth; narrow cloth-wrapped trouser leg; worn wrapped desert boot. Light and sun-faded, long-distance courier kit."
+    },
+    {
+      "name": "Caravan Leather",
+      "slug": "caravan-leather",
+      "class": "light",
+      "brief": "Oxblood leather sleeveless rider vest, many small brass buckles, reinforced abdomen and green neckerchief; modest wide-brim traveler hat; one dark leather chapped trouser leg; short riding boot."
+    },
+    {
+      "name": "Quarry Jack",
+      "slug": "quarry-jack",
+      "class": "medium",
+      "brief": "Soot yellow padded sleeveless work jack reinforced with small riveted iron plates and narrow leather shoulder caps; compact battered iron sallet; one charcoal trouser leg with a rectangular knee plate; sturdy iron-toed boot. Practical industrial medium armor."
+    },
+    {
+      "name": "Road Warden",
+      "slug": "road-warden",
+      "class": "medium",
+      "brief": "Dusty navy sleeveless armored waistcoat with rows of brass studs, short split coat tails, small restrained shoulder plates and tan collar; low rounded steel patrol helm; one armored leather chapped leg; plated riding boot."
+    },
+    {
+      "name": "Brass Sentinel",
+      "slug": "brass-sentinel",
+      "class": "heavy",
+      "brief": "Heavy aged brass segmented cuirass with dark teal cloth backing, compact ribbed collar, restrained rounded shoulder caps and short tassets; closed brass sentinel helm with narrow eye slit; one articulated plated leg; heavy brass sabaton. Solid human proportions, no huge shoulders. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Foundry Bulwark",
+      "slug": "foundry-bulwark",
+      "class": "heavy",
+      "brief": "Heavy blackened iron salvage breastplate, asymmetric overlapping steel bands, red oxide straps, small industrial shoulder caps; squat riveted bucket helm with mesh eye slit; one steel-plated trouser leg; reinforced iron boot. Dense foundry defender kit. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Storm Ranger",
+      "slug": "storm-ranger",
+      "class": "light",
+      "brief": "Muted petrol-blue waxed sleeveless short ranger coat with buff leather placket, high storm collar and neatly rolled shoulder edges; close waterproof hood without neck drape; one dark blue waxed trouser leg; mud-brown weather boot. Matching separate upper sleeve or leather upper-arm guard and forearm wrap, retaining light human proportions."
+    },
+    {
+      "name": "Copper Duelist",
+      "slug": "copper-duelist",
+      "class": "medium",
+      "brief": "Compact copper scale sleeveless fencing vest over burgundy cloth, laced waist, high clean arm openings, narrow shoulder protection; low copper jingasa without huge brim; one slim burgundy trouser leg with copper thigh strips; split-toe leather boot. Matching separate upper sleeve or leather upper-arm guard and forearm wrap, retaining light human proportions."
+    },
+    {
+      "name": "Charter Marshal",
+      "slug": "charter-marshal",
+      "class": "heavy",
+      "brief": "Chestnut sleeveless marshal coat with a fitted silver-gray breastplate, indigo lapels, tiny star-shaped rivets and short split tails; low-crown broad-brim lawman's hat without insignia text; one dark armored chapped leg; polished but scuffed spurred boot. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Reed Shadow",
+      "slug": "reed-shadow",
+      "class": "light",
+      "brief": "Dark moss sleeveless fitted reed-fiber vest, fine woven panels, black leather tie closures and low collar, no dangling cape; small close-fitting moss hood; one narrow woven reed trouser leg with cloth knee wrap; quiet soft moccasin boot. Matching separate upper sleeve or leather upper-arm guard and forearm wrap, retaining light human proportions."
+    },
+    {
+      "name": "Fen Tracker",
+      "slug": "fen-tracker",
+      "class": "light",
+      "brief": "Brown-green sleeveless bark-leather scouting vest with layered reed shoulder tabs, narrow rope waist and small pale shell fasteners; compact conical woven reed cap; one wrapped olive trouser leg; marsh leather boot with laced front. Matching separate upper sleeve or leather upper-arm guard and forearm wrap, retaining light human proportions."
+    },
+    {
+      "name": "Ash Novice",
+      "slug": "ash-novice",
+      "class": "light",
+      "brief": "Plain smoke-gray sleeveless novice vestment, short split skirt, ochre rope belt, gently layered fabric and tiny worn beads; simple close ash-gray cowl without shoulders; one loose gray trouser leg with a cloth ankle wrap; simple low wrapped sandal shoe. Matching separate upper sleeve or leather upper-arm guard and forearm wrap, retaining light human proportions."
+    },
+    {
+      "name": "Ember Guard",
+      "slug": "ember-guard",
+      "class": "heavy",
+      "brief": "Burnt-orange sleeveless scale vest over charcoal temple cloth with bronze edging, short overlapping waist guards and small fitted shoulder plates; bronze low conical temple helm; one charcoal trouser leg with bronze scales; ash-brown plated gaiter boot. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Censor Carapace",
+      "slug": "censor-carapace",
+      "class": "heavy",
+      "brief": "Ivory ceramic-faced sleeveless plate armor bound in blackened bronze, fitted collar, small curved shoulder caps, soot-red woven belt; compact closed ceramic censor mask-helm with a narrow visor; one dark padded leg with white segmented plates; enclosed dark bronze boot with pale toe plate. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Pale Wanderer",
+      "slug": "pale-wanderer",
+      "class": "light",
+      "brief": "Cream and faded slate sleeveless insulated short coat with narrow wool-lined collar, brown hide reinforcements, horn toggles and short hem; close wool winter hood without a cape; one slate wool trouser leg with fur ankle trim; weathered insulated leather boot. No oversized fur shoulders. Matching separate upper sleeve or leather upper-arm guard and forearm wrap, retaining light human proportions."
+    },
+    {
+      "name": "Bone Scavenger",
+      "slug": "bone-scavenger",
+      "class": "light",
+      "brief": "Primitive ragged brown sleeveless leather harness with a few small pale animal bone strips lashed flat across ribs, narrow rope belt, bare open shoulder sockets; small skull-fragment leather cap, not an entire animal head; one patched bandit trouser leg tied with cord; worn scrap leather ankle boot. Matching separate upper sleeve or leather upper-arm guard and forearm wrap, retaining light human proportions."
+    },
+    {
+      "name": "Red Reaver",
+      "slug": "red-reaver",
+      "class": "heavy",
+      "brief": "Dark red sleeveless raider brigandine with irregular flat steel patches, black leather straps, short frayed hem and small shoulder plates; battered half-mask iron raider helm with restrained bone studs; one rust-red armored chapped leg; scarred iron-capped boot. Brutal but believable salvaged armor. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Mesa Corsair",
+      "slug": "mesa-corsair",
+      "class": "heavy",
+      "brief": "Muted violet sleeveless outlaw leather coat with fitted overlapping steel breast strips, tan sash, asymmetric buckles and compact collar; close black leather hood with small protective brow plate; one dark violet reinforced trouser leg; buckled black riding boot. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Iron Labourer",
+      "slug": "iron-labourer",
+      "class": "medium",
+      "brief": "Dusty ochre sleeveless work jerkin with a short leather apron front, a single old iron chest patch and dark practical belt; small thick leather work cap with resting goggles; one tan canvas work trouser leg with sewn knee patch; chunky worn work boot. Matching separate upper sleeve or leather upper-arm guard and forearm wrap, retaining light human proportions."
+    },
+    {
+      "name": "Reed Ashigaru",
+      "slug": "reed-ashigaru",
+      "class": "heavy",
+      "brief": "Rust-red heavy sleeveless ashigaru chest armor with horizontal lacquered reed slats, dark indigo ties and small waist lames, open shoulder sockets; small weathered dark iron jingasa; one indigo hakama trouser leg with narrow red knee binding; low split-toe tabi boot. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Lacquer Ronin",
+      "slug": "lacquer-ronin",
+      "class": "heavy",
+      "brief": "Deep green lacquered sleeveless ronin scale vest, dark silk collar, restrained brass fastening, small overlapping hip plates, no wide shoulder wings; modest woven green-brown kasa; one charcoal hakama trouser leg with green shin lames; brown split-toe armored boot. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Gate Lamellar",
+      "slug": "gate-lamellar",
+      "class": "heavy",
+      "brief": "Heavy dark indigo and iron sleeveless lamellar do with ivory lacing, compact fitted shoulder scales and short layered waist guards; low kabuto helmet with a very small crest and no horns; one dark armored leg with vertical iron shin guards; iron-toed tabi boot. No oversized pauldrons. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Steel Retainer",
+      "slug": "steel-retainer",
+      "class": "heavy",
+      "brief": "Gunmetal sleeveless retainer cuirass with diagonal leather fastening, muted plum cloth lining and restrained silver-edged shoulder caps, close waist; squat crested steel helmet with a short ridge; one plum trouser leg beneath segmented steel guards; articulated steel boot. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Dusk Shinobi",
+      "slug": "dusk-shinobi",
+      "class": "light",
+      "brief": "Charcoal and muted midnight-blue sleeveless stealth vest with narrow overlapping matte leather lamellae, compact cloth collar, wrapped waist and no loose tails; small close-fitting face-wrap hood with exposed eye opening, no face inside; one dark wrapped trouser leg; soft split-toe stealth boot. Subtle steel gray trim. Matching separate upper sleeve or leather upper-arm guard and forearm wrap, retaining light human proportions."
+    },
+    {
+      "name": "Winter Sohei",
+      "slug": "winter-sohei",
+      "class": "heavy",
+      "brief": "Pale blue-gray sleeveless warrior-monk vestment with fitted bronze scale chest panels, small wool-bound shoulder caps, brown rope waist and short layered hem; snug pale hood with small bronze forehead guard; one gray insulated trouser leg with bronze knee strips; brown fur-lined gaiter boot. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Sunken Crown",
+      "slug": "sunken-crown",
+      "class": "heavy",
+      "brief": "Legendary exile's sleeveless black royal lamellar cuirass, weathered narrow old-gold edges, dark wine silk backing, small human-scale shoulder caps and elegant short tassets; compact battered royal kabuto with a broken crescent crest; one burgundy leg protected by black-and-gold segmented plates; black steel sabaton with a gold edge. Subdued lost royalty, no glow or magical effects. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Cinder Reliquary",
+      "slug": "cinder-reliquary",
+      "class": "heavy",
+      "brief": "Legendary sleeveless abbess armor: pale bone-ceramic overlapping chest panels over deep ember-orange cloth, fine tarnished brass reliquary fittings, fitted high collar, narrow shoulder caps, short layered waist cloth; compact ivory ceremonial hood-helm with fine brass brow; one soot-orange leg with ceramic knee scales; dark bronze bound boot. Sacred austere ash-wastes craftsmanship, no glow. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    },
+    {
+      "name": "Wraith of Salt",
+      "slug": "wraith-of-salt",
+      "class": "medium",
+      "brief": "Legendary hunter's sleeveless silver-gray dustcoat with thin black ceramic scale inserts, frayed narrow split tails, high wrapped collar and tiny red cord details; close white-gray scout hood with a slim smoked-glass eye slit; one pale layered stealth trouser leg with black knee insert; soft gray leather tracker boot. Lightweight and carefully fitted, no broad cape, no glow. Matching separate upper sleeve or leather upper-arm guard and forearm wrap, retaining light human proportions."
+    },
+    {
+      "name": "Last Bastion",
+      "slug": "last-bastion",
+      "class": "heavy",
+      "brief": "Legendary gatewarden's sleeveless dense basalt-gray plate cuirass, bronze-stapled cracks, restrained deep teal bindings, small reinforced shoulder caps and short heavy waist plates; compact closed dark steel fortress helm with a thick brow and narrow slit; one massive but anatomically plausible articulated plate leg; broad dark iron sabaton. Extremely heavy practical human armor, no gigantic shoulders, no glow. Heavy armor construction: close-fitted torso with chain or thick padded backing, articulated metal or reinforced lamellar thigh and shin guards, narrow human-scale elbow and shoulder protection, matching upper-arm armor and forearm vambrace. Clearly substantial heavy protection with practical weight."
+    }
+  ]
+}

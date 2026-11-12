@@ -169,6 +169,7 @@ static void make_actor(int k,int i){
     a->homeX=a->tx=a->x;a->homeY=a->ty=a->y;a->blood=a->hunger=100;a->speechCooldown=20+seed%40;
     int poor = a->kind == RAIDER && e->modifier == 1;
     living_gear(a,i%8,poor ? 0 : tier,(int)(seed%10000));
+    if(e->type!=POP_REFUGEES && e->type!=POP_WOUNDED && !poor)armor_wanderer(a,seed,tier);
     if (i == vendor_member(e)) {
         inventory_add(a, RATION, 3 + tier);
         inventory_add(a, portion_item(MEDKIT, seed % 23 == 0 ? 100 : 40 + seed % 48), 1);
@@ -178,7 +179,7 @@ static void make_actor(int k,int i){
     }
     if(e->type==POP_REFUGEES||e->type==POP_WOUNDED){a->gear[0]=STAFF;a->gear[1]=RAGS;a->gear[2]=0;}
     if((e->type==POP_ARMY||e->type==POP_PATROL)&&war_faction_index(e->faction)>=0){
-        war_outfit(a,ROLE_MARSHAL,i,tier>=2?2:1);
+        war_outfit(a,ROLE_MARSHAL,i,i==0?3:i%4==0?2:1);
     }else if(e->type==POP_ARMY||e->type==POP_PATROL){
         int m=tier>=2?3:1,q=tier>=2?2:1;
         a->gear[0]=gear_id(i%4==3?29:e->faction==SHOGUN?5:16,m,q);

@@ -61,7 +61,7 @@ def pack(im, name, size):
 
 
 sets = json.loads((ART/'sets.json').read_text())
-found = [s for s in sets if (ART/(s['slug']+'.png')).is_file()]
+found = [s for s in sets if s['slug'] in LANDMARKS and (ART/(s['slug']+'.png')).is_file()]
 lines = ['/* Recovered artwork. Native preview fixture only. */\n']
 records = []
 for i, s in enumerate(found):

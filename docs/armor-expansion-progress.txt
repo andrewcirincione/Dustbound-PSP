@@ -1,0 +1,45 @@
+Dust 1.0.2 armor expansion — review candidate
+
+Thirty distinct sets: five recovered and twenty-five newly generated. Fifteen
+of the new twenty-five are heavy armor. All new outfits have separate upper
+arm and forearm art. Pieces use actual catalog items and ordinary equip/loot
+logic, with weight, protection, movement, stealth and weather tradeoffs.
+
+Rendering changes
+- Near shoulder draws in front of the torso without a torso repaint over it.
+- Far arm draws before trousers, preserving rear-limb occlusion.
+- Narrower thighs/shins and a textured hip band keep both legs connected.
+- Individual head fitting corrects hood and cap placement.
+- Standing, combat, prone and crawling paths share the new artwork.
+
+Army uniforms (soldier / veteran / officer)
+Compact: Road Warden / Brass Sentinel / Charter Marshal.
+Shogunate: Reed Ashigaru / Gate Lamellar / Steel Retainer.
+Ash order: Ember Guard / Censor Carapace / Winter Sohei.
+
+Both army directors and town guard outfitting use the same rank mapping.
+Independent wanderers use faction/strength-appropriate pools; four legendary
+sets retain their named owners and existing unique body-item IDs. Service
+staff retain their work clothes. New smith stock rotates existing clothing
+slots to preserve settlement stock budgets.
+
+Save compatibility
+All existing item IDs and v29 fields retain their offsets. New items and
+merchant stock are appended in save v30. Existing runs upgrade NPC clothing
+once, preserving party gear and dead, unconscious or stripped characters.
+
+Reproduction
+python3 scripts/pack_armor_sets.py
+make -f scripts/native_v1000.mk -j4
+python3 scripts/validate_v1000.py
+make -j4  # PSPDEV must point to a PSPDEV installation
+python3 scripts/emulator_v102.py /path/to/extracted/PPSSPP/AppDir
+
+Native outfit review: tests/review_armor_sets.c includes render.c; link native
+core objects excluding render.o and native_main.o. Captures include actual
+inventory/world screens, mirrored passive/fight poses, two-handed contact,
+prone/crawling poses and the three faction rank ladders.
+
+Validation at checkpoint: complete source artwork and PSP compilation;
+new shoulder/occlusion/connected-hip/uniform/save tests pass. Broader native
+regressions and exact-executable PPSSPP qualification are in progress.

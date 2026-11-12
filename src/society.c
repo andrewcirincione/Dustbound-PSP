@@ -197,6 +197,8 @@ int watch_town(const Actor *guard) {
 }
 int disguise_faction(const Actor*a){
  int n=actor_no(a),bodyItem=a->gear[1];if(!bodyItem&&n>=0)bodyItem=g.depth.actors[n].layer;
+ int bs=armor_item_set(bodyItem),hs=armor_item_set(a->gear[2]);
+ if(bs>=0||hs>=0)return bs>=0&&hs>=0&&armor_set_faction(bs)==armor_set_faction(hs)?armor_set_faction(bs):FREE;
  int body=gear_family(bodyItem),head=gear_family(a->gear[2]);
  if(body==39&&head==57)return MONKS;
  if((body==34||body==47)&&(head==50||head==58||head==59))return SHOGUN;

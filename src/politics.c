@@ -84,7 +84,7 @@ static int dispatch_heir(int t,int faction){
  init_actor(n,name,GUARD,faction,x,y,28);
  Actor *a=&g.actors[n];
  a->homeTown=t;
- if(war_faction_index(faction)>=0)war_outfit(a,ROLE_MARSHAL,n%4,1);
+ if(war_faction_index(faction)>=0)war_outfit(a,ROLE_MARSHAL,n%4,3);
  g.living.owned[n]=0;
  g.living.anger[n]=0;
  g.living.command[n]=-1;
