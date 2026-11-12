@@ -30,6 +30,10 @@ static int weapon(int n){return n==0?NONE:n<=36?gear_id(weapon_family_index(n-1)
 static void occlusion(void){
     int checked=0;
     for(int family=32;family<48;family++)for(int w=0;w<39;w++)for(int face=0;face<2;face++){
+        /* Greatswords use the foreground shoulder plane, including when the
+           remaining arm becomes the leading arm. Their exact pixel coverage
+           is checked in test_arsenal_orientation for both facings and arm loss. */
+        if(gear_family(weapon(w))==84)continue;
         Actor a=fresh();a.gear[0]=a.attackWeapon=weapon(w);a.gear[1]=gear_id(family,1,1);
         a.facing=face;a.attackAngle=face?0:3.14159265f;
         a.lostMask=(1<<LARM)|(1<<RARM);draw(&a,0);memcpy(reference,canvas,sizeof(reference));

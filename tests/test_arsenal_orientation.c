@@ -59,15 +59,16 @@ int main(void){
   clipRight=480;clipBottom=272;
  }
  int visibleOverBody=0,leadingOcclusions=0;
- for(int n=100;n<120;n++)for(int facing=0;facing<2;facing++)for(int passive=0;passive<2;passive++){
+ for(int n=100;n<120;n++)for(int facing=0;facing<2;facing++)for(int passive=0;passive<2;passive++)for(int lostCase=0;lostCase<3;lostCase++){
   Actor a=g.actors[0];a.gear[0]=a.attackWeapon=WEAPON_ITEMS+n;a.gear[1]=armor_set_item(9,0);a.gear[2]=a.gear[5]=NONE;a.race=a.body=a.hair=a.beard=a.scar=0;
   a.facing=facing;a.active=a.squad=1;a.autoattack=!passive;a.attackPhase=a.hitFlash=a.movedTimer=a.unconscious=a.dead=a.taskKind=a.sneaking=0;a.lostMask=a.prostheticMask=0;a.target=a.carrying=a.carriedBy=-1;
+  if(lostCase)a.lostMask=1<<(LARM+(lostCase==1?(facing?0:1):(facing?1:0)));
   memset(canvas,0,sizeof(canvas));memset(&probe,0,sizeof(probe));capturedLayer=0;captureLayer=1;
   actor_painted_stance(&a,240,220,3,1,0,0,0);captureLayer=0;assert(capturedLayer==1);memcpy(finalFigure,canvas,sizeof(finalFigure));typeof(probe) pose=probe;
   int headPixels=0;for(int yy=125;yy<139;yy++)for(int xx=230;xx<250;xx++)headPixels+=(beforeWeapon[yy*512+xx]>>24)>240;
   assert(headPixels>20); /* Sword must be drawn after the head/body, not behind them. */
   memset(canvas,0,sizeof(canvas));weapon_sprite(pose.item,pose.x,pose.y,pose.sc,pose.angle,pose.face,1);memcpy(weaponOnly,canvas,sizeof(weaponOnly));
-  int near=facing?0:1;memset(canvas,0,sizeof(canvas));painted_arm(&a,near,pose.shoulder[near],pose.wrist[near],3,facing?1:-1,0,actor_skin(&a),itemDefs[a.gear[1]].color,1,0,0,ARM_BOTH);
+  int near=facing?0:1;if(limb_missing(&a,LARM+near))near=1-near;memset(canvas,0,sizeof(canvas));painted_arm(&a,near,pose.shoulder[near],pose.wrist[near],3,facing?1:-1,0,actor_skin(&a),itemDefs[a.gear[1]].color,1,0,0,ARM_BOTH);
   for(int yy=0;yy<272;yy++)for(int xx=0;xx<480;xx++){
    int j=yy*512+xx;if((weaponOnly[j]>>24)!=255||(beforeWeapon[j]>>24)<240)continue;
    if(hypotf(xx-pose.wrist[0][0],yy-pose.wrist[0][1])<10||hypotf(xx-pose.wrist[1][0],yy-pose.wrist[1][1])<10)continue;

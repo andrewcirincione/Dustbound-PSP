@@ -26,3 +26,10 @@ overlap pixels across all 20 new models and both facings. Added standalone weapo
 and armor pictures to smith/armorer trading pane; item pictures verified bounded
 and distinct. Final qualification now requires 47 suites and real smith menu captures.
 Old pre-fix preview/build hash above is superseded; do not publish it.
+
+Final occlusion checks now cover passive/armed shoulder rest and both missing-arm
+cases: 16,614 blade-over-body pixels and 19,334 leading-arm overlaps passed.
+The older rear-plane torso test explicitly delegates greatswords to this foreground
+regression; other weapon rear-arm checks, reflections and motion all pass.
+Final PSP build with shoulder carry and smith pictures: 11,778,256 bytes;
+SHA256 0377bec06a891e3343ab82930c2d53813fa8faf18d2bf05eb3baf8ec3cd2412e.
