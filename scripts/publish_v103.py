@@ -35,7 +35,7 @@ def find_release():
 release=find_release()
 if release is None:
     gh('release','create',TAG,*['dist/'+n for n in NAMES],
-       '--repo',REPO,'--target',SHA,'--title','Dust 1.0.3 — Armor across the frontier',
+       '--repo',REPO,'--target',SHA,'--title','Dust 1.0.3 — 100 new weapons',
        '--notes-file','docs/RELEASE_NOTES.md','--draft','--verify-tag')
     release=find_release()
 assert release is not None,'Release creation did not return a visible draft'
