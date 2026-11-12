@@ -8,7 +8,7 @@ very few plain wood/wrapped handles. Check actual held orientation and grips.
 
 Current work: 100 definitions and individual prompts in assets/art/arsenal-expansion/
 weapons.json. Four utilitarian first-pass designs retained; 96 revised following the
-user's feedback about repetitive rusty wood/cloth designs. Generation ongoing.
+user's feedback about repetitive rusty wood/cloth designs. All 100 drawings generated and packed.
 The JSON generation order lists every pending design; pack_arsenal.py derives progress
 from actual files. Full ImageGen originals remain under generated_images and the art
 working directory; game-ready PNGs, calibrated pivots and indexed sprites are committed.
@@ -17,8 +17,20 @@ Source branch: arsenal-1.0.3. Base public main eb35b768b4a2e293085db2ff7a3612d03
 PSPDEV: /workspace/scratch/c30f2d0204c9/psp-toolchain/pspdev
 PPSSPP: /workspace/scratch/c30f2d0204c9/emulator/AppDir
 
-Implemented, pending tests: appended save v31 IDs and stock; new catalog/stats;
+Implemented: appended save v31 IDs and stock; new catalog/stats;
 level-based NPC selection and preserved named-owner IDs; daily regional 15/25/35/45
 smith budgets; color-preserving painted weapon renderer and authored grip anchors.
 Do not publish until all 100 assets, orientation audits, stock/save tests, regression
 suites, PSP build and PPSSPP checks pass. Latest released game remains v1.0.2.
+
+2026-11-12 final validation checkpoint: all 100 packed drawings; 200 held/attack
+review frames. New catalog, 3,200 grip orientations and 7,200 equipped poses passed.
+PSP build and quick PPSSPP boot/combat passed. Two old test assumptions being
+updated for appended weapon IDs and the explicitly revised shop inventory size.
+Full release qualification remains mandatory before publishing.
+
+Final local checks passed: all 45 suites; PSP PBP 11,719,088 bytes, SHA256
+6439e6fd6c963ee7ec1f42269f9dc5d798354e11122c454a9f4a68005ade5623.
+Quick PPSSPP 1.20.4 boot, inventory, real combat and walking passed.
+All 200 held/attack review frames examined, covering all 100 weapons and both
+facings. Full 100-loadout / 8-combat-class PPSSPP release run remains pending.

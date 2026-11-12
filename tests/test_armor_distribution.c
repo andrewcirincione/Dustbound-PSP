@@ -31,7 +31,7 @@ int main(void){
  int rareStock=0,regionalStock=0;
  for(int day=1;day<=52;day++)for(int town=0;town<TOWNS;town++){
   g.day=day;armor_stock(town);int legends=0;
-  for(int it=ARMOR_SET_ITEMS;it<ITEMS;it++)if(*market_stock(town,it)>0){
+  for(int it=ARMOR_SET_ITEMS;it<WEAPON_ITEMS;it++)if(*market_stock(town,it)>0){
    int set=armor_item_set(it),f=armor_set_faction(set);
    if(set>=26){legends++;rareStock++;assert(town_design(town)->importance==TOWN_CAPITAL);assert((it-ARMOR_SET_ITEMS)%4!=0);}
    else{regionalStock++;assert(f==g.townOwner[town]||f==FREE||f==SCAVENGERS);}

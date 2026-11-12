@@ -39,6 +39,7 @@ static inline void grip_hand(WeaponGrip g0, int secondary, float *x, float *y) {
 }
 /* Support hands follow the painted fore-end/string, never the torso transform. */
 static inline float weapon_support_distance(int weapon) {
+    if(arsenal_index(weapon)>=0)return arsenal_support_along(weapon);
     int f = gear_family(weapon);
     if (f == 29 || f == 31)
         return 7.f;

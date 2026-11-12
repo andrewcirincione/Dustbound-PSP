@@ -44,5 +44,5 @@ src/audio.o: src/vendor/minimp3.h
 
 src/world.o: src/frontier_towns.h src/structure_models.h src/settlement_art_ids.h
 
-src/arsenal.o: src/arsenal_data.h
+src/arsenal.o: src/arsenal_data.h src/arsenal_grips_data.h
 src/render.o: src/arsenal_art_data.h

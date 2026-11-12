@@ -1,3 +1,7 @@
+# 1.0.3 — A hundred weapons
+
+100 independently generated weapon models across 38 types; strength-based equipment and stats; regional 15–45 option smithies refreshing at midnight; calibrated primary/support grips and correct edge/aim parity; appended save v31 migration.
+
 # 1.0.2 — Armor across the frontier
 
 Thirty fitted armor sets (fifteen heavy), faction/rank/unit distribution, mixed raider salvage, named legendary elites, persistent remote caches, rare capital stock and rarity-based prices. Existing saves upgrade automatically.

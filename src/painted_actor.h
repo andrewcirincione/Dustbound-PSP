@@ -306,6 +306,9 @@ static WeaponScanSpan weapon_scan_span(float low, float high, float x, int sc,
     return (WeaponScanSpan){a < b ? a : b, a < b ? b : a, -yComponent * inverse};
 }
 static void weapon_sprite(int item, float x, float y, int sc, float angle, int face, float li) {
+#ifdef DUST_WEAPON_OBSERVER
+    DUST_WEAPON_OBSERVER(item,x,y,sc,angle,face);
+#endif
     if (!item)return;
     WeaponDesign design=weapon_design(item);float ca=cosf(angle),sa=sinf(angle),anchor=weapon_design_anchor(item);
     if(weapon_rapier(item)&&arsenal_index(item)<0){
@@ -1001,7 +1004,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         int side=i==nearArm?0:1;
         shoulders[i][0]=bodySockets[side][0];shoulders[i][1]=bodySockets[side][1];
     }
-    float support=weapon_support_distance(weapon);
+    float support=weapon_support_distance(weapon),supportAcross=arsenal_support_across(weapon)*face;
     if(weapon_style(weapon)==WS_BOW){
         /* Raise the bow along its aim from the shoulder. The old fixed-height
            grip made an upward shot fold the bow hand through the shoulder. */
@@ -1020,7 +1023,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         support=-3+(support+3)*draw;
     }
     grip=reachable_grip(grip,shoulders[primary][0],shoulders[primary][1],
-        shoulders[1-primary][0],shoulders[1-primary][1],support,
+        shoulders[1-primary][0]+grip.uy*supportAcross,shoulders[1-primary][1]-grip.ux*supportAcross,support,
         combat_two_hands(weapon)&&arms==2,actorArmReach*sc);
     int twoHands = combat_two_hands(weapon);
     int rearPunch = !weapon && a->attackPhase && variant == UNARMED_CROSS;
@@ -1049,8 +1052,8 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
             wrists[i][1] = fist.y;
         } else {
             float along = i != primary ? support : 0;
-            wrists[i][0] = grip.x + grip.ux * along;
-            wrists[i][1] = grip.y + grip.uy * along;
+            wrists[i][0] = grip.x + grip.ux * along - (i!=primary?grip.uy*supportAcross:0);
+            wrists[i][1] = grip.y + grip.uy * along + (i!=primary?grip.ux*supportAcross:0);
         }
     }
     int farReaching = !relaxed && (!weapon || twoHands || primary == farArm);

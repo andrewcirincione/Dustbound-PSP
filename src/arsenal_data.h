@@ -18,7 +18,7 @@ static const ArsenalDef arsenalDefs[ARSENAL_WEAPONS]={
 {"Hornbeak Pick",12,12,0,OUTLAWS,17,8,10,-5,288,1.550f,1.556f},
 {"Kiln Boarding Axe",13,13,1,OUTLAWS,25,8,8,3,580,1.550f,1.392f},
 {"Ossuary Kanabo",14,14,0,MONKS,24,12,4,-5,386,1.550f,1.761f},
-{"Pipejaw Tetsubo",15,15,1,MONKS,36,14,8,3,734,1.550f,1.668f},
+{"Foundry Gauge Rod",15,15,1,MONKS,36,14,8,3,734,1.550f,1.668f},
 {"Antler Quarterstaff",16,16,0,MONKS,7,4,4,-5,148,2.250f,1.351f},
 {"Ragpicker Hook",17,17,1,SCAVENGERS,23,6,8,3,552,1.550f,1.300f},
 {"Bonering Sabre",18,18,0,SHOGUN,13,6,4,-5,232,1.550f,1.453f},

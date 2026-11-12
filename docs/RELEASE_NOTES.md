@@ -1,13 +1,13 @@
-# Dust 1.0.2 — Armor across the frontier
+# Dust 1.0.3 — A hundred weapons
 
-Thirty new fitted armor sets, including fifteen heavy sets and four legendary sets, are distributed throughout the world.
+100 independently drawn weapons across all 38 weapon types, including eight legendary designs. New models use bone, ceramic, glass, metal, enamel and industrial mechanisms alongside a small minority of plain utilitarian weapons.
 
-- Raiders scavenge mixed low-grade pieces; veterans carry stronger equipment.
-- Armies wear faction and rank uniforms, with distinct ranged-crew headwear and boots.
-- Legendary sets are worn by named elites. Individual accessories also appear in remote caches and, rarely, expensive capital stock. Unique body pieces remain with their owners.
-- Regional smith stock and prices reflect faction, stats and rarity.
-- Shoulder/arm layering, narrower trousers and connected Cinder Scout legs apply across the expansion.
+- Equipment and stats follow enemy strength, weapon role and rarity.
+- Smithies hold 15–45 combined weapon and armor options by settlement importance, refreshing at midnight.
+- Stronger weapons appear in more important settlements; rare legendary stock is reserved for capitals.
+- Primary/support grips, cutting edges and aiming directions are calibrated to the actual new drawings and checked on equipped characters in both facings.
+- Existing saves, personal trophies and acquired equipment retain their identities.
 
-Extract **Dust-1.0.2-PSP.zip** to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Existing saves are upgraded automatically. DustAmbient.mp3 is embedded.
+Extract **Dust-1.0.3-PSP.zip** to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Save format 31 upgrades prior expeditions automatically. DustAmbient.mp3 remains embedded.
 
-Validation: native regression and distribution suites, PBP/embedded-asset checks, all thirty armor loadouts through PPSSPP, and 153 production-renderer reviews. The Evidence ZIP records the executable hash and results. Physical PSP hardware and audible output have not been measured.
+The Evidence ZIP includes native test results, grip/orientation checks, 200 equipped renderer reviews, and PSP emulator captures tied to the executable hash. Physical PSP hardware and audible output have not been measured.

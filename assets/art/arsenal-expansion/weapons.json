@@ -410,7 +410,7 @@
     "height": 34,
     "grip_hint": [
       0.5,
-      0.65
+      0.84
     ],
     "edge": 1,
     "subject": "Japanese studded war club with long wooden core",
@@ -421,8 +421,8 @@
   },
   {
     "index": 15,
-    "name": "Pipejaw Tetsubo",
-    "slug": "pipejaw-tetsubo",
+    "name": "Foundry Gauge Rod",
+    "slug": "foundry-gauge-rod",
     "type": 15,
     "type_name": "Tetsubo",
     "family": 15,
@@ -438,14 +438,14 @@
     "height": 34,
     "grip_hint": [
       0.5,
-      0.65
+      0.84
     ],
     "edge": 1,
     "subject": "heavy Japanese metal war club",
-    "design": "tetsubo made from a blue-painted industrial pipe wrench head stretched into a club, short side jaw profile and a solid red steel grip with oval cutouts",
-    "source": "Pipejaw Tetsubo.png",
+    "design": "stout octagonal blue enamel casting rod with a broad flat bronze cap, narrow brass lower handgrip with three oval apertures, smooth end cap",
+    "source": "Foundry Gauge Rod.png",
     "price": 734,
-    "prompt": "Use case: stylized-concept. Asset type: one original production weapon sprite for Dust, a gritty western/samurai/industrial frontier RPG. Subject: Tetsubo, named Pipejaw Tetsubo. Deliberately BOLD ORIGINAL construction: tetsubo made from a blue-painted industrial pipe wrench head stretched into a club, short side jaw profile and a solid red steel grip with oval cutouts. Recognizable as this weapon type, but dramatic silhouette and unusual physical construction are essential. Orientation is CRITICAL for game use: the BLADE TIP or striking head points straight UP, the solid HANDLE points down, the MAIN CUTTING EDGE is on IMAGE LEFT; blunt/symmetric heads may be symmetric. Entire single CONNECTED weapon isolated and fully visible, generous transparent padding; hand-painted realistic textured game art, strong readable forms, physical highlights, clear color from the specified distinct materials. Grip center near x=50%, y=65% of canvas. No plain wood haft or generic cloth-wrapped stick handle: use the specified sculpted solid handle. No people, hands, display pedestal, shadows, glow, halos, scenery, text, labels, watermark, duplicate weapons or floating disconnected components. Genuine transparent background. Keep details bold enough to read when reduced to 100 pixels tall. This is a new structural design, never a recolor of a rusty conventional sword."
+    "prompt": "Use case: stylized-concept. Create one hand-painted industrial foundry calibration rod collectible for a western-samurai fantasy game. It is a single connected blunt workshop implement: a stout octagonal deep BLUE enamel cylinder forming the upper two thirds, a wide flat bronze cap at the top, a short red collar, and a slender solid brass lower handle with three small oval grip apertures and a smooth capped bottom. Visually clear blue enamel, gold brass and red accents. Upright side elevation, broad capped end UP and narrower handgrip DOWN; handle center near x50%, y84%. Entire object visible with generous padding and genuine transparent background. Realistic textured game item art, bold readable silhouette. No people, hands, scenes, text, shadows, glow, labels, or other objects."
   },
   {
     "index": 16,
@@ -466,7 +466,7 @@
     "height": 44,
     "grip_hint": [
       0.5,
-      0.65
+      0.52
     ],
     "edge": 1,
     "subject": "long straight fighting quarterstaff",
@@ -830,14 +830,15 @@
     "height": 33,
     "grip_hint": [
       0.5,
-      0.78
+      0.65
     ],
     "edge": 1,
     "subject": "western long rifle, barrel points straight up, side elevation",
     "design": "rifle assembled from a long thin octagonal copper pipe barrel, a green enamel industrial pressure-valve receiver, rough solid white bone stock with an angular cheek cutout",
     "source": "Valvebody Rifle.png",
     "price": 818,
-    "prompt": "Use case: stylized-concept. Asset type: one original production weapon sprite for Dust, a gritty western/samurai/industrial frontier RPG. Subject: Ranger rifle, named Valvebody Rifle. Deliberately BOLD ORIGINAL construction: rifle assembled from a long thin octagonal copper pipe barrel, a green enamel industrial pressure-valve receiver, rough solid white bone stock with an angular cheek cutout. Recognizable as this weapon type, but dramatic silhouette and unusual physical construction are essential. Orientation is CRITICAL for game use: the BARREL or loaded ARROW points straight UP, the STOCK/trigger handgrip is below it, crossbow prods span LEFT-RIGHT. Entire single CONNECTED weapon isolated and fully visible, generous transparent padding; hand-painted realistic textured game art, strong readable forms, physical highlights, clear color from the specified distinct materials. Grip center near x=50%, y=78% of canvas. No plain wood haft or generic cloth-wrapped stick handle: use the specified sculpted solid handle. No people, hands, display pedestal, shadows, glow, halos, scenery, text, labels, watermark, duplicate weapons or floating disconnected components. Genuine transparent background. Keep details bold enough to read when reduced to 100 pixels tall. This is a new structural design, never a recolor of a rusty conventional sword."
+    "prompt": "Use case: stylized-concept. Asset type: one original production weapon sprite for Dust, a gritty western/samurai/industrial frontier RPG. Subject: Ranger rifle, named Valvebody Rifle. Deliberately BOLD ORIGINAL construction: rifle assembled from a long thin octagonal copper pipe barrel, a green enamel industrial pressure-valve receiver, rough solid white bone stock with an angular cheek cutout. Recognizable as this weapon type, but dramatic silhouette and unusual physical construction are essential. Orientation is CRITICAL for game use: the BARREL or loaded ARROW points straight UP, the STOCK/trigger handgrip is below it, crossbow prods span LEFT-RIGHT. Entire single CONNECTED weapon isolated and fully visible, generous transparent padding; hand-painted realistic textured game art, strong readable forms, physical highlights, clear color from the specified distinct materials. Grip center near x=50%, y=78% of canvas. No plain wood haft or generic cloth-wrapped stick handle: use the specified sculpted solid handle. No people, hands, display pedestal, shadows, glow, halos, scenery, text, labels, watermark, duplicate weapons or floating disconnected components. Genuine transparent background. Keep details bold enough to read when reduced to 100 pixels tall. This is a new structural design, never a recolor of a rusty conventional sword.",
+    "grip_packed_y": 80
   },
   {
     "index": 30,
@@ -886,7 +887,7 @@
     "height": 29,
     "grip_hint": [
       0.5,
-      0.78
+      0.65
     ],
     "edge": 1,
     "subject": "western shotgun with short heavy barrel, side elevation barrel points up",
@@ -1474,7 +1475,7 @@
     "height": 34,
     "grip_hint": [
       0.5,
-      0.65
+      0.84
     ],
     "edge": 1,
     "subject": "Japanese studded war club with long wooden core",
@@ -1502,7 +1503,7 @@
     "height": 34,
     "grip_hint": [
       0.5,
-      0.65
+      0.84
     ],
     "edge": 1,
     "subject": "heavy Japanese metal war club",
@@ -1530,7 +1531,7 @@
     "height": 44,
     "grip_hint": [
       0.5,
-      0.65
+      0.52
     ],
     "edge": 1,
     "subject": "long straight fighting quarterstaff",
@@ -1894,14 +1895,15 @@
     "height": 33,
     "grip_hint": [
       0.5,
-      0.78
+      0.65
     ],
     "edge": 1,
     "subject": "western long rifle, barrel points straight up, side elevation",
     "design": "rifle with a fat short BLACK fluted barrel and an offset triangular mechanical sight, brass round receiver drum, skeletal red steel shoulder stock and black molded pistol grip",
     "source": "Compact Ranger Rifle.png",
     "price": 2510,
-    "prompt": "Use case: stylized-concept. Asset type: one original production weapon sprite for Dust, a gritty western/samurai/industrial frontier RPG. Subject: Ranger rifle, named Compact Ranger Rifle. Deliberately BOLD ORIGINAL construction: rifle with a fat short BLACK fluted barrel and an offset triangular mechanical sight, brass round receiver drum, skeletal red steel shoulder stock and black molded pistol grip. Recognizable as this weapon type, but dramatic silhouette and unusual physical construction are essential. Orientation is CRITICAL for game use: the BARREL or loaded ARROW points straight UP, the STOCK/trigger handgrip is below it, crossbow prods span LEFT-RIGHT. Entire single CONNECTED weapon isolated and fully visible, generous transparent padding; hand-painted realistic textured game art, strong readable forms, physical highlights, clear color from the specified distinct materials. Grip center near x=50%, y=78% of canvas. No plain wood haft or generic cloth-wrapped stick handle: use the specified sculpted solid handle. No people, hands, display pedestal, shadows, glow, halos, scenery, text, labels, watermark, duplicate weapons or floating disconnected components. Genuine transparent background. Keep details bold enough to read when reduced to 100 pixels tall. This is a new structural design, never a recolor of a rusty conventional sword."
+    "prompt": "Use case: stylized-concept. Asset type: one original production weapon sprite for Dust, a gritty western/samurai/industrial frontier RPG. Subject: Ranger rifle, named Compact Ranger Rifle. Deliberately BOLD ORIGINAL construction: rifle with a fat short BLACK fluted barrel and an offset triangular mechanical sight, brass round receiver drum, skeletal red steel shoulder stock and black molded pistol grip. Recognizable as this weapon type, but dramatic silhouette and unusual physical construction are essential. Orientation is CRITICAL for game use: the BARREL or loaded ARROW points straight UP, the STOCK/trigger handgrip is below it, crossbow prods span LEFT-RIGHT. Entire single CONNECTED weapon isolated and fully visible, generous transparent padding; hand-painted realistic textured game art, strong readable forms, physical highlights, clear color from the specified distinct materials. Grip center near x=50%, y=78% of canvas. No plain wood haft or generic cloth-wrapped stick handle: use the specified sculpted solid handle. No people, hands, display pedestal, shadows, glow, halos, scenery, text, labels, watermark, duplicate weapons or floating disconnected components. Genuine transparent background. Keep details bold enough to read when reduced to 100 pixels tall. This is a new structural design, never a recolor of a rusty conventional sword.",
+    "grip_packed_y": 73
   },
   {
     "index": 68,
@@ -1950,14 +1952,15 @@
     "height": 29,
     "grip_hint": [
       0.5,
-      0.78
+      0.65
     ],
     "edge": 1,
     "subject": "western shotgun with short heavy barrel, side elevation barrel points up",
     "design": "scattergun with a broad pair of OVER-UNDER barrels, black vented muzzle housing, ivory carved break-action receiver and skeletal crimson metal buttstock",
     "source": "Rail Guard Scattergun.png",
     "price": 2454,
-    "prompt": "Use case: stylized-concept. Asset type: one original production weapon sprite for Dust, a gritty western/samurai/industrial frontier RPG. Subject: Scattergun, named Rail Guard Scattergun. Deliberately BOLD ORIGINAL construction: scattergun with a broad pair of OVER-UNDER barrels, black vented muzzle housing, ivory carved break-action receiver and skeletal crimson metal buttstock. Recognizable as this weapon type, but dramatic silhouette and unusual physical construction are essential. Orientation is CRITICAL for game use: the BARREL or loaded ARROW points straight UP, the STOCK/trigger handgrip is below it, crossbow prods span LEFT-RIGHT. Entire single CONNECTED weapon isolated and fully visible, generous transparent padding; hand-painted realistic textured game art, strong readable forms, physical highlights, clear color from the specified distinct materials. Grip center near x=50%, y=78% of canvas. No plain wood haft or generic cloth-wrapped stick handle: use the specified sculpted solid handle. No people, hands, display pedestal, shadows, glow, halos, scenery, text, labels, watermark, duplicate weapons or floating disconnected components. Genuine transparent background. Keep details bold enough to read when reduced to 100 pixels tall. This is a new structural design, never a recolor of a rusty conventional sword."
+    "prompt": "Use case: stylized-concept. Asset type: one original production weapon sprite for Dust, a gritty western/samurai/industrial frontier RPG. Subject: Scattergun, named Rail Guard Scattergun. Deliberately BOLD ORIGINAL construction: scattergun with a broad pair of OVER-UNDER barrels, black vented muzzle housing, ivory carved break-action receiver and skeletal crimson metal buttstock. Recognizable as this weapon type, but dramatic silhouette and unusual physical construction are essential. Orientation is CRITICAL for game use: the BARREL or loaded ARROW points straight UP, the STOCK/trigger handgrip is below it, crossbow prods span LEFT-RIGHT. Entire single CONNECTED weapon isolated and fully visible, generous transparent padding; hand-painted realistic textured game art, strong readable forms, physical highlights, clear color from the specified distinct materials. Grip center near x=50%, y=78% of canvas. No plain wood haft or generic cloth-wrapped stick handle: use the specified sculpted solid handle. No people, hands, display pedestal, shadows, glow, halos, scenery, text, labels, watermark, duplicate weapons or floating disconnected components. Genuine transparent background. Keep details bold enough to read when reduced to 100 pixels tall. This is a new structural design, never a recolor of a rusty conventional sword.",
+    "grip_packed_y": 75
   },
   {
     "index": 70,
@@ -2454,7 +2457,7 @@
     "height": 34,
     "grip_hint": [
       0.5,
-      0.65
+      0.84
     ],
     "edge": 1,
     "subject": "Japanese studded war club with long wooden core",
@@ -2482,7 +2485,7 @@
     "height": 34,
     "grip_hint": [
       0.5,
-      0.65
+      0.84
     ],
     "edge": 1,
     "subject": "heavy Japanese metal war club",
@@ -2510,7 +2513,7 @@
     "height": 44,
     "grip_hint": [
       0.5,
-      0.65
+      0.52
     ],
     "edge": 1,
     "subject": "long straight fighting quarterstaff",
@@ -2678,14 +2681,15 @@
     "height": 33,
     "grip_hint": [
       0.5,
-      0.78
+      0.65
     ],
     "edge": 1,
     "subject": "western long rifle, barrel points straight up, side elevation",
     "design": "legendary rifle with a very long narrow silver barrel inside an OPEN black support cage, round gold clockwork receiver, ivory hooked shoulder stock and a crescent front sight",
     "source": "Far Horizon.png",
     "price": 14938,
-    "prompt": "Use case: stylized-concept. Asset type: one original production weapon sprite for Dust, a gritty western/samurai/industrial frontier RPG. Subject: Ranger rifle, named Far Horizon. Deliberately BOLD ORIGINAL construction: legendary rifle with a very long narrow silver barrel inside an OPEN black support cage, round gold clockwork receiver, ivory hooked shoulder stock and a crescent front sight. Recognizable as this weapon type, but dramatic silhouette and unusual physical construction are essential. Orientation is CRITICAL for game use: the BARREL or loaded ARROW points straight UP, the STOCK/trigger handgrip is below it, crossbow prods span LEFT-RIGHT. Entire single CONNECTED weapon isolated and fully visible, generous transparent padding; hand-painted realistic textured game art, strong readable forms, physical highlights, clear color from the specified distinct materials. Grip center near x=50%, y=78% of canvas. No plain wood haft or generic cloth-wrapped stick handle: use the specified sculpted solid handle. No people, hands, display pedestal, shadows, glow, halos, scenery, text, labels, watermark, duplicate weapons or floating disconnected components. Genuine transparent background. Keep details bold enough to read when reduced to 100 pixels tall. This is a new structural design, never a recolor of a rusty conventional sword."
+    "prompt": "Use case: stylized-concept. Asset type: one original production weapon sprite for Dust, a gritty western/samurai/industrial frontier RPG. Subject: Ranger rifle, named Far Horizon. Deliberately BOLD ORIGINAL construction: legendary rifle with a very long narrow silver barrel inside an OPEN black support cage, round gold clockwork receiver, ivory hooked shoulder stock and a crescent front sight. Recognizable as this weapon type, but dramatic silhouette and unusual physical construction are essential. Orientation is CRITICAL for game use: the BARREL or loaded ARROW points straight UP, the STOCK/trigger handgrip is below it, crossbow prods span LEFT-RIGHT. Entire single CONNECTED weapon isolated and fully visible, generous transparent padding; hand-painted realistic textured game art, strong readable forms, physical highlights, clear color from the specified distinct materials. Grip center near x=50%, y=78% of canvas. No plain wood haft or generic cloth-wrapped stick handle: use the specified sculpted solid handle. No people, hands, display pedestal, shadows, glow, halos, scenery, text, labels, watermark, duplicate weapons or floating disconnected components. Genuine transparent background. Keep details bold enough to read when reduced to 100 pixels tall. This is a new structural design, never a recolor of a rusty conventional sword.",
+    "grip_packed_y": 76
   },
   {
     "index": 96,

@@ -10,7 +10,7 @@ make -j2 > build/v060-psp.txt 2>&1
 python3 scripts/validate_pbp.py EBOOT.PBP > build/v060-pbp-validation.txt
 build/test-depth build/depth-fixtures > build/v060-depth.txt
 build/dustbound-native --fixtures build/emu
-sources="src/game.c src/content.c src/armor.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c"
+sources="src/game.c src/content.c src/armor.c src/arsenal.c src/world.c src/expansion.c src/interior.c src/playability.c src/audio.c src/depth.c src/depth_combat.c"
 cc -O2 -std=gnu99 -Isrc $sources src/render.c tests/make_audit_fixture.c -lm -o build/make-audit-fixture
 build/make-audit-fixture build/audit-fixtures build/audit-layout
 for suite in depth render audit playability; do

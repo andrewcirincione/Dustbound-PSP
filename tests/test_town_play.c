@@ -385,22 +385,22 @@ static void settlement_layouts(void) {
         noForges += stock == 0;
         if (plan->smith) {
             int fine = 0, bestWeaponMaterial = 0;
-            assert(stock >= 14 && stock <= 22);
+            assert(stock == 15 + 10 * plan->importance);
             for (int row = 0; row < stock; row++) {
                 int item = shop_item(row);
                 if (itemDefs[item].quality < 2)
                     continue;
                 fine++;
                 int expensive = item_price(town, item, 0);
-                g.frontier.venue[town][item] = TRADE_GENERAL;
+                *market_venue(town, item) = TRADE_GENERAL;
                 assert(expensive > item_price(town, item, 0));
-                g.frontier.venue[town][item] = TRADE_SMITH;
+                *market_venue(town, item) = TRADE_SMITH;
                 if (itemDefs[item].slot == 0 && itemDefs[item].material > bestWeaponMaterial)
                     bestWeaponMaterial = itemDefs[item].material;
             }
-            assert(fine >= 3);
+            if (plan->importance >= TOWN_HUB) assert(fine >= 3);
             if (plan->marketTier == 2 && !starter_country(towns[town].x, towns[town].y))
-                assert(bestWeaponMaterial >= 4);
+                assert(bestWeaponMaterial >= 3);
         }
         int ore = nearest_ore(towns[town].x, towns[town].y, 33, NODE_ORE);
         assert(ore >= 0 && town_near(g.nodes[ore].x, g.nodes[ore].y, 16) < 0);

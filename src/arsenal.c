@@ -1,9 +1,10 @@
 #include "game.h"
 #include "arsenal_data.h"
+#include "arsenal_grips_data.h"
 #include "armor_sets_data.h"
 #include <stdio.h>
 #include <string.h>
-static char arsenalDescriptions[ARSENAL_WEAPONS][112];
+static char arsenalDescriptions[ARSENAL_WEAPONS][112],arsenalNamedDescriptions[ELITES][112];
 static unsigned arand(unsigned *s){unsigned x=*s;x^=x<<13;x^=x>>17;x^=x<<5;return *s=x?x:37;}
 int arsenal_type(int item){
     if(item>=WEAPON_ITEMS&&item<ITEMS)return arsenalDefs[item-WEAPON_ITEMS].type;
@@ -21,6 +22,8 @@ int arsenal_index(int item){
     for(int i=0;i<ARSENAL_WEAPONS;i++)if(arsenalDefs[i].family==eliteDefs[owner].weaponFamily&&arsenalDefs[i].tier>tier){best=i;tier=arsenalDefs[i].tier;}
     return best;
 }
+float arsenal_support_along(int item){int i=arsenal_index(item);return i>=0?arsenalGripOffsets[i][0]:-4;}
+float arsenal_support_across(int item){int i=arsenal_index(item);return i>=0?arsenalGripOffsets[i][1]:0;}
 int arsenal_tier(int item){
     int i=arsenal_index(item);return i>=0?arsenalDefs[i].tier:itemDefs[item].quality;
 }
@@ -45,6 +48,8 @@ void arsenal_content(void){
         if(d->power<best->power+2)d->power=best->power+2;
         if(d->penetration<best->penetration)d->penetration=best->penetration;
         if(d->price<best->price+1500)d->price=best->price+1500;
+        snprintf(arsenalNamedDescriptions[owner],112,"%s's %s. Damage %d; pierce %d; weight %d.",eliteDefs[owner].name,eliteDefs[owner].weapon,d->power,d->penetration,d->weight);
+        d->desc=arsenalNamedDescriptions[owner];
     }
 }
 void arsenal_outfit(Actor*a,unsigned seed,int tier){
