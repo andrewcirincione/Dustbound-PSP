@@ -77,7 +77,7 @@ static void shops_and_inns(void){
  int upstairs=0,smiths=0;
  for(int b=0;b<g.buildingCount;b++){
   if(inn_has_upstairs(b)){InteriorProp down[ROOM_PROPS],up[ROOM_PROPS];int n=interior_floor_props(b,0,down),m=interior_floor_props(b,1,up),asc=0,desc=0;for(int i=0;i<n;i++)asc|=down[i].action==ROOM_STAIRS&&down[i].art==ART_INN_STAIRS;for(int i=0;i<m;i++)desc|=up[i].action==ROOM_STAIRS&&up[i].art==ART_STAIRS_DOWN;assert(asc&&desc);upstairs++;}
-  if(g.buildings[b].type==FORGE&&g.buildings[b].owner<0&&!ruined_building(b)){int t=building_town(b);if(t<0)continue;restock_town(t);int weapons=0,armor=0;for(int it=1;it<ITEMS;it++)if(g.frontier.venue[t][it]==TRADE_SMITH&&*market_stock(t,it)>0){weapons+=itemDefs[it].slot==0;armor+=itemDefs[it].slot>0&&itemDefs[it].slot<=4;}assert(weapons>=8&&armor>=6);smiths++;}
+  if(g.buildings[b].type==FORGE&&g.buildings[b].owner<0&&!ruined_building(b)){int t=building_town(b);if(t<0)continue;restock_town(t);int weapons=0,armor=0;for(int it=1;it<ITEMS;it++)if(*market_venue(t,it)==TRADE_SMITH&&*market_stock(t,it)>0){weapons+=itemDefs[it].slot==0;armor+=itemDefs[it].slot>0&&itemDefs[it].slot<=4;}assert(weapons>=8&&armor>=6);smiths++;}
  }
  assert(upstairs&&smiths);
  for(int n=1;n<g.actorCount;n++)if(g.actors[n].kind==GUARD&&strcmp(g.actors[n].name,"Jailkeeper"))g.actors[n].active=0;

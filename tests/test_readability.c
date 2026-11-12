@@ -59,7 +59,9 @@ static void outfits(void){
  const int types[]={POP_RAIDERS,POP_ARMY,POP_DUELISTS};const char*names[]={"starving-bandits","army","elites"};
  for(int k=0;k<3;k++){Actor*a=fresh();group(types[k],k==0);WorldEvent*e=&g.population.groups[0];
   for(int i=0;i<e->count;i++){Actor*b=&g.actors[e->members[i]];
-   if(!k)assert(!b->gear[2]&&!b->gear[3]&&!b->gear[5]&&(b->gear[1]==0||b->gear[1]==RAGS)&&itemDefs[b->gear[0]].quality==0);
+   if(!k){assert(!b->gear[5]&&itemDefs[b->gear[0]].quality==0);
+   int scavenged=0;for(int p=1;p<5;p++){int set=armor_item_set(b->gear[p]);if(set>=0){assert(set==16||set==19);scavenged++;}}
+   assert(scavenged<=2);}
    else assert(b->gear[1]&&b->gear[2]&&b->gear[3]&&b->gear[4]);
    if(k==1){float bx=e->x-(i/3)*2.3f,by=e->y+(i%3-1)*2.2f;b->x=bx;b->y=by;population_walk(e->members[i],.1f);assert(distance(bx,by,b->x,b->y)<.01f);}
   }

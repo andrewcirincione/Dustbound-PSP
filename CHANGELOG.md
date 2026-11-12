@@ -1,3 +1,7 @@
+# 1.0.2 — Armor across the frontier
+
+Thirty fitted armor sets (fifteen heavy), faction/rank/unit distribution, mixed raider salvage, named legendary elites, persistent remote caches, rare capital stock and rarity-based prices. Existing saves upgrade automatically.
+
 # 1.0.1 — Character fit
 
 - Shorter common upper arms and forearms, connected painted elbows and wrists, and fitted shoulder openings across all sixteen torso styles.

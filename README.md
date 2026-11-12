@@ -1,10 +1,10 @@
 # Dust — PSP frontier survival RPG
 
-## 1.0.1 — Character fit
+## 1.0.2 — Armor across the frontier
 
-Shorter shared arms attach at the painted shoulder openings across all sixteen armor styles. Passive, combat, crawling and resting poses use fitted joints. Left/right combat poses mirror consistently, the brigandine sits over the hips, and polearms use a stable grip.
+Thirty fitted armor sets, including fifteen heavy sets, now appear on travelers, raiders and organized armies. Named elites wear legendary sets; remote caches and rare capital stock offer individual accessories. Prices and equipment follow region, rank and rarity.
 
-[1.0.1 validation](docs/VALIDATION_V101.md) · [1.0.0 gameplay changes](docs/VALIDATION_V1000.md)
+[Armor distribution and validation](docs/ARMOR_DISTRIBUTION.md) · [1.0.0 gameplay changes](docs/VALIDATION_V1000.md)
 
 An original isometric western–samurai survival RPG for PSP homebrew, inspired by Kenshi. Build a squad, survive injuries and hunger, trade, steal, craft equipment and establish a camp among independent factions and wandering groups.
 
@@ -61,7 +61,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dust-1.0.1-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v29 reads earlier expeditions. Existing equipment, training and town control carry over.
+Extract `Dust-1.0.2-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v30 reads earlier expeditions, including v29. Existing equipment, training and town control carry over.
 
 ## Controls
 

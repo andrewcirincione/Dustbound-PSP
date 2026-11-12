@@ -1,13 +1,13 @@
-# Dust 1.0.1 — Character fit
+# Dust 1.0.2 — Armor across the frontier
 
-Shorter arms now share common shoulder positions across outfits and stances. Generated garments fit their painted collar, waist and arm openings. Elbows and wrists stay connected, and the rear arm stays behind the torso in mirrored left/right views.
+Thirty new fitted armor sets, including fifteen heavy sets and four legendary sets, are distributed throughout the world.
 
-- Passive arms rest at the sides, with smaller heads, fitted headwear and weapons closer to the back.
-- Brigandine is narrower and centred over the hips. Resting and crawling use the same fitted attachments.
-- Revised sabre, greatsword, tetsubo and unarmed poses; stable naginata hand placement and extended bow draws.
+- Raiders scavenge mixed low-grade pieces; veterans carry stronger equipment.
+- Armies wear faction and rank uniforms, with distinct ranged-crew headwear and boots.
+- Legendary sets are worn by named elites. Individual accessories also appear in remote caches and, rarely, expensive capital stock. Unique body pieces remain with their owners.
+- Regional smith stock and prices reflect faction, stats and rarity.
+- Shoulder/arm layering, narrower trousers and connected Cinder Scout legs apply across the expansion.
 
-Extract **Dust-1.0.1-PSP.zip** to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Keep existing saves; save format remains v29. DustAmbient.mp3 is embedded in the executable.
+Extract **Dust-1.0.2-PSP.zip** to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Existing saves are upgraded automatically. DustAmbient.mp3 is embedded.
 
-Validation: all 41 native suites passed, and the PSP executable compiled successfully and passed PBP and embedded-asset checks. The Evidence ZIP contains build provenance, test results and the approved production-renderer galleries covering sixteen torso styles and thirty-nine weapon/unarmed sets.
-
-Fresh PPSSPP verification is pending. The first emulator attempt failed because of test-harness paths; the corrected retry is blocked by GitHub runner startup errors. This package makes no successful emulator-test claim. Physical PSP performance and audible output have not been measured. See `docs/BUILD_V101.json` and `docs/VALIDATION_V101.md`.
+Validation: native regression and distribution suites, PBP/embedded-asset checks, all thirty armor loadouts through PPSSPP, and 153 production-renderer reviews. The Evidence ZIP records the executable hash and results. Physical PSP hardware and audible output have not been measured.
