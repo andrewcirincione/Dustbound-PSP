@@ -1,0 +1,13 @@
+Dust 1.0.4 / 20 greatswords — WORK IN PROGRESS
+Authorized: add 20 more greatswords, compile and publish; show actual in-game previews.
+Base public main: 4aeb7b6929c5d936673e81066c45fa4431619c3e
+Source branch: greatswords-1.0.4. Do not publish incomplete artwork.
+Twenty new prompts/definitions append indices 100–119 in assets/art/arsenal-expansion/weapons.json.
+Built-in generation in progress; every final asset must be packed and grip-reviewed.
+Code: append-only save v32, preserved v31 layout and IDs, separate 20-item shop state,
+level-based distribution, one/two new greatsword offers inside 15–45 daily smith budget.
+Nonvisual catalog, shop/day/save and actual v31 migration tests passed locally.
+Pending: all 20 drawings, full 46 suites, two-facing held/attack reviews, PSP build,
+actual in-game previews and PPSSPP equipped/combat qualification for all 20; publish v1.0.4.
+PSPDEV /workspace/scratch/c30f2d0204c9/psp-toolchain/pspdev
+PPSSPP /workspace/scratch/c30f2d0204c9/emulator/AppDir

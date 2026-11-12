@@ -17,10 +17,10 @@ static int opaque_near(const ArtSprite*s,float x,float y,int radius){for(int yy=
  }return 0;}
 int main(void){
 #ifndef ARSENAL_ALLOW_INCOMPLETE
- assert(ARSENAL_READY==100);
+ assert(ARSENAL_READY==ARSENAL_WEAPONS);
 #endif
  game_new(73819,0);fb=canvas;pitch=512;clipLeft=clipTop=0;clipRight=480;clipBottom=272;
- uint64_t hashes[100];int poseCases=0,grips=0;
+ uint64_t hashes[ARSENAL_WEAPONS];int poseCases=0,grips=0;
  for(int n=0;n<ARSENAL_WEAPONS;n++){
   int item=WEAPON_ITEMS+n;const ArtSprite*s=&arsenalSprites[n];const WeaponArt*w=&arsenalWeaponArt[n];
 #ifdef ARSENAL_ALLOW_INCOMPLETE
@@ -57,5 +57,5 @@ int main(void){
   }
   clipRight=480;clipBottom=272;
  }
- printf("PASS 100 distinct silhouettes, %d rotated/mirrored grip checks and %d equipped anatomy/attack poses; main and support palms stay on the actual drawn handle.\n",grips,poseCases);
+ printf("PASS 120 distinct silhouettes, %d rotated/mirrored grip checks and %d equipped anatomy/attack poses; main and support palms stay on the actual drawn handle.\n",grips,poseCases);
 }

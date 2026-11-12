@@ -1,5 +1,10 @@
 # 1.0.3 — A hundred weapons
 
+## 1.0.4
+- Added 20 independently drawn greatswords across five equipment tiers and regional styles, with calibrated two-handed grips.
+- Daily smith inventories include a new greatsword (two at fortresses/capitals), inside the existing 15–45 equipment budget.
+- Save format 32 preserves the complete v31 layout, existing item IDs and purchased equipment.
+
 100 independently generated weapon models across 38 types; strength-based equipment and stats; regional 15–45 option smithies refreshing at midnight; calibrated primary/support grips and correct edge/aim parity; appended save v31 migration.
 
 # 1.0.2 — Armor across the frontier

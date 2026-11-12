@@ -14,7 +14,7 @@ int main(void){
   assert(armor_item_set(it)<0);assert(weapon_rapier(it)==(z->type==37));assert(weapon_ranged(it)==(z->type>=24&&z->type<=31));
   for(int j=0;j<i;j++)assert(strcmp(z->name,arsenalDefs[j].name));
  }
- for(int t=0;t<38;t++)assert(covered[t]>=2&&covered[t]<=3);assert(legends==8);
+ for(int t=0;t<38;t++)assert(t==32?covered[t]==23:covered[t]>=2&&covered[t]<=3);assert(legends==12);
  for(int type=0;type<38;type++){
   int lastPower=0,seen=0;
   for(int tier=0;tier<=4;tier++){
@@ -29,6 +29,7 @@ int main(void){
    restock_town(t);if(!town_design(t)->smith)continue;int w,a,budget=15+10*town_design(t)->importance;
    assert(options(t,TRADE_SMITH,&w,&a)==budget);assert(w==budget*3/5&&a==budget-w);assert(w>=8&&a>=6);
    assert(g.arsenal.stockDay[t]==day);
+   int greats=0;for(int j=100;j<120;j++)greats+=*market_stock(t,WEAPON_ITEMS+j)>0&&*market_venue(t,WEAPON_ITEMS+j)==TRADE_SMITH;assert(greats>=(town_design(t)->importance>=TOWN_FORTRESS?2:1));
    for(int i=0;i<ARSENAL_WEAPONS;i++)if(*market_stock(t,WEAPON_ITEMS+i)>0&&arsenalDefs[i].tier==4){assert(town_design(t)->importance==TOWN_CAPITAL);rare++;}
   }
  }assert(rare>0);
@@ -44,5 +45,5 @@ int main(void){
  assert(g.actors[0].gear[0]==WEAPON_ITEMS+99&&inventory_count(&g.actors[0],WEAPON_ITEMS+47)==1);assert(!*market_stock(0,WEAPON_ITEMS+38)&&!g.actors[elite].gear[0]);
  assert(load_game("build/old-v30.sav"));assert(g.arsenal.version==1&&g.actors[g.selected].gear[0]<WEAPON_ITEMS);
  for(int town=0;town<TOWNS;town++)if(town_design(town)->smith){int w,a;assert(options(town,TRADE_SMITH,&w,&a)==15+10*town_design(town)->importance);}
- puts("PASS 100 weapons / 38 types; strength/rarity ordering; 15–45 smith options; legendary weapons only in capitals; real midnight refresh and save/load persistence.");
+ puts("PASS 120 weapons / 38 types; strength/rarity ordering; 15–45 smith options; legendary weapons only in capitals; real midnight refresh and save/load persistence.");
 }

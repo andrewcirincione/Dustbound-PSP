@@ -1,13 +1,9 @@
-# Dust 1.0.3 — A hundred weapons
+# Dust 1.0.4 — 20 new greatswords
 
-100 independently drawn weapons across all 38 weapon types, including eight legendary designs. New models use bone, ceramic, glass, metal, enamel and industrial mechanisms alongside a small minority of plain utilitarian weapons.
+Adds 20 distinct generated greatsword models: four salvaged, four field, four military, four veteran and four legendary constructions. Blade shapes, guards, pommels, handle materials, stats, weight and handling vary. Each has a clear two-handed grip and calibrated main/support hand anchors. The previous greatswords remain, giving 23 greatswords in the expanded catalog.
 
-- Equipment and stats follow enemy strength, weapon role and rarity.
-- Smithies hold 15–45 combined weapon and armor options by settlement importance, refreshing at midnight.
-- Stronger weapons appear in more important settlements; rare legendary stock is reserved for capitals.
-- Primary/support grips, cutting edges and aiming directions are calibrated to the actual new drawings and checked on equipped characters in both facings.
-- Existing saves, personal trophies and acquired equipment retain their identities.
+Living enemies and new encounters use strength-appropriate equipment. Daily smith refreshes include at least one new greatsword, or two in fortresses and capitals, within the 15–45 combined weapon/armor stock budget. Highest tiers remain restricted by settlement importance; legendary weapons stay rare. Existing v31 saves preserve acquired weapons, inventory, money, progression and depleted stock; migration replaces only eligible existing offers.
 
-Extract **Dust-1.0.3-PSP.zip** to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. Save format 31 upgrades prior expeditions automatically. DustAmbient.mp3 remains embedded.
+Qualification includes the complete native regression suite, 120 distinct silhouettes, both facings, equipped anatomy and support grips, production-renderer reviews, a PSP build and all 20 new greatswords loaded/equipped and used in real PPSSPP combat. Physical PSP hardware and audible output are not measured.
 
-The Evidence ZIP includes native test results, grip/orientation checks, 200 equipped renderer reviews, and PSP emulator captures tied to the executable hash. Physical PSP hardware and audible output have not been measured.
+Extract the PSP archive to the memory stick root, retaining PSP/GAME/DUSTBOUND/EBOOT.PBP. Existing save files are not bundled or overwritten.

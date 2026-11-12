@@ -1,6 +1,6 @@
 # Dust — PSP frontier survival RPG
 
-## 1.0.3 — A hundred weapons
+## 1.0.4 — A hundred weapons
 
 100 new independently drawn weapons across all 38 types, with strength-based enemy equipment and eight legendary designs. Smithies offer 15–45 weapon and armor options by settlement importance and refresh at midnight. New primary/support grips and edge/aim orientation are verified on equipped characters.
 
@@ -61,7 +61,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dust-1.0.3-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v31 reads earlier expeditions, including v30. Existing equipment, training and town control carry over.
+Extract `Dust-1.0.4-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v31 reads earlier expeditions, including v30. Existing equipment, training and town control carry over.
 
 ## Controls
 

@@ -19,7 +19,7 @@ int arsenal_index(int item){
     int owner=regalia_owner(item);
     if(owner<0 || (item-REGALIA_ITEMS)%2)return -1;
     int best=-1,tier=-1;
-    for(int i=0;i<ARSENAL_WEAPONS;i++)if(arsenalDefs[i].family==eliteDefs[owner].weaponFamily&&arsenalDefs[i].tier>tier){best=i;tier=arsenalDefs[i].tier;}
+    for(int i=0;i<ARSENAL_WEAPONS;i++)if(arsenalDefs[i].family==eliteDefs[owner].weaponFamily&&(arsenalDefs[i].tier>tier || (arsenalDefs[i].tier==tier && best>=0 && arsenalDefs[i].power>arsenalDefs[best].power))){best=i;tier=arsenalDefs[i].tier;}
     return best;
 }
 float arsenal_support_along(int item){int i=arsenal_index(item);return i>=0?arsenalGripOffsets[i][0]:-4;}
@@ -67,11 +67,11 @@ static int smith_max_tier(int town){int i=town_design(town)->importance;return i
 static void clear_equipment(int town,int venue){
     for(int it=1;it<ITEMS;it++)if(*market_venue(town,it)==venue&&itemDefs[it].slot>=0&&itemDefs[it].slot<=4)*market_stock(town,it)=0;
 }
-static int choose_weapon(int town,int maxTier,unsigned*seed,int rare){
+static int choose_weapon(int town,int maxTier,unsigned*seed,int rare,int requiredType){
     int best=-1,score=-100000;
     for(int i=0;i<ARSENAL_WEAPONS;i++){
         const ArsenalDef*z=&arsenalDefs[i];int it=WEAPON_ITEMS+i;
-        if(z->tier>maxTier||*market_stock(town,it)>0||(!rare&&z->tier==4)||(rare&&z->tier!=4))continue;
+        if((requiredType>=0&&(z->type!=requiredType||i<ARSENAL_V103_WEAPONS))||z->tier>maxTier||*market_stock(town,it)>0||(!rare&&z->tier==4)||(rare&&z->tier!=4))continue;
         int n=(int)(arand(seed)%100)+(z->faction==g.townOwner[town]?70:z->faction==SCAVENGERS?20:0);
         if(n>score){score=n;best=it;}
     }
@@ -94,8 +94,8 @@ void arsenal_stock(int town){
         clear_equipment(town,TRADE_SMITH);
         int count=0,weaponCount=budget*3/5,rare=maxTier==4&&arand(&seed)%3==0;
         for(int i=0;i<weaponCount;i++){
-            int it=choose_weapon(town,maxTier,&seed,rare&&i==0);
-            if(it<0)it=choose_weapon(town,maxTier,&seed,0);
+            int it=choose_weapon(town,maxTier,&seed,rare&&i==0,(i==1||(i==2&&plan->importance>=TOWN_FORTRESS))?32:-1);
+            if(it<0)it=choose_weapon(town,maxTier,&seed,0,-1);
             if(it<0)break;*market_stock(town,it)=1;*market_venue(town,it)=TRADE_SMITH;count++;
         }
         for(;count<budget;count++){
@@ -135,4 +135,29 @@ void arsenal_world_init(void){
         for(int n=0;n<e->count;n++){Actor*a=&e->reserve[n];if(!a->dead&&a->unconscious<=0&&!a->gearStolen[0])arsenal_outfit(a,e->seed+n*7919u,arsenal_level_tier(a));}
     }
     for(int t=0;t<TOWNS;t++)arsenal_stock(t);
+}
+
+/* One-time v31 migration changes only eligible living NPCs and replaces
+   in-stock ordinary offers; purchased stock and player possessions stay intact. */
+void greatsword_world_init(void){
+    if(g.greatswords.version)return;g.greatswords.version=1;
+    for(int n=0;n<g.actorCount;n++){
+        Actor*a=&g.actors[n];
+        if(!a->active||a->dead||a->unconscious>0||a->prisonTime>0||g.depth.actors[n].captive||a->gearStolen[0]||arsenal_type(a->gear[0])!=32)continue;
+        arsenal_outfit(a,g.seed+(unsigned)n*7919u,arsenal_level_tier(a));
+    }
+    for(int k=0;k<POP_GROUPS+EVENTS;k++){
+        WorldEvent*e=k<POP_GROUPS?&g.population.groups[k]:&g.living.events[k-POP_GROUPS];if(!e->stored)continue;
+        for(int n=0;n<e->count;n++){Actor*a=&e->reserve[n];if(!a->dead&&a->unconscious<=0&&!a->prisonTime&&!a->gearStolen[0]&&arsenal_type(a->gear[0])==32)arsenal_outfit(a,e->seed+n*7919u,arsenal_level_tier(a));}
+    }
+    for(int t=0;t<TOWNS;t++)if(town_design(t)->smith){
+        unsigned seed=g.seed^(t+1u)*2654435761u^(g.day+1u)*2246822519u;
+        int want=town_design(t)->importance>=TOWN_FORTRESS?2:1,have=0;
+        for(int it=WEAPON_ITEMS+ARSENAL_V103_WEAPONS;it<ITEMS;it++)have+=*market_stock(t,it)>0&&*market_venue(t,it)==TRADE_SMITH;
+        for(;have<want;have++){
+            int it=choose_weapon(t,smith_max_tier(t),&seed,0,32),old=-1;if(it<0)break;
+            for(int j=WEAPON_ITEMS;j<WEAPON_ITEMS+ARSENAL_V103_WEAPONS;j++)if(*market_stock(t,j)>0&&*market_venue(t,j)==TRADE_SMITH&&arsenal_tier(j)<4){old=j;break;}
+            if(old<0)break;*market_stock(t,old)=0;*market_stock(t,it)=1;*market_venue(t,it)=TRADE_SMITH;
+        }
+    }
 }

@@ -860,6 +860,7 @@ void game_new(uint32_t seed, int scenario) {
     placement_init();
     armor_world_init();
     arsenal_world_init();
+    greatsword_world_init();
     find_context();
 }
 
@@ -2667,7 +2668,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 31, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
+enum { SAVE_VERSION = 32, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -2797,8 +2798,11 @@ static int validate_game(const Game *t) {
     if(t->arsenal.version<0||t->arsenal.version>1)return 0;
     for(int town=0;town<TOWNS;town++){
         if(t->arsenal.stockDay[town]<0)return 0;
-        for(int i=0;i<ARSENAL_WEAPONS;i++)if(t->arsenal.stock[town][i]<0||t->arsenal.venue[town][i]>TRADE_APOTHECARY)return 0;
+        for(int i=0;i<ARSENAL_V103_WEAPONS;i++)if(t->arsenal.stock[town][i]<0||t->arsenal.venue[town][i]>TRADE_APOTHECARY)return 0;
     }
+    if(t->greatswords.version<0||t->greatswords.version>1)return 0;
+    for(int town=0;town<TOWNS;town++)for(int i=0;i<GREATSWORD_ADDITIONS;i++)
+        if(t->greatswords.stock[town][i]<0||t->greatswords.venue[town][i]>TRADE_APOTHECARY)return 0;
     if (t->armor.version<0 || t->armor.version>2) return 0;
     for(int town=0;town<TOWNS;town++)for(int it=0;it<ARMOR_EXTRA_ITEMS;it++)
         if(t->armor.stock[town][it]<0 || t->armor.venue[town][it]>TRADE_APOTHECARY)return 0;
@@ -3001,7 +3005,7 @@ static int save_shape(uint32_t version,uint32_t size) {
         }
         return size == ends[version - 17] - expansion;
     }
-    return (version == 28 && size == offsetof(Game, plans) - (sizeof(g.frontier) - V28_FRONTIER_BYTES)) || (version==29 && size==offsetof(Game,armor)) || (version==30 && size==offsetof(Game,arsenal)) || (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version == 28 && size == offsetof(Game, plans) - (sizeof(g.frontier) - V28_FRONTIER_BYTES)) || (version==29 && size==offsetof(Game,armor)) || (version==30 && size==offsetof(Game,arsenal)) || (version==31 && size==offsetof(Game,greatswords)) || (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -3025,7 +3029,7 @@ static void read_save_array(SaveReader *reader, void *array, size_t oldBytes, si
 }
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if (version == SAVE_VERSION || version == 30 || version == 29) memcpy(out, data, size);
+    if (version == SAVE_VERSION || version == 31 || version == 30 || version == 29) memcpy(out, data, size);
     else {
         SaveReader reader = {data, (unsigned char *)out, size};
 #define WIDEN(field, count) read_save_array(&reader, out->field, (count) * sizeof(out->field[0]), sizeof(out->field))
@@ -3192,6 +3196,7 @@ int load_game(const char *path) {
     placement_init();
     armor_world_init();
     arsenal_world_init();
+    greatsword_world_init();
         if (h.version < 27) {
             if (g.weather) g.weatherTimer = fminf(g.weatherTimer, 100);
             for (int t = 0; t < TOWNS; t++) {

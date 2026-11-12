@@ -2,7 +2,7 @@
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
 #define GAME_NAME "Dust"
-#define VERSION "1.0.3"
+#define VERSION "1.0.4"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -45,7 +45,9 @@
 #define ARMOR_SET_PIECES 4
 #define ARMOR_EXTRA_ITEMS (ARMOR_SETS*ARMOR_SET_PIECES)
 #define WEAPON_ITEMS (ARMOR_SET_ITEMS+ARMOR_EXTRA_ITEMS)
-#define ARSENAL_WEAPONS 100
+#define ARSENAL_V103_WEAPONS 100
+#define GREATSWORD_ADDITIONS 20
+#define ARSENAL_WEAPONS (ARSENAL_V103_WEAPONS+GREATSWORD_ADDITIONS)
 #define ITEMS (WEAPON_ITEMS+ARSENAL_WEAPONS)
 #define LODGES 3
 #define COMPLETED_CONTRACTS 32
@@ -412,9 +414,15 @@ typedef struct {
     /* v31 appends generated weapon stock, preserving v30 saves and item IDs. */
     struct {
         int version;
-        int stock[TOWNS][ARSENAL_WEAPONS],stockDay[TOWNS];
-        unsigned char venue[TOWNS][ARSENAL_WEAPONS];
+        int stock[TOWNS][ARSENAL_V103_WEAPONS],stockDay[TOWNS];
+        unsigned char venue[TOWNS][ARSENAL_V103_WEAPONS];
     } arsenal;
+    /* v32 appends 20 greatswords; the complete v31 layout remains a prefix. */
+    struct {
+        int version;
+        int stock[TOWNS][GREATSWORD_ADDITIONS];
+        unsigned char venue[TOWNS][GREATSWORD_ADDITIONS];
+    } greatswords;
 } Game;
 enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH, ROOM_STAIRS, ROOM_RESEARCH };
@@ -530,6 +538,7 @@ void restock(void);
 void arsenal_outfit(Actor *actor,unsigned seed,int tier);
 void arsenal_stock(int town);
 void arsenal_world_init(void);
+void greatsword_world_init(void);
 void armor_stock(int town);
 int armor_item_set(int item);
 int armor_set_item(int set, int piece);
