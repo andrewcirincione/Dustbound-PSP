@@ -1,35 +1,38 @@
-Dust 1.0.4 / 20 greatswords — WORK IN PROGRESS
-Authorized: add 20 more greatswords, compile and publish; show actual in-game previews.
-Base public main: 4aeb7b6929c5d936673e81066c45fa4431619c3e
-Source branch: greatswords-1.0.4. Do not publish incomplete artwork.
-Twenty new prompts/definitions append indices 100–119 in assets/art/arsenal-expansion/weapons.json.
-Built-in generation in progress; every final asset must be packed and grip-reviewed.
-Code: append-only save v32, preserved v31 layout and IDs, separate 20-item shop state,
-level-based distribution, one/two new greatsword offers inside 15–45 daily smith budget.
-Nonvisual catalog, shop/day/save and actual v31 migration tests passed locally.
-Pending: all 20 drawings, full 46 suites, two-facing held/attack reviews, PSP build,
-actual in-game previews and PPSSPP equipped/combat qualification for all 20; publish v1.0.4.
-PSPDEV /workspace/scratch/c30f2d0204c9/psp-toolchain/pspdev
-PPSSPP /workspace/scratch/c30f2d0204c9/emulator/AppDir
+Dust 1.0.4 — COMPLETED AND PUBLISHED (2026-11-12)
 
-All 20 final drawings now packed. All 46 local suites passed; 3,840 grip raster
-checks, 8,640 equipped anatomy cases, 9,600 new greatsword cache-bound poses;
-all 40 new held/contact review frames visually examined. Local PSP build valid:
-11,774,488 bytes, SHA256 38ebf9ebec089ade4c8c3d4305ef2df4b005ee2e9307e8848b1d08cb46db1702.
-Three actual PPSSPP equipped/combat preview loadouts passed (100,109,119).
-Final full 20-weapon PPSSPP release qualification and public upload remain pending.
+Release: https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v1.0.4
+Tested runtime commit: 5848640fd53680cdff231a6666a4cf59a479efde
+Successful qualification: https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/43328524470
 
-Latest user corrections: greatswords resting at shoulder must draw in front of
-body/head/rear arm, with leading arm over sword. Fixed in painted_actor.h and
-covered by pixel occlusion test: 2,700 blade-over-body pixels, 3,322 leading-arm
-overlap pixels across all 20 new models and both facings. Added standalone weapon
-and armor pictures to smith/armorer trading pane; item pictures verified bounded
-and distinct. Final qualification now requires 47 suites and real smith menu captures.
-Old pre-fix preview/build hash above is superseded; do not publish it.
+Completed all current user requests:
+- 20 additional individually drawn greatswords, indices 100–119. Expanded catalog
+  now has 120 weapons, including 23 greatswords from the two expansions.
+- Four new greatswords at each of five equipment tiers; varied silhouettes,
+  guards, pommels and handle materials. No plain wood/wrapped-hilt designs.
+- Greatswords rest on the shoulder in passive world carry and menu portraits.
+  Body, head and rear arm are behind the sword; the leading arm covers it.
+  Surviving-arm carry is handled when one arm is missing.
+- Smith and armorer screens show the actual selected weapon/armor artwork.
+- Daily smith budgets remain 15/25/35/45 combined equipment options. One new
+  greatsword is guaranteed on refresh, or two at fortresses/capitals, at the
+  appropriate tier. Save v32 preserves v31 layout, existing IDs and possessions.
+- Actual compiled-PSP equipped/combat previews and smith weapon/armor captures
+  are supplied in the evidence archive, including in-game-previews-final.png.
 
-Final occlusion checks now cover passive/armed shoulder rest and both missing-arm
-cases: 16,614 blade-over-body pixels and 19,334 leading-arm overlaps passed.
-The older rear-plane torso test explicitly delegates greatswords to this foreground
-regression; other weapon rear-arm checks, reflections and motion all pass.
-Final PSP build with shoulder carry and smith pictures: 11,778,256 bytes;
-SHA256 0377bec06a891e3343ab82930c2d53813fa8faf18d2bf05eb3baf8ec3cd2412e.
+Verification: all 47 native regression suites passed on a clean GitHub runner;
+120 distinct silhouettes, 3,840 rotated/mirrored grip checks, 8,640 equipped
+anatomy cases, 9,600 new greatsword world-cache bounds poses. Pixel tests cover
+20 new greatswords, both facings, passive/armed shoulder rest and both missing-arm
+cases: 16,614 blade-over-body pixels and 19,334 leading-arm overlaps.
+Other weapons retain rear-arm occlusion checks; reflection and motion checks pass.
+All 20 new weapons were loaded, equipped and used in actual PPSSPP combat.
+Both ordinary smith menu picture captures passed. Physical PSP/audio not measured.
+
+EBOOT.PBP: 11,778,256 bytes
+SHA256: 0377bec06a891e3343ab82930c2d53813fa8faf18d2bf05eb3baf8ec3cd2412e
+The release EBOOT matches the local corrected previews exactly.
+All four public assets are uploaded; game/evidence hashes match qualification:
+EBOOT.PBP, Dust-1.0.4-PSP.zip, Dust-1.0.4-Evidence.zip, SHA256SUMS-1.0.4.txt.
+
+No remaining generation, implementation, build or publication work for this request.
+A documentation checkpoint may follow the tested runtime commit on main.
