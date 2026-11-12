@@ -1,36 +1,29 @@
-Dust 1.0.3 / 100-weapon expansion checkpoint — 2026-11-12
+Dust 1.0.3 / 100-weapon expansion — COMPLETED AND PUBLISHED
+2026-11-12
 
-Authorized: add 100 independently drawn weapons across all 38 types; enemy equipment
-follows strength/rank, shops follow settlement importance; compile/test/publish.
-Latest user revision: 15–45 combined weapon and armor options per smithy, refreshed
-at the beginning of each day. Strong variation in shapes, materials and mechanisms;
-very few plain wood/wrapped handles. Check actual held orientation and grips.
+Public release: https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v1.0.3
+Tested runtime source / release tag: c912ac3649181e6f12070c70d26718b75bab1015
+Successful qualification: https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/43312631417
 
-Current work: 100 definitions and individual prompts in assets/art/arsenal-expansion/
-weapons.json. Four utilitarian first-pass designs retained; 96 revised following the
-user's feedback about repetitive rusty wood/cloth designs. All 100 drawings generated and packed.
-The JSON generation order lists every pending design; pack_arsenal.py derives progress
-from actual files. Full ImageGen originals remain under generated_images and the art
-working directory; game-ready PNGs, calibrated pivots and indexed sprites are committed.
+Completed: exactly 100 independently generated and packed weapon models across all
+38 weapon types; varied materials/constructions, eight legendary designs; calibrated
+main and support grips, both facings and correct blade/bow/firearm orientation.
+Strength-based NPC equipment, regional/importance-based stock; smithies have a
+combined 15/25/35/45 weapon and armor options, refreshed at the start of each day.
+Existing item IDs and player possessions retained; save format 31 reads older saves.
 
-Source branch: arsenal-1.0.3. Base public main eb35b768b4a2e293085db2ff7a3612d037401321.
-PSPDEV: /workspace/scratch/c30f2d0204c9/psp-toolchain/pspdev
-PPSSPP: /workspace/scratch/c30f2d0204c9/emulator/AppDir
+Verification: all 45 native regression suites passed; 100 distinct silhouettes;
+3,200 mirrored/rotated grip checks, 7,200 equipped anatomy/attack poses; all 200
+production-renderer held/contact review frames examined. Additional local 41,600
+world-cache bounds checks passed (x -89..88, y -118..25 at 2x).
+The exact release PSP executable passed PPSSPP 1.20.4 loading all 100 catalog
+loadouts, inventory/world captures, eight combat classes and passive/walking checks.
+Physical PSP hardware and audible output were not measured.
 
-Implemented: appended save v31 IDs and stock; new catalog/stats;
-level-based NPC selection and preserved named-owner IDs; daily regional 15/25/35/45
-smith budgets; color-preserving painted weapon renderer and authored grip anchors.
-Do not publish until all 100 assets, orientation audits, stock/save tests, regression
-suites, PSP build and PPSSPP checks pass. Latest released game remains v1.0.2.
+EBOOT.PBP: 11,719,088 bytes
+SHA256: 6439e6fd6c963ee7ec1f42269f9dc5d798354e11122c454a9f4a68005ade5623
+Public assets, all uploaded and verified against the qualification hashes:
+EBOOT.PBP, Dust-1.0.3-PSP.zip, Dust-1.0.3-Evidence.zip, SHA256SUMS-1.0.3.txt.
 
-2026-11-12 final validation checkpoint: all 100 packed drawings; 200 held/attack
-review frames. New catalog, 3,200 grip orientations and 7,200 equipped poses passed.
-PSP build and quick PPSSPP boot/combat passed. Two old test assumptions being
-updated for appended weapon IDs and the explicitly revised shop inventory size.
-Full release qualification remains mandatory before publishing.
-
-Final local checks passed: all 45 suites; PSP PBP 11,719,088 bytes, SHA256
-6439e6fd6c963ee7ec1f42269f9dc5d798354e11122c454a9f4a68005ade5623.
-Quick PPSSPP 1.20.4 boot, inventory, real combat and walking passed.
-All 200 held/attack review frames examined, covering all 100 weapons and both
-facings. Full 100-loadout / 8-combat-class PPSSPP release run remains pending.
+Nothing remains to generate, compile or publish for this request.
+The final documentation checkpoint may follow the tested runtime commit on main.
