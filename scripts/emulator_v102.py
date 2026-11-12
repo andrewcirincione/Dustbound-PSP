@@ -49,7 +49,9 @@ Enable = False
     for s in (range(1) if quick else range(ARMOR_SETS:=30)):
         steps += [{'load':f'armor-{s:02d}'},{'expect':{'screen':0},'capture':f'armor-{s:02d}-world'},
                   {'key':'triangle'},{'expect':{'screen':1},'capture':f'armor-{s:02d}-inventory'},{'key':'circle'}]
-    steps += [{'analog':[.55,0],'frames':8},{'capture':'v102-walking'}]
+    steps += [{'load':'armor-combat'},{'expect':{'screen':0}},{'attack':2},{'capture':'v102-heavy-armor-combat'},
+              {'key':'square'},{'wait':5},{'capture':'v102-heavy-armor-passive'},
+              {'analog':[.55,0],'frames':8},{'capture':'v102-walking'}]
     request=RUN/'release-check.json';request.write_text(json.dumps({'id':'armor-1.0.2','steps':steps,'stop':True}))
     sys.argv=[str(Path(bridge.__file__)),str(app),str(request)]
     asyncio.run(bridge.main());result=json.loads(bridge.RESULT.read_text())
@@ -57,7 +59,7 @@ Enable = False
     assert result['state']['version']=='1.0.2',result['state']
     record={k:v for k,v in result.items() if k!='state'}
     record.update(eboot_sha256=hashlib.sha256(eboot.read_bytes()).hexdigest(),emulator='Official PPSSPP 1.20.4',
-                  armor_sets_tested=1 if quick else 30,physical_psp_tested=False)
+                  armor_sets_tested=1 if quick else 30,combat_verified=True,physical_psp_tested=False)
     (OUT/('quick-controller.json' if quick else 'psp-controller.json')).write_text(json.dumps(record,indent=2)+'\n')
     print('PASS: actual release EBOOT booted and reviewed in PPSSPP.',flush=True)
 

@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'dist';EV=ROOT/'evidence/v102'
 def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 subprocess.run(['python3','scripts/validate_pbp.py','EBOOT.PBP','--assets','assets'],cwd=ROOT,check=True)
 eboot=ROOT/'EBOOT.PBP';controller=json.loads((EV/'psp/psp-controller.json').read_text())
-assert controller['ok'] and controller['eboot_sha256']==digest(eboot) and controller['armor_sets_tested']==30
+assert controller['ok'] and controller['eboot_sha256']==digest(eboot) and controller['armor_sets_tested']==30 and controller['combat_verified']
 results=json.loads((ROOT/'build/v1000/native-results.json').read_text())
 assert len(results)>=43 and all(x['status']=='passed' for x in results.values()),'Native qualification failed'
 assert len(list((EV/'review').glob('*.png')))==153

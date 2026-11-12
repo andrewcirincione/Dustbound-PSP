@@ -12,7 +12,7 @@ static void setup(Actor *a,int set){
     a->body=a->race=a->hair=a->beard=a->scar=0;a->skin=2;a->hairColor=0;
     a->gear[0]=SABRE;a->gear[5]=NONE;a->facing=1;a->attackPhase=a->autoattack=a->movedTimer=a->hitFlash=0;
     a->carrying=a->carriedBy=a->target=-1;a->squad=a->active=1;a->dead=a->unconscious=a->sneaking=a->taskKind=0;
-    a->lostMask=a->prostheticMask=0;armor_equip(a,set);
+    a->lostMask=a->prostheticMask=0;for(int l=0;l<LIMBS;l++)a->health[l]=species_health(a);armor_equip(a,set);
 }
 int main(int argc,char **argv){
     const char *root=argc>1?argv[1]:"build/armor-sets/frames";mkdir(root,0777);

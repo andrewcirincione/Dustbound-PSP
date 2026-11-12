@@ -1,9 +1,16 @@
-Dust 1.0.2 distribution checkpoint — 2026-11-12
-Recovered commit 0c4dc14: all 30 generated sets and fitting fixes.
-User approved world distribution and compile/publish.
-Pending: worn mixed raiders, faction/unit/rank outfits, named elites, rare regional shops/caches, pricing, tests, PPSSPP, release.
-Source path: /workspace/scratch/04803d41d4a2/dust-release
-PSPDEV: /workspace/scratch/c30f2d0204c9/psp-toolchain/pspdev
-PPSSPP: /workspace/scratch/c30f2d0204c9/emulator/AppDir
-Checkpoint branch: armor-world-1.0.2
-Use scripts/validate_v1000.py for all native suites.
+Dust 1.0.2 release checkpoint — 2026-11-12
+
+All 30 generated armor sets and fitting corrections are committed remotely.
+World distribution, faction/rank/unit outfits, mixed raiders, legendary owners,
+remote caches, rare regional/capital stock and rarity pricing are implemented.
+
+43/43 local native suites passed. PSP build and embedded-asset validation passed.
+153 production-renderer captures generated; manual review corrected the capture
+fixture so each outfit starts with healthy legs instead of retaining crawl state.
+Full 30-loadout PPSSPP controller review is in progress.
+
+Source/checkpoint branch: armor-world-1.0.2
+Publishing branch: release-1.0.2
+Publication: scripts/publish_v102.py, gated by release-armor.yml qualification.
+Run scripts/validate_v1000.py, review_armor_v102.py, emulator_v102.py,
+then package_v102.py. Do not publish packages if any required check fails.
