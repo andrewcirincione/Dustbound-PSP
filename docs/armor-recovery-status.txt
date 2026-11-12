@@ -1,0 +1,27 @@
+Dust armor recovery — 12 November 2026
+
+Thirty sets were planned in the recovered manifest. Only five source-art sheets
+exist: Cinder Scout, Salt Runner, Caravan Leather, Quarry Jack and Road Warden.
+No new armor-set implementation, new items, world distribution, PSP build or
+release was completed by the earlier pass. Published code remains 1.0.1.
+
+These screenshots are native development previews made through the production
+renderer. The review executable temporarily substitutes the five recovered
+assets and their planned stats in its own memory. It does not alter saved games
+or the release catalog. These are not PPSSPP or physical PSP captures.
+
+The archive includes each complete inventory and world capture at 480x272,
+mirrored passive/combat pose reviews, and the exact recovery-status JSON. The original five art sheets and the
+30-set planning manifest are preserved on the armor-recovery-review branch.
+
+Why arms look unchanged
+The renderer selects a generic cloth sleeve or bare upper arm, plus a generic
+bracer or bare forearm. These choices are based on outfit family and armor
+value. There are no individual outfit arm meshes/sprites. The recovered
+manifest explicitly briefs sleeveless torsos and contains no arm-part assets.
+Torso armor nevertheless has 65% arm-hit coverage in combat; hits beyond this
+coverage bypass that armor. Both arms were checked at covered and uncovered
+rolls for all five preview loadouts.
+
+Original approved shoulder/arm geometry and weapon poses were preserved.
+This is a recovery review, not a completed 30-set release.
