@@ -1,0 +1,51 @@
+name: Publish qualified Dust 1.0.2
+on:
+  push:
+    branches: [publish-armor-1.0.2]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: dust-publish-qualified-1.0.2
+  cancel-in-progress: false
+jobs:
+  publish-qualified:
+    if: github.ref == 'refs/heads/publish-armor-1.0.2'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Dust-1.0.2-tested-release
+          run-id: 43296882016
+          github-token: ${{ github.token }}
+          path: dist
+      - name: Verify qualified artifact and executable provenance
+        run: |
+          cd dist
+          sha256sum -c SHA256SUMS-1.0.2.txt
+          echo '8541467ea85c1708efcf7c0d94b140d1ed2d35af7c0e6b941d6ec851f67ca424  EBOOT.PBP' | sha256sum -c -
+          echo 'e58c2cc79d360f0b1bdb3adf54b3f786b8911e6d5ea7a18f8b33b04171579816  Dust-1.0.2-PSP.zip' | sha256sum -c -
+          echo 'c4bbcffbea9bfb7c87c96da73b73714474102847b2b26bd696ff3cca6f4bf358  Dust-1.0.2-Evidence.zip' | sha256sum -c -
+          python - <<'PY'
+          import json,zipfile,hashlib
+          with zipfile.ZipFile('Dust-1.0.2-Evidence.zip') as z:
+              m=json.loads(z.read('evidence/v102/build-manifest.json'))
+              c=json.loads(z.read('evidence/v102/psp/psp-controller.json'))
+              n=json.loads(z.read('evidence/v102/native-results.json'))
+          assert m['commit']=='9f58267328425310bc295d426ffe6d1739b05948'
+          assert m['emulator_verified'] and m['native_suites_passed']==43
+          assert c['ok'] and c['armor_sets_tested']==30 and c['combat_verified']
+          assert len(n)==43 and all(r['status']=='passed' for r in n.values())
+          assert m['eboot_sha256']==c['eboot_sha256']==hashlib.sha256(open('EBOOT.PBP','rb').read()).hexdigest()
+          print('Verified the exact executable and packages qualified by all 43 suites, 30 PSP loadouts and combat.')
+          PY
+      - name: Publish verified draft by release ID
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DUST_RELEASE_COMMIT: 9f58267328425310bc295d426ffe6d1739b05948
+        run: python scripts/publish_v102.py
