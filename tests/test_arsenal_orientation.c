@@ -59,9 +59,9 @@ int main(void){
   clipRight=480;clipBottom=272;
  }
  int visibleOverBody=0,leadingOcclusions=0;
- for(int n=100;n<120;n++)for(int facing=0;facing<2;facing++){
+ for(int n=100;n<120;n++)for(int facing=0;facing<2;facing++)for(int passive=0;passive<2;passive++){
   Actor a=g.actors[0];a.gear[0]=a.attackWeapon=WEAPON_ITEMS+n;a.gear[1]=armor_set_item(9,0);a.gear[2]=a.gear[5]=NONE;a.race=a.body=a.hair=a.beard=a.scar=0;
-  a.facing=facing;a.active=a.squad=a.autoattack=1;a.attackPhase=a.hitFlash=a.movedTimer=a.unconscious=a.dead=a.taskKind=a.sneaking=0;a.lostMask=a.prostheticMask=0;a.target=a.carrying=a.carriedBy=-1;
+  a.facing=facing;a.active=a.squad=1;a.autoattack=!passive;a.attackPhase=a.hitFlash=a.movedTimer=a.unconscious=a.dead=a.taskKind=a.sneaking=0;a.lostMask=a.prostheticMask=0;a.target=a.carrying=a.carriedBy=-1;
   memset(canvas,0,sizeof(canvas));memset(&probe,0,sizeof(probe));capturedLayer=0;captureLayer=1;
   actor_painted_stance(&a,240,220,3,1,0,0,0);captureLayer=0;assert(capturedLayer==1);memcpy(finalFigure,canvas,sizeof(finalFigure));typeof(probe) pose=probe;
   int headPixels=0;for(int yy=125;yy<139;yy++)for(int xx=230;xx<250;xx++)headPixels+=(beforeWeapon[yy*512+xx]>>24)>240;

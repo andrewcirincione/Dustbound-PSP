@@ -781,11 +781,12 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     int face = a->facing ? 1 : -1, missing = a->lostMask & ~a->prostheticMask;
     float progress = a->attackDuration > 0 ? fmaxf(0, fminf(1, 1 - a->attackClock / a->attackDuration)) : 0;
     float block = a->impactKind == 2 && a->hitFlash > 0 ? pose_ease(a->hitFlash / .27f) : 0;
-    int stowed = a->squad && !a->autoattack && !a->attackPhase && block <= 0 ? a->gear[0] : 0;
+    int shoulderCarry=gear_family(a->gear[0])==84;
+    int stowed = !shoulderCarry && a->squad && !a->autoattack && !a->attackPhase && block <= 0 ? a->gear[0] : 0;
     int mining = mining_pose(a);
     int weapon = mining ? gear_id(12, 0, 0) : a->attackPhase ? a->attackWeapon : stowed ? 0 : a->gear[0];
     int relaxed = !mining && !a->attackPhase && block <= 0 &&
-                  ((a->squad && !a->autoattack) || (!weapon && stance < .2f));
+                  ((a->squad && !a->autoattack && !shoulderCarry) || (!weapon && stance < .2f));
     if (relaxed)
         stance = 0;
     const CombatProfile *profile = combat_profile(weapon);
