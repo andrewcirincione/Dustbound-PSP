@@ -1,5 +1,8 @@
 # 1.0.3 — A hundred weapons
 
+## 1.0.5
+- Raised the greatsword idle/shoulder-rest angle by approximately 11 degrees, with smooth blending into guard/attacks and mirrored facing.
+
 ## 1.0.4
 - Corrected greatsword shoulder-rest depth: body/head/rear arm, then sword, then leading arm.
 - Added actual selected-item pictures to smith/armorer trading screens.

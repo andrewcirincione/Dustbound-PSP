@@ -792,7 +792,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     const CombatProfile *profile = combat_profile(weapon);
     CombatPose rig = combat_pose(weapon, a->attackPhase, progress, variant);
     float blend=a->attackPhase>=2?1:a->attackPhase==1?fmaxf(stance,pose_ease(progress)):stance;
-    rig=pose_mix(profile->idle,rig,blend);
+    rig=pose_mix(combat_idle(weapon),rig,blend);
     if (block > 0) {
         CombatPose parry = profile->guard;
         parry.handX = 7; parry.handY = -26;

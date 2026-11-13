@@ -108,7 +108,12 @@ static inline const CombatProfile *combat_profile(int weapon) {
         return &combatProfiles[SPEAR_PROFILE];
     return &combatProfiles[style < 0 ? WS_SABRE : style];
 }
-static inline CombatPose combat_idle(int weapon) { return combat_profile(weapon)->idle; }
+static inline CombatPose combat_idle(int weapon) {
+    CombatPose idle = combat_profile(weapon)->idle;
+    /* The blade rests on the upper shoulder rather than through its socket. */
+    if (gear_family(weapon) == 84) idle.blade = -2.27f;
+    return idle;
+}
 static inline CombatPose combat_pose(int weapon, int phase, float p, int variant) {
     const CombatProfile *profile = combat_profile(weapon);
     const CombatMove *move = &profile->moves[variant];

@@ -1,0 +1,8 @@
+Dust 1.0.5 — in progress
+User requested a slightly higher greatsword idle angle to rest on the shoulder.
+Raised the greatsword-specific idle blade angle from -2.47 to -2.27 radians;
+renderer uses this adjusted idle pose with the existing eased blend.
+World/inventory shoulder carry and foreground depth retained. Other weapon families
+keep their original profiles; save format stays 32.
+Pending: native visual/contact review, 47 suites, PSP build, screenshots, publication.
+Base main 7967171a873e6e468b83d8aa6b87dc6a616805d9.

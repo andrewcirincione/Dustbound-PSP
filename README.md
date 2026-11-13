@@ -1,8 +1,8 @@
 # Dust — PSP frontier survival RPG
 
-## 1.0.4 — A hundred weapons
+## 1.0.5 — A hundred weapons
 
-120 independently drawn expansion weapons across all 38 types, including 23 greatswords and 12 legendary designs, with strength-based enemy equipment. Version 1.0.4 adds 20 greatswords, correct shoulder-rest layering, and selected-item pictures at smiths and armorers. Smithies offer 15–45 weapon and armor options by settlement importance and refresh at midnight. New primary/support grips and edge/aim orientation are verified on equipped characters.
+120 independently drawn expansion weapons across all 38 types, including 23 greatswords and 12 legendary designs, with strength-based enemy equipment. Version 1.0.4 added 20 greatswords, shoulder-rest layering, and smith item pictures; version 1.0.5 raises the idle greatsword angle to rest on the shoulder. Smithies offer 15–45 weapon and armor options by settlement importance and refresh at midnight. New primary/support grips and edge/aim orientation are verified on equipped characters.
 
 [Weapon distribution and validation](docs/ARSENAL_DISTRIBUTION.md) · [Armor expansion](docs/ARMOR_DISTRIBUTION.md)
 
@@ -61,7 +61,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dust-1.0.4-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v31 reads earlier expeditions, including v30. Existing equipment, training and town control carry over.
+Extract `Dust-1.0.5-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v31 reads earlier expeditions, including v30. Existing equipment, training and town control carry over.
 
 ## Controls
 

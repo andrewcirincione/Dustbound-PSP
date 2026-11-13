@@ -1,9 +1,5 @@
-# Dust 1.0.4 — 20 new greatswords
+# Dust 1.0.5 — Greatsword shoulder alignment
 
-Adds 20 distinct generated greatsword models: four salvaged, four field, four military, four veteran and four legendary constructions. Blade shapes, guards, pommels, handle materials, stats, weight and handling vary. Each has a clear two-handed grip and calibrated main/support hand anchors. Greatswords rest on the shoulder in passive world carry and menu previews. Shoulder-rest swords draw in front of the body, head and rear arm, beneath the leading arm. The previous greatswords remain, giving 23 greatswords in the expanded catalog.
+Raises the greatsword idle angle by approximately 11 degrees so the blade rests on top of the shoulder. Both world carry and inventory previews use the adjustment, mirrored for the opposite facing. The pose blends smoothly into the existing guard and attack motions. The sword remains in front of the body and behind the leading arm. Other weapon families retain their existing idle angles.
 
-Living enemies and new encounters use strength-appropriate equipment. Smiths and armorers show a standalone picture of the selected weapon or armor piece. Daily smith refreshes include at least one new greatsword, or two in fortresses and capitals, within the 15–45 combined weapon/armor stock budget. Highest tiers remain restricted by settlement importance; legendary weapons stay rare. Existing v31 saves preserve acquired weapons, inventory, money, progression and depleted stock; migration replaces only eligible existing offers.
-
-Qualification includes the complete native regression suite, 120 distinct silhouettes, both facings, equipped anatomy and support grips, production-renderer reviews, a PSP build and all 20 new greatswords loaded/equipped and used in real PPSSPP combat. Physical PSP hardware and audible output are not measured.
-
-Extract the PSP archive to the memory stick root, retaining PSP/GAME/DUSTBOUND/EBOOT.PBP. Existing save files are not bundled or overwritten.
+The 120-weapon expansion, smith item pictures, daily 15–45 equipment stock and save format 32 remain supported. Qualification includes all 47 regression suites, all 20 recent greatswords in native shoulder-rest/grip/depth reviews, plus actual PSP captures for four blade shapes in both facings, real combat transitions and smith weapon/armor previews. Physical PSP hardware and audible output are not measured.
