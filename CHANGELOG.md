@@ -1,5 +1,8 @@
 # 1.0.3 — A hundred weapons
 
+## 1.0.6
+- Slightly shorter, slimmer blades on the twenty longer expansion greatswords. Three compact designs retain their size. Grip spacing, shoulder-rest angle, combat stats and save format remain unchanged.
+
 ## 1.0.5
 - Raised the greatsword idle/shoulder-rest angle by approximately 11 degrees, with smooth blending into guard/attacks and mirrored facing.
 

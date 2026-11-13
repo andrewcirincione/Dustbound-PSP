@@ -1,5 +1,9 @@
-# Dust 1.0.5 — Greatsword shoulder alignment
+# Dust 1.0.6 — Greatsword proportions
 
-Raises the greatsword idle angle by approximately 11 degrees so the blade rests on top of the shoulder. Both world carry and inventory previews use the adjustment, mirrored for the opposite facing. The pose blends smoothly into the existing guard and attack motions. The sword remains in front of the body and behind the leading arm. Other weapon families retain their existing idle angles.
+The twenty longer expansion greatswords have slightly shorter and slimmer blades, so they fit the character scale better. The blade beyond the grip zone is 14% shorter and 6% slimmer (roughly 10–12% less overall length, depending on the model). The compact Breaker-Yard Slab, Fen Bastard Sword and Quarry Splitter keep their existing size.
 
-The 120-weapon expansion, smith item pictures, daily 15–45 equipment stock and save format 32 remain supported. Qualification includes all 47 regression suites, all 20 recent greatswords in native shoulder-rest/grip/depth reviews, plus actual PSP captures for four blade shapes in both facings, real combat transitions and smith weapon/armor previews. Physical PSP hardware and audible output are not measured.
+Both hand positions, the raised shoulder-rest angle and the foreground blade/leading-arm layering are preserved. Combat stats, item IDs, shop stock and save format 32 are unchanged.
+
+Qualification: all 47 native regression suites, 260 production-renderer review frames, and actual PPSSPP 1.20.4 equipment/combat checks for four representative greatswords in both facings, plus weapon and armor shop previews. No physical PSP hardware test.
+
+Install the EBOOT in PSP/GAME/DUSTBOUND or extract the PSP zip at the memory-stick root. Keep your existing save files.

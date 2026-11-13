@@ -1,0 +1,5 @@
+Dust 1.0.6 — in progress
+User requested a modest reduction to oversized greatswords.
+Twenty longer expansion greatsword models use .86 blade length / .94 blade width beyond the fixed grip zone. Compact indices 100,101,103 remain unchanged. Grips, shoulder angle, stats, saves and other weapon families are unchanged.
+Pending native QC, PSP screenshots, compile and publication.
+Base main 06e60b40017691f83a8ae588aec757d9eaa2dba2.
