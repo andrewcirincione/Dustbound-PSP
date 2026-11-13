@@ -1,5 +1,31 @@
-Dust 1.0.6 — in progress
+Dust 1.0.6 — COMPLETED AND PUBLISHED
+
 User requested a modest reduction to oversized greatswords.
-Twenty longer expansion greatsword models use .86 blade length / .94 blade width beyond the fixed grip zone. Compact indices 100,101,103 remain unchanged. Grips, shoulder angle, stats, saves and other weapon families are unchanged.
-Pending native QC, PSP screenshots, compile and publication.
-Base main 06e60b40017691f83a8ae588aec757d9eaa2dba2.
+Twenty longer expansion greatswords use .86 longitudinal blade size and .94
+blade width beyond the fixed grip zone: approximately 10–12% less overall length.
+Compact indices 100 (Breaker-Yard Slab), 101 (Fen Bastard Sword), and 103
+(Quarry Splitter) retain their original size. Both palm positions, the raised
+shoulder-rest angle and blade/leading-arm depth remain aligned.
+Combat stats, item IDs, other weapon families, smith stock and save format 32
+are unchanged.
+
+Validation completed:
+- All 47 native regression suites passed locally and in GitHub Actions.
+- 260 production-renderer review frames generated; long Zweihander and legendary
+  shoulder-rest views checked in both facings.
+- Four representative greatswords tested in both facings in actual PPSSPP 1.20.4,
+  including eight equipment/combat cases and smith weapon/armor previews.
+- Local PSP run passed idle, combat, both facings and both smith preview types.
+- Actual PSP inventory captures visually compared against 1.0.5.
+- Public release hashes match qualifying workflow package hashes; public EBOOT
+  matches the locally built/emulated binary. No physical PSP hardware test.
+
+Release: https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v1.0.6
+Qualified source/tag: b9f9ff1e694567ac63c63b043ac9cb20df4c9cb3
+Workflow: https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/43337469202
+Job: 131597193944 (success)
+EBOOT.PBP: 11,778,424 bytes
+SHA256: 8363ff8d9e9322fe3bb15088f3cbacd8d088564f2546c08b238902bc0b037800
+PSP ZIP SHA256: ec5c5ceca0a47d9b9db021038d4cf61dc36351afde933ee90fc3858a0c81400b
+Evidence ZIP SHA256: 31cad376fb02a9eece03f94e435972d769592bc234e6ae6abcfb97290dfe2e65
+Screenshot comparison: evidence/v106/greatsword-size-comparison.png
