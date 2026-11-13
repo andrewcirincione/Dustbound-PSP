@@ -1,8 +1,28 @@
-Dust 1.0.5 — in progress
+Dust 1.0.5 — COMPLETED AND PUBLISHED
+
 User requested a slightly higher greatsword idle angle to rest on the shoulder.
-Raised the greatsword-specific idle blade angle from -2.47 to -2.27 radians;
-renderer uses this adjusted idle pose with the existing eased blend.
-World/inventory shoulder carry and foreground depth retained. Other weapon families
-keep their original profiles; save format stays 32.
-Pending: native visual/contact review, 47 suites, PSP build, screenshots, publication.
-Base main 7967171a873e6e468b83d8aa6b87dc6a616805d9.
+Raised the greatsword-specific idle blade angle from -2.47 to -2.27 radians
+(11.46 degrees steeper); renderer uses this adjusted idle pose with its eased blend.
+World/inventory shoulder carry and foreground depth retained: blade above the
+body/head/rear arm, below the leading arm. Other weapon families retain their
+original profiles. Save format remains 32.
+
+Validation completed:
+- All 47 native regression suites passed in GitHub Actions.
+- 260 production-renderer review frames generated.
+- Four representative greatswords tested in both facings in actual PPSSPP 1.20.4,
+  including eight equipment/combat cases and smith weapon/armor previews.
+- Local PSP capture run passed both facings, combat and smith previews.
+- Actual PSP screenshots visually reviewed against 1.0.4; higher shoulder angle
+  and leading-arm overlap retained. No physical PSP hardware test performed.
+- Public release asset digests match qualified workflow package digests;
+  published EBOOT matches the locally built and emulated binary.
+
+Release: https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v1.0.5
+Qualified source/tag: 20caa6e18b7741f02e7874080f4939fb87c26cd1
+Workflow: https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/43334629910
+Job: 131587582633 (success)
+EBOOT.PBP: 11,778,016 bytes
+SHA256: 430bde10f64ded3c0092ec2cfb1d448ab43b743aac7594c1272d8385925c261d
+PSP ZIP SHA256: 391ae139ef558055295a77cf2a0a7b9688bee426955a4ba52184c218361b7b89
+Evidence ZIP SHA256: a6d4d85178331ef7417a4b04b69a969baf37a2105c2dd6755ad8861c6e421b3e
