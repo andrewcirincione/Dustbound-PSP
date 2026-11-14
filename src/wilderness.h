@@ -64,6 +64,7 @@ int wilderness_validate(const Game *s){
 }
 static int wilderness_guard_group(int k){int i=k-48;return i>=0&&i<WILDERNESS_SITES&&g.wilderness.guardSerial[i]>0&&g.wilderness.guardSerial[i]==P.groups[k].serial;}
 static void wilderness_guards(void){
+ if(g.expedition.version)return;
  for(int i=0;i<WILDERNESS_SITES;i++){
   int b=g.wilderness.building[i]-1,k=48+i;
   if(b<0||i%4==1||g.wilderness.guardSerial[i]||P.groups[k].spawned||observers(P.groups[k].x,P.groups[k].y)<100||warrant_preserve(k))continue;

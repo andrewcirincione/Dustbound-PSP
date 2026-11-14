@@ -101,6 +101,7 @@ void population_prune_corpses(void) {
         Actor*a=&g.actors[n];
         if(!a->active||!a->dead){g.plans.corpseSince[n]=0;continue;}
         if(!g.plans.corpseSince[n])g.plans.corpseSince[n]=fmaxf(.001f,g.time);
+        if(expedition_owns(n))continue;
         if(a->squad||a->carriedBy>=0||a->carrying>=0||a->bountyReward>0||
            g.time-g.plans.corpseSince[n]<180||observers(a->x,a->y)<32)continue;
         int own=population_owned(n)-1;
@@ -131,6 +132,7 @@ static int vendor_member(const WorldEvent *e) {
     return -1;
 }
 int population_vendor(int n) {
+    if(n>=0&&n<g.actorCount&&expedition_owns(n)&&g.actors[n].kind==TRADER&&!g.actors[n].dead)return 1;
     if (n < 0 || n >= g.actorCount)
         return 0;
     int k = population_owned(n) - 1;
@@ -313,7 +315,7 @@ static int snapshot_pinned(int n){
 }
 int population_store(int k){
     if(k<0||k>=POP_GROUPS)return 0;WorldEvent*e=&P.groups[k];PopulationState*m=&P.state[k];if(!e->spawned)return 1;
-    for(int i=0;i<e->count;i++)if(!(m->detached&(1<<i))){int n=e->members[i];if(n<0||snapshot_pinned(n)||observers(g.actors[n].x,g.actors[n].y)<80)return 0;}
+    for(int i=0;i<e->count;i++)if(!(m->detached&(1<<i))){int n=e->members[i];if(n<0||snapshot_pinned(n))return 0;int same=0;for(int q=0;q<g.actorCount;q++)if(g.actors[q].squad&&g.actors[q].active&&!g.actors[q].dead&&depth_room(&g.actors[q])==g.depth.actors[n].room&&distance(g.actors[q].x,g.actors[q].y,g.actors[n].x,g.actors[n].y)<80)same=1;if(same)return 0;}
     for(int i=0;i<e->count;i++)if(!(m->detached&(1<<i))){int n=e->members[i];e->reserve[i]=g.actors[n];e->reserve[i].carrying=e->reserve[i].carriedBy=-1;e->reserveDepth[i]=g.depth.actors[n];e->reserveAnger[i]=g.living.anger[n];social_save(k,i,n);release_slot(n);e->members[i]=-1;}
     e->stored=1;e->spawned=0;return 1;
 }
@@ -648,13 +650,13 @@ static void refresh_encounters(const float *near) {
 void population_tick(float dt){
     if(!P.version)return;if(!g.life.version)life_init();P.pulse+=dt;P.offlinePulse+=dt;if(P.pulse<1)return;float step=fminf(5,P.pulse);P.pulse=0;
     /* Unload before allocating; all members of all player squads keep their area alive. */
-    for(int k=0;k<POP_GROUPS;k++){WorldEvent*e=&P.groups[k];detach_followers(k);if(e->spawned&&observers(e->x,e->y)>95&&(!population_object_count(k)||observers(P.state[k].siteX,P.state[k].siteY)>80))population_store(k);}
+    for(int k=0;k<POP_GROUPS;k++){WorldEvent*e=&P.groups[k];detach_followers(k);if(e->spawned&&(actor_inside(&g.actors[g.selected])||observers(e->x,e->y)>95)&&(!population_object_count(k)||observers(P.state[k].siteX,P.state[k].siteY)>80))population_store(k);}
     int order[POP_GROUPS];float near[POP_GROUPS];
     for(int k=0;k<POP_GROUPS;k++){order[k]=k;near[k]=observers(P.groups[k].x,P.groups[k].y);
         if(population_object_count(k))near[k]=fminf(near[k],observers(P.state[k].siteX,P.state[k].siteY));
         for(int i=0;i<P.groups[k].count;i++){Actor*a=member(k,i);if(a&&(a->dead||a->unconscious>0))near[k]=fminf(near[k],observers(a->x,a->y));}}
     for(int i=1;i<POP_GROUPS;i++){int k=order[i],j=i;while(j>0&&near[order[j-1]]>near[k]){order[j]=order[j-1];j--;}order[j]=k;}
-    for(int j=0;j<POP_GROUPS;j++){int k=order[j];if(near[k]<55){if(wilderness_guard_group(k)){int room=P.groups[k].reserveDepth[0].room,inside=0;for(int n=0;n<g.actorCount;n++)if(g.actors[n].squad&&depth_room(&g.actors[n])==room)inside=1;if(!inside)continue;}population_materialize(k);if(near[k]<14)field_observe(k);}}
+    for(int j=0;j<POP_GROUPS;j++){int k=order[j];if(near[k]<55){if(actor_inside(&g.actors[g.selected])&&!P.groups[k].reserveDepth[0].room){int outside=0;for(int n=0;n<g.actorCount;n++)if(g.actors[n].squad&&!actor_inside(&g.actors[n])&&distance(g.actors[n].x,g.actors[n].y,P.groups[k].x,P.groups[k].y)<55)outside=1;if(!outside)continue;}if(wilderness_guard_group(k)){int room=P.groups[k].reserveDepth[0].room,inside=0;for(int n=0;n<g.actorCount;n++)if(g.actors[n].squad&&depth_room(&g.actors[n])==room)inside=1;if(!inside)continue;}population_materialize(k);if(near[k]<14)field_observe(k);}}
     for(int k=0;k<POP_GROUPS;k++){WorldEvent*e=&P.groups[k];physiology(k,step);if(!wilderness_guard_group(k))group_behavior(k,step);forage_offline(k,step);
         if(legion_group(k)&&P.state[k].phase==POP_RUINS&&e->presence>DAY_SECONDS*4&&
            !e->spawned&&near[k]>120)population_generate(k,POP_ARMY);

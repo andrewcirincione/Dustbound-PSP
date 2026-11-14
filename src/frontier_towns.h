@@ -38,6 +38,7 @@ static const RuinedVillage ruins[RUIN_VILLAGES] = {
     {"Pale Hollow ruins", "Hollow raider", 979, 1175, {{2,-4},{-5,-1},{1,4}}, {SHOP,BAR,HOUSE}, 2, 11},
 };
 int ruined_building(int id) {
+    if(expedition_large(id)&&expedition_inhabited(expedition_site(id)))return 0;
     return id >= 0 && id < g.buildingCount && g.frontier.variant[id] >= BUILD_RUIN_FIRST;
 }
 
@@ -48,6 +49,8 @@ int building_town(int id) {
     return town_near(b->x, b->y, 24);
 }
 const char *building_name(int id) {
+    if(expedition_large(id))return expedition_name(expedition_site(id));
+    if(id>=0&&id<g.buildingCount&&g.frontier.variant[id]>=BUILD_EXP_FIRST&&g.frontier.variant[id]<=BUILD_EXP_LAST)return g.buildings[id].type==WINDMILL?"Old windpump":g.buildings[id].type==CAMPFIRE?"Outpost fire":"Water cistern";
     const Building *b = &g.buildings[id];
     int t = building_town(id), v = g.frontier.variant[id];
     const TownDesign *plan = town_design(t);
@@ -85,6 +88,10 @@ const char *building_name(int id) {
     return labels[b->type];
 }
 int building_sprite(int id) {
+    int em=expedition_model(id);
+    if(em>=0){static const int old[]={ART_REED_HOME,ART_SNOW_LODGE,ART_ASH_HOME,ART_STOCKADE,ART_DUSTWARD,ART_ROAD_INN};return em<6?EXPEDITION_ART_FIRST+em:old[(em-6)%6];}
+    if(id>=0&&id<g.buildingCount&&g.frontier.variant[id]>=BUILD_EXP_FIRST&&g.frontier.variant[id]<=BUILD_EXP_LAST)return g.buildings[id].type==WINDMILL?24:g.buildings[id].type==CAMPFIRE?27:25;
+
     const Building *b = &g.buildings[id];
     int town = building_town(id), style = town < 0 ? -1 : civil_style(town);
     const TownDesign *plan = town_design(town);
@@ -144,6 +151,7 @@ int building_sprite(int id) {
     }
 }
 #include "structure_models.h"
+#include "expedition_models.h"
 
 static int wallCacheCount = -1;
 static unsigned char wallAxes[MAX_BUILDINGS];
@@ -194,6 +202,7 @@ float building_scale(int id) {
 
 void building_footprint(int id, float *w, float *d, int *height) {
     int sprite = building_sprite(id), model = structure_art_index(sprite);
+    if(sprite>=EXPEDITION_ART_FIRST&&sprite<EXPEDITION_ART_FIRST+6){const BuildingModel*m=&expeditionModels[sprite-EXPEDITION_ART_FIRST];*w=m->w;*d=m->d;*height=m->height;return;}
     if (model >= 0) {
         float scale = sprite_scale(sprite);
         *w = structureModels[model].w * scale;
@@ -213,7 +222,7 @@ void building_footprint(int id, float *w, float *d, int *height) {
 int structure_blocks(int id, float x, float y, float padding) {
     const Building *b = &g.buildings[id];
     float dx = x - b->x, dy = y - b->y;
-    if (fabsf(dx) >= 2.3f || fabsf(dy) >= 2.3f)
+    if (fabsf(dx) >= 8.f || fabsf(dy) >= 8.f)
         return 0;
     if (b->type == WALL) {
         WallRun span = building_wall_run(id);
@@ -229,6 +238,7 @@ int structure_blocks(int id, float x, float y, float padding) {
 }
 static void door_offset(int id, float *x, float *y, int *east) {
     int sprite = building_sprite(id), model = structure_art_index(sprite);
+    if(sprite>=EXPEDITION_ART_FIRST&&sprite<EXPEDITION_ART_FIRST+6){const BuildingModel*m=&expeditionModels[sprite-EXPEDITION_ART_FIRST];*x=m->doorX;*y=m->doorY;*east=m->eastDoor;return;}
     if (model < 0) {
         *x = 0;
         *y = .85f;

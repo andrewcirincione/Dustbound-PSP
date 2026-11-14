@@ -395,7 +395,7 @@ void init_expansion(void) {
 static Actor *road_vendor(void) {
     int n = ui.roadTrader - 1;
     if (!population_vendor(n) || !conscious(&g.actors[n]) ||
-        depth_distance(&g.actors[g.selected], &g.actors[n]) > TALK_REACH)
+        depth_distance(&g.actors[g.selected], &g.actors[n]) > (expedition_owns(n)?3.0f:TALK_REACH))
         return NULL;
     return &g.actors[n];
 }

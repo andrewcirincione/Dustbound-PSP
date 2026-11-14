@@ -2,13 +2,18 @@
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
 #define GAME_NAME "Dust"
-#define VERSION "1.1.0"
+#define VERSION "1.2.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
 #define TALK_REACH 1.6f
 #define MAX_ACTORS 192
-#define MAX_BUILDINGS 448
+#define MAX_BUILDINGS 640
+#define EXP_SITES 46
+#define EXP_ADDITIONS 30
+#define EXP_FLOORS 3
+#define EXP_GUARDS 4
+#define EXP_CHESTS 4
 #define RUIN_VILLAGES 4
 #define WILDERNESS_SITES 16
 #define MAX_NODES 640
@@ -323,6 +328,7 @@ typedef struct {
     float x, y, seen;
 } WarrantView;
 typedef struct { float x, y; unsigned short room; unsigned char floor; } DropLocation;
+typedef struct { int initialized,count,stockDay,live[EXP_GUARDS]; Actor actor[EXP_GUARDS]; DepthActor depth[EXP_GUARDS]; } ExpeditionCrew;
 typedef struct {
     uint32_t seed, rng;
     float time, dayTime, raidTimer, autosave;
@@ -431,22 +437,31 @@ typedef struct {
         float quiet, danger, cooldown;
         int sequence;
     } wilderness;
+    /* v34: widened building arrays, expanded exploration and persistent crews. */
+    struct {
+        int version,primary[EXP_ADDITIONS];
+        unsigned discovered[2];
+        unsigned char tier[EXP_SITES];
+        Stack loot[EXP_SITES][EXP_FLOORS][EXP_CHESTS][3];
+        ExpeditionCrew crew[EXP_SITES][EXP_FLOORS];
+    } expedition;
 } Game;
 void wilderness_init(void);
 int wilderness_site(int building);
 const char *wilderness_name(int site);
 const char *wilderness_record(int site);
 int wilderness_validate(const Game *state);
-enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
-enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH, ROOM_STAIRS, ROOM_RESEARCH, ROOM_RUIN_RECORD };
-enum { ROOM_PROPS = 18 };
+enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY, CHEST_EXPEDITION };
+enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH, ROOM_STAIRS, ROOM_RESEARCH, ROOM_RUIN_RECORD, ROOM_EXP_UP, ROOM_EXP_DOWN, ROOM_EXP_CACHE, ROOM_EXP_TRADE };
+enum { ROOM_PROPS = 64 };
 #define DOOR_REACH 1.65f
 #define CELL_Y 3.65f
 #define CELL_HINGE_X 2.65f
 #define CELL_LATCH_X 4.35f
 enum { BUILD_NORMAL, BUILD_ARMORER, BUILD_LODGE,
        BUILD_RUIN_FIRST, BUILD_RUIN_LAST = BUILD_RUIN_FIRST + RUIN_VILLAGES - 1,
-       BUILD_WILD_FIRST, BUILD_WILD_LAST = BUILD_WILD_FIRST + WILDERNESS_SITES - 1 };
+       BUILD_WILD_FIRST, BUILD_WILD_LAST = BUILD_WILD_FIRST + WILDERNESS_SITES - 1,
+       BUILD_EXP_FIRST, BUILD_EXP_LAST = BUILD_EXP_FIRST + EXP_ADDITIONS - 1 };
 enum { TOWN_LOCAL, TOWN_HUB, TOWN_FORTRESS, TOWN_CAPITAL };
 enum { TRADE_GENERAL, TRADE_SMITH, TRADE_INN, TRADE_ARMORER, TRADE_APOTHECARY };
 typedef struct {
@@ -972,4 +987,33 @@ int field_aid(int actor,float dt);
 int combat_slot_available(int attacker,int target);
 void recovery_hint(char *out,int size);
 
+
+void expedition_init(void);
+void expedition_tick(float dt);
+int expedition_site(int building);
+int expedition_large(int building);
+const char *expedition_name(int site);
+const char *expedition_record(int site);
+int expedition_model(int building);
+int expedition_inhabited(int site);
+int expedition_levels(int building);
+float expedition_width(int building);
+float expedition_height(int building);
+int expedition_bounds_valid(const Game *state,int room,float x,float y);
+int expedition_floor_valid(const Game *state,int room,int floor);
+int expedition_validate(const Game *state);
+int expedition_props(int building,int floor,InteriorProp *props);
+int expedition_clear_sight(int building,int floor,float x,float y,float tx,float ty);
+int expedition_walkable(int building,int floor,float x,float y);
+int expedition_walls(int building,int floor,float *lines,int max);
+void expedition_stairs(Actor *actor,int up);
+int expedition_cache_index(int building,int floor,float x,float y);
+Stack *expedition_cache(int encoded);
+int expedition_owns(int actor);
+int expedition_stair_point(int building,int floor,int up,float *x,float *y);
+int expedition_cache_owner(int encoded);
+const char *expedition_floor_name(int site,int floor);
+int expedition_robot(const Actor *actor);
+int expedition_actor_tick(int actor,float dt);
+void expedition_services(int site);
 #endif

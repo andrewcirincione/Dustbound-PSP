@@ -862,6 +862,7 @@ void game_new(uint32_t seed, int scenario) {
     arsenal_world_init();
     greatsword_world_init();
     wilderness_init();
+    expedition_init();
     find_context();
 }
 
@@ -2336,6 +2337,7 @@ void simulate(float dt) {
     tick_expansion(dt);
     custody_tick(dt);
     population_tick(dt);
+    expedition_tick(dt);
     placement_tick(dt);
     ruined_village_guards(1);
     living_tick(dt);
@@ -2377,6 +2379,7 @@ void simulate(float dt) {
             put_down(a);
         if (!a->active || a->dead)
             continue;
+        if(expedition_robot(a)>=0){a->hunger=a->blood=100;a->bleed=0;}
         int ready = conscious(a) && (a->attackPhase || (a->autoattack && ((a->squad && gear_family(a->gear[0]) == 84) || (a->target >= 0 &&
             a->target < g.actorCount && conscious(&g.actors[a->target]) &&
             depth_distance(a,&g.actors[a->target]) < 10))));
@@ -2669,7 +2672,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 33, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
+enum { SAVE_VERSION = 34, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -2728,7 +2731,7 @@ static int validate_game(const Game *t) {
             if (t->charges[n][f] & ~CRIME_MASK)
                 return 0;
     for (int i = 0; i < t->buildingCount; i++)
-        if (t->townLife.chestRefresh[i] < 0 || t->frontier.variant[i] > BUILD_WILD_LAST)
+        if (t->townLife.chestRefresh[i] < 0 || t->frontier.variant[i] > BUILD_EXP_LAST)
             return 0;
     for (int i = 0; i < RUIN_VILLAGES; i++) {
         int b = t->ruinedVillage[i];
@@ -2777,8 +2780,7 @@ static int validate_game(const Game *t) {
         return 0;
     if (t->interiorBuilding && (t->interiorActor != t->selected ||
                                 !building_has_interior(t->buildings[t->interiorBuilding - 1].type) ||
-                                !isfinite(t->interiorX) || !isfinite(t->interiorY) || t->interiorX < .4f ||
-                                t->interiorY < .4f || t->interiorX > 6.6f || t->interiorY > 6.6f))
+                                !expedition_bounds_valid(t,t->interiorBuilding,t->interiorX,t->interiorY)))
         return 0;
     if (!isfinite(t->time) || !isfinite(t->dayTime) || t->weather < 0 || t->weather > 4 || t->day < 1 ||
         t->money < 0)
@@ -2834,16 +2836,16 @@ static int validate_game(const Game *t) {
     for (int i = 0; i < PROJECTILES; i++) {
         int room = t->depth.shots[i].room;
         if (t->depth.shots[i].active && t->shotFloor[i] &&
-            (t->shotFloor[i] > 1 || room < 1 || room > t->buildingCount || t->buildings[room - 1].type != BAR))
+            (!expedition_floor_valid(t,room,t->shotFloor[i])))
             return 0;
     }
     for (int i = 0; i < t->nodeCount; i++) {
         if (t->nodes[i].type != NODE_DROPPED)
             continue;
         const DropLocation *d = &t->drops[i];
-        if (d->room > t->buildingCount || d->floor > 1 || (!d->room && d->floor) ||
-            (d->floor && t->buildings[d->room - 1].type != BAR) ||
-            !isfinite(d->x) || !isfinite(d->y) || (d->room && (d->x < .4f || d->x > 6.6f || d->y < .4f || d->y > 6.6f)) ||
+        if (d->room > t->buildingCount || !expedition_floor_valid(t,d->room,d->floor) || (!d->room && d->floor) ||
+            0 ||
+            !isfinite(d->x) || !isfinite(d->y) || (d->room && !expedition_bounds_valid(t,d->room,d->x,d->y)) ||
             t->nodes[i].owner < 0 || t->nodes[i].owner >= FACTIONS ||
             t->nodes[i].qty <= 0 || t->nodes[i].qty > 999 || !t->nodes[i].item || t->nodes[i].locked ||
             t->nodes[i].remaining > 1)
@@ -2853,7 +2855,7 @@ static int validate_game(const Game *t) {
         const Actor *a = &t->actors[i];
         if (t->innFloor[i]) {
             int room = t->interiorBuilding && t->interiorActor == i ? t->interiorBuilding : t->depth.actors[i].room;
-            if (t->innFloor[i] > 1 || room < 1 || room > t->buildingCount || t->buildings[room - 1].type != BAR)
+            if (!expedition_floor_valid(t,room,t->innFloor[i]))
                 return 0;
         }
         if (!isfinite(a->x) || !isfinite(a->y) || a->x < 0 || a->x > WORLD || a->y < 0 || a->y > WORLD)
@@ -2886,7 +2888,7 @@ static int validate_game(const Game *t) {
     if(t->trails.version<0||t->trails.version>1||t->trails.seen<0||t->trails.seen>63||t->trails.omit<0||t->trails.omit>0xffffff)return 0;
     for(int k=0;k<6;k++){int b=t->trails.bed[k];if(b<0||b>t->buildingCount||(b&&t->buildings[b-1].type!=BED)||(!t->trails.version&&b))return 0;}
     if(!t->trails.version&&(t->trails.seen||t->trails.omit))return 0;
-    return wilderness_validate(t) && field_notes_valid(t) && depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t) && population_validate(t) && life_validate(t) && war_validate(t);
+    return expedition_validate(t) && wilderness_validate(t) && field_notes_valid(t) && depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t) && population_validate(t) && life_validate(t) && war_validate(t);
 }
 static int migrate_legacy(const LegacyGame *old) {
     if (old->actorCount < 1 || old->actorCount > 80 || old->buildingCount < 0 || old->buildingCount > 100 ||
@@ -2998,7 +3000,7 @@ static int save_shape(uint32_t version,uint32_t size) {
         if (version >= 24) buildingBytes += sizeof(g.frontier.variant[0]);
         if (version >= 26) buildingBytes += sizeof(g.homes.property[0]) + sizeof(g.homes.furniture[0]);
         size_t expansion = (MAX_BUILDINGS - V27_BUILDINGS) * buildingBytes;
-        if (version >= 24) expansion += sizeof(g.frontier) - V28_FRONTIER_BYTES;
+        if (version >= 24) expansion += sizeof(g.frontier) - (MAX_BUILDINGS-448) - V28_FRONTIER_BYTES;
         if (version <= 24) {
             const size_t groupSize = sizeof(g.population.groups[0]) + sizeof(g.population.state[0]) +
                 sizeof(g.population.social[0]) + sizeof(g.life.groups[0]) + sizeof(g.fieldNotes.group[0]);
@@ -3006,7 +3008,15 @@ static int save_shape(uint32_t version,uint32_t size) {
         }
         return size == ends[version - 17] - expansion;
     }
-    return (version == 28 && size == offsetof(Game, plans) - (sizeof(g.frontier) - V28_FRONTIER_BYTES)) || (version==29 && size==offsetof(Game,armor)) || (version==30 && size==offsetof(Game,arsenal)) || (version==31 && size==offsetof(Game,greatswords)) || (version==32 && size==offsetof(Game,wilderness)) || (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    if(version>=28&&version<=33){
+        size_t per=sizeof(g.buildings[0])+sizeof(g.depth.buildings[0])+sizeof(g.townLife.chestRefresh[0])+sizeof(g.field.rolls[0])+sizeof(g.frontier.variant[0])+sizeof(g.homes.property[0])+sizeof(g.homes.furniture[0]);
+        if(version>=29)per+=sizeof(g.plans.furniture[0])+sizeof(g.plans.x[0])+sizeof(g.plans.y[0])+sizeof(g.plans.campLastNear[0]);
+        const size_t end[]={offsetof(Game,plans),offsetof(Game,armor),offsetof(Game,arsenal),offsetof(Game,greatswords),offsetof(Game,wilderness),offsetof(Game,expedition)};
+        size_t extra=(MAX_BUILDINGS-448)*per;
+        if(version==28)extra+=sizeof(g.frontier)-(MAX_BUILDINGS-448)-V28_FRONTIER_BYTES;
+        return size==end[version-28]-extra;
+    }
+    return (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -3030,15 +3040,14 @@ static void read_save_array(SaveReader *reader, void *array, size_t oldBytes, si
 }
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if (version == SAVE_VERSION || version == 32 || version == 31 || version == 30 || version == 29) memcpy(out, data, size);
+    if (version == SAVE_VERSION) memcpy(out, data, size);
     else {
         SaveReader reader = {data, (unsigned char *)out, size};
 #define WIDEN(field, count) read_save_array(&reader, out->field, (count) * sizeof(out->field[0]), sizeof(out->field))
         if (version >= 17) {
-            if (version < 28) {
-                WIDEN(buildings, V27_BUILDINGS);
-                WIDEN(depth.buildings, V27_BUILDINGS);
-            }
+            int buildings=version<28?V27_BUILDINGS:448;
+            WIDEN(buildings,buildings);
+            WIDEN(depth.buildings,buildings);
             if (version <= 24) {
                 WIDEN(population.groups, WAR_POP_GROUPS);
                 WIDEN(population.state, WAR_POP_GROUPS);
@@ -3046,26 +3055,32 @@ static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t si
                 WIDEN(life.groups, WAR_POP_GROUPS);
                 WIDEN(fieldNotes.group, WAR_POP_GROUPS);
             }
-            if (version >= 21 && version < 28) WIDEN(townLife.chestRefresh, V27_BUILDINGS);
-            if (version >= 22 && version < 28) WIDEN(field.rolls, V27_BUILDINGS);
+            if (version >= 21) WIDEN(townLife.chestRefresh, buildings);
+            if (version >= 22) WIDEN(field.rolls, buildings);
             if (version >= 24) {
-                if (version < 28) WIDEN(frontier.variant, V27_BUILDINGS);
+                WIDEN(frontier.variant, buildings);
+                if(version<=28){
                 for (int t=0;t<TOWNS;t++)
                     read_save_array(&reader,out->frontier.stock[t],(V28_ITEMS-V23_ITEMS)*sizeof(int),sizeof(out->frontier.stock[t]));
                 for (int t=0;t<TOWNS;t++)
                     read_save_array(&reader,out->frontier.venue[t],V28_ITEMS,sizeof(out->frontier.venue[t]));
                 read_save_span(&reader,(unsigned char *)out->frontier.knownLodges+sizeof(out->frontier.knownLodges));
-                size_t oldEnd = offsetof(Game,frontier.knownLodges)+sizeof(out->frontier.knownLodges)-offsetof(Game,frontier)-TOWNS*5;
+                size_t oldEnd = offsetof(Game,frontier.knownLodges)+sizeof(out->frontier.knownLodges)-offsetof(Game,frontier)-TOWNS*5-(MAX_BUILDINGS-448);
                 size_t padding=V28_FRONTIER_BYTES-oldEnd;
                 if (padding > reader.left) return 0;
                 reader.source+=padding;reader.left-=padding;
                 reader.dest=(unsigned char *)&out->homes;
+                }
             }
-            if (version >= 26 && version < 28) {
-                WIDEN(homes.property, V27_BUILDINGS);
-                WIDEN(homes.furniture, V27_BUILDINGS);
+            if (version >= 26) {
+                WIDEN(homes.property, buildings);
+                WIDEN(homes.furniture, buildings);
             }
-            read_save_span(&reader, version == 28 ? (void *)&out->plans : (void *)&out->residentHome);
+            if(version>=29){
+                WIDEN(plans.furniture,buildings);WIDEN(plans.x,buildings);WIDEN(plans.y,buildings);WIDEN(plans.campLastNear,buildings);
+            }
+            void *end=version==28?(void*)&out->plans:version==29?(void*)&out->armor:version==30?(void*)&out->arsenal:version==31?(void*)&out->greatswords:version==32?(void*)&out->wilderness:version==33?(void*)&out->expedition:(void*)&out->residentHome;
+            read_save_span(&reader,end);
         } else {
             int oldItems = version>=11 ? TOWN_STOCK_ITEMS : version==10 ? V100_ITEMS : version==9 ? V090_ITEMS :
                            version==8 ? OLD_ITEMS : version>=5 ? CATALOG_ITEMS : 2052;
@@ -3199,6 +3214,7 @@ int load_game(const char *path) {
     arsenal_world_init();
     greatsword_world_init();
     wilderness_init();
+    expedition_init();
         if (h.version < 27) {
             if (g.weather) g.weatherTimer = fminf(g.weatherTimer, 100);
             for (int t = 0; t < TOWNS; t++) {

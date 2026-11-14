@@ -188,7 +188,9 @@ static void restock_chest(int building) {
 static Stack *chest_stack(int row, int *slot) {
     Stack *stacks;
     int count;
-    if (ui.chestKind == CHEST_PROPERTY) {
+    if (ui.chestKind == CHEST_EXPEDITION) {
+        stacks=expedition_cache(ui.storageIndex);if(!stacks)return NULL;count=3;
+    } else if (ui.chestKind == CHEST_PROPERTY) {
         if (ui.storageIndex < 0 || ui.storageIndex >= SLAVE_CAMPS)
             return NULL;
         stacks = g.field.seized[ui.storageIndex];
@@ -216,6 +218,7 @@ const Stack *interior_chest_item(int row) {
     return row == 0 && !node->locked && node->remaining && node->item && node->qty ? &contents : NULL;
 }
 int chest_owner(void) {
+    if(ui.chestKind==CHEST_EXPEDITION)return expedition_cache_owner(ui.storageIndex);
     if (ui.chestKind == CHEST_PROPERTY)
         return FREE;
     if (ui.chestKind == CHEST_FIELD)
@@ -480,7 +483,7 @@ void actor_enter_room(int n, int building) {
     z->room = building + 1;
     g.innFloor[n] = 0;
     z->rx = 3.5f;
-    z->ry = 6.1f;
+    z->ry = expedition_large(building)?expedition_height(building)-.9f:6.1f;
     building_door(building, &a->x, &a->y);
     a->routeLen = a->routePos = 0;
     a->routeClock = 0;
@@ -637,6 +640,7 @@ static void put_prop(InteriorProp *p, int *count, float x, float y, float w, flo
     p[(*count)++] = (InteriorProp){x,y,w,d,art,action};
 }
 static int room_layout(int building, int t, int style, int floor, InteriorProp *p) {
+    if(expedition_large(building))return expedition_props(building,floor,p);
     const Building *b = &g.buildings[building];
     int variant = g.frontier.variant[building], n = 0;
     const TownDesign *plan = town_design(t);
@@ -774,6 +778,7 @@ static int room_layout(int building, int t, int style, int floor, InteriorProp *
 }
 
 int inn_has_upstairs(int building) {
+    if(expedition_large(building))return expedition_levels(building)>1;
     return building >= 0 && building < g.buildingCount && g.buildings[building].type == BAR &&
            !ruined_building(building) && town_design(building_town(building))->beds >= 4;
 }
@@ -800,6 +805,7 @@ void inn_change_floor(Actor *a, int floor) {
 
 int inn_follow_stairs(Actor *a, int floor, float dt) {
     int room = depth_room(a);
+    if(expedition_large(room-1)&&actor_floor(a)!=floor){float x,y;int up=floor>actor_floor(a);if(!expedition_stair_point(room-1,actor_floor(a),up,&x,&y))return 0;if(distance(depth_x(a),depth_y(a),x,y)<1.3f)expedition_stairs(a,up);else room_route_toward(a,x,y,dt);return 1;}
     if (actor_floor(a) == floor || !inn_has_upstairs(room - 1))
         return 0;
     if (distance(depth_x(a), depth_y(a), 4.86f, 5.72f) < .65f)
@@ -887,7 +893,7 @@ void interior_leave(void) {
 int interior_context(void) {
     if (!g.interiorBuilding)
         return -2;
-    if (!actor_floor(&g.actors[g.selected]) && distance(g.interiorX, g.interiorY, 3.5f, 6.7f) < 1.1f)
+    if (!actor_floor(&g.actors[g.selected]) && distance(g.interiorX, g.interiorY, 3.5f, expedition_large(g.interiorBuilding-1)?expedition_height(g.interiorBuilding-1)-.3f:6.7f) < 1.1f)
         return -1;
     InteriorProp p[ROOM_PROPS];
     int n = interior_floor_props(g.interiorBuilding - 1, actor_floor(&g.actors[g.selected]), p), best = -2;
@@ -915,6 +921,10 @@ const char *interior_prompt(void) {
     switch (p[c].action) {
     case ROOM_STAIRS:
         return actor_floor(&g.actors[g.selected]) ? "GO DOWNSTAIRS" : "GO UPSTAIRS";
+    case ROOM_EXP_UP:return "CLIMB TO NEXT FLOOR";
+    case ROOM_EXP_DOWN:return "DESCEND TO PREVIOUS FLOOR";
+    case ROOM_EXP_CACHE:return "SEARCH CACHE";
+    case ROOM_EXP_TRADE:return "TRADE AT OUTPOST COUNTER";
     case ROOM_RUIN_RECORD:
         return "READ WEATHERED RECORD";
     case ROOM_TRADE:
@@ -965,8 +975,13 @@ void interior_interact(void) {
     int town = building_town(id);
     ui.selection = ui.scroll = 0;
     switch (p[c].action) {
+    case ROOM_EXP_UP:expedition_stairs(a,1);break;
+    case ROOM_EXP_DOWN:expedition_stairs(a,0);break;
+    case ROOM_EXP_CACHE:
+        ui.storageIndex=expedition_cache_index(id,actor_floor(a),p[c].x,p[c].y);ui.chestKind=CHEST_EXPEDITION;ui.selection=ui.scroll=0;ui.screen=SCREEN_CHEST;break;
+    case ROOM_EXP_TRADE:expedition_services(expedition_site(id));break;
     case ROOM_RUIN_RECORD:
-        log_msg("%s", wilderness_record(wilderness_site(id)));
+        log_msg("%s", expedition_large(id)?expedition_record(expedition_site(id)):wilderness_record(wilderness_site(id)));
         break;
     case ROOM_STAIRS: {
         int floor = actor_floor(a);
@@ -1061,7 +1076,7 @@ int jail_room_open(int room) {
     return 1;
 }
 static int room_clear(int room, const InteriorProp *p, int count, float x, float y) {
-    if (x < .4f || y < .4f || x > 6.6f || y > 6.6f)
+    if (x < .4f || y < .4f || x > expedition_width(room-1)-.4f || y > expedition_height(room-1)-.4f || !expedition_walkable(room-1,0,x,y))
         return 0;
     if (g.buildings[room - 1].type == JAIL) {
         if (fabsf(y-CELL_Y) < .24f &&
@@ -1098,8 +1113,8 @@ void interior_clear_position(Actor *a) {
         return;
     int locked = g.buildings[room - 1].type == JAIL && !jail_room_open(room);
     float best = 100, px = ox, py = oy;
-    for (float y = .45f; y <= 6.6f; y += .2f)
-        for (float x = .45f; x <= 6.6f; x += .2f) {
+    for (float y = .45f; y <= expedition_height(room-1)-.4f; y += .2f)
+        for (float x = .45f; x <= expedition_width(room-1)-.4f; x += .2f) {
             if (locked && (oy < CELL_Y) != (y < CELL_Y)) continue;
             float d = (x-ox)*(x-ox)+(y-oy)*(y-oy);
             if (d < best && room_clear(room,p,count,x,y)) {
@@ -1140,8 +1155,8 @@ void room_route_toward(Actor *a, float tx, float ty, float dt) {
     }
     a->routeClock -= dt;
     if (a->routeClock <= 0 || distance(tx,ty,a->routeTargetX,a->routeTargetY) > .6f) {
-        enum { SIDE = 16, CELLS = SIDE * SIDE };
-        short parent[CELLS], queue[CELLS], path[CELLS];
+        enum { SIDE = 84, CELLS = SIDE * SIDE };
+        static short parent[CELLS], queue[CELLS], path[CELLS];
         int sx = (int)fmaxf(0,fminf(SIDE-1,roundf((x-.5f)/.4f)));
         int sy = (int)fmaxf(0,fminf(SIDE-1,roundf((y-.5f)/.4f)));
         int start = sy*SIDE+sx, end = start, used = 1;

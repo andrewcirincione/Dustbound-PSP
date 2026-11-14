@@ -75,7 +75,7 @@ void depth_enter_room(int building) {
         D.actors[i].room = room;
         g.innFloor[i] = 0;
         D.actors[i].rx = 2.8f + (i % 2) * 1.3f;
-        D.actors[i].ry = 5.8f;
+        D.actors[i].ry = expedition_large(building)?expedition_height(building)-1.2f:5.8f;
     }
 }
 void actor_leave_room(int n) {
@@ -140,10 +140,11 @@ void depth_room_tick(float dt) {
         int room = depth_room(a);
         if (!room || !conscious(a) || a->prisonTime > 0 || playing_dead(a))
             continue;
+        if(expedition_owns(i)){expedition_actor_tick(i,dt);continue;}
         if (a->squad) {
             Building *b = &g.buildings[room - 1];
             DepthActor *z = &D.actors[i];
-            int privateOwner = b->owner < 0 && home_state(room - 1) != HOME_OWNED;
+            int privateOwner = !expedition_large(room-1) && b->owner < 0 && home_state(room - 1) != HOME_OWNED;
             int unwelcome = privateOwner && g.rep[b->faction] < -25 &&
                 (disguise_score(a, b->faction) < 40 || g.society.recognized[i][b->faction] > 0);
             int privateRoom = privateOwner && (b->type == HOUSE || b->type == TOWER || b->type == JAIL ||
@@ -190,6 +191,7 @@ void depth_room_tick(float dt) {
             if (i != j && conscious(&g.actors[j]) && !playing_dead(&g.actors[j]) && hostile(a, &g.actors[j]) &&
                 (!g.actors[j].sneaking || npc_sees(a, &g.actors[j], npc_sight_range(a)))) {
                 float d = depth_distance(a, &g.actors[j]);
+                if(expedition_large(room-1)&&!expedition_clear_sight(room-1,actor_floor(a),depth_x(a),depth_y(a),depth_x(&g.actors[j]),depth_y(&g.actors[j])))continue;
                 if (d < best) {
                     target = j;
                     best = d;

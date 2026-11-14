@@ -46,19 +46,14 @@ int main(void){
   assert(save_game("build/wilderness-travel.sav")&&load_game("build/wilderness-travel.sav"));
  }
  game_new(73819,0);
- int oldCount=g.wilderness.building[0]-1;assert(oldCount>0);g.buildingCount=oldCount;
- /* A real v32 prefix, before any new sites or director state exist. */
- size_t bytes=offsetof(Game,wilderness);unsigned hash=2166136261u;unsigned char *raw=(unsigned char*)&g;
- for(size_t n=0;n<bytes;n++)hash=(hash^raw[n])*16777619u;
- struct {char magic[8];unsigned version,size,hash;}header={{'D','U','S','T','S','A','V','E'},32,bytes,hash};
- FILE*f=fopen("build/wilderness-v32.sav","wb");assert(f);fwrite(&header,sizeof(header),1,f);fwrite(&g,bytes,1,f);fclose(f);
- assert(load_game("build/wilderness-v32.sav"));assert(g.wilderness.version==1);
+ /* Authentic v32 bytes use the historical 448-building capacity. */
+ assert(load_game("build/v32-modern.sav"));assert(g.wilderness.version==1);
  int sites=0;
  for(int i=0;i<WILDERNESS_SITES;i++){
   int b=g.wilderness.building[i]-1;if(b<0)continue;sites++;assert(wilderness_site(b)==i);
   assert(building_has_interior(g.buildings[b].type));
   actor_enter_room(g.selected,b);fixture_service(ROOM_RUIN_RECORD);interior_interact();
-  fixture_service(ROOM_CHEST);interior_interact();assert(ui.screen==SCREEN_CHEST);
+  fixture_service(ROOM_EXP_CACHE);interior_interact();assert(ui.screen==SCREEN_CHEST);
   assert(interior_chest_count()>0);interior_chest_take(0);
   g.interiorBuilding=0;g.depth.actors[g.selected].room=0;ui.screen=SCREEN_WORLD;
  }

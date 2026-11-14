@@ -764,6 +764,17 @@ static int mining_pose(const Actor *a) {
            g.nodes[a->taskIndex].type <= NODE_COPPER && !a->attackPhase && limb_arms(a);
 }
 static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float stance, int variant, int laid_out) {
+    int machine=expedition_robot(a);
+    if(machine>=0){
+        int dead=a->dead||a->unconscious>0;float boss=a->healthScale>=300?1.25f:1;
+        float p=a->attackDuration>0?1-a->attackClock/a->attackDuration:0;
+        int frame=!dead&&a->attackPhase==2?3:!dead&&a->movedTimer>0?1+((int)(a->anim*1.3f)&1):0;
+        int id=EXP_ROBOT_FIRST+machine*4+frame;const ArtSprite*image=scene_sprite(id);float scale=(machine?.6f:.5f)*sc*boss,sy=dead?scale*.35f:scale;
+        int bob=!dead&&a->movedTimer>0?(int)(sinf(a->anim*2)*sc):0,lunge=!dead&&a->attackPhase==2?(int)(sinf(p*3.14159f)*3*sc)*(a->facing?1:-1):0;
+        scaled_art(id,x-(int)(image->ax*scale)+lunge,y-(int)(image->ay*sy)+bob,(int)(image->w*scale),(int)(image->h*sy),li,a->facing?0:1,dead?1:0);
+        return;
+    }
+
     uint32_t skin = actor_skin(a);
     int race = species_index(a);
     paintHair = actor_hair(a);

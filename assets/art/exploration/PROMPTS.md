@@ -1,0 +1,7 @@
+# Generated exploration assets
+
+Built-in image generation produced six transparent painterly post-apocalyptic buildings: relay citadel, turbine hall, caravan refuge, sealed archive, scrapper yard, and pumpworks. Each prompt requested orthographic 2:1 isometric projection, upright verticals, readable material shading, accessible ground-level entrance, generous transparent margin and no lettering or people. The turbine hall received a targeted revision adding a visible two-leaf entrance on its right-facing wall.
+
+Two enemy identity assets were generated: an articulated bipedal sentinel with orange optic/blade arm and an ochre six-legged excavation crawler with cyan optic/pincers. Each received a four-frame 2x2 transparent animation sheet: neutral, walking step A, opposite walking step B, and melee attack. Prompts required consistent identity, camera, materials, scale and visibly different plausible leg poses.
+
+The production packing script calibrates each selected building's measured foundation and doorway to the game's +/-0.5 ground slopes while retaining upright verticals, following the established pack_structure_art pipeline. models.json records calibration points and original generation hashes; packed/ contains the self-contained production sources for deterministic compilation. Raw full-resolution generation outputs are preserved separately by the image-generation service and copied to the ignored originals/ workspace folder.

@@ -11,6 +11,7 @@
 #include "structure_art.h"
 #include "furniture_art.h"
 #include "furniture_models.h"
+#include "expedition_art.h"
 
 _Static_assert(ART_COUNT == SETTLEMENT_ART_FIRST, "Settlement sprite IDs must follow the base atlas");
 #include <ctype.h>
@@ -59,9 +60,10 @@ static uint32_t blend(uint32_t a, uint32_t b, float f) {
 }
 /* Indexed row spans skip transparent margins. Only edge texels need blending.
    A lighting change updates 256 palette entries, not every sprite pixel. */
-static uint32_t artPalette[SCENE_ART_END][256];
-static int artLight[SCENE_ART_END];
+static uint32_t artPalette[EXPEDITION_ART_END][256];
+static int artLight[EXPEDITION_ART_END];
 static const ArtSprite *scene_sprite(int id) {
+    if(id>=EXPEDITION_ART_FIRST&&id<EXPEDITION_ART_END)return &expeditionSprites[id-EXPEDITION_ART_FIRST];
     int model = structure_art_index(id);
     if (model >= 0) return &structureSprites[model];
     if (id >= FURNITURE_ART_FIRST) return &furnitureSprites[id - FURNITURE_ART_FIRST];
@@ -612,9 +614,9 @@ static void elevation(int id, int x0, int y0, int x1, int y1, int height, float 
 }
 static void art_shadow(int id, int x, int y) {
     int model = structure_art_index(id);
-    if (model < 0 && (id < 0 || id >= 32))
+    if (model < 0 && !(id>=EXPEDITION_ART_FIRST&&id<EXPEDITION_ART_FIRST+6) && (id < 0 || id >= 32))
         return;
-    const ArtShadow *s = model >= 0 ? &structureShadows[model] : &artShadows[id];
+    const ArtShadow *s = id>=EXPEDITION_ART_FIRST&&id<EXPEDITION_ART_FIRST+6?&expeditionShadows[id-EXPEDITION_ART_FIRST]:model >= 0 ? &structureShadows[model] : &artShadows[id];
     x -= s->ax;
     y -= s->ay;
     for (int yy = 0; yy < s->h; yy++) {
@@ -1221,10 +1223,10 @@ static void texture_plane(int id, float x, float y, float ux, float uy, float vx
             fb[yy * pitch + xx] = palette[s->pixels[s->rows[sy * 3] + sx - lo]];
         }
 }
-static float roomScale = 22, roomBase = 61;
+static float roomScale = 22, roomBase = 61, roomCamX,roomCamY;
 static void room_project(float x, float y, int *sx, int *sy) {
-    *sx = 240 + (int)((x - y) * roomScale);
-    *sy = (int)(roomBase + (x + y) * roomScale * .5f);
+    *sx = 240 + (int)(((x-roomCamX) - (y-roomCamY)) * roomScale);
+    *sy = (int)(roomBase + (x + y-roomCamX-roomCamY) * roomScale * .5f);
 }
 static float room_furniture_scale(const InteriorProp *p) {
     return 2 * roomScale * (p->w + p->d) / furnitureModels[furniture_art_index(p->art)].span;
@@ -1267,18 +1269,20 @@ static void interior_draw(void) {
                 b->type == JAIL ? 18.5f + plan->custody * 2.3f :
                 b->type == HOUSE ? 19.8f + (id % 3) * .9f : 21.0f + plan->marketTier;
     if (g.frontier.variant[id] == BUILD_LODGE) roomScale = 22;
-    roomBase = 69 - (roomScale - 20) * 2.3f;
+    roomBase = 69 - (roomScale - 20) * 2.3f;roomCamX=roomCamY=0;
+    float roomW=7,roomH=7;
+    if(expedition_large(id)){roomW=expedition_width(id);roomH=expedition_height(id);roomScale=20;roomBase=150;roomCamX=g.interiorX;roomCamY=g.interiorY;}
     rect(0, 0, 480, 272, 0x3d3429);
     int cx, cy, eastX, eastY, westX, westY;
     room_project(0, 0, &cx, &cy);
-    room_project(7, 0, &eastX, &eastY);
-    room_project(0, 7, &westX, &westY);
+    room_project(roomW, 0, &eastX, &eastY);
+    room_project(0, roomH, &westX, &westY);
     float wall = style == 1 ? 38 : style == 2 ? 41 : 37;
     int wallArt = style == 3 || style == 5 ? 106 : style == 4 ? 107 : 105;
     int floorArt = style == 2 ? 105 : 104;
     texture_plane(wallArt, westX, westY, cx-westX, cy-westY, 0, -wall, 3, 1.2f, 1.04f);
     texture_plane(wallArt, cx, cy, eastX-cx, eastY-cy, 0, -wall, 3, 1.2f, .90f);
-    texture_plane(floorArt, cx, cy, eastX-cx, eastY-cy, westX-cx, westY-cy, 2.6f, 2.6f, 1.12f);
+    texture_plane(floorArt, cx, cy, eastX-cx, eastY-cy, westX-cx, westY-cy, 2.6f*roomW/7, 2.6f*roomH/7, 1.12f);
     if (wallArt == 105)
         for (int j = 0; j <= 5; j++) {
             int x, y;
@@ -1289,7 +1293,7 @@ static void interior_draw(void) {
         }
     int x, y;
     if (!floor) {
-        room_project(3.5f, 6.86f, &x, &y);
+        room_project(3.5f, expedition_large(id)?roomH-.14f:6.86f, &x, &y);
         texture_plane(104, x, y - 8, 15, 8, -15, 8, .8f, .8f, 1.11f);
         text(x - 12, y + 9, "EXIT", GOLD, 1);
     }
@@ -1301,7 +1305,7 @@ static void interior_draw(void) {
         }
     InteriorProp props[ROOM_PROPS];
     int jail = b->type == JAIL;
-    enum { ROOM_OBJECTS = MAX_ACTORS + ROOM_PROPS + 1 };
+    enum { ROOM_OBJECTS = MAX_ACTORS + ROOM_PROPS + 65 };
     int count = interior_floor_props(id, floor, props), furniture = count, order[ROOM_OBJECTS];
     float depth[ROOM_OBJECTS];
     int roomActor[ROOM_OBJECTS];
@@ -1310,6 +1314,8 @@ static void interior_draw(void) {
         depth[i] = props[i].art == 23 ? -1 : room_depth(props[i].x,props[i].y,jail);
         roomActor[i] = -1;
     }
+    float partition[256];int partitions=expedition_walls(id,floor,partition,64);
+    for(int j=0;j<partitions;j++){float*p=partition+j*4;order[count]=count;roomActor[count]=-3-j;depth[count++]=(p[0]+p[1]+p[2]+p[3])*.5f;}
     if (jail) {
         order[count] = count;
         roomActor[count] = -2;
@@ -1360,12 +1366,14 @@ static void interior_draw(void) {
             if (resident->squad) squad_health_bar(resident, x, y);
         } else if (roomActor[i] == -2) {
             cell_partition(id+1);
+        } else if(roomActor[i]<=-3){
+            float*p=partition+(-3-roomActor[i])*4;int x0,y0,x1,y1;room_project(p[0],p[1],&x0,&y0);room_project(p[2],p[3],&x1,&y1);elevation(ART_STONE_WALL,x0,y0,x1,y1,22,.82f,-1);
         } else {
             room_furniture(&props[i]);
         }
     }
     char roomTitle[64];
-    snprintf(roomTitle, sizeof(roomTitle), "%s%s", building_name(id), floor ? " / UPSTAIRS" : "");
+    if(expedition_large(id))snprintf(roomTitle,sizeof(roomTitle),"%s / %s",building_name(id),expedition_floor_name(expedition_site(id),floor));else snprintf(roomTitle, sizeof(roomTitle), "%s%s", building_name(id), floor ? " / UPSTAIRS" : "");
     const char *name = roomTitle;
     int titleWidth = text_width(name);
     rect(467-titleWidth,223,titleWidth+9,13,INK);
@@ -2882,7 +2890,7 @@ static void chest_screen(void) {
     int owner = chest_owner();
     const char *name = ui.chestKind == CHEST_PROPERTY ? "CONFISCATED BELONGINGS" :
         ui.chestKind == CHEST_FIELD ? "CHEST CONTENTS" :
-        ruined_building(ui.storageIndex) ? "SALVAGE CHEST" :
+        ui.chestKind==CHEST_EXPEDITION?"EXPLORATION CACHE":ruined_building(ui.storageIndex) ? "SALVAGE CHEST" :
         g.buildings[ui.storageIndex].type == SHOP ? "SHOP STOCK CHEST" : "HOUSEHOLD CHEST";
     overlay_header(name, "\001 TAKE ONE   \015 SELECT ITEM   \002 LEAVE");
     if (owner) {
