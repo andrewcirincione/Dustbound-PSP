@@ -7,7 +7,7 @@ static void room(int s,int floor){fresh();int b=building(s);actor_enter_room(0,b
 static int service(int action){fixture_service(action);g.depth.actors[0].rx=g.interiorX;g.depth.actors[0].ry=g.interiorY;int count=nearby_actions();for(int j=0;j<count;j++){const NearbyAction*x=nearby_action(j);if(x->type==ACTION_CONTEXT&&x->kind==5)return j;}assert(0);return -1;}
 int main(int argc,char**argv){root=argc>1?argv[1]:"build/v1000/fixtures";mkdir(root,0777);
  const int sites[]={17,20,16,18,19,21};char name[64];
- for(int m=0;m<6;m++){Actor*a=fresh();int b=building(sites[m]);float x,y;building_door(b,&x,&y);a->x=g.buildings[b].x-1;a->y=g.buildings[b].y-6;expedition_tick(.1f);ui.noticeTime=0;snprintf(name,sizeof(name),"exploration-model-%d",m);save(name);}
+ for(int m=0;m<6;m++){Actor*a=fresh();int b=building(sites[m]);float x,y;building_door(b,&x,&y);a->x=g.buildings[b].x+1;a->y=g.buildings[b].y-4;expedition_tick(.1f);ui.noticeTime=0;snprintf(name,sizeof(name),"exploration-model-%d",m);save(name);}
  room(16,0);save("refuge-entrance");int trade=service(ROOM_EXP_TRADE);save("refuge-counter");
  room(16,0);int stairs=service(ROOM_EXP_UP);save("refuge-stairs");
  room(16,1);int down=service(ROOM_EXP_DOWN);save("refuge-downstairs");
