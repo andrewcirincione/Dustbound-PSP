@@ -33,7 +33,8 @@ if '--rebuild-source' in sys.argv:
  (art/'models.json').write_text(json.dumps(meta,indent=2)+'\n')
 assert len(meta)==14
 code=['/* Compiled generated, calibrated building and robot art. */\n'];entries=[];shadows=[];models=[]
-for i,z in enumerate(meta):
+compiled=meta+[{'name':n,'anchor':[0,0]} for n in ['iron-floor','concrete-floor','slate-floor','ceramic-floor']]
+for i,z in enumerate(compiled):
  im=Image.open(packed/(z['name']+'.png')).convert('RGBA');assert im.width*im.height<65536
  src,entry=pack(im,'explore_'+str(i),z['anchor'][1],z['anchor'][0]);code.append(src);entries.append(entry)
  if i<6:
@@ -41,6 +42,6 @@ for i,z in enumerate(meta):
   # The packed forward foundation corner is inferable from its 2:1 dimensions.
   corner=(z['anchor'][0]+22*(m[0]-m[1]),z['anchor'][1]+11*(m[0]+m[1]))
   sh,sa=shadow(im,z['anchor'],corner);sc,se=pack_shadow(sh,'explore_shadow_'+str(i),sa);code.append(sc);shadows.append(se)
-code.append('static const ArtSprite expeditionSprites[]={\n'+',\n'.join(entries)+'\n};\nstatic const ArtShadow expeditionShadows[]={\n'+',\n'.join(shadows)+'\n};\n#define EXPEDITION_ART_READY 14\n')
+code.append('static const ArtSprite expeditionSprites[]={\n'+',\n'.join(entries)+'\n};\nstatic const ArtShadow expeditionShadows[]={\n'+',\n'.join(shadows)+'\n};\n#define EXPEDITION_ART_READY 18\n')
 (root/'src/expedition_art.h').write_text(''.join(code));(root/'src/expedition_models.h').write_text('/* Generated calibrated foundation and doorway geometry. */\nstatic const BuildingModel expeditionModels[]={\n'+',\n'.join(models)+'\n};\n')
 print('Packed six calibrated building models and two robot enemies.')

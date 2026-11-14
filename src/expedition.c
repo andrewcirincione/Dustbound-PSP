@@ -23,6 +23,7 @@ const char *expedition_name(int s){const ExpeditionSite*z=site_def(s);return z?z
 const char *expedition_record(int s){const ExpeditionSite*z=site_def(s);return z?z->record:"The record is illegible.";}
 int expedition_inhabited(int s){const ExpeditionSite*z=site_def(s);return z&&z->occupied;}
 int expedition_model(int b){const ExpeditionSite*z=site_def(expedition_site(b));return z?z->model:-1;}
+int expedition_material(int b){const ExpeditionSite*z=site_def(expedition_site(b));return z?EXP_MATERIAL_FIRST+(z->theme==0?0:z->theme==4||z->theme==7?1:z->theme==2||z->theme==5||z->theme==1?2:3):-1;}
 int expedition_levels(int b){const ExpeditionSite*z=site_def(expedition_site(b));return z?z->floors:1;}
 float expedition_width(int b){const ExpeditionSite*z=site_def(expedition_site(b));return z?z->w:7;}
 float expedition_height(int b){const ExpeditionSite*z=site_def(expedition_site(b));return z?z->h:7;}
@@ -112,12 +113,12 @@ int expedition_walls(int b,int floor,float*lines,int max){
   float bound=axis?z->h:z->w,span=axis?z->w:z->h;
   for(float at=cell;at<bound-.5f;at+=cell){
    float start=0;for(float door=cell/2;door<span;door+=cell){float lo=door-1.2f,hi=door+1.2f;
-    if(n<max){float*p=lines+4*n++;p[0]=axis?start:at;p[1]=axis?at:start;p[2]=axis?lo:at;p[3]=axis?at:lo;}start=hi;
+    if(((s+floor*3+axis+(int)(at/cell)*2+(int)(door/cell))%5!=0)&&n<max){float*p=lines+4*n++;p[0]=axis?start:at;p[1]=axis?at:start;p[2]=axis?lo:at;p[3]=axis?at:lo;}start=hi;
    }
    if(start<span&&n<max){float*p=lines+4*n++;p[0]=axis?start:at;p[1]=axis?at:start;p[2]=axis?span:at;p[3]=axis?at:span;}
   }
  }
- (void)floor;return n;
+ return n;
 }
 int expedition_walkable(int b,int floor,float x,float y){
  if(!expedition_large(b))return 1;
@@ -164,12 +165,12 @@ int expedition_robot(const Actor*a){return a->kind==BEAST&&a->race==2&&a->voice>
 int expedition_owns(int n){return n>=0&&n<MAX_ACTORS&&crewOwner[n]>0;}
 static void create_crew(int s,int floor){
  ExpeditionCrew*c=&g.expedition.crew[s][floor];if(c->initialized)return;
- const ExpeditionSite*z=&expeditionSites[s];int b=primary(s),tier=g.expedition.tier[s];memset(c,0,sizeof(*c));c->initialized=1;c->count=z->occupied?2:2+tier/2;c->stockDay=g.day;
+ const ExpeditionSite*z=&expeditionSites[s];int b=primary(s),tier=g.expedition.tier[s];memset(c,0,sizeof(*c));c->initialized=1;c->count=z->occupied?(floor?2:3):2+tier/2;c->stockDay=g.day;
  for(int m=0;m<EXP_GUARDS;m++)c->live[m]=-1;
  for(int m=0;m<c->count;m++){
   Actor*a=&c->actor[m];DepthActor*d=&c->depth[m];unsigned seed=mix(g.seed+s*8917u+floor*179u+m*37u);int boss=m==0&&floor==z->floors-1&&!z->occupied;int level=2+tier*13+floor*4+(boss?6:0);
   memset(a,0,sizeof(*a));memset(d,0,sizeof(*d));d->upkeep=100;d->room=b+1;
-  a->active=1;a->kind=z->robot?BEAST:z->occupied?(m?GUARD:TRADER):RAIDER;a->faction=z->occupied?z->faction:HOSTILE;
+  a->active=1;a->kind=z->robot?BEAST:z->occupied?(m?GUARD:floor?SETTLER:TRADER):RAIDER;a->faction=z->occupied?z->faction:HOSTILE;
   a->race=z->robot?2:seed%2;a->voice=z->robot?77+(m+floor)%2:z->occupied?(m?ROLE_MARSHAL:ROLE_MERCHANT):0;
   snprintf(a->name,sizeof(a->name),"%s",z->robot?boss?"Core Warden":m%2?"Iron Crawler":"Old Sentinel":z->occupied?m?"Outpost guard":"Outpost trader":boss?"Vault keeper":"Ruin scavenger");
   a->healthScale=z->robot?125+tier*35+floor*15+(boss?65:0):100+tier*10;a->body=seed%3;a->skin=seed%8;a->hair=seed%7;a->hairColor=seed%6;
@@ -182,6 +183,8 @@ static void create_crew(int s,int floor){
   if(boss){px=z->w-3;py=z->h-5;}
   if(z->occupied){px=m?6:5;py=z->h-3.8f;}
   d->rx=a->homeX=a->tx=px;d->ry=a->homeY=a->ty=py;
+  if(z->occupied&&floor==0&&m==1){d->room=0;a->x+=3.5f;a->y+=3.5f;a->homeX=a->tx=a->x;a->homeY=a->ty=a->y;}
+
   if(z->occupied&&!m){inventory_add(a,RATION,6);inventory_add(a,MEDKIT,4);inventory_add(a,PARTS,4);inventory_add(a,BEDROLL_ITEM,2);}
  }
 }
@@ -196,12 +199,18 @@ static void store_crew(int s,int f){
   for(int j=0;j<g.actorCount;j++){if(g.actors[j].target==n)g.actors[j].target=-1;if(g.actors[j].attackTarget==n){g.actors[j].attackTarget=-1;g.actors[j].attackPhase=0;}}
  }
 }
+static int crew_needed(int s,int floor){
+ int b=primary(s);if(b<0)return 0;
+ if(squad_present(b+1,floor))return 1;
+ if(floor==0&&expeditionSites[s].occupied)for(int n=0;n<g.actorCount;n++)if(g.actors[n].squad&&!g.actors[n].dead&&!actor_inside(&g.actors[n])&&distance(g.actors[n].x,g.actors[n].y,g.buildings[b].x,g.buildings[b].y)<30)return 1;
+ return 0;
+}
 void expedition_tick(float dt){
  if(!g.expedition.version)return;
- for(int s=0;s<EXP_SITES;s++)for(int f=0;f<EXP_FLOORS;f++)if(g.expedition.crew[s][f].initialized&&!squad_present(primary(s)+1,f))store_crew(s,f);
+ for(int s=0;s<EXP_SITES;s++)for(int f=0;f<EXP_FLOORS;f++)if(g.expedition.crew[s][f].initialized&&!crew_needed(s,f))store_crew(s,f);
  for(int s=0;s<EXP_SITES;s++){int b=primary(s);if(b<0)continue;
   Actor*lead=&g.actors[g.selected];if(!actor_inside(lead)&&distance(lead->x,lead->y,g.buildings[b].x,g.buildings[b].y)<22&&!(g.expedition.discovered[s/32]&(1u<<(s%32)))){g.expedition.discovered[s/32]|=1u<<(s%32);log_msg("Found %s.",expedition_name(s));}
-  for(int f=0;f<expeditionSites[s].floors;f++)if(depth_room(lead)==b+1&&actor_floor(lead)==f){
+  for(int f=0;f<expeditionSites[s].floors;f++)if((depth_room(lead)==b+1&&actor_floor(lead)==f)||(f==0&&expeditionSites[s].occupied&&!actor_inside(lead)&&distance(lead->x,lead->y,g.buildings[b].x,g.buildings[b].y)<30)){
    create_crew(s,f);ExpeditionCrew*c=&g.expedition.crew[s][f];
    for(int m=0;m<c->count;m++)if(c->live[m]<0&&c->actor[m].active){int n=-1;for(int j=0;j<g.actorCount;j++)if(g.living.owned[j]<0){n=j;break;}if(n<0&&g.actorCount<MAX_ACTORS)n=g.actorCount++;if(n<0)break;
     society_actor_reset(n);g.actors[n]=c->actor[m];g.depth.actors[n]=c->depth[m];g.innFloor[n]=f;g.living.owned[n]=0;g.living.anger[n]=0;g.living.command[n]=-1;c->live[m]=n;crewOwner[n]=1+(s*EXP_FLOORS+f)*EXP_GUARDS+m;

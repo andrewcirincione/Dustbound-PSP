@@ -48,5 +48,16 @@
     "name": "crawler-animation",
     "frames": 4,
     "selected_sha256": "1a7d5005972f63f2ebbc30e8b0e2ba419ec5c47b974ef06cff48fb15aefdd362"
+  },
+  {
+    "name": "material_atlas",
+    "sha256": "acff1e72b345d82cf6f7077800dabaf96febf77fc0dfb72469dfd120d1afe804",
+    "tiles": [
+      "iron-floor",
+      "concrete-floor",
+      "slate-floor",
+      "ceramic-floor"
+    ],
+    "processing": "Equal 2x2 atlas cells resized to 64x64; no repainting."
   }
 ]

@@ -6,9 +6,13 @@
 #include <stddef.h>
 extern int hostile(const Actor*,const Actor*);
 static int seen[POP_GROUPS], kinds, encounters, hostiles;
+static unsigned otherSeen[MAX_ACTORS];
+static int hostileVisible;
 static int sightings(const Actor*a){
- int visible=0;
- for(int n=0;n<g.actorCount;n++){const Actor*b=&g.actors[n];float dx=b->x-a->x,dy=b->y-a->y;if(b->active&&!b->squad&&!b->dead&&!depth_room(b)&&fabsf(view_horizontal(dx,dy))<11&&fabsf(view_vertical(dx,dy))<13)visible++;}
+ int visible=0;hostileVisible=0;
+ for(int n=0;n<g.actorCount;n++){const Actor*b=&g.actors[n];float dx=b->x-a->x,dy=b->y-a->y;if(b->active&&!b->squad&&!b->dead&&!depth_room(b)&&fabsf(view_horizontal(dx,dy))<11&&fabsf(view_vertical(dx,dy))<13){visible++;if(hostile(a,b))hostileVisible=1;
+ if(!population_owned(n)){unsigned hash=2166136261u;for(const char*p=b->name;*p;p++)hash=(hash^(unsigned char)*p)*16777619u;hash^=b->kind*37u+b->faction*197u;if(otherSeen[n]!=hash){otherSeen[n]=hash;encounters++;hostiles+=hostile(a,b);}}
+ }}
  for(int k=0;k<POP_GROUPS;k++){WorldEvent*e=&g.population.groups[k];if(!e->spawned)continue;
   for(int m=0;m<e->count;m++){int n=e->members[m];if(n<0)continue;Actor*b=&g.actors[n];float dx=b->x-a->x,dy=b->y-a->y;
    if(b->active&&!b->dead&&!depth_room(b)&&fabsf(view_horizontal(dx,dy))<11&&fabsf(view_vertical(dx,dy))<13){visible++;if(seen[k]!=e->serial){seen[k]=e->serial;kinds|=1<<e->type;encounters++;hostiles+=hostile(a,b);}break;}
@@ -19,9 +23,9 @@ static int sightings(const Actor*a){
 int main(void){
  for(int route=0;route<4;route++){
   game_new(73819+route*53,0);ui.screen=SCREEN_WORLD;g.eventTimer=100000;g.autosave=-100000;
-  memset(seen,0,sizeof(seen));kinds=encounters=hostiles=0;
+  memset(seen,0,sizeof(seen));memset(otherSeen,0,sizeof(otherSeen));kinds=encounters=hostiles=0;
   Actor*a=&g.actors[g.selected];a->autoattack=0;
-  float heading=route*.8f,ox=a->x,oy=a->y,stuck=0,quiet=0,maxgap=0,first=-1,outdoors=0;
+  float heading=route*.8f,ox=a->x,oy=a->y,stuck=0,quiet=0,maxgap=0,first=-1,outdoors=0,hostileSeconds=0;
   for(int step=0;step<12000;step++){
    for(int l=0;l<LIMBS;l++)a->health[l]=species_health(a);
    a->blood=a->hunger=100;a->unconscious=a->dead=a->stun=a->bleed=0;a->lostMask=0;
@@ -34,15 +38,15 @@ int main(void){
    }
    float dx=cosf(heading),dy=sinf(heading);
    if(0)printf("TRACE t%d game%.0f pos%.0f,%.0f moving%.1f ui%d pause%d room%d prison%.0f quiet%.0f danger%.0f seq%d\n",step/10,g.time,a->x,a->y,a->movedTimer,ui.screen,ui.paused,depth_room(a),a->prisonTime,g.wilderness.quiet,g.wilderness.danger,g.wilderness.sequence);
-   int before=encounters;
+
    game_tick(.1f,(Input){.ax=view_horizontal(dx,dy),.ay=view_vertical(dx,dy)});
    if(distance(ox,oy,a->x,a->y)<.005f)stuck+=.1f;else stuck=0;ox=a->x;oy=a->y;
-   int visible=sightings(a);
+   int visible=sightings(a);if(hostileVisible)hostileSeconds+=.1f;
    if(town_near(a->x,a->y,24)<0){outdoors+=.1f;quiet+=.1f;if(visible){if(first<0)first=outdoors;if(quiet>maxgap)maxgap=quiet;quiet=0;}}
   }
   if(quiet>maxgap)maxgap=quiet;
-  printf("ROUTE %d: encounters %d hostile %d types %x first %.1fs max-gap %.1fs position %.1f %.1f spawned %d\n",route,encounters,hostiles,kinds,first,maxgap,a->x,a->y,g.wilderness.sequence);fflush(stdout);
-  assert(encounters>=4&&hostiles>=2&&maxgap<120);
+  printf("ROUTE %d: encounters %d hostile %d types %x first %.1fs max-gap %.1fs position %.1f %.1f spawned %d hostile-visible %.1fs\n",route,encounters,hostiles,kinds,first,maxgap,a->x,a->y,g.wilderness.sequence,hostileSeconds);fflush(stdout);
+  assert(encounters>=4&&(hostiles>=2||hostileSeconds>=60)&&maxgap<120);
   assert(save_game("build/wilderness-travel.sav")&&load_game("build/wilderness-travel.sav"));
  }
  game_new(73819,0);

@@ -18,7 +18,9 @@ def state():
 def number(k,fmt='I'):
  for _ in range(100):
   d=state()
-  if k+'_value' in d:return struct.unpack('<'+fmt,bytes.fromhex(d[k+'_value']))[0]
+  if k+'_value' in d:
+   raw=bytes.fromhex(d[k+'_value'])
+   return raw[0] if fmt=='I' and len(raw)==1 else struct.unpack('<'+fmt,raw)[0]
   time.sleep(.005)
  raise TimeoutError(('telemetry',k))
 async def frames(n=3):

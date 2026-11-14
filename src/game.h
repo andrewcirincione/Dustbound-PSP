@@ -995,6 +995,7 @@ int expedition_large(int building);
 const char *expedition_name(int site);
 const char *expedition_record(int site);
 int expedition_model(int building);
+int expedition_material(int building);
 int expedition_inhabited(int site);
 int expedition_levels(int building);
 float expedition_width(int building);

@@ -24,6 +24,7 @@ int npc_role(const Actor *a) {
     return ROLE_CITIZEN;
 }
 const char *npc_role_name(const Actor *a) {
+    if(expedition_robot(a)>=0)return a->healthScale>=300?"CORE WARDEN":"AUTOMATON";
     if ((uintptr_t)a >= (uintptr_t)g.actors && (uintptr_t)a < (uintptr_t)(g.actors + MAX_ACTORS)) {
         int ai=(int)(a-g.actors);
         if (slave_in_camp(a)) return "SHACKLED WORKER";

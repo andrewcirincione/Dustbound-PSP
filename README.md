@@ -1,8 +1,10 @@
 # Dust — PSP frontier survival RPG
 
-## 1.1.0 — The inhabited wilderness
+## 1.2.0 — Old-world expeditions
 
-Wilderness travel now actively seeds nearby threats, camps and traffic within the PSP actor budget. Sixteen named abandoned compounds have varied buildings, enterable interiors, finite salvage and records; some have hostile occupants. Greatswords have distinct passive and fight poses, with a square-button stance hint. Existing saves upgrade automatically.
+30 additional locations bring the wilderness total to 46, with 106 explorable floors. Explore larger connected interiors, climb through galleries to guarded vaults, encounter animated old-world robots, and visit occupied refuges, guild yards and faction outposts. Six new generated isometric building models and four interior materials add visual variety. Loot, wounds, cleared enemies and upper-floor progress persist. Existing saves upgrade automatically.
+
+[Exploration guide](docs/EXPLORATION_GUIDE.md) · [Release notes](docs/RELEASE_NOTES.md)
 
 120 independently drawn expansion weapons across all 38 types, including 23 greatswords and 12 legendary designs, with strength-based enemy equipment. Version 1.0.4 added 20 greatswords, shoulder-rest layering, and smith item pictures; version 1.0.5 raises the idle greatsword angle to rest on the shoulder. Version 1.0.6 modestly reduces the longer greatsword blades while preserving the two-hand grips and shoulder angle. Smithies offer 15–45 weapon and armor options by settlement importance and refresh at midnight. New primary/support grips and edge/aim orientation are verified on equipped characters.
 

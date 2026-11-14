@@ -651,7 +651,7 @@ static void building(int id) {
     const Building *b = &g.buildings[id];
     int x, y;
     project(b->x, b->y, &x, &y);
-    if (x < -155 || x > 635 || y < -80 || y > 345)
+    if (x < -155 || x > 635 || y < -80 || y > 550)
         return;
     float brightness = light();
     if (b->type != WALL) {
@@ -1193,7 +1193,7 @@ static void civic_flag(int t){
 
 static void texture_plane(int id, float x, float y, float ux, float uy, float vx, float vy, float repeatU,
                           float repeatV, float li) {
-    const ArtSprite *s = &artSprites[id];
+    const ArtSprite *s = scene_sprite(id);
     float det = ux * vy - uy * vx;
     if (fabsf(det) < .1f)
         return;
@@ -1209,7 +1209,7 @@ static void texture_plane(int id, float x, float y, float ux, float uy, float vx
         top = clipTop;
     if (bottom > clipBottom)
         bottom = clipBottom;
-    const uint32_t *palette = part_palette(id, 0x808080, li, 0);
+    const uint32_t *palette = id>=EXPEDITION_ART_FIRST?sprite_palette(id,s,li):part_palette(id, 0x808080, li, 0);
     for (int yy = top; yy < bottom; yy++)
         for (int xx = left; xx < right; xx++) {
             float dx = xx + .5f - x, dy = yy + .5f - y, u = (dx * vy - dy * vx) / det,
@@ -1280,6 +1280,7 @@ static void interior_draw(void) {
     float wall = style == 1 ? 38 : style == 2 ? 41 : 37;
     int wallArt = style == 3 || style == 5 ? 106 : style == 4 ? 107 : 105;
     int floorArt = style == 2 ? 105 : 104;
+    if(expedition_large(id)){floorArt=expedition_material(id);wallArt=EXP_MATERIAL_FIRST+1;}
     texture_plane(wallArt, westX, westY, cx-westX, cy-westY, 0, -wall, 3, 1.2f, 1.04f);
     texture_plane(wallArt, cx, cy, eastX-cx, eastY-cy, 0, -wall, 3, 1.2f, .90f);
     texture_plane(floorArt, cx, cy, eastX-cx, eastY-cy, westX-cx, westY-cy, 2.6f*roomW/7, 2.6f*roomH/7, 1.12f);

@@ -120,7 +120,7 @@ static void travel_director(const float *near,float dt){
   if(d<16&&population_object_count(k))g.wilderness.quiet=0;
   if(!wilderness_guard_group(k)&&P.groups[k].count<=3&&d<42&&x*dx+y*dy>0&&fabsf(x*dy-y*dx)<18)forward++;
  }
- if(g.wilderness.cooldown>0||hostileClose||forward>=2||(g.wilderness.quiet<14&&g.wilderness.danger<50))return;
+ if(g.wilderness.cooldown>0||hostileClose||(forward>=2&&g.wilderness.danger<50)||(g.wilderness.quiet<14&&g.wilderness.danger<50))return;
  int slot=travel_slot(near);if(slot<0)return;
  for(int trial=0;trial<32;trial++){
   float angle=(trial%2?1:-1)*(trial/8)*.35f,ca=cosf(angle),sa=sinf(angle),ux=dx*ca-dy*sa,uy=dx*sa+dy*ca;

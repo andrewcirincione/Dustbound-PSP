@@ -1274,6 +1274,7 @@ static uint64_t actor_key(const Actor *a, int lum, float stance, int variant) {
     HASHV(mining_pose(a) ? 1 + (int)(a->action * 34) : 0);
     HASHV(actor_in_bed(a));
     HASHV(a->kind);
+    HASHV(a->voice);HASHV(a->healthScale);
     HASHV(a->attackPhase);
     HASHV(a->attackWeapon);
     HASHV(variant);

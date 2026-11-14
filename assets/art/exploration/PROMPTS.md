@@ -5,3 +5,6 @@ Built-in image generation produced six transparent painterly post-apocalyptic bu
 Two enemy identity assets were generated: an articulated bipedal sentinel with orange optic/blade arm and an ochre six-legged excavation crawler with cyan optic/pincers. Each received a four-frame 2x2 transparent animation sheet: neutral, walking step A, opposite walking step B, and melee attack. Prompts required consistent identity, camera, materials, scale and visibly different plausible leg poses.
 
 The production packing script calibrates each selected building's measured foundation and doorway to the game's +/-0.5 ground slopes while retaining upright verticals, following the established pack_structure_art pipeline. models.json records calibration points and original generation hashes; packed/ contains the self-contained production sources for deterministic compilation. Raw full-resolution generation outputs are preserved separately by the image-generation service and copied to the ignored originals/ workspace folder.
+
+## Material atlas
+Four equal flat texture panels: worn riveted iron, cracked concrete, dark slate and chipped ivory ceramic. Generated with even lighting and no perspective, objects or text. The four cells are compiled to 64x64 indexed textures and mapped onto the same isometric floor geometry.

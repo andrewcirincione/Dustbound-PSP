@@ -1,3 +1,13 @@
+## 1.2.0 — Old-world expeditions (2026-11-14)
+
+- Add 30 named sites and expand all 46 primary interiors into 106 scrolling floors with connected rooms, side stores, stairs and finite caches.
+- Add inhabited refuges, work camps and faction outposts, supply trading, beds and persistent guards.
+- Add six generated isometric exteriors, four floor materials and two animated robot enemies with mechanical salvage.
+- Match guards and final-floor rewards to site tier; strengthen upper-floor guardians and protect starting-region balance.
+- Preserve floor crews, wounds, deaths and depleted loot across visits and saves. Upgrade historical saves to v34 with 640-building capacity.
+- Prevent neutral traffic from suppressing overdue hostile wilderness encounters.
+- Qualify routes through actual room collision, analog traversal, regression suites and representative PPSSPP scenes.
+
 # 1.0.3 — A hundred weapons
 
 ## 1.1.0
