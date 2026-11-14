@@ -38,7 +38,7 @@ int main(void){
  printf("PASS: 46 sites (%d occupied), %d floors; all stairs, records, counters, beds and caches reachable through actual room collision.\n",occupied,floors);
  assert(load_game("build/v33-modern.sav"));assert(g.money==12345&&g.expedition.version==1);for(int i=0;i<EXP_ADDITIONS;i++)assert(g.expedition.primary[i]);
  int b=g.expedition.primary[0]-1;actor_enter_room(g.selected,b);ui.screen=SCREEN_WORLD;expedition_tick(.1f);assert(g.expedition.crew[16][0].count==3);
- fixture_service(ROOM_EXP_TRADE);interior_interact();assert(ui.screen==SCREEN_TRADE&&shop_count()>0);ui.screen=SCREEN_WORLD;
+ fixture_service(ROOM_EXP_TRADE);game_tick(.033f,(Input){.pressed=KEY_CROSS});assert(ui.screen==SCREEN_ACTIONS);game_tick(.033f,(Input){.pressed=KEY_RIGHT});game_tick(.033f,(Input){.pressed=KEY_CROSS});assert(ui.screen==SCREEN_TRADE&&shop_count()>0);ui.screen=SCREEN_WORLD;
  fixture_service(ROOM_EXP_CACHE);interior_interact();assert(ui.screen==SCREEN_CHEST);int index=ui.storageIndex;Stack*loot=expedition_cache(index);int qty=loot[0].qty;interior_chest_take(0);assert(loot[0].qty==qty-1);
  assert(save_game("build/expedition-interaction.sav")&&load_game("build/expedition-interaction.sav"));assert(expedition_cache(index)[0].qty==qty-1);ui.screen=SCREEN_WORLD;
  fixture_service(ROOM_EXP_UP);interior_interact();assert(actor_floor(&g.actors[g.selected])==1);expedition_tick(.1f);assert(save_game("build/expedition-floor1.sav")&&load_game("build/expedition-floor1.sav"));assert(actor_floor(&g.actors[g.selected])==1);

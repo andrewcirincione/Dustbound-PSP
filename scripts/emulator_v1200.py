@@ -33,7 +33,7 @@ Enable = False
  for name in ['refuge-entrance','turbine-entrance','archive-entrance','archive-gallery','archive-vault']:
   steps += [{'load':name},{'wait':2},{'capture':name}]
  steps += [{'load':'refuge-entrance'},{'analog':[.6,0],'frames':18},{'capture':'refuge-walking'},
-           {'load':'refuge-counter'},{'key':'cross'},{'choose':meta['trade']},{'key':'cross'},{'expect':{'screen':meta['trade_screen']}},{'capture':'outpost-trading'},{'key':'circle'},
+           {'load':'refuge-counter'},{'key':'cross'},{'key':'right'},{'choose':meta['trade']},{'key':'cross'},{'expect':{'screen':meta['trade_screen']}},{'capture':'outpost-trading'},{'key':'circle'},
            {'load':'refuge-stairs'},{'key':'cross'},{'choose':meta['stairs']},{'key':'cross'},{'expect':{'screen':0,'inn_floor':1}},{'capture':'refuge-floor-two'},
            {'load':'refuge-downstairs'},{'key':'cross'},{'choose':meta['down']},{'key':'cross'},{'expect':{'screen':0,'inn_floor':0}},{'capture':'refuge-stairs-return'},
            {'load':'archive-upper-stairs'},{'key':'cross'},{'choose':meta['upper']},{'key':'cross'},{'expect':{'screen':0,'inn_floor':2}},{'capture':'archive-floor-three'},
