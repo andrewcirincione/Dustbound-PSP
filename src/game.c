@@ -861,6 +861,7 @@ void game_new(uint32_t seed, int scenario) {
     armor_world_init();
     arsenal_world_init();
     greatsword_world_init();
+    wilderness_init();
     find_context();
 }
 
@@ -2376,9 +2377,9 @@ void simulate(float dt) {
             put_down(a);
         if (!a->active || a->dead)
             continue;
-        int ready = conscious(a) && (a->attackPhase || (a->autoattack && a->target >= 0 &&
+        int ready = conscious(a) && (a->attackPhase || (a->autoattack && ((a->squad && gear_family(a->gear[0]) == 84) || (a->target >= 0 &&
             a->target < g.actorCount && conscious(&g.actors[a->target]) &&
-            depth_distance(a,&g.actors[a->target]) < 10));
+            depth_distance(a,&g.actors[a->target]) < 10))));
         CombatVisual *visual = &combatVisuals[i];
         visual->stance = clamp(visual->stance + (ready ? dt * 5 : -dt * 3), 0, 1);
         a->cooldown = fmaxf(0, a->cooldown - dt);
@@ -2668,7 +2669,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 32, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
+enum { SAVE_VERSION = 33, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -2727,7 +2728,7 @@ static int validate_game(const Game *t) {
             if (t->charges[n][f] & ~CRIME_MASK)
                 return 0;
     for (int i = 0; i < t->buildingCount; i++)
-        if (t->townLife.chestRefresh[i] < 0 || t->frontier.variant[i] > BUILD_RUIN_LAST)
+        if (t->townLife.chestRefresh[i] < 0 || t->frontier.variant[i] > BUILD_WILD_LAST)
             return 0;
     for (int i = 0; i < RUIN_VILLAGES; i++) {
         int b = t->ruinedVillage[i];
@@ -2885,7 +2886,7 @@ static int validate_game(const Game *t) {
     if(t->trails.version<0||t->trails.version>1||t->trails.seen<0||t->trails.seen>63||t->trails.omit<0||t->trails.omit>0xffffff)return 0;
     for(int k=0;k<6;k++){int b=t->trails.bed[k];if(b<0||b>t->buildingCount||(b&&t->buildings[b-1].type!=BED)||(!t->trails.version&&b))return 0;}
     if(!t->trails.version&&(t->trails.seen||t->trails.omit))return 0;
-    return field_notes_valid(t) && depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t) && population_validate(t) && life_validate(t) && war_validate(t);
+    return wilderness_validate(t) && field_notes_valid(t) && depth_validate(t) && regional_validate(t) && living_validate(t) && society_validate(t) && civil_validate(t) && limbs_validate(t) && population_validate(t) && life_validate(t) && war_validate(t);
 }
 static int migrate_legacy(const LegacyGame *old) {
     if (old->actorCount < 1 || old->actorCount > 80 || old->buildingCount < 0 || old->buildingCount > 100 ||
@@ -3005,7 +3006,7 @@ static int save_shape(uint32_t version,uint32_t size) {
         }
         return size == ends[version - 17] - expansion;
     }
-    return (version == 28 && size == offsetof(Game, plans) - (sizeof(g.frontier) - V28_FRONTIER_BYTES)) || (version==29 && size==offsetof(Game,armor)) || (version==30 && size==offsetof(Game,arsenal)) || (version==31 && size==offsetof(Game,greatswords)) || (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version == 28 && size == offsetof(Game, plans) - (sizeof(g.frontier) - V28_FRONTIER_BYTES)) || (version==29 && size==offsetof(Game,armor)) || (version==30 && size==offsetof(Game,arsenal)) || (version==31 && size==offsetof(Game,greatswords)) || (version==32 && size==offsetof(Game,wilderness)) || (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -3029,7 +3030,7 @@ static void read_save_array(SaveReader *reader, void *array, size_t oldBytes, si
 }
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if (version == SAVE_VERSION || version == 31 || version == 30 || version == 29) memcpy(out, data, size);
+    if (version == SAVE_VERSION || version == 32 || version == 31 || version == 30 || version == 29) memcpy(out, data, size);
     else {
         SaveReader reader = {data, (unsigned char *)out, size};
 #define WIDEN(field, count) read_save_array(&reader, out->field, (count) * sizeof(out->field[0]), sizeof(out->field))
@@ -3197,6 +3198,7 @@ int load_game(const char *path) {
     armor_world_init();
     arsenal_world_init();
     greatsword_world_init();
+    wilderness_init();
         if (h.version < 27) {
             if (g.weather) g.weatherTimer = fminf(g.weatherTimer, 100);
             for (int t = 0; t < TOWNS; t++) {

@@ -2,7 +2,7 @@
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
 #define GAME_NAME "Dust"
-#define VERSION "1.0.6"
+#define VERSION "1.1.0"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -10,6 +10,7 @@
 #define MAX_ACTORS 192
 #define MAX_BUILDINGS 448
 #define RUIN_VILLAGES 4
+#define WILDERNESS_SITES 16
 #define MAX_NODES 640
 #define PACK 24
 #define SKILLS 20
@@ -423,16 +424,29 @@ typedef struct {
         int stock[TOWNS][GREATSWORD_ADDITIONS];
         unsigned char venue[TOWNS][GREATSWORD_ADDITIONS];
     } greatswords;
+    /* v33: persistent exploration sites and travel pacing; v32 stays a prefix. */
+    struct {
+        int version, building[WILDERNESS_SITES], guardSerial[WILDERNESS_SITES];
+        unsigned discovered;
+        float quiet, danger, cooldown;
+        int sequence;
+    } wilderness;
 } Game;
+void wilderness_init(void);
+int wilderness_site(int building);
+const char *wilderness_name(int site);
+const char *wilderness_record(int site);
+int wilderness_validate(const Game *state);
 enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY };
-enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH, ROOM_STAIRS, ROOM_RESEARCH };
+enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH, ROOM_STAIRS, ROOM_RESEARCH, ROOM_RUIN_RECORD };
 enum { ROOM_PROPS = 18 };
 #define DOOR_REACH 1.65f
 #define CELL_Y 3.65f
 #define CELL_HINGE_X 2.65f
 #define CELL_LATCH_X 4.35f
 enum { BUILD_NORMAL, BUILD_ARMORER, BUILD_LODGE,
-       BUILD_RUIN_FIRST, BUILD_RUIN_LAST = BUILD_RUIN_FIRST + RUIN_VILLAGES - 1 };
+       BUILD_RUIN_FIRST, BUILD_RUIN_LAST = BUILD_RUIN_FIRST + RUIN_VILLAGES - 1,
+       BUILD_WILD_FIRST, BUILD_WILD_LAST = BUILD_WILD_FIRST + WILDERNESS_SITES - 1 };
 enum { TOWN_LOCAL, TOWN_HUB, TOWN_FORTRESS, TOWN_CAPITAL };
 enum { TRADE_GENERAL, TRADE_SMITH, TRADE_INN, TRADE_ARMORER, TRADE_APOTHECARY };
 typedef struct {

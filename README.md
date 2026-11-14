@@ -1,6 +1,8 @@
 # Dust — PSP frontier survival RPG
 
-## 1.0.6 — A hundred weapons
+## 1.1.0 — The inhabited wilderness
+
+Wilderness travel now actively seeds nearby threats, camps and traffic within the PSP actor budget. Sixteen named abandoned compounds have varied buildings, enterable interiors, finite salvage and records; some have hostile occupants. Greatswords have distinct passive and fight poses, with a square-button stance hint. Existing saves upgrade automatically.
 
 120 independently drawn expansion weapons across all 38 types, including 23 greatswords and 12 legendary designs, with strength-based enemy equipment. Version 1.0.4 added 20 greatswords, shoulder-rest layering, and smith item pictures; version 1.0.5 raises the idle greatsword angle to rest on the shoulder. Version 1.0.6 modestly reduces the longer greatsword blades while preserving the two-hand grips and shoulder angle. Smithies offer 15–45 weapon and armor options by settlement importance and refresh at midnight. New primary/support grips and edge/aim orientation are verified on equipped characters.
 

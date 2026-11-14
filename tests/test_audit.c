@@ -255,6 +255,7 @@ int main(void) {
     a->y = 44;
     a->job = JOB_COOK;
     g.buildingCount = 2;
+    memset(&g.wilderness,0,sizeof(g.wilderness)); /* This fixture replaces all world sites. */
     g.nodeCount = 0;
     g.buildings[0] = (Building){.x = 42, .y = 44, .type = STORE, .owner = 0};
     g.buildings[0].storage[0] = (Stack){GRAIN, 18};

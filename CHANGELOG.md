@@ -1,5 +1,11 @@
 # 1.0.3 — A hundred weapons
 
+## 1.1.0
+- Added a travel encounter director, small starting-region threats, varied camps/traffic and off-screen combat snapshots to release live actor slots.
+- Added 16 named explorable wilderness compounds with distinct building mixes, interior furnishings, records, finite salvage and possible hostile occupants.
+- Greatswords hold a ready guard in Fight even without a target; Square icon beside Passive/Fight.
+- Save v33 preserves the entire v32 prefix and adds persistent sites and encounter pacing.
+
 ## 1.0.6
 - Slightly shorter, slimmer blades on the twenty longer expansion greatswords. Three compact designs retain their size. Grip spacing, shoulder-rest angle, combat stats and save format remain unchanged.
 

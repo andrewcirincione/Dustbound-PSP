@@ -1615,6 +1615,8 @@ static void hud(void) {
         a->unconscious > 0 ? "DOWN" : a->prisonTime > 0 ? "JAILED" :
         limb_crawling(a) ? "CRAWLING" : limb_limping(a) ? "LIMPING" :
         actor_in_bed(a) ? "RESTING" : a->autoattack ? "FIGHT" : "PASSIVE";
+    if (!strcmp(status,"FIGHT") || !strcmp(status,"PASSIVE"))
+        button_icon(460 - (int)strlen(status) * 6,259,3,1,TEAL);
     text(472 - (int)strlen(status) * 6, 259, status, a->dead || a->unconscious > 0 ? RED : TEAL, 1);
 
     if (a->bleed > .01f) text(370, 259, "BLEED", RED, 1);

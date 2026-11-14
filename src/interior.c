@@ -152,6 +152,7 @@ int homes_validate(const Game *save) {
 
 static int room_has_chest(int building) {
     const Building *b = &g.buildings[building];
+    if (wilderness_site(building) >= 0) return 1;
     if (ruined_building(building))
         return b->type == SHOP;
     return b->owner < 0 && b->faction > FREE && !home_state(building) &&
@@ -642,6 +643,30 @@ static int room_layout(int building, int t, int style, int floor, InteriorProp *
     int layout = (building + (t + 1) * 5) % 3;
     static const int decor[] = {ART_IRON_STOVE, ART_ARMOR_STAND, ART_SIDE_ALTAR,
                                ART_CARAVAN_BALES, ART_IRON_STOVE, ART_CARAVAN_BALES};
+    if (wilderness_site(building) >= 0) {
+        int kind = wilderness_site(building) % 8;
+        int alternate = building & 1;
+        put_prop(p,&n,alternate?1.1f:5.7f,2.0f,.43f,.37f,20,ROOM_CHEST);
+        put_prop(p,&n,3.6f,1.1f,.70f,.32f,17,ROOM_RUIN_RECORD);
+        if (kind==0 || kind==4) { /* foundry / quarry machinery */
+            put_prop(p,&n,1.4f,4.4f,.60f,.57f,19,ROOM_NONE);
+            put_prop(p,&n,5.5f,4.5f,.52f,.44f,ART_IRON_STOVE,ROOM_NONE);
+            put_prop(p,&n,3.4f,3.0f,.35f,.4f,21,ROOM_NONE);
+        } else if (kind==1 || kind==5) { /* watch post / fortified refuge */
+            put_prop(p,&n,1.3f,4.6f,.58f,.81f,16,ROOM_REST);
+            put_prop(p,&n,5.4f,4.4f,.35f,.35f,ART_PRACTICE_POST,ROOM_NONE);
+            put_prop(p,&n,5.4f,1.1f,.45f,.45f,ART_ARMOR_STAND,ROOM_NONE);
+        } else if (kind==2 || kind==6) { /* shrine / former clinic */
+            put_prop(p,&n,3.3f,2.5f,.55f,.45f,ART_SIDE_ALTAR,ROOM_NONE);
+            put_prop(p,&n,1.2f,4.7f,.58f,.81f,16,ROOM_REST);
+            put_prop(p,&n,5.5f,4.7f,.58f,.81f,16,ROOM_REST);
+        } else { /* caravan stop / warehouse */
+            put_prop(p,&n,1.2f,4.7f,.46f,.47f,ART_CARAVAN_BALES,ROOM_NONE);
+            put_prop(p,&n,5.5f,4.4f,.46f,.47f,ART_CARAVAN_BALES,ROOM_NONE);
+            put_prop(p,&n,1.3f,1.1f,.6f,.4f,21,ROOM_NONE);
+        }
+        return n;
+    }
     if (ruined_building(building)) {
         if (b->type == SHOP)
             put_prop(p,&n,5.75f,2.0f,.43f,.37f,20,ROOM_CHEST);
@@ -890,6 +915,8 @@ const char *interior_prompt(void) {
     switch (p[c].action) {
     case ROOM_STAIRS:
         return actor_floor(&g.actors[g.selected]) ? "GO DOWNSTAIRS" : "GO UPSTAIRS";
+    case ROOM_RUIN_RECORD:
+        return "READ WEATHERED RECORD";
     case ROOM_TRADE:
         return "TRADE AT COUNTER";
     case ROOM_REST:
@@ -938,6 +965,9 @@ void interior_interact(void) {
     int town = building_town(id);
     ui.selection = ui.scroll = 0;
     switch (p[c].action) {
+    case ROOM_RUIN_RECORD:
+        log_msg("%s", wilderness_record(wilderness_site(id)));
+        break;
     case ROOM_STAIRS: {
         int floor = actor_floor(a);
         if (a->attackPhase || a->prisonTime > 0)

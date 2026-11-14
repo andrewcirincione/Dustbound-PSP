@@ -1,0 +1,4 @@
+Dust 1.1.0 — implementation checkpoint
+Source recovered from published main 760c9be0b1760a31978f10ab2385e46b7d7f0140.
+Implemented bounded encounter director; safe off-screen combat snapshots; 16 three-building wilderness locations with eight interior archetypes, records and finite salvage; interior guard groups; v33 append-only migration; distinct ready greatsword stance and Square hint.
+Pending: complete route/depleted-world/save and interaction regressions, visual review, PSP build and emulation, publication.

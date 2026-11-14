@@ -51,6 +51,7 @@ const char *building_name(int id) {
     const Building *b = &g.buildings[id];
     int t = building_town(id), v = g.frontier.variant[id];
     const TownDesign *plan = town_design(t);
+    if (wilderness_site(id) >= 0) return wilderness_name(wilderness_site(id));
     if (ruined_building(id)) {
         if (b->type == SHOP) return ruins[v - BUILD_RUIN_FIRST].tradingPost;
         if (b->type == BAR) return "Burned inn";
@@ -75,8 +76,17 @@ int building_sprite(int id) {
     const Building *b = &g.buildings[id];
     int town = building_town(id), style = town < 0 ? -1 : civil_style(town);
     const TownDesign *plan = town_design(town);
+    if (wilderness_site(id) >= 0) {
+        int kind=wilderness_site(id)%8;
+        if(b->type==TOWER)return 3;
+        if(b->type==WINDMILL)return 24;
+        if(b->type==WELL)return 25;
+        if(b->type==WALL)return kind==5?ART_STONE_WALL:ART_COURT_WALL;
+        if(b->type==CAMPFIRE)return 27;
+        if(b->type==HOUSE && (kind==2||kind==6))return kind==2?ART_ASH_HOME:ART_HERB_SHOP;
+    }
     if (ruined_building(id)) {
-        if (b->type == SHOP) return ART_RUIN_SHOP;
+        if (b->type == SHOP || b->type == STORE) return ART_RUIN_SHOP;
         if (b->type == BAR) return ART_RUIN_INN;
         if (b->type == FORGE) return ART_RUIN_FORGE;
         return ART_RUIN_HOUSE;

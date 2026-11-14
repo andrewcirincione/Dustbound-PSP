@@ -260,6 +260,7 @@ static void group_behavior(int k,float dt){
  if(distance(e->x,e->y,z->lastX,z->lastY)<.08f)z->stalled+=dt;else z->stalled=0;z->lastX=e->x;z->lastY=e->y;
 }
 int population_tactics(int n,float dt){
+ if(population_owned(n)&&wilderness_guard_group(population_owned(n)-1))return 0;
  int owned=population_owned(n);if(!owned||!L.version)return 0;int k=owned-1;GroupLife*z=&L.groups[k];WorldEvent*e=&P.groups[k];Actor*a=&g.actors[n];int i=0;while(i<e->count&&e->members[i]!=n)i++;if(i>=e->count||a->squad||g.society.freed[n])return 0;
 
  if(z->goal==LIFE_AMBUSH&&!z->ambushSprung){float angle=i*6.283185f/e->count;route_toward(a,P.state[k].siteX+cosf(angle)*4,P.state[k].siteY+sinf(angle)*4,dt*.6f);a->sneaking=1;return 1;}

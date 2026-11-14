@@ -20,6 +20,8 @@ static Actor *quiet_frontier(unsigned seed) {
     game_new(seed,0);
     Actor *a=&g.actors[g.selected];
     a->x=380;a->y=380;
+    /* Exercise the slower legacy refill independently of the travel director. */
+    g.wilderness.cooldown=100000;
     g.day=42;
     g.time=41*DAY_SECONDS;
     for(int k=0;k<POP_GROUPS;k++)park_group(k);
