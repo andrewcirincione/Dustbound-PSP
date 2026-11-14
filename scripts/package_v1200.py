@@ -8,7 +8,7 @@ subprocess.run(['python3','scripts/validate_pbp.py','EBOOT.PBP','--assets','asse
 eboot=ROOT/'EBOOT.PBP';controller=json.loads((EV/'psp/psp-controller.json').read_text())
 assert controller['ok'] and controller['eboot_sha256']==digest(eboot)
 results=json.loads((ROOT/'build/v1000/native-results.json').read_text())
-assert len(results)>=51 and all(x['status']=='passed' for x in results.values()),'Native qualification failed'
+assert len(results)>=52 and all(x['status']=='passed' for x in results.values()),'Native qualification failed'
 assert controller['exterior_models_verified']==6 and controller['interior_scenes_verified']==5
 for field in ['upstairs_verified','downstairs_verified','third_floor_verified','trade_verified','salvage_verified','robot_combat_verified','analog_walk_verified']:assert controller[field],field
 assert len(list((EV/'psp').glob('*.png')))>=21

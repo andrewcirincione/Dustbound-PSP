@@ -16,7 +16,8 @@ int main(int argc,char**argv){root=argc>1?argv[1]:"build/v1000/fixtures";mkdir(r
  room(18,1);save("archive-gallery");int upper=service(ROOM_EXP_UP);save("archive-upper-stairs");
  room(18,2);save("archive-vault");int cache=service(ROOM_EXP_CACHE);save("archive-cache");
  room(20,0);Actor*a=&g.actors[0];ExpeditionCrew*c=&g.expedition.crew[20][0];int n=c->live[0];assert(n>=0);Actor*bot=&g.actors[n];g.interiorX=g.depth.actors[0].rx=g.depth.actors[n].rx+1.1f;g.interiorY=g.depth.actors[0].ry=g.depth.actors[n].ry;
- a->gear[0]=a->attackWeapon=WEAPON_ITEMS+109;armor_equip(a,20);a->healthScale=1000;for(int l=0;l<LIMBS;l++)a->health[l]=1000;a->target=n;a->autoattack=0;bot->target=0;bot->cooldown=0;save("robot-combat");
+ a->gear[0]=a->attackWeapon=WEAPON_ITEMS+109;armor_equip(a,20);a->healthScale=1000;for(int l=0;l<LIMBS;l++)a->health[l]=1000;a->xp[STRENGTH]=12*79*79;a->xp[DEXTERITY]=12*49*49;g.society.weaponXP[0][weapon_class(a->gear[0])]=12*59*59;
+ a->target=n;a->autoattack=0;bot->target=0;bot->cooldown=1.5f;save("robot-combat");
  char path[512];snprintf(path,sizeof(path),"%s/exploration.json",root);FILE*f=fopen(path,"w");assert(f);fprintf(f,"{\"trade\":%d,\"stairs\":%d,\"upper\":%d,\"down\":%d,\"cache\":%d,\"trade_screen\":%d,\"chest_screen\":%d}",trade,stairs,upper,down,cache,SCREEN_TRADE,SCREEN_CHEST);fclose(f);
  puts("Prepared six new exteriors, occupied refuge, three-floor archive, services, finite loot and robot combat.");return 0;
 }

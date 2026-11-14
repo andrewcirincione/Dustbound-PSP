@@ -35,7 +35,7 @@ jobs:
       - name: Run current native regression suites
         run: |
           python scripts/validate_v1000.py
-          python -c "import json; r=json.load(open('build/v1000/native-results.json')); assert len(r)>=51 and all(x['status']=='passed' for x in r.values()), r"
+          python -c "import json; r=json.load(open('build/v1000/native-results.json')); assert len(r)>=52 and all(x['status']=='passed' for x in r.values()), r"
       - name: Install verified PSPDEV toolchain
         run: |
           curl -L --fail --retry 3 -o "$RUNNER_TEMP/pspdev.tar.gz" https://github.com/pspdev/pspdev/releases/download/v20261101/pspdev-ubuntu-latest-x86_64.tar.gz

@@ -771,7 +771,9 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         int frame=!dead&&a->attackPhase==2?3:!dead&&a->movedTimer>0?1+((int)(a->anim*1.3f)&1):0;
         int id=EXP_ROBOT_FIRST+machine*4+frame;const ArtSprite*image=scene_sprite(id);float scale=(machine?.6f:.5f)*sc*boss,sy=dead?scale*.35f:scale;
         int bob=!dead&&a->movedTimer>0?(int)(sinf(a->anim*2)*sc):0,lunge=!dead&&a->attackPhase==2?(int)(sinf(p*3.14159f)*3*sc)*(a->facing?1:-1):0;
-        scaled_art(id,x-(int)(image->ax*scale)+lunge,y-(int)(image->ay*sy)+bob,(int)(image->w*scale),(int)(image->h*sy),li,a->facing?0:1,dead?1:0);
+        int left=x-(int)(image->ax*scale)+lunge,top=y-(int)(image->ay*sy)+bob,w=(int)(image->w*scale),h=(int)(image->h*sy);
+        track_paint((PaintBounds){left,top,left+w,top+h});
+        scaled_art(id,left,top,w,h,li,a->facing?0:1,dead?1:0);
         return;
     }
 
