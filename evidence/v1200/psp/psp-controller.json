@@ -1,0 +1,249 @@
+{
+  "id": "exploration-1.2.0",
+  "ok": true,
+  "responses": [
+    {
+      "image": "v1200-title",
+      "screen": 13,
+      "frame": 190,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "exploration-model-0",
+      "screen": 0,
+      "frame": 222,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "exploration-model-1",
+      "screen": 0,
+      "frame": 266,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "exploration-model-2",
+      "screen": 0,
+      "frame": 310,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "exploration-model-3",
+      "screen": 0,
+      "frame": 354,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "exploration-model-4",
+      "screen": 0,
+      "frame": 398,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "exploration-model-5",
+      "screen": 0,
+      "frame": 442,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "refuge-entrance",
+      "screen": 0,
+      "frame": 486,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "turbine-entrance",
+      "screen": 0,
+      "frame": 530,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "archive-entrance",
+      "screen": 0,
+      "frame": 574,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "archive-gallery",
+      "screen": 0,
+      "frame": 618,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "archive-vault",
+      "screen": 0,
+      "frame": 662,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "refuge-walking",
+      "screen": 0,
+      "frame": 724,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "outpost-trading",
+      "screen": 6,
+      "frame": 784,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "refuge-floor-two",
+      "screen": 0,
+      "frame": 844,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "refuge-stairs-return",
+      "screen": 0,
+      "frame": 898,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "archive-floor-three",
+      "screen": 0,
+      "frame": 952,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "archive-salvage",
+      "screen": 44,
+      "frame": 1006,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "archive-salvage-taken",
+      "screen": 44,
+      "frame": 1012,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "robot-combat",
+      "screen": 0,
+      "frame": 1070,
+      "attack": 2,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "robot-combat-follow-through",
+      "screen": 0,
+      "frame": 1090,
+      "attack": 1,
+      "variant": 1,
+      "place": [
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "eboot_sha256": "fd487f24a0c8f9b100b3ba73845f8ebfe4e3e5cc96f6de14b18436b67d4c1571",
+  "emulator": "Official PPSSPP 1.20.4",
+  "exterior_models_verified": 6,
+  "interior_scenes_verified": 5,
+  "upstairs_verified": true,
+  "downstairs_verified": true,
+  "third_floor_verified": true,
+  "trade_verified": true,
+  "salvage_verified": true,
+  "robot_combat_verified": true,
+  "analog_walk_verified": true,
+  "physical_psp_tested": false
+}

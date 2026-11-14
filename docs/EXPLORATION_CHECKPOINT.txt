@@ -1,5 +1,20 @@
-Dust 1.2.0 — QUALIFICATION CHECKPOINT
+Dust 1.2.0 — COMPLETED AND PUBLISHED
 
-46 sites (30 additional), 19 occupied, 106 floors. New six generated buildings, four material textures and two animated robotic enemy types are implemented and production-rendered. Floor-specific persistent crews and caches are implemented. Genuine v33 migration, all-floor reachability, analog route traversal, three-floor save/load, occupied trading, robot salvage/deaths and reward-tier checks pass.
+Public release: https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v1.2.0
+Tested/tagged source: c9706bfa857b7ae090f7aff0377318f12807355b
+Tested source tree: 343c61f2884db790592a3b9944a171a676f2546d
+Release workflow: 43641430914; job 132589719141; SUCCESS.
+Regular source build workflow: 43641430888; SUCCESS.
 
-All 51 native suites pass, including four 20-minute travel routes (longest observed empty interval 59.5 seconds). Current native qualification is recorded in build/v1000/native-results.json. Actual PSP qualification and immutable release publishing are handled by release-exploration.yml on release-1.2.0. Do not call the release published until the workflow and uploaded digests are verified. The public 1.1.0 remains untouched.
+30 additional locations, 46 total, 19 occupied, 106 explorable floors (1–3 per site). Six new generated isometric exteriors, four materials, and two animated mechanical enemies. Finite caches and per-floor occupants retain loot, injuries and deaths. Rewards and guards follow site tier; upper floors increase danger. Occupied sites provide guards, supplies and rest.
+
+52 native suites pass. All 106 floors pass actual-collision reachability for services and loot. Ordinary analog input traverses a complete refuge route. Genuine v33 upgrades, three-floor saves, finite loot, trading and robot salvage/death persistence pass. Thirty additions place successfully across 64 world seeds. Four 20-minute travel tests show on-screen activity with a longest empty interval of 59.5 seconds; health was held constant to isolate availability.
+
+Official PPSSPP 1.20.4 ran the actual release EBOOT: six exteriors, five interior scenes, analog movement, upstairs, downstairs, third-floor access, outpost trade, salvage and live robot combat. Twenty-one actual PSP screenshots are in the Evidence ZIP. Robot sprite-cache visibility was fixed before publication; a dedicated test covers 16 robot poses across both designs and facings, visible corpses, and reused cached bodies. No physical PSP hardware test.
+
+EBOOT: 12,048,120 bytes
+SHA256 fd487f24a0c8f9b100b3ba73845f8ebfe4e3e5cc96f6de14b18436b67d4c1571
+PSP ZIP SHA256 e1fd9512f1f3412c5d5d34e1aa82f73713ffffdd6e6f6e0f13b05cbd608ca306
+Evidence ZIP SHA256 2d22ddf9878251a3a96daa460e3adc5896dda0a217269a321951ec9bfed6bd12
+
+Production MEMSIZE=0. Save version 34, 640 building slots. Keep existing saves while replacing EBOOT.PBP. Published release digests match the downloaded, qualified artifacts. Completed source and evidence are synced to main; the immutable v1.2.0 tag remains on the tested source.
