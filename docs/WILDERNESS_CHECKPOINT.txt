@@ -1,8 +1,44 @@
-Dust 1.1.0 — implementation checkpoint
-Source recovered from published main 760c9be0b1760a31978f10ab2385e46b7d7f0140.
-Implemented bounded encounter director; safe off-screen combat snapshots; 16 three-building wilderness locations with eight interior archetypes, records and finite salvage; interior guard groups; v33 append-only migration; distinct ready greatsword stance and Square hint.
-Pending: complete route/depleted-world/save and interaction regressions, visual review, PSP build and emulation, publication.
+Dust 1.1.0 — COMPLETED AND PUBLISHED
 
-Completed native integration checks: four 20-minute analog travel routes (longest empty intervals 32.2/62.9/19.9/50.5 s); three six-minute depleted day-42 routes with simulated clears (11/14/12 visible groups, 6/7/5 threats, 3 camps each; longest gaps 62.0/29.6/45.9 s). Health held constant to isolate availability, not combat balance.
-Validated v32 migration, all sixteen primary site interiors, readable records and finite salvage interactions; off-screen combat snapshot preserves wounds and gear; interior guards and stance toggles pass. Native visual review shows foundry, watch post, shrine, camp, bandits and distinct passive/fight greatswords.
-Full 50-suite regression run is underway. PSP compilation, PPSSPP review and public release remain pending.
+Source recovered from published main 760c9be0b1760a31978f10ab2385e46b7d7f0140.
+Implemented an active travel director using actual on-screen activity, small
+starting-region threats, varied camps/traffic and safe off-screen combat snapshots.
+Distant NPC fights no longer pin the limited live actor pool indefinitely.
+Wounds, equipment and members survive snapshots; active recruits, prisoners,
+quest parties, bounties, nearby squads and observed sites are protected.
+
+Sixteen named three-structure compounds add 48 buildings/structures, with foundry,
+quarry/pump, watch post, shrine, clinic, fort, caravan-stop and freight-yard themes.
+Existing painted architecture is arranged into varied compounds; enterable rooms
+have themed furnishings, records and finite salvage. Some have interior guards.
+Greatswords hold a distinct ready guard in Fight even without a target; Passive
+retains the shoulder rest. Square icon appears beside Passive/Fight.
+Save v33 preserves the entire v32 prefix and appends persistent sites/pacing.
+
+Qualification completed:
+- All 50 native regression suites passed locally and in GitHub Actions.
+- Four 20-minute analog travel routes: longest empty stretches 32.2, 62.9,
+  19.9 and 50.5 seconds; 11, 11, 5 and 16 unique population groups encountered.
+- Three six-minute depleted day-42 routes: 11/14/12 visible groups, 6/7/5
+  threats replenished after simulated clears, and 3 camps each; longest gaps
+  62.0/29.6/45.9 seconds. Health held constant: these measure availability,
+  not combat balance. Results are sampled routes, not a universal time guarantee.
+- v32 upgrade, all sixteen primary interiors, records, finite salvage, interior
+  guards, off-screen combat state and target-free stance toggles passed.
+- 260 production-renderer weapon review frames generated.
+- Actual PPSSPP 1.20.4: four equipped/combat cases across two greatswords and both
+  facings; three exterior/interior pairs; camp and bandit scenes; target-free
+  Passive/Fight/Passive toggle; smith weapon/armor previews. Captures reviewed.
+- Published EBOOT and both ZIP digests match qualification logs and the downloaded
+  tested-release artifact. Every runtime source hash matches the release manifest.
+- No physical PSP hardware test performed.
+
+Release: https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v1.1.0
+Qualified source/tag: b9005a3192451e6c7f973a393537073d043aea58
+Workflow: https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/43626514605
+Job: 132543437747 (success)
+EBOOT.PBP: 11,796,120 bytes
+SHA256: d8204a26ee9799cd3b84e0412da0120c5660d6577efa577516f0bff6f4c6300e
+PSP ZIP SHA256: 336f15f438ab426a1bbbfe02283a27d87d7296322c30651116845ee042271ea1
+Evidence ZIP SHA256: 5651ca7e5b05426a48347a589b9f7879bf3b2e702a41974ced895ed7aa1e01ca
+Actual PSP gallery: evidence/v1100/in-game-previews.png (in Evidence ZIP).
