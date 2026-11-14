@@ -59,7 +59,7 @@ void wilderness_init(void){
 }
 int wilderness_validate(const Game *s){
  if(s->wilderness.version<0||s->wilderness.version>1||s->wilderness.sequence<0||!isfinite(s->wilderness.quiet)||!isfinite(s->wilderness.danger)||!isfinite(s->wilderness.cooldown)||s->wilderness.quiet<0||s->wilderness.danger<0||s->wilderness.cooldown<0)return 0;
- for(int i=0;i<WILDERNESS_SITES;i++){int b=s->wilderness.building[i];if(b<0||b>s->buildingCount||(b&&s->frontier.variant[b-1]!=BUILD_WILD_FIRST+i))return 0;}
+ for(int i=0;i<WILDERNESS_SITES;i++){int b=s->wilderness.building[i];if(s->wilderness.guardSerial[i]<0||b<0||b>s->buildingCount||(b&&s->frontier.variant[b-1]!=BUILD_WILD_FIRST+i))return 0;}
  return 1;
 }
 static int wilderness_guard_group(int k){int i=k-48;return i>=0&&i<WILDERNESS_SITES&&g.wilderness.guardSerial[i]>0&&g.wilderness.guardSerial[i]==P.groups[k].serial;}

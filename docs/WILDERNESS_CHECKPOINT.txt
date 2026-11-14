@@ -2,3 +2,7 @@ Dust 1.1.0 — implementation checkpoint
 Source recovered from published main 760c9be0b1760a31978f10ab2385e46b7d7f0140.
 Implemented bounded encounter director; safe off-screen combat snapshots; 16 three-building wilderness locations with eight interior archetypes, records and finite salvage; interior guard groups; v33 append-only migration; distinct ready greatsword stance and Square hint.
 Pending: complete route/depleted-world/save and interaction regressions, visual review, PSP build and emulation, publication.
+
+Completed native integration checks: four 20-minute analog travel routes (longest empty intervals 32.2/62.9/19.9/50.5 s); three six-minute depleted day-42 routes with simulated clears (11/14/12 visible groups, 6/7/5 threats, 3 camps each; longest gaps 62.0/29.6/45.9 s). Health held constant to isolate availability, not combat balance.
+Validated v32 migration, all sixteen primary site interiors, readable records and finite salvage interactions; off-screen combat snapshot preserves wounds and gear; interior guards and stance toggles pass. Native visual review shows foundry, watch post, shrine, camp, bandits and distinct passive/fight greatswords.
+Full 50-suite regression run is underway. PSP compilation, PPSSPP review and public release remain pending.

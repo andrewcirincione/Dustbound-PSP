@@ -51,7 +51,19 @@ const char *building_name(int id) {
     const Building *b = &g.buildings[id];
     int t = building_town(id), v = g.frontier.variant[id];
     const TownDesign *plan = town_design(t);
-    if (wilderness_site(id) >= 0) return wilderness_name(wilderness_site(id));
+    if (wilderness_site(id) >= 0) {
+        int site=wilderness_site(id);
+        if(g.wilderness.building[site]==id+1)return wilderness_name(site);
+        if(b->type==STORE)return "Abandoned storehouse";
+        if(b->type==FORGE)return "Derelict machine hall";
+        if(b->type==SHOP)return "Deserted supply depot";
+        if(b->type==HOUSE)return "Empty quarters";
+        if(b->type==WINDMILL)return "Rusting windpump";
+        if(b->type==WELL)return "Old well";
+        if(b->type==CAMPFIRE)return "Cold campfire";
+        if(b->type==WALL)return "Broken perimeter";
+        return "Abandoned bunkhouse";
+    }
     if (ruined_building(id)) {
         if (b->type == SHOP) return ruins[v - BUILD_RUIN_FIRST].tradingPost;
         if (b->type == BAR) return "Burned inn";

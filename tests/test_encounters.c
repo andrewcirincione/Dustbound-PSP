@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 static void park_group(int k) {
     WorldEvent *e=&g.population.groups[k];
@@ -22,6 +23,7 @@ static Actor *quiet_frontier(unsigned seed) {
     a->x=380;a->y=380;
     /* Exercise the slower legacy refill independently of the travel director. */
     g.wilderness.cooldown=100000;
+    memset(g.wilderness.building,0,sizeof(g.wilderness.building)); /* Landmark guards have separate integration coverage. */
     g.day=42;
     g.time=41*DAY_SECONDS;
     for(int k=0;k<POP_GROUPS;k++)park_group(k);
