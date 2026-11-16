@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install review dependencies
-        run: python -m pip install Pillow==11.3.0 websockets==15.0.1
+        run: python -m pip install Pillow==13.0.0 websockets==15.0.1
       - name: Verify compiled armor fit metadata
         run: |
           python scripts/pack_armor_sets.py

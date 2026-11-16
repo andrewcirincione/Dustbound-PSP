@@ -1,6 +1,4 @@
-## 1.2.0 — Old-world expeditions (2026-11-14)
-
-## 1.2.1 — Field repairs
+## 1.2.1 — Field repairs (2026-11-16)
 
 - Fix character skin, hair/beard anchors and variety, backpack fit, boots/cap orientation, fixed-length walking legs, katana/greatsword carries and weapon-fitting artifacts.
 - Read before accepting work; abandon from the Journal; use individual camp chests; restrict depot services to real depots.
@@ -9,6 +7,7 @@
 - Restore useful camp workshops/farming and expand cooking/leatherworking. Fix room/floor combat targeting and duplicate NPC casualty carries. Improve rain.
 - Save version 35 preserves older expeditions. PSP and emulator qualification are recorded in `evidence/v121`.
 
+## 1.2.0 — Old-world expeditions (2026-11-14)
 
 - Add 30 named sites and expand all 46 primary interiors into 106 scrolling floors with connected rooms, side stores, stairs and finite caches.
 - Add inhabited refuges, work camps and faction outposts, supply trading, beds and persistent guards.

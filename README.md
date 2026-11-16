@@ -21,7 +21,7 @@ An original isometric western–samurai survival RPG for PSP homebrew, inspired 
 
 DustAmbient.mp3 loops across the title screen, gameplay and menus. The full soundtrack is built into the EBOOT and decoded ahead of playback.
 
-Start > Camp & Home contains camp placement, home furniture and research. Place a campfire or an inventory bedroll on open ground; placement clears nearby foliage. Camps disappear after a day without the squad nearby. Furniture can be moved or removed in homes you own. Smithies offer expanded stock and equipment forging; markets stay open all day. Public depots share storage across towns and charge a quoted fee on both deposits and withdrawals. Purchased-house chests share a separate free stash.
+Start > Camp & Home contains camp placement, home furniture and research. Place campfires, inventory bedrolls, farm plots, workshops, research benches, walls, storage or wind pumps on open ground; the menu quotes materials and research. Placement clears nearby foliage. Camps disappear after a day without the squad nearby. Furniture can be moved or removed in homes you own. Smithies offer expanded stock and equipment forging; markets stay open all day. Public depots share storage across towns and charge a quoted fee on both deposits and withdrawals. Purchased-house chests share a separate free stash.
 
 [1.0.0 changes and validation](docs/VALIDATION_V1000.md)
 
