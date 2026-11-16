@@ -42,3 +42,5 @@ Final qualification checkpoint:
 - Resume with scripts/emulator_v122.py, scripts/review_feedback_v122.py and scripts/package_v122.py. The new .github/workflows/release-v122.yml builds, tests and publishes only from release-1.2.2. Do not call a partial controller record a complete release.
 
 Final screenshot/interaction follow-up: remove the obsolete iron/research readouts from the two-choice camp screen. An actual bed-use probe also caught expedition infirmaries inheriting private-house restrictions; the exception is now corrected, with native and PSP controller acceptance for sleeping in the ward. The full controller target is 62 captures.
+
+A final footprint audit found ground-floor corner caches overlapping stairs at 42 sites. Those caches are repositioned, and all 106 floors now have non-overlapping stairs/chests/furniture in addition to the existing connected-path tests.

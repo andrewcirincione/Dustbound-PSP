@@ -191,7 +191,7 @@ int expedition_stair_point(int b,int floor,int up,float*x,float*y){
 static void prop(InteriorProp*p,int*n,float x,float y,float w,float d,int art,int action){if(*n<ROOM_PROPS)p[(*n)++]=(InteriorProp){x,y,w,d,art,action};}
 static void chest_point(int b,int floor,int c,float*x,float*y){
  float w=expedition_width(b),h=expedition_height(b);
- *x=c&1?w-2.4f:2.4f;*y=c&2?h-4:2.4f;
+ *x=c&1?w-5:2.4f;*y=c&2?h-4:2.4f;
  if(floor==1){*x=c&1?w-3:3;*y=c&2?h-6:5;}
  if(floor==2){*x=c&1?w-3:3;*y=c&2?h-6:3;}
 }

@@ -70,6 +70,14 @@ static void interiors(void){
   int count=interior_floor_props(b,floor,p);for(int i=0;i<count;i++){beds[floor]+=p[i].action==ROOM_REST;stands[floor]+=p[i].art==ART_ARMOR_STAND;hash[floor]=hash[floor]*33+p[i].art+(int)(p[i].x*100)+(int)(p[i].y*100);}
  }
  assert(beds[0]>=8&&stands[0]==0&&stands[1]<=2&&stands[2]==0&&hash[0]!=hash[1]&&hash[1]!=hash[2]);
+ // The stairs, chests and furniture must have distinct physical footprints.
+ for(int site=0;site<EXP_SITES;site++){
+  int building=site<16?g.wilderness.building[site]-1:g.expedition.primary[site-16]-1;
+  for(int floor=0;floor<expedition_levels(building);floor++){
+   int count=interior_floor_props(building,floor,p);
+   for(int i=0;i<count;i++)for(int j=0;j<i;j++)assert(fabsf(p[i].x-p[j].x)>=p[i].w+p[j].w||fabsf(p[i].y-p[j].y)>=p[i].d+p[j].d);
+  }
+ }
  for(int s=0;s<EXP_SITES;s++)for(int floor=0;floor<expedition_levels(s<16?g.wilderness.building[s]-1:g.expedition.primary[s-16]-1);floor++){
   Stack*weapon=expedition_cache((s*EXP_FLOORS+floor)*EXP_CHESTS+1);
   if(!expedition_inhabited(s))assert(itemDefs[weapon[0].item].slot==0);
