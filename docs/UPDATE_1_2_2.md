@@ -29,3 +29,14 @@ Implementation checkpoint:
 - Two-day theft acceptance tests pass through equipping, unequipping, passing, dropping/picking up, home storage and save/reload. Separate stolen batches do not refresh each other's deadlines.
 - Redoubt native standing render medians improved from 0.70–0.89 ms to 0.08–0.23 ms; tick p95 from 0.57–0.61 ms to 0.13–0.14 ms. These are host measurements, not PSP hardware measurements.
 - Initial EBOOT compilation passed. Final pose changes, emulator verification and release publication remain pending.
+
+Final qualification checkpoint:
+
+- The inventory legend and injury stance text are removed. Weight columns are checked in both normal and pictured trading layouts. The creator also replaces the removed Engineering field with Smithing.
+- All 20 added greatswords × 2 facings × 3 body types × 5 species pass an actual face-pixel occlusion audit (34,570 face pixels, zero covered). The coat/blade/leading-arm ordering is preserved, with the resting blade behind the chin. Joint, grip, attack and world-cache checks pass.
+- Every storage entry point now checks the depot allowlist, including exterior contexts, indoor counters, clerk dialogues, transfers and automatic work.
+- Theft ages also survive partial food/medicine use, forging/crafting, deployed bedrolls, seized property and temporary weapon confiscation. These append to v36; all released save prefixes stay unchanged.
+- A complete initial native run passed 55 suites. The final regression run is in progress after the final carry/layering and theft-container checks.
+- The PSP controller development pass reached every new scenario successfully. One earlier pass used an outdated stair action label and another was intentionally rejected because the source EBOOT changed during the run. Neither is release qualification. The final full run is now using a frozen executable and the corrected exact action labels.
+- Matched native before/after benchmarks show 73–83% less standing rendering time and 21–27% less scrolling rendering time in Redoubt. These are host component measurements, not hardware frame rates; the raw record is in evidence/v122/interior-performance.json.
+- Resume with scripts/emulator_v122.py, scripts/review_feedback_v122.py and scripts/package_v122.py. The new .github/workflows/release-v122.yml builds, tests and publishes only from release-1.2.2. Do not call a partial controller record a complete release.

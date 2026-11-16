@@ -1,3 +1,15 @@
+## 1.2.2 — Carry and quarters (2026-11-16)
+
+- Double menu navigation volume; preserve the selection sound.
+- Adjust greatsword shoulder carries with a shallower blade and bent elbow; keep the face clear.
+- Increase combat and weapon-class XP 50%; double Toughness and field medicine XP.
+- Remove four trade skills and restrict camp construction to bonfires and bedrolls.
+- Remove the equipped-marker legend and limping label; restore the short hide description; add inventory/shop weight columns.
+- Restrict depot entry points, transfers and automatic workers to actual depots; preserve owned-home chests.
+- Replace repetitive expedition floor grids with purpose-specific layouts, barracks beds, distinct floors and appropriate rewards.
+- Cache indoor backgrounds, walls and navigation; correct upper-floor collision and remove the duplicate location label.
+- Expire stolen tags after two in-game days; preserve deadlines through equipment, transfers, storage and saves. Save v36 preserves all older formats.
+
 ## 1.2.1 — Field repairs (2026-11-16)
 
 - Fix character skin, hair/beard anchors and variety, backpack fit, boots/cap orientation, fixed-length walking legs, katana/greatsword carries and weapon-fitting artifacts.

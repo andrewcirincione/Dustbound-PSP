@@ -1213,18 +1213,21 @@ static void texture_plane(int id, float x, float y, float ux, float uy, float vx
     if (bottom > clipBottom)
         bottom = clipBottom;
     const uint32_t *palette = id>=EXPEDITION_ART_FIRST?sprite_palette(id,s,li):part_palette(id, 0x808080, li, 0);
-    for (int yy = top; yy < bottom; yy++)
-        for (int xx = left; xx < right; xx++) {
-            float dx = xx + .5f - x, dy = yy + .5f - y, u = (dx * vy - dy * vx) / det,
-                  v = (dy * ux - dx * uy) / det;
+    float inverse=1.f/det,du=vy*inverse,dv=-uy*inverse;
+    float tilesU=repeatU*s->w,tilesV=repeatV*s->h;
+    for (int yy = top; yy < bottom; yy++) {
+        float dx=left+.5f-x,dy=yy+.5f-y;
+        float u=(dx*vy-dy*vx)*inverse,v=(dy*ux-dx*uy)*inverse;
+        for (int xx = left; xx < right; xx++,u+=du,v+=dv) {
             if (u < 0 || v < 0 || u >= 1 || v >= 1)
                 continue;
-            int sx = (int)(u * repeatU * s->w) % s->w, sy = (int)(v * repeatV * s->h) % s->h;
+            int sx = (int)(u * tilesU) % s->w, sy = (int)(v * tilesV) % s->h;
             int lo = s->rows[sy * 3 + 1];
             if (sx < lo || sx >= s->rows[sy * 3 + 2])
                 continue;
             fb[yy * pitch + xx] = palette[s->pixels[s->rows[sy * 3] + sx - lo]];
         }
+    }
 }
 static float roomScale = 22, roomBase = 61, roomCamX,roomCamY;
 static void room_project(float x, float y, int *sx, int *sy) {
@@ -2625,9 +2628,9 @@ static void creator_screen(void) {
              species->health, actor_capacity(&a), (int)roundf(species->move * 100),
              (int)roundf(species->food * 100));
     text(30, 207, stats, TEAL, 1);
-    snprintf(stats, sizeof(stats), "STR %d  DEX %d  TOUGH %d  DODGE %d  AGI %d  SNEAK %d  ENG %d",
+    snprintf(stats, sizeof(stats), "STR %d  DEX %d  TOUGH %d  DODGE %d  AGI %d  SNEAK %d  SMITH %d",
              level(&a, STRENGTH), level(&a, DEXTERITY), level(&a, TOUGHNESS), level(&a, DODGE),
-             level(&a, ATHLETICS), level(&a, STEALTH), level(&a, ENGINEERING));
+             level(&a, ATHLETICS), level(&a, STEALTH), level(&a, SMITHING));
     text(30, 217, stats, MUTED, 1);
     clipped(30, 227, species->trait, 69, TEXT);
 }

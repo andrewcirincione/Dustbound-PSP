@@ -1,0 +1,114 @@
+{
+  "baseline_commit": "db2341042a5c6d40aaeee345d271db7f6e9d48fe",
+  "scene": "Redoubt Nine; same seed and floor/camera positions; 180 measured frames after 12 warm-up frames per condition",
+  "platform": "native Linux host, not PSP hardware",
+  "compiler": "14.2.0",
+  "before": [
+    {
+      "floor": 0,
+      "mode": "standing",
+      "render_median_ms": 0.807121,
+      "render_p95_ms": 1.025411,
+      "tick_median_ms": 0.06658,
+      "tick_p95_ms": 0.247345
+    },
+    {
+      "floor": 1,
+      "mode": "standing",
+      "render_median_ms": 0.814362,
+      "render_p95_ms": 1.326126,
+      "tick_median_ms": 0.068003,
+      "tick_p95_ms": 0.252592
+    },
+    {
+      "floor": 2,
+      "mode": "standing",
+      "render_median_ms": 0.79357,
+      "render_p95_ms": 0.973293,
+      "tick_median_ms": 0.067071,
+      "tick_p95_ms": 0.331332
+    },
+    {
+      "floor": 0,
+      "mode": "camera_scroll",
+      "render_median_ms": 0.895585,
+      "render_p95_ms": 1.092573,
+      "tick_median_ms": 0.065379,
+      "tick_p95_ms": 0.235967
+    },
+    {
+      "floor": 1,
+      "mode": "camera_scroll",
+      "render_median_ms": 0.889656,
+      "render_p95_ms": 1.089598,
+      "tick_median_ms": 0.065419,
+      "tick_p95_ms": 0.271561
+    },
+    {
+      "floor": 2,
+      "mode": "camera_scroll",
+      "render_median_ms": 0.840572,
+      "render_p95_ms": 1.009718,
+      "tick_median_ms": 0.067242,
+      "tick_p95_ms": 0.304821
+    }
+  ],
+  "after": [
+    {
+      "floor": 0,
+      "mode": "standing",
+      "render_median_ms": 0.215997,
+      "render_p95_ms": 0.260054,
+      "tick_median_ms": 0.061213,
+      "tick_p95_ms": 0.110998
+    },
+    {
+      "floor": 1,
+      "mode": "standing",
+      "render_median_ms": 0.137077,
+      "render_p95_ms": 0.203278,
+      "tick_median_ms": 0.057757,
+      "tick_p95_ms": 0.119481
+    },
+    {
+      "floor": 2,
+      "mode": "standing",
+      "render_median_ms": 0.167683,
+      "render_p95_ms": 0.61451,
+      "tick_median_ms": 0.061553,
+      "tick_p95_ms": 0.108394
+    },
+    {
+      "floor": 0,
+      "mode": "camera_scroll",
+      "render_median_ms": 0.712097,
+      "render_p95_ms": 0.872159,
+      "tick_median_ms": 0.063826,
+      "tick_p95_ms": 0.178821
+    },
+    {
+      "floor": 1,
+      "mode": "camera_scroll",
+      "render_median_ms": 0.650975,
+      "render_p95_ms": 0.762333,
+      "tick_median_ms": 0.062234,
+      "tick_p95_ms": 0.150147
+    },
+    {
+      "floor": 2,
+      "mode": "camera_scroll",
+      "render_median_ms": 0.612467,
+      "render_p95_ms": 0.728061,
+      "tick_median_ms": 0.063356,
+      "tick_p95_ms": 0.143487
+    }
+  ],
+  "render_median_reduction_percent": [
+    73.2,
+    83.2,
+    78.9,
+    20.5,
+    26.8,
+    27.1
+  ]
+}

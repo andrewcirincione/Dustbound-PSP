@@ -332,6 +332,7 @@ static void captivity(float dt) {
                 captor->carrying = -1;
                 a->carriedBy = -1;
                 z->captive = 1;
+                g.repairs.confiscatedUntil[i]=stolen_until(a,PACK);
                 z->confiscated = a->gear[0];
                 z->confiscatedOwner = a->gearStolen[0];
                 a->gear[0] = 0;

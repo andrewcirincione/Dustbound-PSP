@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""Package exactly the PSP executable qualified by native tests and PPSSPP."""
+import hashlib,json,os,shutil,struct,subprocess,zipfile
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'dist';EV=ROOT/'evidence/v122';VERSION='1.2.2'
+def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+subprocess.run(['python3','scripts/validate_pbp.py','EBOOT.PBP','--assets','assets'],cwd=ROOT,check=True)
+eboot=ROOT/'EBOOT.PBP';controller=json.loads((EV/'psp/psp-controller.json').read_text())
+assert controller['ok'] and not controller.get('partial') and controller['eboot_sha256']==digest(eboot)
+results=json.loads((ROOT/'build/v1000/native-results.json').read_text())
+assert len(results)>=55 and all(x['status']=='passed' for x in results.values()),'Native qualification failed'
+for field in ['feedback_scenarios_verified','quest_offer_accept_abandon_verified','camp_chest_verified','forging_verified','equipped_sales_verified','lodging_verified','loot_percent_verified','combat_verified','new_122_scenarios_verified','stolen_expiry_verified','weight_columns_verified','simplified_camps_verified','injured_stance_verified']:assert controller[field],field
+assert controller['backpacks_reviewed']==8
+assert len(list((EV/'psp').glob('*.png')))>=61
+assert len(controller['responses'])>=61 and len({x['image'] for x in controller['responses']})==len(controller['responses'])
+visual=json.loads((EV/'visual-audit.json').read_text());assert visual['combinations']==600 and visual['face_pixels_occluded']==0
+pbp=eboot.read_bytes();offsets=struct.unpack_from('<8I',pbp,8);sfo=pbp[offsets[0]:offsets[1]]
+_,_,keys,values,count=struct.unpack_from('<4s4I',sfo);fields={}
+for n in range(count):
+    key,fmt,size,cap,offset=struct.unpack_from('<HHIII',sfo,20+n*16)
+    name=sfo[keys+key:].split(b'\0',1)[0].decode();value=sfo[values+offset:values+offset+size]
+    fields[name]=struct.unpack('<I',value[:4])[0] if fmt==0x404 else value.rstrip(b'\0').decode()
+assert fields['TITLE']=='Dust '+VERSION and fields['MEMSIZE']==0,fields
+manifest={'version':VERSION,'commit':os.environ.get('GITHUB_SHA') or subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
+'eboot_bytes':len(pbp),'eboot_sha256':digest(eboot),'prx_sha256':hashlib.sha256(pbp[offsets[6]:offsets[7]]).hexdigest(),
+'native_suites_passed':len(results),'new_weapon_models':0,'wilderness_sites':46,'additional_sites':30,'inhabited_sites':19,'explorable_floors':106,'new_building_models':6,'animated_robot_types':2,'new_materials':4,'max_buildings':640,'active_travel_director':True,'distinct_greatsword_fight_stance':True,'catalog_models':120,'new_greatswords':0,'weapon_types_covered':38,'production_render_reviews':600,'walking_poses_checked':720,'facial_combinations_checked':112,'backpacks_checked':8,
+'qualification':'55 native suites; complete PPSSPP controller run; 600 production-renderer carry fits with zero face pixels covered',
+'save_format':36,'sfo':fields,'pspdev':'v20261101 / GCC 15.2.0','emulator':controller['emulator'],
+'emulator_verified':True,'physical_psp_tested':False,
+'carry_visual_audit':visual,'redoubt_floors_reviewed':3,'other_interiors_reviewed':4,
+'runtime_sources':{str(p.relative_to(ROOT)):digest(p) for p in sorted((ROOT/'src').glob('*')) if p.suffix in ('.c','.h','.inc')}}
+(EV/'build-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+(EV/'native-results.json').write_text(json.dumps(results,indent=2)+'\n');OUT.mkdir(exist_ok=True);shutil.copy2(eboot,OUT/'EBOOT.PBP')
+def archive(name,entries):
+    with zipfile.ZipFile(OUT/name,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as z:
+        for source,target in entries:
+            info=zipfile.ZipInfo(target,(2026,11,16,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=0o100644<<16
+            z.writestr(info,source.read_bytes())
+docs=['README.md','LICENSE','CHANGELOG.md','docs/FIELD_GUIDE.md','docs/RELEASE_NOTES.md','docs/ARSENAL_DISTRIBUTION.md','docs/EXPLORATION_GUIDE.md']
+archive('Dust-1.2.2-PSP.zip',[(eboot,'PSP/GAME/DUSTBOUND/EBOOT.PBP')]+[(ROOT/p,'Dust-1.2.2/'+p) for p in docs])
+archive('Dust-1.2.2-Evidence.zip',[(p,str(p.relative_to(ROOT))) for p in sorted(EV.rglob('*')) if p.is_file()])
+with zipfile.ZipFile(OUT/'Dust-1.2.2-PSP.zip') as z:
+    assert z.read('PSP/GAME/DUSTBOUND/EBOOT.PBP')==pbp
+    assert not any(n.endswith(('.sav','.bak','.rgba')) or 'DUST_QA' in n for n in z.namelist())
+names=['EBOOT.PBP','Dust-1.2.2-PSP.zip','Dust-1.2.2-Evidence.zip']
+(OUT/'SHA256SUMS-1.2.2.txt').write_text(''.join(digest(OUT/n)+'  '+n+'\n' for n in names))
+print((OUT/'SHA256SUMS-1.2.2.txt').read_text())

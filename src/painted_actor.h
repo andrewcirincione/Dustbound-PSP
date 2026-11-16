@@ -1099,6 +1099,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     /* A greatsword held at the shoulder crosses the visible body plane.
        Stage it after the head/torso, beneath the leading arm, in both views. */
     int frontGreatsword=weapon&&gear_family(weapon)==84;
+    int restingGreatsword=frontGreatsword&&!a->attackPhase&&blend<.01f&&block<=0;
     int farWeapon=weapon&&arms&&primary==farArm&&!frontGreatsword;
     if(farWeapon)weapon_sprite(weapon,grip.x,grip.y,sc,angle,face,li);
     if(weapon&&arms&&!frontGreatsword&&(twoHands||primary==farArm))
@@ -1157,7 +1158,13 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
              5.7f*bodyWidth*sc,lc,li,itemDefs[legs].quality,face<0,.12f,.29f);
     PART(74,0,headChin-.3f,0,-22.9f,2.0f,skin,0);
     paint_torso(chest,torso?cloth:skin,li,itemDefs[torso].quality);
+    /* A shoulder-rest blade is in front of the coat but behind the chin.
+       The leading arm still closes around its handle in the foreground. */
+    if(restingGreatsword&&arms)weapon_sprite(weapon,grip.x,grip.y,sc,angle,face,li);
     float scalp = head_y(-33.f);
+#ifdef DUST_BEFORE_HEAD_OBSERVER
+    DUST_BEFORE_HEAD_OBSERVER(RX(0,scalp),RY(scalp),RX(0,headChin),RY(headChin),head_width(race)*sc);
+#endif
     painted_head(a, RX(0, scalp), RY(scalp), RX(0, headChin), RY(headChin), head_width(race) * sc, skin, li, face);
 #ifdef DUST_HEAD_OBSERVER
     DUST_HEAD_OBSERVER(RX(0,scalp),RY(scalp),RX(0,headChin),RY(headChin),head_width(race)*sc);
@@ -1170,7 +1177,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         head_attachment(hf,headArt,&wide,&top,&bottom);
         part(headArt,RX(0,top),RY(top),RX(0,bottom),RY(bottom),wide*sc,itemDefs[head].color,li,itemDefs[head].quality,(face<0)^(armor_item_set(head)==19),0,1);
     }
-    if(frontGreatsword&&arms)
+    if(frontGreatsword&&!restingGreatsword&&arms)
         weapon_sprite(weapon,grip.x,grip.y,sc,angle,face,li);
     painted_arm(a, nearArm, shoulders[nearArm], wrists[nearArm], sc, face, race, skin, cloth, li,
                 !weapon && !relaxed, !nearReaching, ARM_BOTH);

@@ -1,11 +1,10 @@
 # Dust — PSP frontier survival RPG
 
-## 1.2.1 — Field repairs
+## 1.2.2 — Carry and quarters
 
-Character fittings and walking proportions, readable forge outputs, quest offers before acceptance and Journal abandonment, physical camp chests, equipped item listings, meaningful recovery bars, injury-based carrying limits, lower resale values and heavier gear. Camp farming/workshops and cooking/leatherworking have reachable facilities and recipes. Combat ignores opponents in other rooms/floors. Older saves upgrade automatically.
+Faster combat and medical training, simpler camps, lighter inventory text, weight columns and stolen tags that expire after two in-game days. Greatswords use a shallower shoulder carry with a bent elbow. Barracks have beds; armories, command rooms, factories, archives and refuges have distinct floor layouts and appropriate equipment/supplies. Indoor scenery and navigation are cached. Shared storage is restricted to public depots and owned-home chests.
 
-[Complete 1.2.1 changes](docs/RELEASE_NOTES.md) · [Qualification checkpoint](docs/FIXES_1_2_1.md)
-
+[Complete 1.2.2 changes](docs/RELEASE_NOTES.md) · [Acceptance record](docs/UPDATE_1_2_2.md)
 
 ## 1.2.0 — Old-world expeditions
 
@@ -21,7 +20,7 @@ An original isometric western–samurai survival RPG for PSP homebrew, inspired 
 
 DustAmbient.mp3 loops across the title screen, gameplay and menus. The full soundtrack is built into the EBOOT and decoded ahead of playback.
 
-Start > Camp & Home contains camp placement, home furniture and research. Place campfires, inventory bedrolls, farm plots, workshops, research benches, walls, storage or wind pumps on open ground; the menu quotes materials and research. Placement clears nearby foliage. Camps disappear after a day without the squad nearby. Furniture can be moved or removed in homes you own. Smithies offer expanded stock and equipment forging; markets stay open all day. Public depots share storage across towns and charge a quoted fee on both deposits and withdrawals. Purchased-house chests share a separate free stash.
+Start > Camp & Home contains camp placement, home furniture and research. Place bonfires and carried bedrolls on open ground. A bonfire uses three timber. Placement clears nearby foliage. Camps disappear after a day without the squad nearby. Furniture can be moved or removed in homes you own. Smithies offer expanded stock and equipment forging; markets stay open all day. Public depots share storage across towns and charge a quoted fee on both deposits and withdrawals. Purchased-house chests share a separate free stash.
 
 [1.0.0 changes and validation](docs/VALIDATION_V1000.md)
 
@@ -39,7 +38,7 @@ Four ruined villages sit off the main roads. Raider crews occupy the wrecked bui
 
 Read wanted posters at a jail to track a target and pin their last reported location. Three high-profile outlaws carry unique gear and stay dead once killed. Road warrants rotate as groups come and go. Carry the target inside a jail belonging to a paying faction, then use Environment > Turn in carried bounty. Live captures pay double.
 
-Residents return to their own homes. Buy a vacant house at its door. Deeds reflect the town’s importance, services and location. Furnish it with beds, chests, tables, shelves and stoves. Any chest in a purchased house opens the same squad stash. Choose each furniture position inside your owned home. Furniture costs silver and needs no research. Existing expeditions upgrade to save version 29.
+Residents return to their own homes. Buy a vacant house at its door. Deeds reflect the town’s importance, services and location. Furnish it with beds, chests, tables, shelves and stoves. Any chest in a purchased house opens the same squad stash. Choose each furniture position inside your owned home. Furniture costs silver and needs no research. Existing expeditions upgrade automatically.
 
 ![Nearby roles and military equipment](evidence/v150-psp-army.png)
 

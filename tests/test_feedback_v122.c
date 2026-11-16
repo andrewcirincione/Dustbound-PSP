@@ -22,6 +22,10 @@ static void storage(void){
   int permitted=depot_public(b)||home_state(b)==HOME_OWNED;
   assert((storage_slots(b)>0)==permitted);depots+=depot_public(b);excluded+=expedition_site(b)>=0;
   if(expedition_site(b)>=0||wilderness_site(b)>=0||ruined_building(b))assert(!depot_public(b)&&!storage_slots(b));
+  if(g.buildings[b].type==STORE&&!permitted){
+   g.actors[0].x=g.buildings[b].x+.4f;g.actors[0].y=g.buildings[b].y;ui.screen=SCREEN_WORLD;
+   interact_context(2,b);assert(ui.screen!=SCREEN_STORAGE);
+  }
  }
  assert(depots>0&&excluded==46);
 }
@@ -46,6 +50,19 @@ static void aging(void){
  int second=-1;for(int i=0;i<PACK;i++)if(i!=first&&a->pack[i].item==WOOD)second=i;assert(second>=0);g.time=one;assert(!item_slot_owner(a,first)&&item_slot_owner(a,second)==UNION);
  g.time+=100;assert(!item_slot_owner(a,second));
 }
+static void stored_theft(void){
+ fresh();Actor*a=&g.actors[0];memset(a->pack,0,sizeof(a->pack));memset(a->stolen,0,sizeof(a->stolen));
+ g.time=100;assert(inventory_add_owned(a,BEDROLL_ITEM,1,UNION));int k=slot(a,BEDROLL_ITEM);float deadline=stolen_until(a,k);
+ float bx=0,by=0;int found=0;for(int y=250;y<1100&&!found;y+=13)for(int x=250;x<1100;x+=13){a->x=x-1.6f;a->y=y;if(placement_valid(1,-1,x,y)){bx=x;by=y;found=1;break;}}assert(found);
+ assert(place_camp(1,bx,by));int bed=g.buildingCount-1;assert(g.repairs.rollUntil[bed]==deadline);
+ g.time=deadline-100;pack_bedroll(bed);k=slot(a,BEDROLL_ITEM);assert(k>=0&&stolen_until(a,k)==deadline);
+ assert(place_camp(1,bx,by));bed=g.buildingCount-1;g.time=deadline;assert(portable_bedroll(bed)==1);pack_bedroll(bed);k=slot(a,BEDROLL_ITEM);assert(k>=0&&!item_slot_owner(a,k));
+ // A seized-property chest preserves the item's original theft deadline.
+ fresh();a=&g.actors[0];memset(a->pack,0,sizeof(a->pack));g.time=200;
+ g.field.seized[0][0]=(Stack){SABRE,1};g.field.seizedOwner[0][0]=UNION;g.repairs.seizedUntil[0][0]=3700;
+ ui.chestKind=CHEST_PROPERTY;ui.storageIndex=0;interior_chest_take(0);k=slot(a,SABRE);assert(k>=0&&stolen_until(a,k)==3700);
+ g.field.seized[0][0]=(Stack){WOOD,1};g.field.seizedOwner[0][0]=UNION;g.repairs.seizedUntil[0][0]=3700;g.time=3700;assert(!stolen_property_until(0,0)&&!g.field.seizedOwner[0][0]);
+}
 static void interiors(void){
  fresh();int b=g.wilderness.building[5]-1;InteriorProp p[ROOM_PROPS];int beds[3]={0},stands[3]={0};
  unsigned long hash[3]={0};
@@ -59,4 +76,4 @@ static void interiors(void){
  }
  assert(load_game("build/dust-v35-field-repairs.sav"));assert(g.repairs.interiorsVersion==1&&g.expedition.version&&g.actorCount>0);
 }
-int main(void){mkdir("build/v122",0777);progression();storage();aging();interiors();puts("PASS: 1.2.2 XP rates, removed skills/camps, depot allowlist, persistent two-day theft expiry through equip/pass/drop/home/save, distinct barracks/armory/command and genuine v35 migration.");return 0;}
+int main(void){mkdir("build/v122",0777);progression();storage();aging();stored_theft();interiors();puts("PASS: 1.2.2 XP rates, removed skills/camps, depot allowlist, persistent two-day theft expiry through equip/pass/drop/home/save, distinct barracks/armory/command and genuine v35 migration.");return 0;}

@@ -362,6 +362,8 @@ int inventory_remove_slot(Actor *a, int slot, int qty) {
     return 1;
 }
 static int use_portion(Actor *a, int slot, int amount) {
+    float until=stolen_until(a,slot);
+    int owner=a->stolen[slot];
     int item = a->pack[slot].item;
     int left = portion_percent(item) - amount;
     if (left <= 0)
@@ -370,9 +372,10 @@ static int use_portion(Actor *a, int slot, int amount) {
     if (!remainder) return 0;
     if (a->pack[slot].qty == 1) {
         a->pack[slot].item = remainder;
+        stolen_set(a,slot,until);
         return 1;
     }
-    if (!inventory_add_owned_until(a, remainder, 1, a->stolen[slot],stolen_until(a,slot)))
+    if (!inventory_add_owned_until(a, remainder, 1, owner,until))
         return 0;
     return inventory_remove_slot(a, slot, 1);
 }
@@ -1529,6 +1532,7 @@ void use_item(int s) {
     Actor *a = &g.actors[g.selected];
     int it=item_slot_id(a,s);
     if(!it)return;
+    stolen_until(a,s==PACK+GEARS?LOOT_LAYER_SLOT:s);
     if(item_slot_equipped(s)){
         if(inventory_add_owned_until(a,it,1,item_slot_owner(a,s),stolen_until(a,s==PACK+GEARS?LOOT_LAYER_SLOT:s)))item_slot_remove(a,s,1);
         else log_msg("Pack full; cannot unequip.");
@@ -1751,13 +1755,14 @@ int craft_item(int c) {
         return 0;
     }
     Actor old = *a;
+    float until=fmaxf(inventory_input_until(a,in1,n1),r->in2?inventory_input_until(a,r->in2,r->n2):0);
     int owner = inventory_input_owner(a, in1, n1);
     if (!owner && r->in2)
         owner = inventory_input_owner(a, r->in2, r->n2);
     inventory_remove(a, in1, n1);
     if (r->in2)
         inventory_remove(a, r->in2, r->n2);
-    if (!inventory_add_owned(a, r->output, qty, owner)) {
+    if (!inventory_add_owned_until(a, r->output, qty, owner,until)) {
         *a = old;
         log_msg("Pack full.");
         return 0;
@@ -1908,7 +1913,7 @@ void find_context(void) {
         if (portable_bedroll(i) < 0) continue;
         if (building_has_interior(b->type))
             add_context(3, i, building_door_distance(i, a->x, a->y), DOOR_REACH);
-        if (b->type >= WELL && b->type <= STORE && b->type != WALL && b->type != WINDMILL && b->type != FORGE)
+        if (b->type >= WELL && b->type <= STORE && b->type != WALL && b->type != WINDMILL && b->type != FORGE && (b->type != STORE || depot_public(i)))
             add_context(2, i, distance(a->x, a->y, b->x, b->y), 1.7f);
     }
     if (ui.contextCount) {
@@ -2075,7 +2080,7 @@ void interact_context(int kind,int target) {
     } else if (b->type == BENCH) {
         ui.screen = SCREEN_RESEARCH;
         ui.selection = 0;
-    } else if (b->type == STORE) {
+    } else if (b->type == STORE && depot_public(n)) {
         ui.storageIndex = n;
         ui.storageSide = 0;
         ui.selection = 0;
@@ -2727,6 +2732,7 @@ int save_game(const char *path) {
     FILE *f = fopen(tmp, "wb");
     if (!f)
         return 0;
+    stolen_tick();
     SaveHeader h = {{'D', 'U', 'S', 'T', 'S', 'A', 'V', 'E'}, SAVE_VERSION, sizeof(g), checksum(&g, sizeof(g))};
     int ok = fwrite(&h, sizeof(h), 1, f) == 1 && fwrite(&g, sizeof(g), 1, f) == 1;
     if (fclose(f) != 0)
@@ -3946,6 +3952,8 @@ void debug_snapshot(const char *path) {
     VALUE("woundflags", &a->woundFlags, 4);
     VALUE("roadside", &g.roadsideAid, sizeof(g.roadsideAid));
     VALUE("autoattack", &a->autoattack, 4);
+    VALUE("first_item_owner", &a->stolen[0], 4);
+    VALUE("camp_options", &buildCount, 4);
     VALUE("trails", &g.trails, sizeof(g.trails));
     VALUE("time", &g.time, 4);
     VALUE("framecount", &rendered_frames, 4);

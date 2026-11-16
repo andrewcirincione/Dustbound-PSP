@@ -61,6 +61,17 @@ float stolen_drop_until(int slot) {
 void stolen_drop_set(int slot,float until) {
     if(slot>=0&&slot<g.nodeCount)stamp(&g.repairs.drop[slot],g.nodes[slot].item,g.nodes[slot].owner,until);
 }
+int stolen_age_owner(int owner,float *until){
+ if(owner<=0){*until=0;return owner;}
+ if(*until<=0)*until=g.time+2*DAY_SECONDS;
+ if(g.time>=*until){*until=0;return 0;}return owner;
+}
+float stolen_property_until(int camp,int slot){
+ if(camp<0||camp>=SLAVE_CAMPS||slot<0||slot>=SEIZED_STACKS)return 0;
+ float *until=&g.repairs.seizedUntil[camp][slot];
+ g.field.seizedOwner[camp][slot]=stolen_age_owner(g.field.seizedOwner[camp][slot],until);
+ return *until;
+}
 void stolen_tick(void) {
     /* Ownership is also expired on access; the sweep handles unattended items. */
     static float next=-1;static unsigned seed;
@@ -70,10 +81,19 @@ void stolen_tick(void) {
         for(int slot=0;slot<LOOT_SLOTS;slot++)stolen_until(&g.actors[n],slot);
     for(int slot=0;slot<HOME_STASH;slot++)stolen_home_until(slot);
     for(int slot=0;slot<g.nodeCount;slot++)stolen_drop_until(slot);
+    for(int b=0;b<g.buildingCount;b++)if(g.field.rolls[b]>1)g.field.rolls[b]=1+stolen_age_owner(g.field.rolls[b]-1,&g.repairs.rollUntil[b]);
+    for(int c=0;c<SLAVE_CAMPS;c++)for(int slot=0;slot<SEIZED_STACKS;slot++)stolen_property_until(c,slot);
+    for(int n=0;n<g.actorCount;n++)g.depth.actors[n].confiscatedOwner=stolen_age_owner(g.depth.actors[n].confiscatedOwner,&g.repairs.confiscatedUntil[n]);
+}
+static int stamps_valid(const TheftStamp *s,int count){
+ for(int i=0;i<count;i++)if(s[i].key>=(unsigned)ITEMS*FACTIONS||!isfinite(s[i].until)||s[i].until<0)return 0;
+ return 1;
 }
 int stolen_validate(const Game *save) {
-    const TheftStamp *first=&save->repairs.actor[0][0];
-    int count=MAX_ACTORS*LOOT_SLOTS+HOME_STASH+MAX_NODES;
-    for(int i=0;i<count;i++)if(first[i].key>=(unsigned)ITEMS*FACTIONS||!isfinite(first[i].until)||first[i].until<0)return 0;
-    return save->repairs.interiorsVersion>=0&&save->repairs.interiorsVersion<=1;
+ for(int n=0;n<MAX_ACTORS;n++)if(!stamps_valid(save->repairs.actor[n],LOOT_SLOTS))return 0;
+ return stamps_valid(save->repairs.home,HOME_STASH)&&stamps_valid(save->repairs.drop,MAX_NODES)&&save->repairs.interiorsVersion>=0&&save->repairs.interiorsVersion<=1;
+}
+
+float inventory_input_until(const Actor*a,int item,int qty){
+ float until=0;for(int i=0;i<PACK&&qty>0;i++)if(a->pack[i].item==item){int take=a->pack[i].qty<qty?a->pack[i].qty:qty;if(take)until=fmaxf(until,stolen_until(a,i));qty-=take;}return until;
 }

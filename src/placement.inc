@@ -110,11 +110,11 @@ int place_camp(int type, float x, float y) {
     Actor *a=&g.actors[g.selected];
     if (type < 0 || type >= buildCount) return 0;
     if (!placement_valid(type,-1,x,y)) { log_msg("Choose open ground outside town."); return 0; }
-    int slot=-1, owner=0;
+    int slot=-1, owner=0;float until=0;
     if (type==1) {
         for(int i=0;i<PACK;i++)if(a->pack[i].item==BEDROLL_ITEM&&a->pack[i].qty){slot=i;break;}
         if(slot<0){log_msg("You need a bedroll.");return 0;}
-        owner=a->stolen[slot];
+        until=stolen_until(a,slot);owner=a->stolen[slot];
     }else{
         if(g.tech<build_tech_required(type)){log_msg("Research tier %d required.",build_tech_required(type));return 0;}
         if(inventory_count(a,WOOD)<build_wood_cost(type)||inventory_count(a,IRONBAR)<build_metal_cost(type)){
@@ -124,7 +124,7 @@ int place_camp(int type, float x, float y) {
     static const int types[]={CAMPFIRE,BED,FARM,FORGE,BENCH,WALL,STORE,WINDMILL};
     int b=add_build(x,y,types[type],FREE,g.selected);
     if(b<0)return 0;
-    if(type==1){inventory_remove_slot(a,slot,1);g.field.rolls[b]=owner+1;}
+    if(type==1){inventory_remove_slot(a,slot,1);g.field.rolls[b]=owner+1;g.repairs.rollUntil[b]=until;}
     else {inventory_remove(a,WOOD,build_wood_cost(type));if(build_metal_cost(type))inventory_remove(a,IRONBAR,build_metal_cost(type));}
     g.plans.campLastNear[b]=g.time;
     g.depth.buildings[b]=(DepthBuilding){.condition=100,.fuel=12};

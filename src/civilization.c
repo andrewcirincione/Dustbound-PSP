@@ -14,7 +14,7 @@ const SpeciesDef speciesDefs[SPECIES]={
  {"Ashlander","Survives on little food. Tough and observant, with a lighter load.",105,-4,.98f,.58f,
   {[STRENGTH]=-2,[DEXTERITY]=2,[TOUGHNESS]=8,[STEALTH]=4,[PERCEPTION]=6}},
  {"Clockwork","Immune to hunger and bleeding. Repairs with parts instead of bandages.",120,9,.88f,0,
-  {[STRENGTH]=5,[TOUGHNESS]=5,[ENGINEERING]=12,[SCIENCE]=7,[ATHLETICS]=-2,[STEALTH]=-2}},
+  {[STRENGTH]=5,[TOUGHNESS]=5,[SMITHING]=12,[ATHLETICS]=-2,[STEALTH]=-2}},
  {"Reedkin","Fast, quiet, and hard to hit. Fragile and carries less.",74,-9,1.23f,.80f,
   {[STRENGTH]=-4,[DEXTERITY]=6,[TOUGHNESS]=-2,[ATHLETICS]=8,[DODGE]=10,[STEALTH]=8}},
  {"Stonekin","Powerful hauler with thick skin. Slow and needs more food.",145,16,.79f,1.48f,

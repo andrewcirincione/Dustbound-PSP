@@ -248,9 +248,11 @@ void interior_chest_take(int row) {
         return;
     int item = contents->item, owner = chest_owner(), slot = 0;
     Stack *stack = ui.chestKind == CHEST_FIELD||ui.chestKind==CHEST_CAMP ? NULL : chest_stack(row, &slot);
-    if (ui.chestKind == CHEST_PROPERTY)
-        owner = g.field.seizedOwner[ui.storageIndex][slot];
-    if (!inventory_add_owned(a, item, 1, owner)) {
+    float until=0;
+    if (ui.chestKind == CHEST_PROPERTY){
+        until=stolen_property_until(ui.storageIndex,slot);owner = g.field.seizedOwner[ui.storageIndex][slot];
+    }
+    if (!inventory_add_owned_until(a, item, 1, owner,until)) {
         log_msg("Pack full.");
         return;
     }
@@ -1067,6 +1069,7 @@ void interior_interact(void) {
         break;
     case ROOM_HOME_STASH:
     case ROOM_STORAGE:
+        if(!storage_slots(id))break;
         ui.storageIndex = id;
         ui.storageSide = 0;
         ui.screen = SCREEN_STORAGE;

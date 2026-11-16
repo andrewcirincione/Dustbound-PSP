@@ -583,12 +583,13 @@ int forge_equipment(int it) {
     for(int i=0;i<requirements.count;i++)if(inventory_count(a,requirements.item[i])<requirements.need[i]){
         log_msg("Missing %d %s.",requirements.need[i]-inventory_count(a,requirements.item[i]),itemDefs[requirements.item[i]].name);return 0;
     }
-    Actor backup = *a;int owner=0;
+    Actor backup = *a;int owner=0;float until=0;
+    for(int i=0;i<requirements.count;i++)until=fmaxf(until,inventory_input_until(a,requirements.item[i],requirements.need[i]));
     for(int i=0;i<requirements.count;i++){
         if(!owner)owner=inventory_input_owner(a,requirements.item[i],requirements.need[i]);
         inventory_remove(a,requirements.item[i],requirements.need[i]);
     }
-    if (!inventory_add_owned(a, it, 1, owner)) {
+    if (!inventory_add_owned_until(a, it, 1, owner,until)) {
         *a = backup;
         log_msg("Pack full. Forging cancelled.");
         return 0;
@@ -683,7 +684,7 @@ int storage_transfer(int b,int from,int slot) {
     }else{
         int clerk=depot_clerk(b);
         int atClerk=clerk>=0&&conscious(&g.actors[clerk])&&
-                    depth_room(a)==depth_room(&g.actors[clerk])&&
+                    depth_room(a)==b+1&&depth_room(a)==depth_room(&g.actors[clerk])&&
                     depth_distance(a,&g.actors[clerk])<=TALK_REACH;
         int atDepot=actor_inside(a)?nearby_station(STORE,1.7f)==b:
                     distance(a->x,a->y,z->x,z->y)<=1.7f||building_door_distance(b,a->x,a->y)<=DOOR_REACH;
@@ -846,6 +847,7 @@ static int clear_structure_site(float x, float y, float spacing) {
 }
 
 int portable_bedroll(int building) {
+    if(building>=0&&building<g.buildingCount&&g.field.rolls[building]>1)g.field.rolls[building]=1+stolen_age_owner(g.field.rolls[building]-1,&g.repairs.rollUntil[building]);
     return building >= 0 && building < g.buildingCount ? g.field.rolls[building] : 0;
 }
 
@@ -867,11 +869,11 @@ void pack_bedroll(int b) {
             log_msg("Someone is resting on the bedroll.");
             return;
         }
-    if (!inventory_add_owned(a, BEDROLL_ITEM, 1, g.field.rolls[b] - 1)) {
+    if (!inventory_add_owned_until(a, BEDROLL_ITEM, 1, g.field.rolls[b] - 1,g.repairs.rollUntil[b])) {
         log_msg("Pack full.");
         return;
     }
-    g.field.rolls[b] = -1;
+    g.field.rolls[b] = -1;g.repairs.rollUntil[b]=0;
     g.buildings[b].owner = -1;
     g.depth.buildings[b].condition = 0;
     log_msg("Packed up the bedroll.");
@@ -2680,14 +2682,14 @@ static void intake_slave(int n, int camp, int faction) {
         int gear = i - PACK;
         Stack stack = gear < 0 ? a->pack[i] :
             (Stack){gear < GEARS ? a->gear[gear] : z->layer, 1};
-        int owner = gear < 0 ? a->stolen[i] :
-            gear < GEARS ? a->gearStolen[gear] : z->layerOwner;
+        float until=stolen_until(a,i==PACK+GEARS?LOOT_LAYER_SLOT:i);
+        int owner=item_slot_owner(a,i);
         if (!stack.item)
             continue;
         while (g.field.seized[camp][slot].item)
             slot++;
         g.field.seized[camp][slot] = stack;
-        g.field.seizedOwner[camp][slot++] = owner;
+        g.field.seizedOwner[camp][slot] = owner;g.repairs.seizedUntil[camp][slot++]=until;
     }
     memset(a->pack, 0, sizeof(a->pack));
     memset(a->stolen, 0, sizeof(a->stolen));

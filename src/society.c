@@ -250,7 +250,7 @@ int society_hostile(const Actor*a,const Actor*b){
 }
 void society_actor_reset(int n){
  if(n<0||n>=MAX_ACTORS)return;
- memset(g.repairs.actor[n],0,sizeof(g.repairs.actor[n]));
+ memset(g.repairs.actor[n],0,sizeof(g.repairs.actor[n]));g.repairs.confiscatedUntil[n]=0;
  g.war.prisonTown[n]=0;
  memset(g.charges[n],0,sizeof(g.charges[n]));
  memset(S.weaponXP[n],0,sizeof(S.weaponXP[n]));memset(S.wanted[n],0,sizeof(S.wanted[n]));memset(S.recognized[n],0,sizeof(S.recognized[n]));
@@ -298,7 +298,7 @@ static void rescue_finish(int n,int helper){
  a->prisonTime=0;a->prisonTown=-1;a->target=-1;a->attackPhase=0;g.living.command[n]=-1;
  S.captorFaction[n]=faction;
  if(helper>=0){crime_charge(a,faction,80,CRIME_ESCAPE);S.recognized[n][faction]=1800;g.depth.freed++;}
- if(z->confiscated&&!a->gear[0]){a->gear[0]=z->confiscated;a->gearStolen[0]=z->confiscatedOwner;z->confiscated=z->confiscatedOwner=0;}
+ if(z->confiscated&&!a->gear[0]){z->confiscatedOwner=stolen_age_owner(z->confiscatedOwner,&g.repairs.confiscatedUntil[n]);a->gear[0]=z->confiscated;a->gearStolen[0]=z->confiscatedOwner;stolen_set(a,PACK,g.repairs.confiscatedUntil[n]);z->confiscated=z->confiscatedOwner=0;g.repairs.confiscatedUntil[n]=0;}
  if(!a->squad){S.freed[n]=helper>=0&&(g.seed+(unsigned)n)%3==0?1:2;a->kind=SETTLER;a->faction=FREE;a->autoattack=0;rescue_refuge(a,faction);}
  if(helper>=0)log_warn("%s is free.%s",a->name,a->squad?"":S.freed[n]==1?" They choose to follow. Recruit or dismiss through nearby actions.":" They are running for refuge.");
 }
@@ -334,7 +334,7 @@ static void seed_prisoners(void){
  for(int j=0;j<2;j++){int t=j?6:0;float x=towns[t].x-9,y=towns[t].y+5;
   for(int k=0;k<12&&!can_walk(x,y);k++){x=towns[t].x-9+k%4;y=towns[t].y+6+k/4;}
   if(!can_walk(x,y))continue;int n=add_actor(j?"Kest":"Ilan",SETTLER,FREE,x,y,4+j*3);if(n<0)continue;
-  Actor*a=&g.actors[n];a->prisonTown=t;a->prisonTime=7200;a->gear[1]=RAGS;a->gear[2]=0;g.depth.actors[n].confiscated=a->gear[0];a->gear[0]=0;
+  Actor*a=&g.actors[n];a->prisonTown=t;a->prisonTime=7200;a->gear[1]=RAGS;a->gear[2]=0;g.repairs.confiscatedUntil[n]=stolen_until(a,PACK);g.depth.actors[n].confiscated=a->gear[0];g.depth.actors[n].confiscatedOwner=a->gearStolen[0];a->gear[0]=a->gearStolen[0]=0;
   S.captorFaction[n]=g.townOwner[t];crime_charge(a,g.townOwner[t],120,CRIME_TRESPASS);
  }
 }

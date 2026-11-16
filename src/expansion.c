@@ -891,7 +891,8 @@ int expansion_input(float dt, Input in) {
                 switch (dialogue_action(n, choice)) {
                 case 21: {
                     int site=depot_site(n);
-                    if(site>=0 && conscious(b) && depth_distance(a,b)<=TALK_REACH){
+                    if(site>=0 && conscious(b) && depth_distance(a,b)<=TALK_REACH &&
+                       (depth_room(a)==site+1||(!depth_room(a)&&building_door_distance(site,a->x,a->y)<=DOOR_REACH))){
                         ui.storageIndex=site;ui.storageSide=0;open_view(SCREEN_STORAGE);
                     }
                     break;

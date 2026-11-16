@@ -113,7 +113,7 @@ static void travel_director(const float *near,float dt){
  for(int n=0;n<g.actorCount;n++){Actor*b=&g.actors[n];if(!b->active||b->squad||!conscious(b)||depth_room(b))continue;
   float x=b->x-a->x,y=b->y-a->y;
   if(fabsf(view_horizontal(x,y))<11&&fabsf(view_vertical(x,y))<13){g.wilderness.quiet=0;if(hostile(a,b))g.wilderness.danger=0;}
-  if(hostile(a,b)&&hypotf(x,y)<14)hostileClose++;
+  if(hostile(a,b)&&hypotf(x,y)<14&&fabsf(view_horizontal(x,y))<11&&fabsf(view_vertical(x,y))<13)hostileClose++;
  }
  for(int k=0;k<POP_GROUPS;k++)if(life_alive(k)){
   float x=P.groups[k].x-a->x,y=P.groups[k].y-a->y,d=hypotf(x,y);

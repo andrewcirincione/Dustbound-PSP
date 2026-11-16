@@ -94,7 +94,7 @@ void limb_sever(Actor*a,int l,int surgery){
 void limb_hit(Actor*a,int l,float cut){if(!valid_limb(l)||limb_missing(a,l)||a->kind==BEAST)return;float threshold=-limb_max_health(a,l)*.55f;if((!depth_organic(a,l)||cut>=.35f)&&a->health[l]<threshold)limb_sever(a,l,0);}
 static int can_fit(int n){Actor*a=&g.actors[n];return conscious(a)&&!a->attackPhase&&a->target<0&&!g.depth.actors[n].captive&&a->prisonTime<=0;}
 int limb_fit(int n,int l,int slot){
- if(n<0||n>=g.actorCount||!valid_limb(l)||slot<0||slot>=PACK)return 0;Actor*a=&g.actors[n];int it=a->pack[slot].item,old=limb_installed(a,l),grade=limb_item_grade(it),owner=a->stolen[slot],oldOwner=limb_owner(a,l);
+ if(n<0||n>=g.actorCount||!valid_limb(l)||slot<0||slot>=PACK)return 0;Actor*a=&g.actors[n];stolen_until(a,slot);stolen_until(a,PACK+GEARS+l-LARM);int it=a->pack[slot].item,old=limb_installed(a,l),grade=limb_item_grade(it),owner=a->stolen[slot],oldOwner=limb_owner(a,l);
  if(grade<0||limb_item_leg(it)!=(l>=LLEG)){log_msg("Choose a replacement for that limb.");return 0;}
  if(!(a->lostMask&(1<<l))){log_msg("Natural limb intact. Venn in Dusk Haven offers surgery.");return 0;}
  if(!can_fit(n)){log_msg("Fit limbs while awake, free and out of combat.");return 0;}

@@ -456,9 +456,13 @@ typedef struct {
     struct {
         TheftStamp actor[MAX_ACTORS][LOOT_SLOTS], home[HOME_STASH], drop[MAX_NODES];
         int interiorsVersion;
+        float rollUntil[MAX_BUILDINGS], seizedUntil[SLAVE_CAMPS][SEIZED_STACKS], confiscatedUntil[MAX_ACTORS];
     } repairs;
 } Game;
+int stolen_age_owner(int owner, float *until);
+float stolen_property_until(int camp, int slot);
 float stolen_until(const Actor *actor, int slot);
+float inventory_input_until(const Actor *actor, int item, int qty);
 void stolen_set(Actor *actor, int slot, float until);
 float stolen_home_until(int slot);
 void stolen_home_set(int slot, float until);
