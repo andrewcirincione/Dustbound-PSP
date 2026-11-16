@@ -15,7 +15,7 @@ int main(int argc,char**argv){root=argc>1?argv[1]:"build/v1000/fixtures";mkdir(r
  room(5,1,12,12);cache(1);save("v122-armory-cache");
  room(5,2,12,12);cache(3);save("v122-command-cache");
  room(7,0,4,9);cache(0);save("v122-storehouse");
- room(20,0,10,12);save("v122-factory");room(18,1,12,15);save("v122-archive");room(6,0,4,10);save("v122-infirmary");room(16,1,12,16);save("v122-refuge");
+ room(20,0,10,12);save("v122-factory");room(18,1,12,15);save("v122-archive");room(6,0,4,10);save("v122-infirmary");fixture_service(ROOM_REST);save("v122-infirmary-bed");room(16,1,12,16);save("v122-refuge");
  a=fresh();road(a);inventory_add(a,WOOD,40);inventory_add(a,BEDROLL_ITEM,2);save("v122-camp");
  puts("Prepared declared 1.2.2 QA scenarios: carry/limping, timed stolen ownership, barracks/armory/command, stairs, useful caches, storehouse chest, factory/archive/infirmary/refuge and simple camps. Interior guards neutralized for layout walks.");return 0;
 }

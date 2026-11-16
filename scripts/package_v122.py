@@ -11,8 +11,8 @@ results=json.loads((ROOT/'build/v1000/native-results.json').read_text())
 assert len(results)>=55 and all(x['status']=='passed' for x in results.values()),'Native qualification failed'
 for field in ['feedback_scenarios_verified','quest_offer_accept_abandon_verified','camp_chest_verified','forging_verified','equipped_sales_verified','lodging_verified','loot_percent_verified','combat_verified','new_122_scenarios_verified','stolen_expiry_verified','weight_columns_verified','simplified_camps_verified','injured_stance_verified']:assert controller[field],field
 assert controller['backpacks_reviewed']==8
-assert len(list((EV/'psp').glob('*.png')))>=61
-assert len(controller['responses'])>=61 and len({x['image'] for x in controller['responses']})==len(controller['responses'])
+assert len(list((EV/'psp').glob('*.png')))>=62
+assert len(controller['responses'])>=62 and len({x['image'] for x in controller['responses']})==len(controller['responses'])
 visual=json.loads((EV/'visual-audit.json').read_text());assert visual['combinations']==600 and visual['face_pixels_occluded']==0
 pbp=eboot.read_bytes();offsets=struct.unpack_from('<8I',pbp,8);sfo=pbp[offsets[0]:offsets[1]]
 _,_,keys,values,count=struct.unpack_from('<4s4I',sfo);fields={}

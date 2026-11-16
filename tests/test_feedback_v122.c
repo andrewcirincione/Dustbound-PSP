@@ -74,6 +74,7 @@ static void interiors(void){
   Stack*weapon=expedition_cache((s*EXP_FLOORS+floor)*EXP_CHESTS+1);
   if(!expedition_inhabited(s))assert(itemDefs[weapon[0].item].slot==0);
  }
+ int ward=g.wilderness.building[6]-1;actor_enter_room(0,ward);fixture_service(ROOM_REST);interior_interact();assert(g.actors[0].taskKind==3);
  assert(load_game("build/dust-v35-field-repairs.sav"));assert(g.repairs.interiorsVersion==1&&g.expedition.version&&g.actorCount>0);
 }
 int main(void){mkdir("build/v122",0777);progression();storage();aging();stored_theft();interiors();puts("PASS: 1.2.2 XP rates, removed skills/camps, depot allowlist, persistent two-day theft expiry through equip/pass/drop/home/save, distinct barracks/armory/command and genuine v35 migration.");return 0;}

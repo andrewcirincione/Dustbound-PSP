@@ -1025,7 +1025,7 @@ void interior_interact(void) {
         ui.screen = SCREEN_TRADE;
         break;
     case ROOM_REST:
-        if (b->type == HOUSE && b->owner < 0 && home_state(id) != HOME_OWNED && !lodge_joined(id)) {
+        if (b->type == HOUSE && !expedition_large(id) && b->owner < 0 && home_state(id) != HOME_OWNED && !lodge_joined(id)) {
             log_msg(g.frontier.variant[id] == BUILD_LODGE ? "Dustward beds are reserved for members." : "Private bed.");
             break;
         }

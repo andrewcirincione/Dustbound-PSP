@@ -102,6 +102,7 @@ Enable = False
       {'load':'v122-factory'},{'capture':'factory-machine-hall'},
       {'load':'v122-archive'},{'capture':'archive-reading-floor'},
       {'load':'v122-infirmary'},{'capture':'infirmary-treatment-ward'},
+      {'load':'v122-infirmary-bed'},{'key':'cross'},{'action':'SLEEP IN BED'},{'key':'cross'},{'expect':{'task':3}},{'capture':'infirmary-bed-usable'},
       {'load':'v122-refuge'},{'capture':'refuge-sleeping-gallery'}
     ]
     partial='--from-scene' in sys.argv
