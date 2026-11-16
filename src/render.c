@@ -2446,10 +2446,9 @@ static void build_screen(void) {
     int first=start_row(ui.selection,buildCount,7);
     for(int c=first;c<buildCount&&c<first+7;c++){
         if(c==1)snprintf(value,sizeof(value),"BEDROLL %d/1",inventory_count(a,BEDROLL_ITEM));
-        else snprintf(value,sizeof(value),"WOOD %d/%d  IRON %d/%d",inventory_count(a,WOOD),build_wood_cost(c),inventory_count(a,IRONBAR),build_metal_cost(c));
+        else snprintf(value,sizeof(value),"TIMBER %d/%d",inventory_count(a,WOOD),build_wood_cost(c));
         row(86+(c-first)*17,c==ui.selection,buildNames[c],value);
     }
-    snprintf(value,sizeof(value),"RESEARCH %d/%d",g.tech,build_tech_required(ui.selection));text(31,218,value,g.tech>=build_tech_required(ui.selection)?TEAL:RED,1);
 }
 static const char *craft_station_name(int type){return type==FORGE?"FORGE":type==CAMPFIRE?"CAMPFIRE":"RESEARCH BENCH";}
 static int craft_readiness(const CraftRequirements*r,char*out,int size){
