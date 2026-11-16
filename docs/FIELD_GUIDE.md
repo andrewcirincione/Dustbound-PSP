@@ -1,4 +1,4 @@
-# Dust field guide — 1.0.0
+# Dust field guide — 1.2.1
 
 Use the contextual guide in any menu. ![select](../assets/ui/select.svg) inside a menu opens its contextual chapter.
 
@@ -38,35 +38,35 @@ Dress an injured body part before it can heal. Clotting stops blood loss. It sti
 
 Food is eaten below forty hunger. You eat what you need and save the remainder. Supplies come from your pack, then a nearby companion or owned depot within three meters. Water supports farms; tonics restore blood and treat exposure. Starvation damages the chest.
 
-An inn bed charges its listed lodging price. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and helps dressed wounds heal. Severe hunger slows recovery. Move to wake. The sun completes a day in thirty minutes of simulation; menus and tactical pause stop time.
+An inn bed charges its listed lodging price. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and helps dressed wounds heal. RECOVERY shows the lowest of overall limb health, blood and restedness. CONSCIOUSNESS shows progress toward waking. Severe hunger slows recovery. Move to wake. The sun completes a day in thirty minutes of simulation; menus and tactical pause stop time.
 
 ## 7. Equipment
 
 Six slots: weapon, torso, head, boots, legs, back. Pack ![cross](../assets/ui/cross.svg) equips; ![square](../assets/ui/square.svg) passes one to an ally; ![triangle](../assets/ui/triangle.svg) switches carried/worn gear. ![cross](../assets/ui/cross.svg) on worn gear removes it if space allows. Hovering equipment changes the single character preview and compares stats. WORN DISGUISE shows your current outfit; PREVIEW shows the hovered outfit. Equipping commits it.
 
-Plate protects more but slows movement and hinders stealth. Cloth is light; travel gear favors weather or movement. Higher grades improve the same role. Torso armor covers chest/arms; headgear covers head; leg armor and boots have separate coverage chances. MOVE% is the worn speed bonus. Weight above capacity slows you further.
+Plate protects more but slows movement and hinders stealth. Cloth is light; travel gear favors weather or movement. Higher grades improve the same role. Torso armor covers chest/arms; headgear covers head; leg armor and boots have separate coverage chances. MOVE% is the worn speed bonus. Worn items remain in inventory, selling and storage lists marked (E). Their full weight counts toward load, and injuries progressively reduce capacity. Weight above capacity slows you further.
 
 ## 8. Merchants
 
 Talk to a trader and choose Trade. ![horizontal](../assets/ui/horizontal.svg) switches buying and selling; ![l](../assets/ui/l.svg)/![r](../assets/ui/r.svg) filters supplies, weapons, armor or backpacks. ![cross](../assets/ui/cross.svg) trades one item. Shops have finite stocks and refresh daily with different gear.
 
-Regional exports are cheap; imports and shortages cost more. Green percentages mean a good buy or sale; red means poor, relative to ordinary buy/resale value. Ask merchants for trading tips. Hostile factions refuse trade unless fooled by a disguise. Stolen goods appear in red. The selling list shows the chance a trader accepts the item without reporting you. Stealth and Thievery improve the odds. Black Mesa fences most outside goods. The item details show its stats and effects before purchase.
+Regional exports are cheap; imports and shortages cost more. Green percentages mean a good buy or sale; red means poor, relative to ordinary buy/resale value. Ask merchants for trading tips. Hostile factions refuse trade unless fooled by a disguise. Stolen goods appear in red. The selling list shows the chance a trader accepts the item without reporting you. Stealth and Thievery improve the odds. Black Mesa fences most outside goods. The item details show its stats and effects before purchase. Resale starts at 50% of listed item value, with local market modifiers.
 
 ## 9. Forging Gear
 
-Enter a smithy and walk to the forge. Choose slot, design, material and quality with ![horizontal](../assets/ui/horizontal.svg). The preview updates before you spend anything.
+Enter a smithy and walk to the forge. Choose slot, design, material and quality with ![horizontal](../assets/ui/horizontal.svg). The preview lists the selected result’s damage, armor, weight, reach, delay, strength requirement and bonuses before you spend anything.
 
 ![cross](../assets/ui/cross.svg) on Forge makes the selected design. Metal, cloth and timber costs scale with material and grade; relic gear also needs a relic. Higher grades require smithing experience and research. Missing materials or a full pack cancel the transaction without charging you.
 
 ## 10. Crafting
 
-Enter a smithy to forge weapons or armor. Each ingredient shows HAVE/NEED, with green for enough and red for a shortage. Mechanical limbs must be bought or found. The general recipe list has been removed; cooking remains available at campfires, including when enemies are nearby.
+Enter a smithy to forge weapons or armor. Each ingredient shows HAVE/NEED, with green for enough and red for a shortage. Mechanical limbs must be bought or found. Cooking recipes at campfires include jerky, oatcakes, stew and rations; every 25 Cooking levels adds one food item per batch. Leatherworking is part of Smithing: use raw hides and cloth to make leather vests or boots at a bench. Nearby enemies do not block these services.
 
-Start > Camp & Home > Research shows three forging tiers. Research needs a nearby bench, a relic and silver. Furniture does not need research.
+Start > Camp & Home > Research unlocks materials, quality and camp workshops. Research needs a nearby bench, a relic and silver. Every five Science levels reduces the silver cost by 1%. Furniture does not need research.
 
 ## 11. Your Outpost
 
-Start > Camp & Home > Build camp offers Campfire and Bedroll. A fire needs timber; a bedroll must be in your inventory. Move the placement cursor with the analog stick or D-pad, then Cross to place. Red positions are blocked. Placement clears nearby foliage. Pack a bedroll through Nearby Actions. A camp disappears after a day without a squad member nearby.
+Start > Camp & Home > Build camp offers fires, bedrolls, farm plots, forges, research benches, palisades, storage and wind pumps. The menu quotes timber, iron and research. A bedroll must be in your inventory. Engineering reduces timber costs and speeds construction; Farming adds one grain per harvest every 20 levels. Move the placement cursor with the analog stick or D-pad, then Cross to place. Red positions are blocked. Placement clears nearby foliage. Pack a bedroll through Nearby Actions. A camp disappears after a day without a squad member nearby.
 
 Buy a house at its door, enter it, then choose Place furniture in Camp & Home. Buy and position a bed, chest, table, shelf or stove. Move / remove changes existing furniture without buying it again. Chests in every house you own share a free 64-stack stash.
 
@@ -94,7 +94,7 @@ Contracts raise standing; theft lowers it. The Factions ledger shows each factio
 
 Ask merchants or marshals for work. Freight needs a refundable deposit and four goods. Bring the cargo to the receiving contact. Caravans wait for you outside town. Square on the Journal entry locates the caravan. Escort or patrol work pays 12 silver per 30 seconds of nearby movement, plus a completion bonus. Stay within 8m. A wanted target has a silver mark beside their name. Their loot screen lists the paying factions. Carry them to a paying jailkeeper. A live target pays twice as much.
 
-Journal shows your objective, payment and contact. Completed contracts have their own tab.
+Read a work offer before accepting it with Cross. Circle declines without accepting. The Journal shows your objective, payment and contact. Open an accepted note and press Triangle to abandon it; freight deposits are forfeited. Completed and abandoned contracts appear in history.
 
 Read wanted posters by a jail door or ask a jailkeeper for the warrants. Cross tracks or drops a case. Square pins its last reported location. Triangle in the Journal opens tracked warrants, and left or right switches to paid cases. Nine Knives, Red Surveyor and Hollow Prince each have a standing warrant. Their deaths are permanent.
 
@@ -104,7 +104,7 @@ At a house for sale, open the deed from Nearby Actions. Once you own the house, 
 
 Six manual slots plus autosave. ![start](../assets/ui/start.svg), Save or Load opens a ledger with name, day, party size and silver. Choose a slot; ![cross](../assets/ui/cross.svg) asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.
 
-Saves use version, size and checksum validation and preserve a previous .bak file. Invalid files never replace your running expedition. Older saves through 0.11.0 remain loadable. Back them up before overwriting. Autosave is slot zero and is never used for manual saving.
+Saves use version, size and checksum validation and preserve a previous .bak file. Invalid files never replace your running expedition. Older saves through 0.11.0 remain loadable. Back them up before overwriting. Autosave is slot zero and is never used for manual saving. Automatic saves, including the exit save, are skipped while every living squad member is incapacitated.
 
 ## 17. Weather
 
@@ -122,7 +122,7 @@ Slavers carry fallen survivors to a work camp. Shackled prisoners work in issued
 
 Approach a house, inn, shop, tower or workshop door and press ![cross](../assets/ui/cross.svg) to enter. Walk around the room with the analog stick. Furniture blocks movement; use the aisles. ![cross](../assets/ui/cross.svg) near the door returns outside.
 
-Counters open local trade and smithies sell weapons and armor. Inns offer beds for 25 silver each. Owned beds are free. Join the Dustward Clan for 280 silver to use beds and training dummies at any of its lodges. Dummies train your equipped weapon skill or Martial Arts up to level 20. Use a research bench directly from outside. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other groups and hired guards remain outside.
+Counters open local trade and smithies sell weapons and armor. Inns quote their bed fee before sleeping; important settlements charge more. Owned beds are free. Join the Dustward Clan for 280 silver to use beds and training dummies at any of its lodges. Dummies train your equipped weapon skill or Martial Arts up to level 20. Use a research bench directly from outside. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other groups and hired guards remain outside.
 
 Save games preserve the building and indoor position. Switching squad members leaves the room. Interiors shelter you from weather; occupants who distrust you may demand you leave and attack if you stay.
 
@@ -146,7 +146,7 @@ Assign each survivor to one of three groups and choose its leader. A pin marks t
 
 ## 23. Camp Work & Fuel
 
-The wilderness has persistent camps, patrols, refugees, raiders, beasts, prisoners and armies. Groups travel, rest, gather and clash even far away. Camp beds are free when unoccupied. Ore seams and cuttable timber have distinct markings and sit outside settlements. Campfires cook 2 meat into 1 ration. Road traders and some smugglers carry their own stock. Search a chest to see its contents before taking anything.
+The wilderness has persistent camps, patrols, refugees, raiders, beasts, prisoners and armies. Groups travel, rest, gather and clash even far away. Camp beds are free when unoccupied. Ore seams and cuttable timber have distinct markings and sit outside settlements. Campfires turn two meat into one ration before the Cooking skill bonus. Take supplies from each physical camp chest, one item at a time. Road traders and some smugglers carry their own stock. Search a chest to see its contents before taking anything.
 
 Highlight a Bedroll in the pack and press ![cross](../assets/ui/cross.svg) to lay it out. Use Nearby Actions to rest or pack it up. Construction consumes materials when a foundation is placed. Stay beside it to build; moving cancels work. Resume from the nearby action or Camp ledger. Unfinished stations and beds cannot work.
 

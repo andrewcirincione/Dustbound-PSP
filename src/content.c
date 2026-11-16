@@ -310,14 +310,14 @@ const char *guideBodies[GUIDE_PAGES] = {
     "permanent; dismiss the body from Squad to free its slot.",
     "Food is eaten below forty hunger. You eat what you need and save the remainder. Supplies come from your pack, then a nearby companion or owned depot within "
     "three meters. Water supports "
-    "farms; tonics restore blood and treat exposure. Starvation damages the chest.\nAn inn bed charges its listed lodging price. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and helps dressed wounds heal. Severe hunger slows recovery. Move to wake. The sun completes a day in thirty minutes of "
+    "farms; tonics restore blood and treat exposure. Starvation damages the chest.\nAn inn bed charges its listed lodging price. Camp shelters are free. Six roadside wayfarer beds have finite caches. Rock passes provide cover and outer bypasses. Sleeping reduces fatigue and helps dressed wounds heal. RECOVERY shows the lowest of overall limb health, blood and restedness; CONSCIOUSNESS shows progress toward waking. Severe hunger slows recovery. Move to wake. The sun completes a day in thirty minutes of "
     "simulation; menus and "
     "tactical pause stop time.",
     "Six slots: weapon, torso, head, boots, legs, back. Pack \001 equips; \003 passes one to an ally; \004 "
     "switches carried/worn gear. \001 on worn gear removes it if space allows. Hovering equipment changes the single character preview and compares stats. WORN DISGUISE shows your current outfit; PREVIEW shows the hovered outfit. Equipping commits it.\nPlate protects more but slows movement and hinders stealth. Cloth is light; "
     "travel gear favors weather or movement. Higher grades improve the same role. Torso armor covers "
     "chest/arms; headgear covers head; leg armor and boots have separate coverage chances. MOVE% is the worn speed "
-    "bonus. Weight above capacity slows you further.",
+    "bonus. Equipped gear stays in inventory, selling and storage lists as (E), and contributes full weight. Injuries reduce carrying capacity. Weight above capacity slows you further.",
     "Talk to a trader and choose Trade. \014 switches buying and selling; \005/\006 filters supplies, "
     "weapons, armor or backpacks. \001 trades one item. Shops have finite stocks and refresh daily with "
     "different "
@@ -325,12 +325,12 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Stolen goods appear in red. The selling list shows the chance a trader accepts the item without reporting you. Stealth and Thievery improve the odds. Black Mesa fences most outside goods. The item "
     "details show its stats and effects before purchase.",
     "Enter a smithy and walk to the forge. Choose slot, design, "
-    "material and quality with \014. The preview updates before you spend anything.\n\001 on Forge makes "
+    "material and quality with \014. The preview lists damage, armor, weight, reach, delay and bonuses before you spend anything.\n\001 on Forge makes "
     "the selected design. Metal, cloth and timber costs scale with material and grade; relic gear also needs "
     "a relic. Higher grades require smithing experience and research. Missing materials or a full pack "
     "cancel the transaction without charging you.",
-    "Start > Camp & Home > Research shows three forging tiers. Stand near a research bench with a relic and silver to research. Furniture needs no research.\nEnter a smithy to forge equipment. Mechanical limbs must be bought or found. Cooking remains available at campfires, including with enemies nearby.",
-    "Start > Camp & Home > Build camp offers a campfire and an inventory bedroll. Move the placement cursor with the analog stick or D-pad, then Cross to place. Red spots are blocked. Placement clears foliage. Camps disappear after a day away.\nBuy a house at its door, enter it and choose Place furniture. Beds, chests, tables, shelves and stoves cost silver. Move / remove repositions existing furniture. All purchased-home chests share a free stash.\nTalk to a depot clerk or use the counter for a separate store shared across towns. Fees are quoted for deposits and withdrawals. \014 switches sides; \001 moves one item; \003 moves a stack.",
+    "Start > Camp & Home > Research unlocks materials, quality and camp workshops. Stand near a research bench with a relic and silver. Science lowers the silver cost. Furniture needs no research.\nEnter a smithy to forge equipment. At a bench, Smithing turns hides and cloth into leather vests and boots. Campfires offer jerky, oatcakes, stew and rations; Cooking improves batch yield. Mechanical limbs must be bought or found. Nearby enemies do not block these services.",
+    "Start > Camp & Home > Build camp offers fires, inventory bedrolls, farms, forges, research benches, walls, storage and wind pumps. Costs and research are shown. Engineering reduces timber and speeds construction. Farming improves harvest yield. Move the placement cursor with the analog stick or D-pad, then Cross to place. Red spots are blocked. Placement clears foliage. Camps disappear after a day away.\nBuy a house at its door, enter it and choose Place furniture. Beds, chests, tables, shelves and stoves cost silver. Move / remove repositions existing furniture. All purchased-home chests share a free stash.\nTalk to a depot clerk or use the counter for a separate store shared across towns. Fees are quoted for deposits and withdrawals. \014 switches sides; \001 moves one item; \003 moves a stack.",
     "D-pad Right opens Squad management. \005/\006 chooses a member; \015 selects a row; \014 changes its value. Follow trails the "
     "assigned group leader; Hold stays put. Mine gathers local deposits; Farm waters and harvests; Medic treats "
     "injured allies.\nSmelt and Cook use nearby stations and can collect ingredients from a nearby depot. "
@@ -344,13 +344,13 @@ const char *guideBodies[GUIDE_PAGES] = {
     "Contracts raise standing; theft lowers it. The Factions ledger shows each faction’s outstanding amount and charges. Ash Monastery, Shogun Rest and Vulture Nest require matching body armor and headwear; close inspections can expose a disguise. "
     "Hired guards cost 240 silver for escort or 180 for camp duty: one simulated day. They fight and "
     "bandage independently, keep their gear, wait outside interiors and return home on expiry.",
-    "Ask merchants or marshals for work. Freight needs a refundable deposit and four goods. Bring the cargo to the receiving contact. Caravans wait for you outside town. Square on the Journal entry locates the caravan. Escort or patrol work pays 20 silver per 30 seconds of nearby movement, plus a completion bonus. Stay within 8m. Check Health / Stats has Health, Stats and Bounty tabs. The Bounty tab lists payouts and accepting factions. Carry the target inside a paying faction's jail and choose Environment > Turn in carried bounty. Live targets pay double.\nDispatch jobs give a sealed packet. It is delivered when you reach the destination; return to your contact for payment. The Journal tracks the current objective and completed work.",
+    "Ask merchants or marshals for work. Freight needs a refundable deposit and four goods. Bring the cargo to the receiving contact. Caravans wait for you outside town. Square on the Journal entry locates the caravan. Escort or patrol work pays 20 silver per 30 seconds of nearby movement, plus a completion bonus. Stay within 8m. Check Health / Stats has Health, Stats and Bounty tabs. The Bounty tab lists payouts and accepting factions. Carry the target inside a paying faction's jail and choose Environment > Turn in carried bounty. Live targets pay double.\nDispatch jobs give a sealed packet. It is delivered when you reach the destination; return to your contact for payment. Read the offer before accepting. In the Journal, open an active note and press Triangle to abandon it. Freight deposits are forfeited. The Journal tracks current work, completed work and abandoned contracts.",
     "Six manual slots plus autosave. \007, Save or Load opens a ledger with name, day, party size and "
     "silver. Choose a slot; \001 asks for confirmation. Save-and-title opens the ledger; choose and confirm a slot.\nSaves "
     "use version, size and checksum validation and preserve a previous .bak file. Invalid files never "
     "replace your running expedition. Older saves through 0.11.0 remain loadable. Back them up before "
     "overwriting. "
-    "Autosave is slot zero and is never used for manual saving.",
+    "Autosave is slot zero and is never used for manual saving. It is skipped while every living squad member is incapacitated, including when quitting.",
     "Dust, rain, acid mist and snow change visibility, terrain colors and survival pressure. Storms reduce "
     "detection and ranged accuracy. Acid and cold build exposure outdoors; shelters and sealed gear protect "
     "you.\nTonics and rest help recover. Rain irrigates farms. The northern highlands are colder; the fen "
@@ -359,7 +359,7 @@ const char *guideBodies[GUIDE_PAGES] = {
     "For a minor bounty the watch asks you to pay or serve time. At 100 silver or more they pursue and arrest you when you fall. Jail staff treat injuries and seize stolen goods. In the cell, \001 offers bail or lockpicking. The watch can relock an open cell if you linger. Move to the exit and press \001 to leave. Escaping adds a charge and the watch can pursue you.\nSlavers carry fallen survivors to a work camp. Shackled prisoners work in issued garb. The camp chest holds their seized equipment and supplies. Press \001 to pick your shackles. Former captors can recognize escapees.",
     "Approach a house, inn, shop, tower or workshop door and press \001 to enter. Walk around the room with "
     "the analog stick. Furniture blocks movement; use the aisles. \001 near the door returns outside.\n"
-    "Counters open local trade and smithies sell weapons and armor. Inns offer beds for 25 silver each. Owned beds are free. Join the Dustward Clan for 280 silver to use beds and training dummies at any of its lodges. Dummies train your equipped weapon skill or Martial Arts up to level 20. Use a research bench directly from outside. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other "
+    "Counters open local trade and smithies sell weapons and armor. Inns quote a bed fee before you sleep; important settlements charge more. Owned beds are free. Join the Dustward Clan for 280 silver to use beds and training dummies at any of its lodges. Dummies train your equipped weapon skill or Martial Arts up to level 20. Use a research bench directly from outside. Indoor time passes: hunger, bleeding and healing continue. Nearby followers in your group enter with you. Other "
     "groups and hired guards remain outside.\nSave games preserve the building and indoor position. Switching squad "
     "members leaves the room. Interiors shelter you from weather; occupants who distrust you may demand you leave and attack if you stay.",
     "Buy travel packs, medicine rolls, ore harnesses and bedroll packs from the BACKPACKS shop tab. "
