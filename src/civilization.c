@@ -25,7 +25,18 @@ float species_health(const Actor *a) {
     float health = a->kind == BEAST ? 100 : speciesDefs[species_index(a)].health;
     return a->healthScale ? health * a->healthScale * .01f : health;
 }
-int actor_capacity(const Actor*a){return 30+effective_level(a,STRENGTH)*2+gear_bonus(a,3)+speciesDefs[species_index(a)].carry+limb_capacity_bonus(a);}
+int actor_capacity(const Actor*a){
+    float full=species_health(a),condition=0;
+    const float contribution[LIMBS]={.05f,.35f,.20f,.20f,.10f,.10f};
+    for(int l=0;l<LIMBS;l++){
+        float maximum=limb_max_health(a,l);
+        float ratio=limb_missing(a,l)?0:fmaxf(0,fminf(1,a->health[l]/fmaxf(1,maximum)));
+        condition+=contribution[l]*ratio;
+    }
+    (void)full;
+    float base=30+effective_level(a,STRENGTH)*2+gear_bonus(a,3)+speciesDefs[species_index(a)].carry+limb_capacity_bonus(a);
+    return (int)fmaxf(8,base*(.25f+.75f*condition));
+}
 float species_food(const Actor*a){return speciesDefs[species_index(a)].food;}
 int species_start_level(int origin,int race,int skill){
  static const int strength[5]={9,12,16,3,7};int n=skill==STRENGTH?strength[origin]:3;

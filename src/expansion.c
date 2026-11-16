@@ -246,7 +246,7 @@ int expansion_input(float dt, Input in) {
                 if (blocked)
                     log_msg("%s.", blocked);
                 else {
-                    int item = a->pack[ui.passSlot].item;
+                    int item = item_slot_id(a,ui.passSlot);
                     if (inventory_transfer(a, &g.actors[n], ui.passSlot, 1)) {
                         log_msg("Passed %s to %s.", itemDefs[item].name, g.actors[n].name);
                         done = 1;
@@ -564,8 +564,8 @@ int expansion_input(float dt, Input in) {
         if (p & KEY_DOWN)
             ui.selection = wrapi(ui.selection + 1, count);
         if (p & (KEY_CROSS | KEY_SQUARE)) {
-            const Stack *stack = ui.storageSide ? storage_stack(ui.storageIndex, ui.selection) : &a->pack[ui.selection];
-            int qty = stack && (p & KEY_SQUARE) ? stack->qty : 1;
+            const Stack *stack=ui.storageSide?storage_stack(ui.storageIndex,ui.selection):NULL;
+            int qty=(p&KEY_SQUARE)?(ui.storageSide?(stack?stack->qty:0):item_slot_qty(a,ui.selection)):1;
             int moved = 0;
             while (moved < qty && storage_transfer(ui.storageIndex, ui.storageSide, ui.selection))
                 moved++;
@@ -619,7 +619,7 @@ int expansion_input(float dt, Input in) {
     if (ui.screen == SCREEN_DROP) {
         if (p & (KEY_CIRCLE | KEY_START | KEY_CROSS)) {
             if (p & KEY_CROSS)
-                inventory_drop(a, ui.dropSlot, ui.selection == 1 ? a->pack[ui.dropSlot].qty : 1);
+                inventory_drop(a, ui.dropSlot, ui.selection == 1 ? item_slot_qty(a,ui.dropSlot) : 1);
             open_view(p & KEY_START ? SCREEN_WORLD : SCREEN_PACK);
             ui.selection = ui.dropSlot;
         } else if (p & (KEY_UP | KEY_DOWN)) {
@@ -640,6 +640,17 @@ int expansion_input(float dt, Input in) {
         return 1;
     }
     if (ui.screen == SCREEN_CONTRACT_NOTE) {
+        if(ui.offerMode&&(p&KEY_CROSS)){
+            int available=0;
+            for(int row=0;contract_offer(ui.offerTown,row)>=0;row++)available|=contract_offer(ui.offerTown,row)==ui.offerKind;
+            if(available&&depth_distance(a,&g.actors[ui.dialogActor])<=TALK_REACH&&conscious(&g.actors[ui.dialogActor])&&accept_contract(ui.offerTown,ui.offerKind)){
+                ui.offerMode=0;open_view(SCREEN_WORLD);
+            }else if(!available)log_msg("That posting is no longer available.");
+            return 1;
+        }
+        if(!ui.offerMode&&(p&KEY_TRIANGLE)&&ui.contractNote<CONTRACTS){
+            if(abandon_contract(ui.contractNote)){ui.journalTab=0;open_view(SCREEN_JOURNAL);}return 1;
+        }
         if (p & (KEY_CIRCLE | KEY_START)) {
             open_view(p & KEY_START ? SCREEN_WORLD : ui.noteReturn);
             for (int row = 0; row < journal_count(); row++)
@@ -677,6 +688,7 @@ int expansion_input(float dt, Input in) {
         if (p & KEY_DOWN)
             ui.selection = wrapi(ui.selection + 1, n);
         if (ui.screen == SCREEN_JOURNAL && (p & KEY_CROSS)) {
+            ui.offerMode=0;
             ui.contractNote = journal_slot(ui.selection);
             ui.noteReturn = SCREEN_JOURNAL;
             open_view(SCREEN_CONTRACT_NOTE);
@@ -867,16 +879,9 @@ int expansion_input(float dt, Input in) {
                     if (complete_contract(turnIn))
                         open_view(SCREEN_WORLD);
                 } else if (kind >= 0 && depth_distance(a, b) <= TALK_REACH && conscious(b)) {
-                    if (accept_contract(town, kind)) {
-                        for (int i = 0; i < CONTRACTS; i++)
-                            if (g.contracts[i].active == 1 && g.contracts[i].town == town && g.contracts[i].type == kind) {
-                                ui.contractNote = i;
-                                ui.noteReturn = SCREEN_WORLD;
-                                ui.journalTab = 0;
-                                open_view(SCREEN_CONTRACT_NOTE);
-                                break;
-                            }
-                    }
+                    ui.offerTown=town;ui.offerKind=kind;ui.offerMode=1;
+                    ui.contractNote=-1;ui.noteReturn=SCREEN_DIALOG;
+                    open_view(SCREEN_CONTRACT_NOTE);
                 } else {
                     ui.dialogPage = 0;
                     ui.selection = 0;

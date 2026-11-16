@@ -377,11 +377,9 @@ static int eat_from_pack(Actor *eater, Actor *owner, int slot) {
 }
 
 int inventory_transfer(Actor *from, Actor *to, int slot, int qty) {
-    if (from == to || slot < 0 || slot >= PACK || qty <= 0 || from->pack[slot].qty < qty)
-        return 0;
-    if (!inventory_add_owned(to, from->pack[slot].item, qty, from->stolen[slot]))
-        return 0;
-    return inventory_remove_slot(from, slot, qty);
+    if(from==to||qty<=0||item_slot_qty(from,slot)<qty)return 0;
+    if(!inventory_add_owned(to,item_slot_id(from,slot),qty,item_slot_owner(from,slot)))return 0;
+    return item_slot_remove(from,slot,qty);
 }
 int pass_recipient(int row) {
     for (int n = 0; n < g.actorCount; n++)
@@ -403,9 +401,8 @@ const char *pass_blocked(int n) {
         return "Different room";
     if (depth_distance(a, b) > 3)
         return "Too far away";
-    const Stack *s = &a->pack[ui.passSlot];
     Actor test = *b;
-    if (!inventory_add_owned(&test, s->item, 1, a->stolen[ui.passSlot]))
+    if (!inventory_add_owned(&test,item_slot_id(a,ui.passSlot),1,item_slot_owner(a,ui.passSlot)))
         return "Pack full";
     return NULL;
 }
@@ -575,6 +572,7 @@ void raider_scraps(Actor *a, unsigned seed) {
 }
 
 void init_actor(int n, const char *name, int kind, int faction, float x, float y, int skill) {
+    g.feedback.wakeTotal[n]=0;
     combatVisuals[n] = (CombatVisual){0};
     g.plans.corpseSince[n]=0;
     g.innFloor[n] = 0;
@@ -1098,7 +1096,7 @@ void combat_impact(int ai, int bi, int w) {
     gain(b, TOUGHNESS, rawDamage * .65f * combat_learning(level(b,TOUGHNESS),rawDamage));
     if (!arresting && depth_organic(b, limb) && w && (cut >= .25f || ranged)) {
         b->woundFlags |= 1u << limb;
-        b->bleed += damage * (ranged ? .028f : cut * .043f);
+        b->bleed += damage * (ranged ? .021f : cut * .032f);
     }
     if (a->squad && hostile(a, b))
         g.townLife.squadHitAt[bi] = g.time + 60;
@@ -1115,6 +1113,20 @@ void combat_impact(int ai, int bi, int w) {
             log_warn("%s %s.", b->name, recovery_coma(b) ? "is in a recovery coma" : "is unconscious");
     }
 }
+float recovery_progress(const Actor*a){
+    float have=0,max=0;for(int l=0;l<LIMBS;l++)if(!limb_missing(a,l)){float m=limb_max_health(a,l);max+=m;have+=fmaxf(0,fminf(m,a->health[l]));}
+    float health=max?100*have/max:100;
+    return fminf(health,fminf(a->race==2?100:a->blood,100-a->fatigue));
+}
+float consciousness_progress(const Actor*a){
+    if(a->dead)return 0;if(a->unconscious<=0)return 100;
+    int n=a-g.actors;float total=g.feedback.wakeTotal[n];
+    if(total<a->unconscious)total=g.feedback.wakeTotal[n]=fmaxf(a->unconscious,recovery_coma(a)?60:18);
+    float progress=100*(1-a->unconscious/fmaxf(1,total));
+    if(a->race!=2)progress=fminf(progress,fmaxf(0,a->blood/25*100));
+    if(recovery_coma(a)&&a->bleed>.01f)progress=fminf(progress,95);
+    return fmaxf(0,fminf(99,progress));
+}
 float coma_threshold(const Actor *a) {
     return -species_health(a) * (.10f + .0055f * (level(a, TOUGHNESS) - 1));
 }
@@ -1125,6 +1137,7 @@ int fatal_injury(const Actor *a) {
     return (a->race != 2 && a->blood <= 0) || a->health[HEAD] <= -.85f * species_health(a);
 }
 void injury_knockout(Actor *a, float impact) {
+    int fresh=a->unconscious<=0;
     float vital = fminf(a->health[HEAD], a->health[CHEST]);
     if (vital <= coma_threshold(a)) {
         if (!(a->woundFlags & WOUND_COMA) || a->unconscious <= 0)
@@ -1132,6 +1145,10 @@ void injury_knockout(Actor *a, float impact) {
         a->woundFlags |= WOUND_COMA;
     } else if (a->unconscious <= 0) {
         a->unconscious = clamp(9 + impact * .12f - level(a, TOUGHNESS) * .075f, 5, 18);
+    }
+    if((uintptr_t)a>=(uintptr_t)g.actors&&(uintptr_t)a<(uintptr_t)(g.actors+MAX_ACTORS)){
+        int n=a-g.actors;
+        if(fresh||g.feedback.wakeTotal[n]<a->unconscious)g.feedback.wakeTotal[n]=a->unconscious;
     }
     a->woundFlags &= ~WOUND_CRITICAL_AWAKE;
     a->autoattack = a->attackPhase = 0;
@@ -1178,7 +1195,7 @@ int injury_tick(Actor *a, DepthActor *z, float dt, int resting) {
     if (a->race != 2) {
         if (a->bleed > .01f) {
             if (a->taskKind != TASK_JAIL_CARE)
-                a->blood -= a->bleed * dt * .35f;
+                a->blood -= a->bleed * dt * .21f;
             float clotting = .028f + .00028f * level(a, TOUGHNESS) + (a->unconscious > 0 ? .016f : 0);
             a->bleed = fmaxf(0, a->bleed - dt * clotting);
             /* Earlier saves and authored casualties may have bleeding without a cut mask. */
@@ -1499,9 +1516,13 @@ static void treatment_tick(float dt) {
 int heal_actor(int mi, int pi) { return begin_treatment(mi, pi, TREAT_DRESS, -1); }
 void use_item(int s) {
     Actor *a = &g.actors[g.selected];
-    if (s < 0 || s >= PACK || !a->pack[s].item)
+    int it=item_slot_id(a,s);
+    if(!it)return;
+    if(item_slot_equipped(s)){
+        if(inventory_add_owned(a,it,1,item_slot_owner(a,s)))item_slot_remove(a,s,1);
+        else log_msg("Pack full; cannot unequip.");
         return;
-    int it = a->pack[s].item;
+    }
     int base = portion_base(it);
     if (base != MEDKIT && it != PARTS && it != TONIC)
         g.field.playingDead[g.selected] = 0;
@@ -1585,9 +1606,9 @@ int buy_item(int town, int it) {
 int sell_item(int town, int s) {
     if (town == -1 && ui.roadTrader) return road_trade(NONE, s);
     Actor *a = &g.actors[g.selected];
-    if (town < 0 || town >= TOWNS || s < 0 || s >= PACK || !a->pack[s].item)
+    if (town < 0 || town >= TOWNS || !item_slot_id(a,s))
         return 0;
-    int it = a->pack[s].item, price = item_price(town, it, 1);
+    int it = item_slot_id(a,s), price = item_price(town, it, 1);
     if (it == DISPATCH_ITEM) { log_msg("The dispatch is for the destination watch."); return 0; }
     if (wanted_amount(a, g.townOwner[town]) >= SERIOUS_BOUNTY && disguise_score(a, g.townOwner[town]) < 40) {
         log_msg("This faction refuses to trade with you.");
@@ -1595,7 +1616,7 @@ int sell_item(int town, int s) {
     }
     if (!stolen_sale(town, s))
         return 0;
-    inventory_remove_slot(a, s, 1);
+    item_slot_remove(a, s, 1);
     g.money += price;
     if (!*market_stock(town, it)) *market_venue(town,it) = ui.tradeSmith;
     (*market_stock(town, it))++;
@@ -1811,7 +1832,7 @@ float node_distance(const Actor *a, int n) {
 
 int inventory_drop(Actor *a, int slot, int qty) {
     if (!conscious(a) || a->prisonTime > 0 || g.depth.actors[a - g.actors].captive ||
-        slot < 0 || slot >= PACK || !a->pack[slot].item || qty <= 0 || qty > a->pack[slot].qty)
+        !item_slot_id(a,slot) || qty <= 0 || qty > item_slot_qty(a,slot))
         return 0;
     int n = 0;
     for (; n < g.nodeCount; n++)
@@ -1821,9 +1842,9 @@ int inventory_drop(Actor *a, int slot, int qty) {
         log_msg("No room to drop another stack.");
         return 0;
     }
-    int item = a->pack[slot].item, owner = a->stolen[slot];
+    int item = item_slot_id(a,slot), owner = item_slot_owner(a,slot);
     if (item == DISPATCH_ITEM) { log_msg("Keep the dispatch for its recipient."); return 0; }
-    if (!inventory_remove_slot(a, slot, qty))
+    if (!item_slot_remove(a, slot, qty))
         return 0;
     if (n == g.nodeCount)
         g.nodeCount++;
@@ -2001,7 +2022,8 @@ void interact_context(int kind,int target) {
     } else if (b->type == BED || b->type == CAMPFIRE) {
         if (b->type == BED) {
             int town = town_near(b->x, b->y, 14);
-            int price = b->owner < 0 && !trail_bed(n) && town >= 0 ? regional_bed_cost(town) : 0;
+            int price=bed_cost(n);
+            (void)town;
             rest_at(a, n, b->x, b->y, 0, price);
             return;
         }
@@ -2672,7 +2694,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 34, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
+enum { SAVE_VERSION = 35, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -3016,7 +3038,7 @@ static int save_shape(uint32_t version,uint32_t size) {
         if(version==28)extra+=sizeof(g.frontier)-(MAX_BUILDINGS-448)-V28_FRONTIER_BYTES;
         return size==end[version-28]-extra;
     }
-    return (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version==34 && size==offsetof(Game,feedback)) || (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }
@@ -3040,7 +3062,7 @@ static void read_save_array(SaveReader *reader, void *array, size_t oldBytes, si
 }
 static int decode_modern(Game *out,const void *data,uint32_t version,uint32_t size) {
     memset(out,0,sizeof(*out));
-    if (version == SAVE_VERSION) memcpy(out, data, size);
+    if (version >= 34) memcpy(out, data, size);
     else {
         SaveReader reader = {data, (unsigned char *)out, size};
 #define WIDEN(field, count) read_save_array(&reader, out->field, (count) * sizeof(out->field[0]), sizeof(out->field))
@@ -3316,7 +3338,12 @@ void save_refresh(void) {
     for (int i = 0; i < SAVE_SLOTS; i++)
         save_inspect(i, &ui.saves[i]);
 }
+int squad_can_autosave(void) {
+    for(int i=0;i<g.actorCount;i++)if(g.actors[i].active&&g.actors[i].squad&&conscious(&g.actors[i]))return 1;
+    return 0;
+}
 int save_slot(int n) {
+    if(n==0&&!squad_can_autosave())return 0;
     char p[400];
     snprintf(p, sizeof(p), "%s/DUST_%d.sav", saveRoot, n);
     int ok = save_game(p);
@@ -3582,14 +3609,14 @@ static void tick_input(float dt, Input in) {
                 ui.selection = (ui.selection + 1) % count;
         }
         if (ui.screen == SCREEN_PACK) {
-            if ((p & KEY_RIGHT) && a->pack[ui.selection].item && conscious(a)) {
+            if ((p & KEY_RIGHT) && item_slot_id(a,ui.selection) && conscious(a)) {
                 ui.dropSlot = ui.selection;
                 open_screen(SCREEN_DROP);
                 return;
             }
             if (p & KEY_CROSS)
                 use_item(ui.selection);
-            if ((p & KEY_SQUARE) && a->pack[ui.selection].item) {
+            if ((p & KEY_SQUARE) && item_slot_id(a,ui.selection)) {
                 ui.passSlot = ui.selection;
                 open_screen(SCREEN_PASS);
             }

@@ -78,7 +78,15 @@ void regional_restock(int t) {
         if(o==2){g.stock[t][CARTRIDGE]=100;g.stock[t][gear_id(2,4,2)]=3;g.stock[t][gear_id(34,4,2)]=2;}
     }
 }
-int regional_bed_cost(int t) {return (t==12&&g.regions.outcome[2]==1)||(t==OLD_TOWNS+2&&g.townOwner[t]==MONKS)?0:25;}
+int regional_bed_cost(int t) {
+    if(t<0||t>=TOWNS||(t==12&&g.regions.outcome[2]==1)||(t==OLD_TOWNS+2&&g.townOwner[t]==MONKS))return 0;
+    const TownDesign *d=town_design(t);
+    return 15+d->importance*10+d->marketTier*5;
+}
+int bed_cost(int b){
+    if(b<0||b>=g.buildingCount||g.buildings[b].owner>=0||trail_bed(b)||home_state(b)==HOME_OWNED||lodge_joined(b)||expedition_large(b))return 0;
+    return regional_bed_cost(building_town(b));
+}
 int regional_well(Actor *a,Building *b) {
     if(regional_at(b->x,b->y)!=0) return 0;
     int o=g.regions.outcome[0];

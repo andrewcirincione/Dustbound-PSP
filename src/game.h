@@ -2,7 +2,7 @@
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
 #define GAME_NAME "Dust"
-#define VERSION "1.2.0"
+#define VERSION "1.2.1"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -445,13 +445,19 @@ typedef struct {
         Stack loot[EXP_SITES][EXP_FLOORS][EXP_CHESTS][3];
         ExpeditionCrew crew[EXP_SITES][EXP_FLOORS];
     } expedition;
+    /* v35 append-only: persistent loot history; earlier saves remain a prefix. */
+    struct {
+        unsigned key[512];
+        int taken[512], next;
+        float wakeTotal[MAX_ACTORS];
+    } feedback;
 } Game;
 void wilderness_init(void);
 int wilderness_site(int building);
 const char *wilderness_name(int site);
 const char *wilderness_record(int site);
 int wilderness_validate(const Game *state);
-enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY, CHEST_EXPEDITION };
+enum { CHEST_ROOM, CHEST_FIELD, CHEST_PROPERTY, CHEST_EXPEDITION, CHEST_CAMP };
 enum { ROOM_NONE, ROOM_TRADE, ROOM_REST, ROOM_FORGE, ROOM_STORAGE, ROOM_CHEST, ROOM_SMITH_TRADE, ROOM_MEMBERSHIP, ROOM_TRAIN, ROOM_HOME_STASH, ROOM_STAIRS, ROOM_RESEARCH, ROOM_RUIN_RECORD, ROOM_EXP_UP, ROOM_EXP_DOWN, ROOM_EXP_CACHE, ROOM_EXP_TRADE };
 enum { ROOM_PROPS = 64 };
 #define DOOR_REACH 1.65f
@@ -634,6 +640,7 @@ typedef struct {
     int journalTab,regionChoice,attackFocus;
     int homeSite, homeBay, warrantTown, warrantClosed;
     int dropSlot, coachTown, contractNote, noteMaxScroll, noteReturn;
+    int offerTown, offerKind, offerMode;
     int nearbyTarget;
     int inspectTab, placeType, placeBuilding, placeSlot, placeReturn;
     float placeX, placeY;
@@ -857,6 +864,21 @@ void log_tick(float dt);
 const char *log_current(int *priority, int *offset);
 int save_game(const char *path);
 int load_game(const char *path);
+int squad_can_autosave(void);
+float consciousness_progress(const Actor *a);
+float recovery_progress(const Actor *a);
+int loot_remaining(int actor);
+int loot_units(const Actor *a);
+void loot_record_taken(int actor, int qty);
+int bed_cost(int building);
+int cooking_yield(const Actor *a, int base);
+int item_slot_id(const Actor *a, int slot);
+int item_slot_qty(const Actor *a, int slot);
+int item_slot_owner(const Actor *a, int slot);
+int item_slot_equipped(int slot);
+int item_slot_remove(Actor *a, int slot, int qty);
+int abandon_contract(int slot);
+void contract_offer_note(int town,int kind,char *out,int size);
 int save_slot(int slot);
 int load_slot(int slot);
 void set_save_root(const char *path);

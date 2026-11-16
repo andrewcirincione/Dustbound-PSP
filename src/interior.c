@@ -3,6 +3,7 @@
 #include "furniture_models.h"
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 extern int conscious(const Actor *);
 const HomeFurniture homeFurniture[FURN_TYPES] = {
     [FURN_BED]   = {"Bed",   190, 16, ROOM_REST, .58f, .81f},
@@ -210,6 +211,12 @@ static Stack *chest_stack(int row, int *slot) {
     return NULL;
 }
 const Stack *interior_chest_item(int row) {
+    if(ui.chestKind==CHEST_CAMP){
+        static Stack camp;int k=ui.storageIndex;
+        if(k<0||k>=POP_GROUPS)return NULL;
+        PopulationState*m=&g.population.state[k];camp=(Stack){m->cacheItem,m->cacheQty};
+        return row==0&&camp.item&&camp.qty?&camp:NULL;
+    }
     if (ui.chestKind != CHEST_FIELD)
         return chest_stack(row, NULL);
     const Node *node = &g.nodes[ui.storageIndex];
@@ -218,6 +225,7 @@ const Stack *interior_chest_item(int row) {
     return row == 0 && !node->locked && node->remaining && node->item && node->qty ? &contents : NULL;
 }
 int chest_owner(void) {
+    if(ui.chestKind==CHEST_CAMP){int f=g.population.groups[ui.storageIndex].faction;return f==HOSTILE?FREE:f;}
     if(ui.chestKind==CHEST_EXPEDITION)return expedition_cache_owner(ui.storageIndex);
     if (ui.chestKind == CHEST_PROPERTY)
         return FREE;
@@ -226,7 +234,7 @@ int chest_owner(void) {
     return g.buildings[ui.storageIndex].faction;
 }
 int interior_chest_count(void) {
-    if (ui.chestKind == CHEST_FIELD)
+    if (ui.chestKind == CHEST_FIELD||ui.chestKind==CHEST_CAMP)
         return interior_chest_item(0) != NULL;
     int count = 0;
     while (chest_stack(count, NULL))
@@ -239,7 +247,7 @@ void interior_chest_take(int row) {
     if (!contents || !conscious(a))
         return;
     int item = contents->item, owner = chest_owner(), slot = 0;
-    Stack *stack = ui.chestKind == CHEST_FIELD ? NULL : chest_stack(row, &slot);
+    Stack *stack = ui.chestKind == CHEST_FIELD||ui.chestKind==CHEST_CAMP ? NULL : chest_stack(row, &slot);
     if (ui.chestKind == CHEST_PROPERTY)
         owner = g.field.seizedOwner[ui.storageIndex][slot];
     if (!inventory_add_owned(a, item, 1, owner)) {
@@ -252,6 +260,8 @@ void interior_chest_take(int row) {
             if (ui.chestKind == CHEST_PROPERTY)
                 g.field.seizedOwner[ui.storageIndex][slot] = 0;
         }
+    } else if(ui.chestKind==CHEST_CAMP){
+        g.population.state[ui.storageIndex].cacheQty--;
     } else {
         g.nodes[ui.storageIndex].qty--;
     }
@@ -735,7 +745,7 @@ static int room_layout(int building, int t, int style, int floor, InteriorProp *
             put_prop(p,&n,x,y,.48f+(j%3)*.10f,.44f,20,ROOM_NONE);
         }
         put_prop(p,&n,3.8f,1.1f,.62f,.38f,21,ROOM_NONE);
-        put_prop(p,&n,3.4f,2.05f,.80f,.31f,17,ROOM_STORAGE);
+        put_prop(p,&n,3.4f,2.05f,.80f,.31f,17,depot_public(building)||b->owner>=0?ROOM_STORAGE:ROOM_CHEST);
     } else if (b->type == BAR) {
         int upstairs = inn_has_upstairs(building);
         if (upstairs)
@@ -930,7 +940,7 @@ const char *interior_prompt(void) {
     case ROOM_TRADE:
         return "TRADE AT COUNTER";
     case ROOM_REST:
-        return "SLEEP IN BED";
+        {static char fee[64];int price=bed_cost(g.interiorBuilding-1);snprintf(fee,sizeof(fee),price?"SLEEP IN BED (%d SILVER)":"SLEEP IN BED (FREE)",price);return fee;}
     case ROOM_FORGE:
         return "FORGE EQUIPMENT";
     case ROOM_SMITH_TRADE:
@@ -1018,8 +1028,7 @@ void interior_interact(void) {
             break;
         }
         rest_at(a, id, p[c].x, p[c].y, id + 1,
-                b->owner < 0 && town >= 0 && home_state(id) != HOME_OWNED && !lodge_joined(id)
-                    ? regional_bed_cost(town) : 0);
+                bed_cost(id));
         break;
     case ROOM_CHEST:
         restock_chest(id);

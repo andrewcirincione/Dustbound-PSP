@@ -271,6 +271,11 @@ void content_init(void) {
         itemDefs[i].cooldown*=1+(d.length-1)*.18f+(d.width-1)*.08f;
     }
     arsenal_content();
+    /* Gear is costly to buy and cumbersome to haul; equipped mass uses the same definitions. */
+    for(int i=1;i<ITEMS;i++)if(itemDefs[i].slot>=0&&itemDefs[i].slot<=4){
+        itemDefs[i].price=(itemDefs[i].price*5+3)/4;
+        itemDefs[i].weight=(itemDefs[i].weight*5+3)/4;
+    }
 }
 
 const char *guideTitles[GUIDE_PAGES] = {"CONTROLS",        "YOUR DRIFTER", "THE BORDERLANDS",    "COMBAT",

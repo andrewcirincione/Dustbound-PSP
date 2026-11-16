@@ -1661,7 +1661,13 @@ static void hud(void) {
     }
     if (treating)
         bar(180, 236, 120, 2, treatment_progress(a), 0xdc9d54);
-    else if (a->taskKind)
+    else if(a->unconscious>0){
+        char progress[80];snprintf(progress,sizeof(progress),"CONSCIOUSNESS %.0f%%",consciousness_progress(a));
+        text(180,224,progress,TEAL,1);bar(180,236,120,3,consciousness_progress(a),TEAL);
+    }else if(a->taskKind==3){
+        char progress[80];snprintf(progress,sizeof(progress),"RECOVERY %.0f%%",recovery_progress(a));
+        text(180,224,progress,TEAL,1);bar(180,236,120,3,recovery_progress(a),TEAL);
+    }else if (a->taskKind)
         bar(180, 236, 120, 2,
             (1 - fminf(1, a->action / (a->taskKind == TASK_CELL_LOCK ? jail_pick_duration(a, a->taskIndex) :
                  a->taskKind == 3 ? REST_DURATION : a->taskKind == 2 ? 4.5f : 2.8f))) * 100,
@@ -1815,8 +1821,8 @@ static const char *item_function(int it) {
     return detail;
 }
 static void pack_screen(void) {
-    Actor *a=&g.actors[g.selected];char b[120];int count=item_view_count(),it=count?a->pack[ui.selection].item:0;
-    overlay_header("PACK & EQUIPMENT","\001 EQUIP / USE   \004 WORN GEAR   \003 PASS TO ALLY");
+    Actor *a=&g.actors[g.selected];char b[120];int count=item_view_count(),it=count?item_slot_id(a,ui.selection):0;
+    overlay_header("PACK & EQUIPMENT","\001 EQUIP / UNEQUIP / USE   \004 WORN   \003 PASS");
     float load = encumbrance(a);
     int capacity = actor_capacity(a);
     snprintf(b, sizeof(b), "LOAD %.0f/%d", load, capacity);
@@ -1830,16 +1836,18 @@ static void pack_screen(void) {
     text(406,82,"VAL/EA",MUTED,1);
     int first=start_row(item_view_row(ui.selection),count,10);
     for(int j=0;j<10&&first+j<count;j++) {
-        int k=item_view_slot(first+j),y=94+j*9,id=a->pack[k].item;
+        int k=item_view_slot(first+j),y=94+j*9,id=item_slot_id(a,k);
         if(k==ui.selection){rect(139,y-1,310,10,0x4a4030);rect(139,y-1,2,10,TEAL);}
-        if (a->stolen[k]) text(146,y,"!",RED,1);
-        clipped(155,y,itemDefs[id].name,34,a->stolen[k]?RED:k==ui.selection?TEXT:MUTED);
-        snprintf(b,sizeof(b),"%d",a->pack[k].qty);text(389-text_width(b),y,b,GOLD,1);
+        int owner=item_slot_owner(a,k);
+        if(owner)text(146,y,"!",RED,1);
+        char label[100];snprintf(label,sizeof(label),"%s%s",item_slot_equipped(k)?"(E) ":"",itemDefs[id].name);
+        clipped(155,y,label,34,owner?RED:k==ui.selection?TEXT:MUTED);
+        snprintf(b,sizeof(b),"%d",item_slot_qty(a,k));text(389-text_width(b),y,b,GOLD,1);
         snprintf(b,sizeof(b),"%d",itemDefs[id].price);text(442-text_width(b),y,b,TEXT,1);
     }
-    snprintf(b, sizeof(b), "%d/%d SLOTS%s", count, PACK,
-             count && a->stolen[ui.selection] ? "  STOLEN" : "");
-    text(146, 183, b, count && a->stolen[ui.selection] ? RED : MUTED, 1);
+    snprintf(b, sizeof(b), "%d ITEMS / (E) EQUIPPED%s", count,
+             count && item_slot_owner(a,ui.selection) ? "  STOLEN" : "");
+    text(146, 183, b, count && item_slot_owner(a,ui.selection) ? RED : MUTED, 1);
     int wornDisguise=disguise_faction(a),nextDisguise=disguise_faction(&preview);
     if (count > 10) {
         snprintf(b, sizeof(b), "%d-%d OF %d", first + 1, first + 10, count);
@@ -2084,7 +2092,7 @@ static void squad_screen(void) {
 static void pass_screen(void) {
     const Actor *a = &g.actors[g.selected];
     char title[96], detail[48];
-    int item = a->pack[ui.passSlot].item;
+    int item = item_slot_id(a,ui.passSlot);
     overlay_header("PASS TO ALLY", "\015 RECIPIENT   \001 HAND OVER ONE   \002 CANCEL");
     snprintf(title, sizeof(title), "%s is passing 1 %s", a->name, itemDefs[item].name);
     clipped(31, 84, title, 68, GOLD);
@@ -2389,14 +2397,15 @@ static void trade_screen(void) {
     int pictured=ui.tradeSmith==TRADE_SMITH||ui.tradeSmith==TRADE_ARMORER;
     int count = ui.sell ? item_view_count() : shop_count(), first = start_row(ui.sell ? item_view_row(ui.selection) : ui.selection, count, 6);
     for (int j = 0; j < 6 && first + j < count; j++) {
-        int i = ui.sell ? item_view_slot(first+j) : first+j, it = ui.sell ? g.actors[g.selected].pack[i].item : shop_item(i);
+        int i = ui.sell ? item_view_slot(first+j) : first+j, it = ui.sell ? item_slot_id(&g.actors[g.selected],i) : shop_item(i);
         int y = 84 + j * 13;
-        int stolen = ui.sell && g.actors[g.selected].stolen[i];
+        int stolen = ui.sell && item_slot_owner(&g.actors[g.selected],i);
         if(pictured){if(i==ui.selection){rect(136,y-3,314,14,0x4a4030);rect(136,y-3,2,14,TEAL);}}
         else row(y,i==ui.selection,"",NULL);
         if (stolen) text(pictured?137:31,y,"!",RED,1);
-        clipped(pictured?145:42,y,itemDefs[it].name,pictured?24:35,stolen?RED:i==ui.selection?TEXT:MUTED);
-        snprintf(v,sizeof(v),"%d",ui.sell?g.actors[g.selected].pack[i].qty:market_quantity(ui.tradeTown, it));text(pictured?296:263,84+j*13,v,MUTED,1);
+        char label[100];snprintf(label,sizeof(label),"%s%s",ui.sell&&item_slot_equipped(i)?"(E) ":"",itemDefs[it].name);
+        clipped(pictured?145:42,y,label,pictured?24:35,stolen?RED:i==ui.selection?TEXT:MUTED);
+        snprintf(v,sizeof(v),"%d",ui.sell?item_slot_qty(&g.actors[g.selected],i):market_quantity(ui.tradeTown, it));text(pictured?296:263,84+j*13,v,MUTED,1);
         snprintf(v,sizeof(v),"%d S",item_price(ui.tradeTown,it,ui.sell));text(pictured?326:301,84+j*13,v,GOLD,1);
         if (stolen) {
             snprintf(v,sizeof(v),"%.0f%% CLEAR",stolen_sale_chance(ui.tradeTown,i)*100);
@@ -2406,7 +2415,7 @@ static void trade_screen(void) {
             text(400,y,v,pct==0?MUTED:((ui.sell?pct>0:pct<0)?0x73c58b:0xde8375),1);
         }
     }
-    int it = ui.sell ? g.actors[g.selected].pack[ui.selection].item : shop_item(ui.selection);
+    int it = ui.sell ? item_slot_id(&g.actors[g.selected],ui.selection) : shop_item(ui.selection);
     if(pictured){rect(28,81,103,85,INK);line(133,81,133,166,EDGE);shop_item_picture(it,28,81,103,85);}
     equipment_comparison(it, 173);
     text(ui.sell ? 205 : 290,237,ui.sell ? "! STOLEN / % CHANCE OF SALE" : "GREEN GOOD / RED POOR",MUTED,1);
@@ -2642,23 +2651,33 @@ static void equipped_screen(void) {
     }
 }
 static void requirement_cell(int cell,const char*label,int need,int have){
-    int x=29+(cell%2)*211,y=177+(cell/2)*13;char b[60];clipped(x,y,label,22,TEXT);snprintf(b,sizeof(b),"%d/%d",have,need);text(x+138,y,b,have>=need?0x73c58b:RED,1);
+    int x=29+(cell%2)*211,y=194+(cell/2)*11;char b[60];clipped(x,y,label,22,TEXT);snprintf(b,sizeof(b),"%d/%d",have,need);text(x+138,y,b,have>=need?0x73c58b:RED,1);
 }
 static void forge_screen(void) {
     overlay_header("EQUIPMENT FORGE", "\014 CONFIGURE   \001 CHOOSE");
     int it=forge_selection_item();ItemDef*d=&itemDefs[it];Actor a=preview_actor();a.gear[d->slot]=it;
     portrait_scale(&a,150,68,30,80,1);
-    char summary[60];snprintf(summary,sizeof(summary),"%s %d / WEIGHT %d",d->slot?"ARMOR":"DAMAGE",d->slot?d->armor:d->power,d->weight);text(30,152,summary,TEXT,1);
+    char summary[120];
+    snprintf(summary,sizeof(summary),"RESULT: %s",d->name);clipped(30,150,summary,68,GOLD);
+    if(!d->slot){
+        snprintf(summary,sizeof(summary),"DMG %d  WEIGHT %d  REACH %.2fm  DELAY %.2fs",d->power,d->weight,d->range,weapon_handling(&g.actors[g.selected],it)*fmaxf(.55f,d->cooldown-effective_level(&g.actors[g.selected],DEXTERITY)*.003f));
+        text(30,162,summary,TEXT,1);
+        snprintf(summary,sizeof(summary),"STR NEED %d  PIERCE %d  AIM %+d  %s %+d",weapon_strength(it),d->penetration,d->accuracy,d->effect>=0?effectNames[d->effect]:"BONUS",item_effect_value(it));
+    }else{
+        snprintf(summary,sizeof(summary),"ARMOR %d  WEIGHT %d  MOVE %+.1f%%  STEALTH %+d",d->armor,d->weight,d->speed*.5f,d->stealth);text(30,162,summary,TEXT,1);
+        snprintf(summary,sizeof(summary),"CAPACITY %+d  WEATHER %d  %s %+d",d->capacity,d->protection,d->effect>=0?effectNames[d->effect]:"BONUS",item_effect_value(it));
+    }
+    clipped(30,174,summary,68,TEAL);
     const char*labels[]={"SLOT","DESIGN","MATERIAL","QUALITY","FORGE THIS PIECE"};
     const char*values[]={slotNames[ui.forgeSlot],forge_selection_name(),materialNames[ui.forgeMaterial],qualityNames[ui.forgeQuality],"\001"};
     for(int i=0;i<5;i++){int y=84+i*14;if(i==ui.selection)rect(195,y-3,253,13,0x3c4034);text(202,y,labels[i],MUTED,1);text(441-strlen(values[i])*6,y,values[i],GOLD,1);}
-    text(29,163,"REQUIREMENTS                HAVE/NEED",MUTED,1);
+    text(29,185,"REQUIREMENTS                 HAVE/NEED",MUTED,1);
     CraftRequirements r;if(!forge_requirements(it,&r))return;Actor*worker=&g.actors[g.selected];int cell=0;
     for(int i=0;i<r.count;i++)requirement_cell(cell++,itemDefs[r.item[i]].name,r.need[i],inventory_count(worker,r.item[i]));
     requirement_cell(cell++,"Research tier",r.tech,g.tech);requirement_cell(cell++,"Smithing",r.smithing,level(worker,SMITHING));
     int station=nearby_workstation(FORGE);if(station>=0&&g.buildings[station].owner>=0)requirement_cell(cell++,"Station fuel",1,(int)g.depth.buildings[station].fuel);
     char b[120],reason[90];int ready=craft_readiness(&r,reason,sizeof(reason));
-    snprintf(b,sizeof(b),"FORGE %s / %s",station>=0?"IN REACH":"TOO FAR",reason);clipped(29,226,b,69,ready?TEAL:RED);
+    snprintf(b,sizeof(b),"FORGE %s / %s",station>=0?"IN REACH":"TOO FAR",reason);clipped(29,233,b,69,ready?TEAL:RED);
 }
 static void dialogue_row_text(int y, const char *option, int selected) {
     enum { LEFT = 137, RIGHT = 441 };
@@ -2809,10 +2828,10 @@ static void engage_screen(void){
 }
 static void drop_screen(void) {
     overlay_header("DROP ITEM", "\001 DROP   \002 BACK");
-    const Stack *stack = &g.actors[g.selected].pack[ui.dropSlot];
+    Actor*a=&g.actors[g.selected];
     char qty[24];
-    snprintf(qty, sizeof(qty), "%d", stack->qty);
-    row(90, 0, itemDefs[stack->item].name, qty);
+    snprintf(qty,sizeof(qty),"%d",item_slot_qty(a,ui.dropSlot));
+    row(90,0,itemDefs[item_slot_id(a,ui.dropSlot)].name,qty);
     row(125, ui.selection == 0, "Drop one", "1");
     row(148, ui.selection == 1, "Drop stack", qty);
 }
@@ -2830,13 +2849,16 @@ static void coach_screen(void) {
     }
 }
 static void contract_note_screen(void) {
-    const Contract *c = journal_contract(ui.contractNote);
-    overlay_header("CONTRACT NOTE", "\015 SCROLL   \005/\006 PAGE   \002 BACK");
-    if (!c) return;
-    char body[600], details[100];
-    snprintf(details, sizeof(details), "%s / %s", contract_title(c->type), towns[c->town].name);
-    text(30, 86, details, GOLD, 1);
-    contract_description(ui.contractNote, body, sizeof(body));
+    Contract offer={.active=1,.type=ui.offerKind,.town=ui.offerTown};
+    if(ui.offerMode)offer.reward=contract_reward(ui.offerTown,ui.offerKind);
+    const Contract *c=ui.offerMode?&offer:journal_contract(ui.contractNote);
+    overlay_header(ui.offerMode?"WORK OFFER":"CONTRACT NOTE",ui.offerMode?"\001 ACCEPT CONTRACT   \015 SCROLL   \002 DECLINE":
+        ui.contractNote<CONTRACTS?"\004 ABANDON   \015 SCROLL   \002 BACK":"\015 SCROLL   \002 BACK");
+    if(!c)return;
+    char body[600],details[100];
+    snprintf(details,sizeof(details),"%s / %s",contract_title(c->type),towns[c->town].name);
+    text(30,86,details,GOLD,1);
+    if(ui.offerMode)contract_offer_note(ui.offerTown,ui.offerKind,body,sizeof(body));else contract_description(ui.contractNote,body,sizeof(body));
     ui.noteMaxScroll = wrap(0, 0, 43, body, 0) - 72;
     if (ui.noteMaxScroll < 0) ui.noteMaxScroll = 0;
     int top = clipTop, bottom = clipBottom;
@@ -2849,7 +2871,7 @@ static void contract_note_screen(void) {
         rect(303,104,2,72,EDGE);
         rect(303,104+ui.scroll*62/ui.noteMaxScroll,2,10,GOLD);
     }
-    snprintf(details, sizeof(details), "%s  %d SILVER", c->completed ? "PAID" : "REWARD", c->reward);
+    snprintf(details,sizeof(details),"%s  %d SILVER",c->active==2&&!c->completed?"ABANDONED":c->completed?"PAID":"REWARD",c->active==2&&!c->completed?0:c->reward);
     text(31, 196, details, TEAL, 1);
 }
 static void journal_screen(void) {
@@ -2862,6 +2884,7 @@ static void journal_screen(void) {
         const Contract *c = journal_contract(k);
         snprintf(b, sizeof(b), "%.23s / %.14s", contract_title(c->type), towns[c->town].name);
         if (c->active == 3) snprintf(v, sizeof(v), "FAILED");
+        else if(c->active==2&&!c->completed)snprintf(v,sizeof(v),"ABANDONED");
         else if (c->completed) snprintf(v, sizeof(v), "PAID");
         else if (contract_ready(k)) snprintf(v, sizeof(v), "READY TO TURN IN");
         else if (c->type == CONTRACT_PATROL)
@@ -2963,10 +2986,12 @@ static void storage_screen(void) {
     if(!count)text(31,100,"NO ITEMS ON THIS SIDE",MUTED,1);
     for (int j = 0; j < 9 && first + j < count; j++) {
         int k = item_view_slot(first+j);
-        const Stack *st = ui.storageSide ? storage_stack(ui.storageIndex,k) : &a->pack[k];
-        int y = 86 + j * 15, stolen = ui.storageSide ? storage_owner(ui.storageIndex,k) : a->stolen[k];
+        Stack carried={item_slot_id(a,k),item_slot_qty(a,k)};
+        const Stack *st = ui.storageSide ? storage_stack(ui.storageIndex,k) : &carried;
+        int y=86+j*15,stolen=ui.storageSide?storage_owner(ui.storageIndex,k):item_slot_owner(a,k);
         snprintf(b, sizeof(b), "%d", st->qty);
-        row(y, k == ui.selection, stolen ? "" : itemDefs[st->item].name, b);
+        char label[100];snprintf(label,sizeof(label),"%s%s",!ui.storageSide&&item_slot_equipped(k)?"(E) ":"",itemDefs[st->item].name);
+        row(y,k==ui.selection,stolen?"":label,b);
         if (stolen) {
             text(32,y,"!",RED,1);
             clipped(44,y,itemDefs[st->item].name,55,RED);
@@ -2974,7 +2999,8 @@ static void storage_screen(void) {
     }
     if(depot_public(ui.storageIndex)){
         int fee=depot_fee(ui.storageIndex,ui.storageSide,ui.selection);
-        const Stack*stack=ui.storageSide?storage_stack(ui.storageIndex,ui.selection):&a->pack[ui.selection];
+        Stack carried={item_slot_id(a,ui.selection),item_slot_qty(a,ui.selection)};
+        const Stack*stack=ui.storageSide?storage_stack(ui.storageIndex,ui.selection):&carried;
         char terms[100];snprintf(terms,sizeof(terms),"FEE %d / ITEM   STACK %d   PURSE %d",fee,fee*(stack?stack->qty:0),g.money);
         text(31,224,terms,g.money>=fee?GOLD:RED,1);
     }
@@ -3103,7 +3129,7 @@ static void loot_screen(void) {
         snprintf(b,sizeof(b),"%d",itemDefs[id].price);text(442-text_width(b),y,b,TEXT,1);
     }
     int it=!count?0:limb_loot_item(a,ui.selection);
-    snprintf(b,sizeof(b),"%d ITEMS / %.30s",count,a->name);
+    snprintf(b,sizeof(b),"%d%% LEFT / %d%% TAKEN / %.30s",loot_remaining(ui.lootActor),100-loot_remaining(ui.lootActor),a->name);
     text(31,167,b,MUTED,1);
     equipment_comparison(it,179);
 }

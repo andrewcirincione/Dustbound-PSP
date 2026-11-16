@@ -400,15 +400,15 @@ static Actor *road_vendor(void) {
     return &g.actors[n];
 }
 static float sale_chance(const Actor *a, int slot, int faction) {
-    int owner = a->stolen[slot];
+    int owner = item_slot_owner(a,slot);
     if (!owner || (faction == OUTLAWS && owner != faction))
         return 1;
-    int value = itemDefs[a->pack[slot].item].price;
+    int value = itemDefs[item_slot_id(a,slot)].price;
     return limit(.16f + level(a, STEALTH) * .003f + level(a, THEFT) * .005f +
                  (faction != owner ? .22f : 0) - fminf(.12f, value * .00012f), .05f, .96f);
 }
 float stolen_sale_chance(int town, int slot) {
-    if (slot < 0 || slot >= PACK)
+    if (!item_slot_id(&g.actors[g.selected],slot))
         return 0;
     const Actor *m = town == -1 ? road_vendor() : NULL;
     int faction = m ? m->faction : town >= 0 && town < TOWNS ? g.townOwner[town] : FREE;
@@ -416,7 +416,7 @@ float stolen_sale_chance(int town, int slot) {
 }
 int stolen_sale(int town, int slot) {
     Actor *a = &g.actors[g.selected];
-    if (!a->stolen[slot])
+    if (!item_slot_owner(a,slot))
         return 1;
     float chance = stolen_sale_chance(town, slot);
     gain(a, THEFT, 22);
@@ -435,17 +435,20 @@ int stolen_sale(int town, int slot) {
 int item_price(int town, int it, int selling) {
     if (it <= 0 || it >= ITEMS)
         return 0;
-    if (town == -1 && road_vendor())
-        return (int)fmaxf(1, itemDefs[it].price * (selling ? .65f : 1.48f));
+    if (town == -1 && road_vendor()) {
+        int quote=(int)fmaxf(2,itemDefs[it].price*1.48f);
+        return selling?quote/2:quote;
+    }
     if (town < 0 || town >= TOWNS)
         return 0;
-    float mod = 1 + regional_price(town,it) + (town==1&&g.depth.route==ROUTE_TRUCE?.12f:0) + (60 - g.prosperity[town]) * .004f + limit(g.rep[g.townOwner[town]]*.001f,-.15f,.1f)*(selling?.5f:-1);
+    float mod = 1 + regional_price(town,it) + (town==1&&g.depth.route==ROUTE_TRUCE?.12f:0) + (60 - g.prosperity[town]) * .004f + limit(g.rep[g.townOwner[town]]*.001f,-.15f,.1f)*-1;
     mod = limit(mod, .65f, 1.6f);
     const ItemDef *item = &itemDefs[it];
-    float rate = selling ? .75f : item->slot >= 0 ? 1.52f : 1.38f;
-    if (!selling && *market_venue(town,it) == TRADE_SMITH && item->quality >= 2)
+    float rate = item->slot >= 0 ? 1.52f : 1.38f;
+    if (*market_venue(town,it) == TRADE_SMITH && item->quality >= 2)
         rate *= item->quality == 3 ? 1.65f : 1.4f;
-    return (int)fmaxf(1, item->price * rate * mod * market_factor(town,it) * politics_price(town,it));
+    int quote=(int)fmaxf(2,item->price * rate * mod * market_factor(town,it) * politics_price(town,it));
+    return selling?quote/2:quote;
 }
 unsigned char *market_venue(int town,int item) {
     if(item>=WEAPON_ITEMS+ARSENAL_V103_WEAPONS)return &g.greatswords.venue[town][item-WEAPON_ITEMS-ARSENAL_V103_WEAPONS];
@@ -522,9 +525,8 @@ int road_trade(int item, int slot) {
     if (!selling)
         for (int j = 0; j < PACK; j++)
             if (m->pack[j].item == item && m->pack[j].qty) { slot = j; break; }
-    if (slot < 0 || slot >= PACK || !from->pack[slot].item)
-        return 0;
-    item = from->pack[slot].item;
+    if(!item_slot_id(from,slot))return 0;
+    item=item_slot_id(from,slot);
     int price = item_price(-1, item, selling);
     if (!selling && g.money < price) {
         log_msg("Not enough silver.");
@@ -602,11 +604,12 @@ static float depotMapTime=-1;
 static void depot_map(void){
     if(depotMapBuildings==g.buildingCount && depotMapSeed==g.seed && depotMapTime==g.time)return;
     depotMapCount=0;
-    for(int b=0;b<g.buildingCount;b++)if(g.buildings[b].type==STORE&&g.buildings[b].owner<0)depotMap[depotMapCount++]=b;
+    for(int b=0;b<g.buildingCount;b++)if(depot_public(b))depotMap[depotMapCount++]=b;
     depotMapBuildings=g.buildingCount;depotMapSeed=g.seed;depotMapTime=g.time;
 }
 int depot_public(int b) {
-    return b>=0 && b<g.buildingCount && g.buildings[b].type==STORE && g.buildings[b].owner<0;
+    return b>=0 && b<g.buildingCount && g.buildings[b].type==STORE && g.buildings[b].owner<0 &&
+        !g.frontier.variant[b] && building_town(b)>=0;
 }
 int depot_clerk(int b) {
     if(!depot_public(b))return -1;
@@ -649,7 +652,7 @@ int storage_slots(int building) {
     if(depot_public(building)){
         depot_map();return depotMapCount*16;
     }
-    return building>=0&&building<g.buildingCount&&g.buildings[building].type==STORE?16:0;
+    return building>=0&&building<g.buildingCount&&g.buildings[building].type==STORE&&g.buildings[building].owner>=0?16:0;
 }
 const Stack *storage_stack(int building,int slot) {
     if(slot<0||slot>=storage_slots(building))return NULL;
@@ -662,8 +665,9 @@ int storage_owner(int building,int slot) {
 }
 int depot_fee(int b,int from,int slot) {
     if(!depot_public(b))return 0;
-    const Stack*stack=from?storage_stack(b,slot):slot>=0&&slot<PACK?&g.actors[g.selected].pack[slot]:NULL;
-    return stack&&stack->item?5+(itemDefs[stack->item].price+49)/50:0;
+    const Stack*stack=from?storage_stack(b,slot):NULL;
+    int item=from?(stack?stack->item:0):item_slot_id(&g.actors[g.selected],slot);
+    return item?5+(itemDefs[item].price+49)/50:0;
 }
 int storage_transfer(int b,int from,int slot) {
     int count=storage_slots(b);if(!count)return 0;
@@ -693,15 +697,15 @@ int storage_transfer(int b,int from,int slot) {
         if(fee)log_msg("Withdrew %s. Fee %d silver.",itemDefs[it].name,fee);else log_msg("Withdrew %s.",itemDefs[it].name);
         return 1;
     }
-    if(slot<0||slot>=PACK||!a->pack[slot].item)return 0;
-    int it=a->pack[slot].item,owner=a->stolen[slot],dest=-1;
+    if(!item_slot_id(a,slot))return 0;
+    int it=item_slot_id(a,slot),owner=item_slot_owner(a,slot),dest=-1;
     if(owner&&!home){log_msg("The depot won't accept stolen goods.");return 0;}
     for(int i=0;i<count;i++){const Stack*stack=storage_stack(b,i);if(stack->item==it&&stack->qty<999&&storage_owner(b,i)==owner){dest=i;break;}}
     if(dest<0)for(int i=0;i<count;i++)if(!storage_stack(b,i)->item){dest=i;break;}
     if(dest<0){log_msg(home?"Shared stash is full.":"Depot has no free stack.");return 0;}
     Stack*stack=(Stack*)storage_stack(b,dest);stack->item=it;stack->qty++;
     if(home)g.homes.stolen[dest]=owner;
-    inventory_remove_slot(a,slot,1);g.money-=fee;
+    item_slot_remove(a,slot,1);g.money-=fee;
     if(fee)log_msg("Stored %s. Fee %d silver.",itemDefs[it].name,fee);else log_msg("Stored %s.",itemDefs[it].name);
     return 1;
 }
@@ -720,11 +724,12 @@ int start_sleep(int town) {
         int count = interior_floor_props(room - 1, actor_floor(a), props);
         for (int i = 0; i < count; i++)
             if (props[i].action == ROOM_REST && distance(depth_x(a), depth_y(a), props[i].x, props[i].y) < 2)
-                return rest_at(a, room - 1, props[i].x, props[i].y, room, regional_bed_cost(town));
+                return rest_at(a, room - 1, props[i].x, props[i].y, room, bed_cost(room-1));
         return 0;
     }
     Building *b = &g.buildings[bed];
-    int price = b->owner < 0 && !trail_bed(bed) && town >= 0 ? regional_bed_cost(town) : 0;
+    int price = bed_cost(bed);
+    (void)b;(void)town;
     return rest_at(a, bed, b->x, b->y, 0, price);
 }
 int doctor_heal(int town) {
@@ -1888,6 +1893,33 @@ int contract_location(int slot, float *x, float *y) {
     *y = towns[town].y;
     return town;
 }
+void contract_offer_note(int town,int kind,char*out,int size){
+    if(town<0||town>=TOWNS||kind<0||kind>=CONTRACT_TYPES){snprintf(out,size,"This posting is no longer available.");return;}
+    int dest=contract_destination(town,g.townOwner[town]);
+    switch(kind){
+    case CONTRACT_DISPATCH:snprintf(out,size,"Carry a sealed dispatch to the watch in %s, then return to your contact in %s for payment. The dispatch takes one inventory slot.",towns[dest].name,towns[town].name);break;
+    case CONTRACT_ORE:snprintf(out,size,"The smith needs 8 iron ore. Bring it to your contact in %s. The ore is handed over when you claim the reward.",towns[town].name);break;
+    case CONTRACT_HUNT:snprintf(out,size,"Defeat %d raiders or predators near %s. Return to the local contact for payment.",HUNT_QUOTA,towns[town].name);break;
+    case CONTRACT_RELIC:snprintf(out,size,"Find one old-world relic for the pump repairs. Bring it to your contact in %s to claim payment.",towns[town].name);break;
+    case CONTRACT_FREIGHT:{int item=town_export(town),bond=4*item_price(town,item,0);snprintf(out,size,"Deliver 4 %s to %s. Deposit: %d silver, refunded with the reward on delivery. Abandoning forfeits the deposit; you keep the goods.",itemDefs[item].name,towns[dest].name,bond);break;}
+    case CONTRACT_ESCORT:snprintf(out,size,"Meet the caravan outside %s and escort it to %s. It waits when you fall behind. Claim payment from the destination contact. You can abandon the escort from the Journal.",towns[town].name,towns[dest].name);break;
+    case CONTRACT_PATROL:snprintf(out,size,"Meet the watch in %s. Stay within 8m of the patrol for 180 seconds and travel at least 35m. Claim your remaining wages from the contact afterward.",towns[town].name);break;
+    default:snprintf(out,size,"Capture the named outlaw wanted by %s. Bring the target inside a jail of a paying faction; a live capture pays more. Read wanted posters for the latest lead.",towns[town].name);break;
+    }
+}
+int abandon_contract(int slot){
+    if(slot<0||slot>=CONTRACTS||(g.contracts[slot].active!=1&&g.contracts[slot].active!=3))return 0;
+    Contract*c=&g.contracts[slot];
+    if(c->type==CONTRACT_DISPATCH&&!c->progress){
+        for(int i=0;i<g.actorCount;i++)if(g.actors[i].squad&&inventory_remove(&g.actors[i],DISPATCH_ITEM,1))break;
+    }
+    Contract archived=*c;archived.active=2;archived.completed=0;remember_contract(&archived);
+    g.plans.dispatchPending[slot]=0;g.frontier.giver[slot]=0;
+    g.society.jobActor[slot]=g.society.jobStage[slot]=g.society.jobBond[slot]=0;
+    g.society.jobFar[slot]=g.society.jobWarning[slot]=g.society.jobElapsed[slot]=g.society.jobNear[slot]=0;
+    g.society.jobPaid[slot]=g.society.jobDistance[slot]=0;
+    log_msg("Abandoned %s.",contract_title(c->type));memset(c,0,sizeof(*c));return 1;
+}
 int accept_contract(int town, int kind) {
     if (town < 0 || town >= TOWNS || kind < 0 || kind >= CONTRACT_TYPES)
         return 0;
@@ -1944,6 +1976,7 @@ void contract_description(int n, char *out, int size) {
         snprintf(out, size, "%s", ui.journalTab ? "No finished contracts." : "Ask around for work.");
         return;
     }
+    if(c->active==2&&!c->completed){snprintf(out,size,"This contract was abandoned. No reward is payable.");return;}
     if (c->active == 2) {
         snprintf(out, size, "%s paid the contract.", towns[c->type == CONTRACT_FREIGHT || c->type == CONTRACT_ESCORT ? c->target : c->town].name);
         return;

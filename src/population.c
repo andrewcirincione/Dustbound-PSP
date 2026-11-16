@@ -783,9 +783,7 @@ const char *population_action_reason(int k, int action) {
     } else if (action == 20) {
         if (!m->cacheQty)
             return "Supplies already taken";
-        Actor test = *a;
-        if (!inventory_add_owned(&test, m->cacheItem, m->cacheQty, cache_owner(e)))
-            return "Pack full";
+
     } else if (action >= 30 && action <= 32) {
         int i = action - 30;
         if (g.rep[e->faction] < -25 || !standing(k))
@@ -806,8 +804,7 @@ void population_action_label(int k,int action,char*out,int size){
     else if(action==1)snprintf(out,size,"Cook at fire: 2 meat > 1 ration");
     else if (action == 20) {
         int owner = cache_owner(&P.groups[k]);
-        snprintf(out, size, owner ? "Steal %s camp supplies" : "Search abandoned camp supplies",
-                 factionNames[owner]);
+        snprintf(out, size, owner ? "Open owned supply chest" : "Open abandoned supply chest");
     } else {
         int i = bounded(action - 30, 0, 2);
         snprintf(out, size, "Buy %s: %d silver (%d left)", itemDefs[traderItems[i]].name,
@@ -823,10 +820,7 @@ int population_action(int k, int action) {
     Actor *a = &g.actors[g.selected];
     WorldEvent *e = &P.groups[k];
     PopulationState *m = &P.state[k];
-    if (action && !e->spawned && standing(k) && !population_materialize(k)) {
-        log_msg("Camp activity is unavailable.");
-        return 0;
-    }
+    if(action&&!e->spawned&&standing(k))population_materialize(k);
     if (!action) {
         log_msg("%s: %d standing / %s / %d beds.",
                 e->type == POP_SMUGGLERS && !population_object_count(k) ? "Smugglers" : population_name(k), standing(k),
@@ -843,13 +837,7 @@ int population_action(int k, int action) {
         gain(a, COOKING, 12);
         log_msg("Cooked 1 ration from 2 meat.");
     } else if (action == 20) {
-        int owner = cache_owner(e);
-        inventory_add_owned(a, m->cacheItem, m->cacheQty, owner);
-        m->cacheQty = 0;
-        if (owner)
-            witnessed_theft(a, owner, 7, 12);
-        else
-            log_msg("Took the remaining camp supplies.");
+        ui.chestKind=CHEST_CAMP;ui.storageIndex=k;ui.selection=ui.scroll=0;ui.screen=SCREEN_CHEST;
     } else if (action >= 30 && action <= 32) {
         int i = action - 30;
         inventory_add(a, traderItems[i], 1);

@@ -862,6 +862,8 @@ void nearby_action_label(int row,char*out,int size){const NearbyAction*x=nearby_
  if(x->type==ACTION_EVENT){char name[70];living_title(x->target,name,sizeof(name));snprintf(out,size,"Investigate %s",name);return;}
  if(x->type>=ACTION_RESCUED_FOLLOW){snprintf(out,size,"%s %s",x->type==ACTION_RESCUED_FOLLOW?"Ask to follow:":x->type==ACTION_RESCUED_LEAVE?"Leave me alone:":"Recruit:",g.actors[x->target].name);return;}
  if(x->kind==5){snprintf(out,size,"%s",interior_prompt());return;}
+ if(x->type==ACTION_CONTEXT&&x->kind==0&&(g.actors[x->target].dead||g.actors[x->target].unconscious>0)&&!g.actors[x->target].squad){snprintf(out,size,"Loot %s (%d%% left)",g.actors[x->target].name,loot_remaining(x->target));return;}
+ if(x->kind==2&&g.buildings[x->target].type==BED){int fee=bed_cost(x->target);snprintf(out,size,fee?"Sleep in bed (%d silver)":"Sleep in bed (free)",fee);return;}
  if(x->type==ACTION_ATTACK||x->type==ACTION_CARRY||x->type==ACTION_RESCUE||x->type==ACTION_STEAL){snprintf(out,size,"%s %s",x->type==ACTION_ATTACK?"Attack":x->type==ACTION_CARRY?"Carry":x->type==ACTION_RESCUE?(g.actors[x->target].prisonTime>0?"Free prisoner:":"Free from shackles:"):"Pickpocket",g.actors[x->target].name);return;}
  int kind=ui.contextKind,index=ui.contextIndex;ui.contextKind=x->kind;ui.contextIndex=x->target;
  const char *verb = context_action();
@@ -958,12 +960,12 @@ static const char *action_reason(const NearbyAction *x, int queueing) {
                 return "Cannot pay for the bed";
         }
     }
-    if (x->kind == 5 && g.buildings[n].owner < 0 && g.money < 25) {
+    if (x->kind == 5 && g.money < bed_cost(n)) {
         InteriorProp props[ROOM_PROPS];
         interior_floor_props(n, actor_floor(a), props);
         int c = interior_context();
         if (c >= 0 && props[c].action == ROOM_REST)
-            return "Need 25 silver";
+            return "Cannot pay for the bed";
     }
     return NULL;
 }

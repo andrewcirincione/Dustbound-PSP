@@ -540,6 +540,29 @@ int nearby_service(int role) {
     }
     return best;
 }
+int loot_units(const Actor *a){
+    int total=0;for(int i=0;i<LOOT_SLOTS;i++)if(limb_loot_item(a,i))total+=i<PACK?a->pack[i].qty:1;
+    return total;
+}
+static unsigned loot_key(int n){
+    Actor*a=&g.actors[n];unsigned key=2166136261u;
+    for(int i=0;i<16&&a->name[i];i++)key=(key^(unsigned char)a->name[i])*16777619u;
+    key=(key^(unsigned)(a->homeX*32))*16777619u;key=(key^(unsigned)(a->homeY*32))*16777619u;
+    int k=population_owned(n);if(k)key=(key^g.population.groups[k-1].serial)*16777619u;
+    key=(key^(unsigned)g.depth.actors[n].room)*16777619u;
+    return key?key:1;
+}
+static int loot_record(int actor,int create){
+    unsigned key=loot_key(actor);
+    for(int i=0;i<512;i++)if(g.feedback.key[i]==key)return i;
+    if(!create)return -1;int slot=g.feedback.next++%512;g.feedback.key[slot]=key;g.feedback.taken[slot]=0;return slot;
+}
+int loot_remaining(int actor){
+    if(actor<0||actor>=g.actorCount)return 0;
+    int left=loot_units(&g.actors[actor]),slot=loot_record(actor,0),taken=slot>=0?g.feedback.taken[slot]:0;
+    return left? (int)ceilf(100.f*left/(left+taken)):0;
+}
+void loot_record_taken(int actor,int qty){int slot=loot_record(actor,1);g.feedback.taken[slot]+=qty;}
 int loot_take(int slot, int all) {
     Actor *a = &g.actors[g.selected];
     if (ui.lootActor < 0 || ui.lootActor >= g.actorCount || slot < 0 || slot >= LOOT_SLOTS)
@@ -558,6 +581,11 @@ int loot_take(int slot, int all) {
     if (!it || !inventory_add_owned(a, it, qty, owner)) {
         log_msg("No item, or no room for that stack.");
         return 0;
+    }
+    loot_record_taken(ui.lootActor,qty);
+    if(b->kind==BEAST&&!b->dead&&(it==MEAT||it==HIDE)){
+        b->dead=1;b->unconscious=0;b->bleed=0;b->attackPhase=b->autoattack=0;b->target=-1;
+        contract_defeat(b);log_msg("Harvesting %s kills %s.",itemDefs[it].name,b->name);
     }
     if (slot < PACK)
         inventory_remove_slot(b, slot, qty);
@@ -698,6 +726,25 @@ int item_view_enabled(void) {
     return ui.screen == SCREEN_PACK || ui.screen == SCREEN_LOOT || ui.screen == SCREEN_THEFT ||
            ui.screen == SCREEN_STORAGE || ui.screen == SCREEN_LAYERS || (ui.screen == SCREEN_TRADE && ui.sell);
 }
+int item_slot_equipped(int slot){return slot>=PACK&&slot<=PACK+GEARS;}
+int item_slot_id(const Actor*a,int slot){
+    if(slot<0)return NONE;if(slot<PACK)return a->pack[slot].item;
+    if(slot<PACK+GEARS)return a->gear[slot-PACK];
+    if(slot==PACK+GEARS&&(uintptr_t)a>=(uintptr_t)g.actors&&(uintptr_t)a<(uintptr_t)(g.actors+MAX_ACTORS))return g.depth.actors[a-g.actors].layer;
+    return NONE;
+}
+int item_slot_qty(const Actor*a,int slot){return !item_slot_id(a,slot)?0:slot<PACK?a->pack[slot].qty:1;}
+int item_slot_owner(const Actor*a,int slot){
+    if(slot<0)return 0;if(slot<PACK)return a->stolen[slot];if(slot<PACK+GEARS)return a->gearStolen[slot-PACK];
+    return slot==PACK+GEARS?g.depth.actors[a-g.actors].layerOwner:0;
+}
+int item_slot_remove(Actor*a,int slot,int qty){
+    if(qty<1||qty>item_slot_qty(a,slot))return 0;
+    if(slot<PACK)return inventory_remove_slot(a,slot,qty);
+    if(slot<PACK+GEARS)a->gear[slot-PACK]=a->gearStolen[slot-PACK]=0;
+    else g.depth.actors[a-g.actors].layer=g.depth.actors[a-g.actors].layerOwner=0;
+    return 1;
+}
 static int view_item(int slot) {
     Actor *a = &g.actors[g.selected];
     if (ui.screen == SCREEN_LOOT || ui.screen == SCREEN_THEFT) {
@@ -709,13 +756,14 @@ static int view_item(int slot) {
         const Stack *stack = storage_stack(ui.storageIndex, slot);
         return stack ? stack->item : 0;
     }
-    int it = a->pack[slot].item;
+    int it = item_slot_id(a,slot);
     if (ui.screen == SCREEN_LAYERS && (itemDefs[it].slot != 1 || itemDefs[it].weight > 5)) return 0;
     return it;
 }
 static int view_limit(void) {
     return ui.screen == SCREEN_LOOT ? LOOT_SLOTS :
-           ui.screen == SCREEN_STORAGE && ui.storageSide ? storage_slots(ui.storageIndex) : PACK;
+           ui.screen == SCREEN_STORAGE && ui.storageSide ? storage_slots(ui.storageIndex) :
+           ui.screen==SCREEN_PACK||ui.screen==SCREEN_TRADE||ui.screen==SCREEN_STORAGE ? PACK+GEARS+1:PACK;
 }
 int item_view_count(void) {
     int count = 0;
