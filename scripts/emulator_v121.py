@@ -28,7 +28,8 @@ def main():
     fixture=ROOT/'build/v121/make-fixtures';fixture.parent.mkdir(parents=True,exist_ok=True)
     subprocess.run(['cc','-O2','-std=gnu99','-Isrc','tests/make_v121_fixture.c',*map(str,objects),'-lm','-o',str(fixture)],cwd=ROOT,check=True)
     subprocess.run([str(fixture),str(fixtures)],cwd=ROOT,check=True)
-    eboot=ROOT/'EBOOT.PBP';shutil.copy2(eboot,GAME/'EBOOT.PBP');(GAME/'DUST_QA').touch()
+    eboot=ROOT/'EBOOT.PBP';eboot_sha256=hashlib.sha256(eboot.read_bytes()).hexdigest()
+    shutil.copy2(eboot,GAME/'EBOOT.PBP');(GAME/'DUST_QA').touch()
     config=RUN/'release.ini';config.write_text('''[General]
 FirstRun = False
 AutoRun = True
@@ -82,8 +83,9 @@ Enable = False
     asyncio.run(bridge.main());result=json.loads(bridge.RESULT.read_text())
     assert result.get('ok'),{k:v for k,v in result.items() if k!='state'}
     assert result['state']['version']=='1.2.1',result['state']
+    assert hashlib.sha256(eboot.read_bytes()).hexdigest()==eboot_sha256,'Executable changed during emulation'
     record={k:v for k,v in result.items() if k!='state'}
-    record.update(partial=partial,eboot_sha256=hashlib.sha256(eboot.read_bytes()).hexdigest(),emulator='Official PPSSPP 1.20.4',
+    record.update(partial=partial,eboot_sha256=eboot_sha256,emulator='Official PPSSPP 1.20.4',
                   feedback_scenarios_verified=True,backpacks_reviewed=8,quest_offer_accept_abandon_verified=True,camp_chest_verified=True,forging_verified=True,equipped_sales_verified=True,lodging_verified=True,loot_percent_verified=True,combat_verified=True,physical_psp_tested=False)
     (OUT/('quick-controller.json' if quick else 'psp-controller.json')).write_text(json.dumps(record,indent=2)+'\n')
     print('PASS: actual release EBOOT booted and reviewed in PPSSPP.',flush=True)

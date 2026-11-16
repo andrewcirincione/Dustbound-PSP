@@ -2922,7 +2922,7 @@ static void chest_screen(void) {
     int owner = chest_owner();
     const char *name = ui.chestKind == CHEST_PROPERTY ? "CONFISCATED BELONGINGS" :
         ui.chestKind == CHEST_FIELD ? "CHEST CONTENTS" :
-        ui.chestKind==CHEST_EXPEDITION?"EXPLORATION CACHE":ruined_building(ui.storageIndex) ? "SALVAGE CHEST" :
+        ui.chestKind==CHEST_EXPEDITION?"EXPLORATION CACHE":ui.chestKind==CHEST_CAMP?"CAMP SUPPLY CHEST":ruined_building(ui.storageIndex) ? "SALVAGE CHEST" :
         g.buildings[ui.storageIndex].type == SHOP ? "SHOP STOCK CHEST" : "HOUSEHOLD CHEST";
     overlay_header(name, "\001 TAKE ONE   \015 SELECT ITEM   \002 LEAVE");
     if (owner) {
@@ -3002,7 +3002,7 @@ static void storage_screen(void) {
         row(y,k==ui.selection,stolen?"":label,b);
         if (stolen) {
             text(32,y,"!",RED,1);
-            clipped(44,y,itemDefs[st->item].name,55,RED);
+            clipped(44,y,label,55,RED);
         }
     }
     if(depot_public(ui.storageIndex)){
@@ -3134,7 +3134,7 @@ static void loot_screen(void) {
         int stolen = theft || (k < PACK ? a->stolen[k] : k < PACK + GEARS ? a->gearStolen[k-PACK] :
                                k == LOOT_LAYER_SLOT ? g.depth.actors[ui.lootActor].layerOwner : limb_owner(a, LARM + k - PACK - GEARS));
         if (stolen) text(31,y,"!",RED,1);
-        snprintf(b,sizeof(b),"%s%.48s",k==LOOT_LAYER_SLOT?"UNDERLAYER: ":k>=PACK+GEARS?"FITTED: ":k>=PACK?"EQUIPPED: ":"",itemDefs[id].name);
+        snprintf(b,sizeof(b),"%s%.48s",k==LOOT_LAYER_SLOT?"(E) UNDERLAYER: ":k>=PACK+GEARS?"FITTED: ":k>=PACK?"(E) ":"",itemDefs[id].name);
         clipped(42,y,b,52,stolen?RED:k==ui.selection?TEXT:MUTED);
         snprintf(b,sizeof(b),"%d",k<PACK?a->pack[k].qty:1);text(386-text_width(b),y,b,GOLD,1);
         snprintf(b,sizeof(b),"%d",itemDefs[id].price);text(442-text_width(b),y,b,TEXT,1);

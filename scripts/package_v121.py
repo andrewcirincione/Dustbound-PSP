@@ -12,6 +12,7 @@ assert len(results)>=54 and all(x['status']=='passed' for x in results.values())
 for field in ['feedback_scenarios_verified','quest_offer_accept_abandon_verified','camp_chest_verified','forging_verified','equipped_sales_verified','lodging_verified','loot_percent_verified','combat_verified']:assert controller[field],field
 assert controller['backpacks_reviewed']==8
 assert len(list((EV/'psp').glob('*.png')))>=38
+assert len(controller['responses'])>=39 and len({x['image'] for x in controller['responses']})==len(controller['responses'])
 pbp=eboot.read_bytes();offsets=struct.unpack_from('<8I',pbp,8);sfo=pbp[offsets[0]:offsets[1]]
 _,_,keys,values,count=struct.unpack_from('<4s4I',sfo);fields={}
 for n in range(count):
