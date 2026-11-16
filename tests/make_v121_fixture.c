@@ -44,6 +44,6 @@ int main(int argc,char**argv){
     int opponent=add_actor("Road opponent",RAIDER,HOSTILE,a->x+11,a->y,2);a->autoattack=1;a->gear[0]=SABRE;a->healthScale=1000;for(int l=0;l<LIMBS;l++)a->health[l]=1000;save("v121-fight");
     a=fresh();road(a);g.weather=2;g.weatherTimer=120;save("v121-rain");
     snprintf(path,sizeof(path),"%s/feedback.json",root);FILE*f=fopen(path,"w");assert(f);
-    fprintf(f,"{\"work_row\":%d,\"employer\":\"%s\",\"barber\":\"%s\",\"appearance_row\":%d,\"opponent\":%d,\"note_screen\":%d,\"journal_screen\":%d,\"forge_screen\":%d,\"chest_screen\":%d,\"creator_screen\":%d}",workRow,employerName,barberName,appearance,opponent,SCREEN_CONTRACT_NOTE,SCREEN_JOURNAL,SCREEN_FORGE,SCREEN_CHEST,SCREEN_CREATE);fclose(f);
+    fprintf(f,"{\"work_row\":%d,\"employer\":\"%s\",\"barber\":\"%s\",\"appearance_row\":%d,\"opponent\":%d,\"note_screen\":%d,\"journal_screen\":%d,\"forge_screen\":%d,\"chest_screen\":%d,\"creator_screen\":%d,\"trade_screen\":%d}",workRow,employerName,barberName,appearance,opponent,SCREEN_CONTRACT_NOTE,SCREEN_JOURNAL,SCREEN_FORGE,SCREEN_CHEST,SCREEN_CREATE,SCREEN_TRADE);fclose(f);
     puts("Prepared 1.2.1 actual-control scenes for character fits, 8 backpacks, forge/sales, quest offers and abandonment, barber, camp chest, lodging, coma, loot, fighting and rain.");return 0;
 }

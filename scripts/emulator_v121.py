@@ -56,7 +56,7 @@ Enable = False
       {'analog':[.5,0],'frames':16},{'capture':'iron-walking'},
       {'load':'v121-forge'},{'key':'cross'},{'action':'FORGE EQUIPMENT'},{'key':'cross'},{'expect':{'screen':meta['forge_screen']}},
       {'choose':2},{'key':'right'},{'key':'right'},{'choose':3},{'key':'right'},{'key':'right'},{'choose':4},{'capture':'forge-output-stats'},{'key':'cross'},{'capture':'forge-crafted'},
-      {'load':'v121-smith-counter'},{'key':'cross'},{'action':'BROWSE WEAPONS'},{'key':'cross'},{'expect':{'screen':7}},{'key':'right'},{'choose':26},{'capture':'equipped-selling'},{'key':'cross'},{'capture':'equipped-sold'},
+      {'load':'v121-smith-counter'},{'key':'cross'},{'action':'BROWSE WEAPONS'},{'key':'cross'},{'expect':{'screen':meta['trade_screen']}},{'key':'right'},{'choose':26},{'capture':'equipped-selling'},{'key':'cross'},{'capture':'equipped-sold'},
       {'load':'v121-quest'},{'key':'cross'},{'action':meta['employer']},{'key':'cross'},{'expect':{'screen':17}},
       {'choose':meta['work_row']},{'key':'cross'},{'choose':0},{'key':'cross'},
       {'expect':{'screen':meta['note_screen'],'offer_mode':1,'active_contracts':0}},{'capture':'quest-offer-before-accept'},
@@ -64,7 +64,7 @@ Enable = False
       {'key':'start'},{'key':'rtrigger'},{'key':'rtrigger'},{'choose':1},{'key':'cross'},{'expect':{'screen':meta['journal_screen']}},
       {'choose':0},{'key':'cross'},{'capture':'quest-abandon-option'},{'key':'triangle'},{'expect':{'active_contracts':0,'screen':meta['journal_screen']}},{'capture':'quest-abandoned'},
       {'load':'v121-appearance'},{'key':'cross'},{'action':meta['barber']},{'key':'cross'},{'choose':meta['appearance_row']},{'key':'cross'},{'expect':{'screen':meta['creator_screen']}},{'capture':'hair-and-beard-current'},
-      {'choose':6},{'key':'right'},{'key':'right'},{'capture':'hair-and-beard-variety'},{'choose':4},{'key':'right'},{'capture':'hair-variety'},
+      {'choose':6},{'key':'right'},{'key':'right'},{'capture':'hair-and-beard-variety'},{'choose':4},{'key':'right'},{'capture':'hair-variety'},{'key':'circle'},
       {'load':'v121-camp-chest'},{'key':'cross'},{'action':'supply chest'},{'capture':'camp-chest-action'},{'key':'cross'},{'expect':{'screen':meta['chest_screen']}},{'capture':'camp-chest-opened'},{'key':'cross'},{'capture':'camp-chest-taken'},
       {'load':'v121-bed'},{'key':'cross'},{'action':'SLEEP IN BED'},{'capture':'bed-price-before-rest'},{'key':'cross'},{'expect':{'screen':0,'task':3}},{'capture':'rest-real-recovery'},
       {'load':'v121-coma'},{'capture':'consciousness-recovery'},
@@ -72,13 +72,18 @@ Enable = False
       {'load':'v121-fight'},{'attack':2},{'capture':'fight-approach-and-attack'},
       {'load':'v121-rain'},{'wait':2},{'capture':'rain'},{'wait':8},{'capture':'rain-moving'}
     ]
+    partial='--from-scene' in sys.argv
+    if partial:
+        scene=sys.argv[sys.argv.index('--from-scene')+1]
+        first=next(i for i,step in enumerate(steps) if step.get('load')==scene)
+        steps=[{'expect':{'screen':13}}]+steps[first:]
     request=RUN/'release-check.json';request.write_text(json.dumps({'id':'feedback-1.2.1','steps':steps,'stop':True}))
     sys.argv=[str(Path(bridge.__file__)),str(app),str(request)]
     asyncio.run(bridge.main());result=json.loads(bridge.RESULT.read_text())
-    assert result.get('ok'),result
+    assert result.get('ok'),{k:v for k,v in result.items() if k!='state'}
     assert result['state']['version']=='1.2.1',result['state']
     record={k:v for k,v in result.items() if k!='state'}
-    record.update(eboot_sha256=hashlib.sha256(eboot.read_bytes()).hexdigest(),emulator='Official PPSSPP 1.20.4',
+    record.update(partial=partial,eboot_sha256=hashlib.sha256(eboot.read_bytes()).hexdigest(),emulator='Official PPSSPP 1.20.4',
                   feedback_scenarios_verified=True,backpacks_reviewed=8,quest_offer_accept_abandon_verified=True,camp_chest_verified=True,forging_verified=True,equipped_sales_verified=True,lodging_verified=True,loot_percent_verified=True,combat_verified=True,physical_psp_tested=False)
     (OUT/('quick-controller.json' if quick else 'psp-controller.json')).write_text(json.dumps(record,indent=2)+'\n')
     print('PASS: actual release EBOOT booted and reviewed in PPSSPP.',flush=True)

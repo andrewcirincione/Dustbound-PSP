@@ -13,7 +13,7 @@ Status: implementation complete; native qualification passes; actual PSP emulato
 - [x] Forging previews show actual resulting equipment stats.
 - [x] Loot actions show remaining/taken percentage; vital beast salvage kills immediately.
 - [x] Public depot services only at actual depots.
-- [x] Sell at half purchase value; raise weapon/armor prices and weights.
+- [x] Sell at half listed item value, with local market modifiers; raise weapon/armor prices and weights.
 - [x] Explain and make useful leatherworking, farming, cooking, engineering, science.
 - [x] Quote bed fees, scaled by settlement importance.
 - [x] Slow bleeding; show consciousness recovery; block all-downed autosaves.
