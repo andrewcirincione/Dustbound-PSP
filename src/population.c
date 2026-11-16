@@ -151,7 +151,7 @@ static void make_actor(int k,int i){
     a->active=1;a->faction=e->faction;a->kind=military(e->type)||e->type==POP_DUELISTS||e->type==POP_HUNTERS?GUARD:SETTLER;
     if(e->type==POP_BEASTS){a->kind=BEAST;snprintf(a->name,sizeof(a->name),"%s",biome(e->x,e->y)==3?"Reed stalker":"Dune prowler");}
     if(e->type==POP_RAIDERS||e->type==POP_AMBUSH)a->kind=RAIDER;
-    a->target=a->attackTarget=a->carrying=a->carriedBy=-1;a->prisonTown=-1;a->homeTown=e->origin;a->body=seed%3;a->skin=(seed>>4)%8;a->hair=(seed>>7)%7;a->hairColor=(seed>>10)%6;a->scar=(seed>>14)%5;
+    a->target=a->attackTarget=a->carrying=a->carriedBy=-1;a->prisonTown=-1;a->homeTown=e->origin;a->body=seed%3;a->skin=(seed>>4)%8;a->hair=(seed>>7)%7;a->hairColor=(seed>>10)%6;a->scar=(seed>>14)%5;a->beard=(seed>>18)%8;
     a->race=e->faction==SHOGUN?(seed%3==0?4:0):e->faction==MONKS?(seed%2?1:3):seed%5;
     int tier=e->tier-(i>0&&e->tier>0),lv=4+tier*9+random_step(&seed)%7;
     if(e->type==POP_REFUGEES||e->type==POP_WOUNDED)lv=3+random_step(&seed)%6;
@@ -773,7 +773,7 @@ const char *population_action_reason(int k, int action) {
         Actor test = *a;
         int owner = inventory_input_owner(&test, MEAT, 2);
         inventory_remove(&test, MEAT, 2);
-        if (!inventory_add_owned(&test, RATION, 1, owner))
+        if (!inventory_add_owned(&test,RATION,cooking_yield(a,1),owner))
             return "Pack full";
     } else if (action >= 11 && action <= 13) {
         float x, y;
@@ -801,7 +801,7 @@ const char *population_action_reason(int k, int action) {
 void population_action_label(int k,int action,char*out,int size){
     if (!action) snprintf(out,size,"Observe %s",P.groups[k].type == POP_SMUGGLERS ? "smugglers" : population_name(k));
     else if(action>=11&&action<=13)snprintf(out,size,"Rest on camp bedroll %d",action-10);
-    else if(action==1)snprintf(out,size,"Cook at fire: 2 meat > 1 ration");
+    else if(action==1)snprintf(out,size,"Cook at fire: 2 meat > %d rations",cooking_yield(&g.actors[g.selected],1));
     else if (action == 20) {
         int owner = cache_owner(&P.groups[k]);
         snprintf(out, size, owner ? "Open owned supply chest" : "Open abandoned supply chest");
@@ -833,9 +833,9 @@ int population_action(int k, int action) {
     } else if (action == 1) {
         int owner = inventory_input_owner(a, MEAT, 2);
         inventory_remove(a, MEAT, 2);
-        inventory_add_owned(a, RATION, 1, owner);
+        inventory_add_owned(a,RATION,cooking_yield(a,1),owner);
         gain(a, COOKING, 12);
-        log_msg("Cooked 1 ration from 2 meat.");
+        log_msg("Cooked %d rations from 2 meat.",cooking_yield(a,1));
     } else if (action == 20) {
         ui.chestKind=CHEST_CAMP;ui.storageIndex=k;ui.selection=ui.scroll=0;ui.screen=SCREEN_CHEST;
     } else if (action >= 30 && action <= 32) {

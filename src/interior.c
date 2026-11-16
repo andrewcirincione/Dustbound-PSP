@@ -551,7 +551,7 @@ void place_in_bed(Actor *a, int bed, float x, float y, int room) {
     g.field.playingDead[n] = 0;
 }
 int rest_at(Actor *a, int bed, float x, float y, int room, int price) {
-    if (!conscious(a) || a->attackPhase == 1 || a->attackPhase == 2 || a->carrying >= 0 || a->prisonTime > 0)
+    if (!conscious(a) || a->carrying >= 0 || a->prisonTime > 0)
         return 0;
     if (!room_bed_free(a, x, y, room, actor_floor(a))) {
         log_msg("That bed is occupied.");

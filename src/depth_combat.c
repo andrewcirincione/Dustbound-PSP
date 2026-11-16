@@ -197,6 +197,8 @@ void depth_room_tick(float dt) {
                     best = d;
                 }
             }
+        int ordered=g.living.command[i];
+        if(a->squad&&a->autoattack&&ordered>=0&&ordered<g.actorCount&&conscious(&g.actors[ordered])&&depth_distance(a,&g.actors[ordered])<24){target=ordered;best=depth_distance(a,&g.actors[ordered]);}
         if (target >= 0 && (!a->squad || a->autoattack)) {
             Actor *b = &g.actors[target];
             int eviction = b->squad && D.actors[target].trespass >= 7 && a->gear[0];

@@ -125,7 +125,11 @@ static const uint32_t *part_palette(int id, uint32_t tint, float li, int quality
     for (int i = 0; i < 256; i++) {
         uint32_t c = actor_sprite(id)->palette[i];
         int r = c & 255, g0 = (c >> 8) & 255, b = (c >> 16) & 255;
-        if (head) {
+        if(id==61||id==74||id==75||id==78||id==79){
+            float reference=id==61?118.7f:id==74?140.f:id==75?129.7f:id==78?129.3f:80.7f;
+            float texture=(r+g0+b)/(3*reference);
+            r=texture*(tint>>16);g0=texture*((tint>>8)&255);b=texture*(tint&255);
+        }else if (head) {
             if (id != 61 && r < 78 && g0 < 70) {
                 int value = (r + g0 + b) / 3;
                 r = value * (64 + (paintHair >> 16)) / 96;
@@ -383,7 +387,7 @@ static void weapon_sprite(int item, float x, float y, int sc, float angle, int f
             rgba_over(row + xx, palette[s->pixels[s->rows[sy * 3] + sx - lo]]);
         }
     }
-    if(arsenal_index(item)<0)weapon_fitting(item,x,y,sc,angle,face,li,tip);
+
 }
 typedef struct {
     float offset, top, bottom, width;
@@ -392,14 +396,14 @@ static BackAttachment back_attachment(int item) {
     // Mount the load on the upper back, ending at the belt. Tall attachments
     // have separate silhouettes; flags, scabbards and cloth are not packs.
     static const BackAttachment mounts[8] = {
-        {1.2f, -27, -12, 12}, // Travel pack
-        {1.1f, -43, -12, 16}, // Banner above shoulder / roll at belt
-        {1.2f, -28, -12, 13}, // Medicine basket
-        {1.36f, -31, -12, 15}, // Ore pack with raised pick
-        {.5f, -30, -5, 16},   // Cape hangs from collar
-        {.6f, -35, -9, 17},   // Sword rack: hilts above shoulder
-        {1.2f, -28, -11, 13}, // Box and bedroll
-        {.45f, -30, -15, 16}, // Mantle surrounds shoulders
+        {1.0f,-27,-14,9.2f}, // Travel pack
+        {1.0f,-39,-14,12}, // Banner above shoulder / roll at belt
+        {1.0f,-27,-14,10}, // Medicine basket
+        {1.10f,-29,-14,11.4f}, // Ore pack with raised pick
+        {.5f,-29,-6,13},   // Cape hangs from collar
+        {.65f,-33,-12,13},   // Sword rack: hilts above shoulder
+        {1.05f,-27,-13.5f,10}, // Box and bedroll
+        {.45f,-29,-15,12}, // Mantle surrounds shoulders
     };
     int f = gear_family(item);
     return mounts[f >= 76 && f <= 83 ? f - 76 : 0];
@@ -411,7 +415,9 @@ static float head_y(float y) {
 static float head_width(int race) {
     return headScale * (race == 4 ? 6.7f : race == 3 ? 5.1f : 5.8f);
 }
+static int boot_flip(int item,int face){int set=armor_item_set(item);return (face<0)^(set>=0?armorBootFlip[set]:0);}
 static void head_attachment(int family, int sprite, float *width, float *top, float *bottom) {
+    if(family<48||family>59)family=50;
     // Calibrated brow/brim rows in each cropped sprite. Chin straps, cheek
     // guards and crests must not be treated as the hat's contact with the head.
     static const float widths[12] = {11, 10.4f, 9.6f, 7.4f, 7.4f, 8.4f, 7.8f, 7.8f, 10.2f, 7.8f, 11, 9.2f};
@@ -679,13 +685,16 @@ static void painted_head(const Actor *a, float x, float top, float endX, float b
     }
     part(61, x, top, endX, bottom, width, skin, li, 0, face < 0, 0, 1);
     if (style == 5) {
-        hair_patch(HX(.02f,.01f), HY(.01f), half * .41f, height * .24f, paintHair, li);
+        HAIR(-.49f,.17f,-.29f,-.26f,.19f,-.19f,.43f,.22f,dark);
+        HAIR(-.25f,-.19f,.13f,-.17f,.40f,.12f,-.24f,.16f,hair);
     } else if (style) {
         float crown = style == 1 ? .17f : .11f;
         hair_patch(HX(-.05f,crown), HY(crown), half * .95f, height * (style == 1 ? .16f : .24f),
                    paintHair, li);
-        if (style == 2)
-            HAIR(-.57f,.14f, .25f,.03f, .89f,.23f, .73f,.38f, hair);
+        if(style==2){
+            HAIR(-.78f,.18f,.05f,-.04f,.91f,.13f,.73f,.31f,hair);
+            painted_line(HX(-.60f,.18f),HY(.18f),HX(.65f,.09f),HY(.09f),sheen);
+        }
         if (style == 3) {
             hair_patch(HX(-.64f,-.16f), HY(-.16f), half * .38f, height * .18f, paintHair, li);
             painted_line(HX(-.72f,-.03f), HY(-.03f), HX(-.38f,.02f), HY(.02f), sheen);
@@ -693,14 +702,27 @@ static void painted_head(const Actor *a, float x, float top, float endX, float b
     }
     if (beard == 1) {
         uint32_t stubble = shade(blend(paintHair, skin, .52f), li);
-        painted_line(HX(.11f,.69f), HY(.69f), HX(.62f,.79f), HY(.79f), stubble);
-        painted_line(HX(.08f,.86f), HY(.86f), HX(.52f,.87f), HY(.87f), stubble);
+        painted_line(HX(.11f,.60f), HY(.60f), HX(.70f,.70f), HY(.70f), stubble);
+        painted_line(HX(.08f,.74f), HY(.74f), HX(.52f,.76f), HY(.76f), stubble);
     } else if (beard == 2) {
-        HAIR(.16f,.72f, .70f,.73f, .51f,.97f, .22f,.93f, dark);
+        HAIR(.16f,.64f, .73f,.65f, .51f,.84f, .22f,.81f, dark);
     } else if (beard == 3) {
-        HAIR(-.49f,.51f, -.19f,.66f, .71f,.68f, .81f,.81f, dark);
-        HAIR(-.49f,.51f, .81f,.81f, .40f,1.02f, -.35f,.87f, hair);
-        painted_line(HX(-.21f,.73f), HY(.73f), HX(.41f,.90f), HY(.90f), sheen);
+        HAIR(-.49f,.43f, -.19f,.59f, .71f,.61f, .81f,.73f, dark);
+        HAIR(-.49f,.43f, .81f,.73f, .40f,.86f, -.35f,.73f, hair);
+        painted_line(HX(-.21f,.63f), HY(.63f), HX(.41f,.78f), HY(.78f), sheen);
+    }
+    if(beard==4){
+        HAIR(.15f,.55f,.76f,.55f,.81f,.63f,.13f,.62f,dark);
+    }else if(beard==5){
+        HAIR(-.47f,.46f,.78f,.63f,.45f,1.10f,-.25f,.92f,dark);
+        HAIR(-.27f,.61f,.70f,.70f,.32f,1.04f,-.15f,.87f,hair);
+    }else if(beard==6){
+        HAIR(-.55f,.42f,-.28f,.47f,-.12f,.75f,-.39f,.74f,dark);
+        HAIR(-.39f,.72f,.75f,.70f,.56f,.83f,-.22f,.82f,hair);
+    }else if(beard==7){
+        HAIR(-.48f,.45f,.76f,.62f,.58f,.88f,-.26f,.78f,dark);
+        HAIR(-.28f,.68f,.28f,.73f,.03f,1.02f,-.27f,.93f,hair);
+        HAIR(.30f,.73f,.64f,.72f,.55f,1.0f,.31f,.94f,hair);
     }
     if (a->race == 2) {
         painted_line(HX(-.39f,.82f), HY(.82f), HX(.39f,.82f), HY(.82f), shade(0x343d3c, li));
@@ -1088,7 +1110,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
             continue;
         int legSide=face>0?i:1-i;
         float xx = face*(legSide ? 1.65f : -1.8f);
-        float stride = feet[i].stride * walk * (a->sneaking ? 5.3f : 7.3f) *
+        float stride = feet[i].stride * walk * (a->sneaking ? 4.3f : 5.6f) *
                        (limping && weakLeg == i ? .28f : 1);
         float groundY = stride * walkY * .5f;
         float step = i == leadLeg ? rig.step + kick * .72f : weapon ? 0 : -1.4f * blend;
@@ -1100,18 +1122,33 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         if (i == leadLeg)
             lift += plantLift + kick * .85f;
         float ankle = groundY - lift;
+        float hipX=RX(xx,-15.2f),hipY=RY(-15.2f);
+        float ankleX=x+foot*sc,ankleY=y+(ankle-2)*sc;
+        float vx=ankleX-hipX,vy=ankleY-hipY,legLength=hypotf(vx,vy);
+        float reach=13.5f*sc;
+        if(legLength>reach){ankleX=hipX+vx*reach/legLength;ankleY=hipY+vy*reach/legLength;legLength=reach;}
+        legLength=fmaxf(.1f,legLength);vx=(ankleX-hipX)/legLength;vy=(ankleY-hipY)/legLength;
+        float upper=7.1f*sc,lower=6.5f*sc;
+        float along=(legLength*legLength+upper*upper-lower*lower)/(2*legLength);
+        float bend=sqrtf(fmaxf(0,upper*upper-along*along));
+        float kneeX=hipX+vx*along+vy*bend*face,kneeAbsY=hipY+vy*along-vx*bend*face;
+#ifdef DUST_LEG_OBSERVER
+        DUST_LEG_OBSERVER(a,i,sc,hipX,hipY,kneeX,kneeAbsY,ankleX,ankleY);
+#endif
+        foot=(ankleX-x)/sc;ankle=(ankleY-y)/sc+2;
+        (void)knee;(void)kneeY;
         int grade=limb_item_grade(limb_installed(a,limb));
         uint32_t limbTint=grade>=0&&!coveredLegs?limbGrades[grade].color:lc;
         int mech = (race==2 || (a->prostheticMask & (1 << limb))) && !coveredLegs, id = mech ? 76 : legArt;
-        part(id, RX(xx, -15.2f), RY(-15.2f), RX(knee, kneeY), RY(kneeY), 3.6f * sc, limbTint, li, itemDefs[legs].quality,
+        part(id,hipX,hipY,kneeX,kneeAbsY, 3.6f * sc, limbTint, li, itemDefs[legs].quality,
              face < 0, 0, mech ? 1 : .54f);
         /* The boot anchors are in ground space, outside torso lean and twist. */
-        part(mech ? 77 : id, RX(knee, kneeY - .35f), RY(kneeY - .35f),
+        part(mech ? 77 : id,kneeX,kneeAbsY-.35f*sc,
              x + foot * sc, y + (ankle - 2) * sc, 3.15f * sc, limbTint,
              li, itemDefs[legs].quality, face < 0, mech ? 0 : .48f, 1);
         part(mech ? 87 : bootArt, x + foot * sc, y + (ankle - 5) * sc,
              x + (foot + face * .6f) * sc, y + (ankle - .2f) * sc, 5.4f * sc,
-             boots ? itemDefs[boots].color : skin, li, itemDefs[boots].quality, face < 0, 0, 1);
+             boots ? itemDefs[boots].color : skin, li, itemDefs[boots].quality, boot_flip(boots,face), 0, 1);
     }
     /* Pants and the hip band occlude the far arm. The hip band samples solid
        upper-trouser fabric so transparent waist openings cannot detach legs. */
@@ -1128,7 +1165,7 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     if (head && hf >= 48) {
         float wide, top, bottom;
         head_attachment(hf,headArt,&wide,&top,&bottom);
-        PART(headArt, 0, top, 0, bottom, wide, itemDefs[head].color, itemDefs[head].quality);
+        part(headArt,RX(0,top),RY(top),RX(0,bottom),RY(bottom),wide*sc,itemDefs[head].color,li,itemDefs[head].quality,(face<0)^(armor_item_set(head)==19),0,1);
     }
     if(frontGreatsword&&arms)
         weapon_sprite(weapon,grip.x,grip.y,sc,angle,face,li);

@@ -437,7 +437,7 @@ int item_price(int town, int it, int selling) {
         return 0;
     if (town == -1 && road_vendor()) {
         int quote=(int)fmaxf(2,itemDefs[it].price*1.48f);
-        return selling?quote/2:quote;
+        return selling?(int)fmaxf(1,itemDefs[it].price*.5f):quote;
     }
     if (town < 0 || town >= TOWNS)
         return 0;
@@ -448,7 +448,7 @@ int item_price(int town, int it, int selling) {
     if (*market_venue(town,it) == TRADE_SMITH && item->quality >= 2)
         rate *= item->quality == 3 ? 1.65f : 1.4f;
     int quote=(int)fmaxf(2,item->price * rate * mod * market_factor(town,it) * politics_price(town,it));
-    return selling?quote/2:quote;
+    return selling?(int)fmaxf(1,item->price*.5f*mod*market_factor(town,it)*politics_price(town,it)):quote;
 }
 unsigned char *market_venue(int town,int item) {
     if(item>=WEAPON_ITEMS+ARSENAL_V103_WEAPONS)return &g.greatswords.venue[town][item-WEAPON_ITEMS-ARSENAL_V103_WEAPONS];
@@ -540,7 +540,7 @@ int road_trade(int item, int slot) {
     if (selling && !stolen_sale(-1, slot))
         return 0;
     inventory_add(to, item, 1);
-    inventory_remove_slot(from, slot, 1);
+    item_slot_remove(from,slot,1);
     g.money += selling ? price : -price;
     trade_goodwill(m->faction, price);
     log_msg("%s %s for %d silver.", selling ? "Sold" : "Bought", itemDefs[item].name, price);

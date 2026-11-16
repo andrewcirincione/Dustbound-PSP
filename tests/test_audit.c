@@ -301,8 +301,8 @@ int main(void) {
     a->xp[ENGINEERING] = 117612;
     a->xp[SCIENCE] = 117612;
     a->xp[FARMING] = 117612;
-    CHECK(buildCount == 2 && build_wood_cost(3) == 0 && build_wood_cost(0) == 1);
-    CHECK(research_cost() == price * 80 / 100 && harvest_yield(a) == 8);
+    CHECK(buildCount == 8 && build_wood_cost(3) > 0 && build_wood_cost(0) == 1);
+    CHECK(research_cost() == price * 80 / 100 && harvest_yield(a) == 10);
     a->xp[COOKING] = 12 * 69 * 69;
     a->x = 42;
     a->y = 44;

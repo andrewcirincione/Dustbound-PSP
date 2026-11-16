@@ -234,8 +234,8 @@ int main(void) {
     interior_leave();
     a->x = 66;
     a->y = 40;
-    CHECK(!build_structure(4), "research benches are absent from the camp menu");
-    add_build(a->x+1.9f,a->y,BENCH,FREE,-1);
+    inventory_add(a,IRONBAR,2);
+    CHECK(build_structure(4), "camp research benches can be built with timber and iron");
     inventory_add(a, RELIC, 3);
     g.money = 2000;
     a->x += .5f;

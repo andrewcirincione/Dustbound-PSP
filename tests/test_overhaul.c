@@ -74,7 +74,7 @@ int main(void) {
     dress_wounds(a);
     money = g.money;
     interior_interact();
-    CHECK(a->taskKind == 3 && g.money == money - 25);
+    CHECK(a->taskKind == 3 && g.money == money - bed_cost(bar));
     simulate(1);
     CHECK(a->health[LARM] > 40);
     a->bleed = 1;

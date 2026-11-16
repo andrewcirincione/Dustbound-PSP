@@ -1996,12 +1996,15 @@ static void health_screen(int actor, int inspect) {
     snprintf(b, sizeof(b), "BLOOD %.0f   FOOD %.0f   FATIGUE %.0f", a->blood, a->hunger, a->fatigue);
     text(31, 194, b, a->bleed > .01f ? RED : MUTED, 1);
     if (a->bleed > .01f) text(323, 194, "BLEEDING", RED, 1);
+    if(a->unconscious>0&&!a->dead){
+        snprintf(b,sizeof(b),"CONSCIOUSNESS %.0f%%",consciousness_progress(a));text(31,220,b,TEAL,1);bar(270,222,170,3,consciousness_progress(a),TEAL);
+    }
     if (inspect)
         return;
     snprintf(b, sizeof(b), "DRESSINGS %d  GEAR %.0f%%  COMA THRESHOLD %.0f", inventory_count(a,MEDKIT),
              z->upkeep, coma_threshold(a));
     text(31,207,b,GOLD,1);
-    text(31, 221, z->captive ? "\001 PICK SHACKLES" : "TEAL HEALTH   RED UNTREATED   GOLD DRESSED   \006 LIMBS", MUTED, 1);
+    if(a->unconscious<=0)text(31, 221, z->captive ? "\001 PICK SHACKLES" : "TEAL HEALTH   RED UNTREATED   GOLD DRESSED   \006 LIMBS", MUTED, 1);
 }
 static void limbs_screen(void) {
     Actor *a=&g.actors[g.selected];char b[140];int surgery=ui.screen==SCREEN_SURGERY,confirm=ui.screen==SCREEN_LIMBCONFIRM;
@@ -2426,10 +2429,13 @@ static void trade_screen(void) {
 static void build_screen(void) {
     overlay_header("CAMP", "\001 CHOOSE A SPOT");
     char value[40];Actor*a=&g.actors[g.selected];
-    snprintf(value,sizeof(value),"TIMBER %d/%d",inventory_count(a,WOOD),build_wood_cost(0));
-    row(101,ui.selection==0,"Campfire",value);
-    snprintf(value,sizeof(value),"BEDROLL %d/1",inventory_count(a,BEDROLL_ITEM));
-    row(127,ui.selection==1,"Bedroll",value);
+    int first=start_row(ui.selection,buildCount,7);
+    for(int c=first;c<buildCount&&c<first+7;c++){
+        if(c==1)snprintf(value,sizeof(value),"BEDROLL %d/1",inventory_count(a,BEDROLL_ITEM));
+        else snprintf(value,sizeof(value),"WOOD %d/%d  IRON %d/%d",inventory_count(a,WOOD),build_wood_cost(c),inventory_count(a,IRONBAR),build_metal_cost(c));
+        row(86+(c-first)*17,c==ui.selection,buildNames[c],value);
+    }
+    snprintf(value,sizeof(value),"RESEARCH %d/%d",g.tech,build_tech_required(ui.selection));text(31,218,value,g.tech>=build_tech_required(ui.selection)?TEAL:RED,1);
 }
 static const char *craft_station_name(int type){return type==FORGE?"FORGE":type==CAMPFIRE?"CAMPFIRE":"RESEARCH BENCH";}
 static int craft_readiness(const CraftRequirements*r,char*out,int size){
@@ -2449,8 +2455,9 @@ static int craft_readiness(const CraftRequirements*r,char*out,int size){
 }
 static void craft_screen(void) {
     overlay_header("WORKSHOP", "\001 CRAFT RECIPE   \003 EQUIPMENT FORGE");
-    for(int i=0;i<recipeCount;i++){
-        int y=86+i*16;if(i==ui.selection){rect(25,y-3,178,14,0x4a4030);rect(25,y-3,2,14,TEAL);}
+    int first=start_row(ui.selection,recipeCount,8);
+    for(int i=first;i<recipeCount&&i<first+8;i++){
+        int y=86+(i-first)*16;if(i==ui.selection){rect(25,y-3,178,14,0x4a4030);rect(25,y-3,2,14,TEAL);}
         text(31,y,recipeNames[i],i==ui.selection?TEXT:MUTED,1);
     }
     line(213,83,213,218,EDGE);CraftRequirements r;if(!recipe_requirements(ui.selection,&r))return;
@@ -2468,6 +2475,7 @@ static void craft_screen(void) {
     else if(g.buildings[station].owner<0)snprintf(b,sizeof(b),"FUEL: TOWN SUPPLIED");
     else snprintf(b,sizeof(b),"FUEL %.0f/1",floorf(g.depth.buildings[station].fuel));
     text(225,188,b,station>=0&&r.station!=BENCH&&g.buildings[station].owner>=0?(g.depth.buildings[station].fuel>=1?0x73c58b:RED):MUTED,1);
+    if(itemDefs[r.output].slot>=0){snprintf(b,sizeof(b),"%s %d  WEIGHT %d",itemDefs[r.output].slot?"ARMOR":"DAMAGE",itemDefs[r.output].slot?itemDefs[r.output].armor:itemDefs[r.output].power,itemDefs[r.output].weight);text(225,188,b,TEAL,1);}
     int ready=craft_readiness(&r,b,sizeof(b));text(225,204,ready?"\001 READY TO CRAFT":"CANNOT CRAFT YET",ready?TEAL:RED,1);clipped(31,222,b,69,ready?TEAL:RED);
 }
 static void research_screen(void) {
@@ -2575,7 +2583,7 @@ static void creator_screen(void) {
     static const char *labels[] = {"NAME", "SPECIES", "BUILD", "SKIN", "HAIR", "HAIR TONE", "BEARD"};
     static const char *builds[] = {"Regular", "Broad", "Lean"};
     static const char *hair[] = {"Bald", "Cropped", "Side part", "Topknot", "Long", "Crest", "Ponytail"};
-    static const char *beard[] = {"Shaven", "Stubble", "Goatee", "Full"};
+    static const char *beard[] = {"Shaven","Stubble","Goatee","Full","Moustache","Long","Chinstrap","Forked"};
     static const char *tones[] = {"Black", "Brown", "Ash brown", "Sandy", "Grey", "Red"};
     if (!ui.titleChoice) {
         char scenario[56];
@@ -2651,7 +2659,7 @@ static void equipped_screen(void) {
     }
 }
 static void requirement_cell(int cell,const char*label,int need,int have){
-    int x=29+(cell%2)*211,y=194+(cell/2)*11;char b[60];clipped(x,y,label,22,TEXT);snprintf(b,sizeof(b),"%d/%d",have,need);text(x+138,y,b,have>=need?0x73c58b:RED,1);
+    int x=29+(cell%2)*211,y=190+(cell/2)*10;char b[60];clipped(x,y,label,22,TEXT);snprintf(b,sizeof(b),"%d/%d",have,need);text(x+138,y,b,have>=need?0x73c58b:RED,1);
 }
 static void forge_screen(void) {
     overlay_header("EQUIPMENT FORGE", "\014 CONFIGURE   \001 CHOOSE");
@@ -2671,13 +2679,13 @@ static void forge_screen(void) {
     const char*labels[]={"SLOT","DESIGN","MATERIAL","QUALITY","FORGE THIS PIECE"};
     const char*values[]={slotNames[ui.forgeSlot],forge_selection_name(),materialNames[ui.forgeMaterial],qualityNames[ui.forgeQuality],"\001"};
     for(int i=0;i<5;i++){int y=84+i*14;if(i==ui.selection)rect(195,y-3,253,13,0x3c4034);text(202,y,labels[i],MUTED,1);text(441-strlen(values[i])*6,y,values[i],GOLD,1);}
-    text(29,185,"REQUIREMENTS                 HAVE/NEED",MUTED,1);
+    text(29,181,"REQUIREMENTS                 HAVE/NEED",MUTED,1);
     CraftRequirements r;if(!forge_requirements(it,&r))return;Actor*worker=&g.actors[g.selected];int cell=0;
     for(int i=0;i<r.count;i++)requirement_cell(cell++,itemDefs[r.item[i]].name,r.need[i],inventory_count(worker,r.item[i]));
     requirement_cell(cell++,"Research tier",r.tech,g.tech);requirement_cell(cell++,"Smithing",r.smithing,level(worker,SMITHING));
     int station=nearby_workstation(FORGE);if(station>=0&&g.buildings[station].owner>=0)requirement_cell(cell++,"Station fuel",1,(int)g.depth.buildings[station].fuel);
     char b[120],reason[90];int ready=craft_readiness(&r,reason,sizeof(reason));
-    snprintf(b,sizeof(b),"FORGE %s / %s",station>=0?"IN REACH":"TOO FAR",reason);clipped(29,233,b,69,ready?TEAL:RED);
+    snprintf(b,sizeof(b),"FORGE %s / %s",station>=0?"IN REACH":"TOO FAR",reason);clipped(29,230,b,69,ready?TEAL:RED);
 }
 static void dialogue_row_text(int y, const char *option, int selected) {
     enum { LEFT = 137, RIGHT = 441 };
@@ -3016,7 +3024,10 @@ static void placement_draw(void) {
         float share=furniture_is_bed(f->art)&&f->d>f->w?1-m->xShare:m->xShare;
         InteriorProp p={ui.placeX,ui.placeY,span*share,span*(1-share),f->art,f->action};
         w=p.w;d=p.d;room_furniture(&p);
-    } else if(!indoors)art(ui.placeType==1?ART_BEDROLL:27,x,y,1.08f,0);
+    }else if(!indoors){
+        static const int images[]={27,ART_BEDROLL,12,2,ART_RESEARCH_TABLE,31,0,4};
+        art(images[ui.placeType],x,y,ui.placeType<2?1.08f:1,0);
+    }
     int valid=indoors&&!ui.placeType?1:placement_valid(ui.placeType,ui.placeBuilding,ui.placeX,ui.placeY);
     uint32_t color=valid?TEAL:RED;int px[4],py[4];
     const float corners[4][2]={{-1,-1},{1,-1},{1,1},{-1,1}};
@@ -3188,13 +3199,23 @@ void render_game(uint32_t *pixels, int stride) {
         terrain();
         objects_draw();
     }
-    if (!g.interiorBuilding && g.weather) {
-        for (int i = 0; i < 25; i++) {
-            int x = ((int)(g.time * 63) + i * 79) % 520 - 20, y = (i * 37) % 210;
-            line(x, y, x + (g.weather == 1 ? 14 : 3), y + (g.weather == 1 ? 3 : 9),
-                 g.weather == 3   ? 0x829a6b
-                 : g.weather == 4 ? 0xc7cbbd
-                                  : shade(0xc7ba92, .85f));
+    if(!g.interiorBuilding&&g.weather){
+        int wet=g.weather==2||g.weather==3;
+        for(int i=0;i<(wet?52:19);i++){
+            unsigned z=(unsigned)(i+7)*2654435761u;
+            float speed=wet?105+(z%65):31+(z%19);
+            int x=((int)((z%503)+g.time*(wet?-13:38)))%520-20;
+            if(x<0)x+=520;
+            int y=((int)((z>>12)%229+g.time*speed))%226;
+            if(wet){
+                int length=3+(z%4);uint32_t color=abgr(g.weather==3?0x80948c:0xa7bdc2);
+                for(int d=0;d<length;d++){
+                    int xx=x-d/3,yy=y+d;
+                    if(xx>=0&&xx<480&&yy>=0&&yy<218){uint32_t*pixel=fb+yy*pitch+xx;rgba_over(pixel,(color&0xffffff)|((unsigned)(d?52:78)<<24));}
+                }
+                if(y>203&&i%4==0){for(int d=-1;d<=1;d++){int xx=x+d;if(xx>=0&&xx<480)rgba_over(fb+(y+5)*pitch+xx,(color&0xffffff)|0x20000000);}}
+            }else if(g.weather==4&&x<480){rgba_over(fb+y*pitch+x,(abgr(0xd4d6d1)&0xffffff)|0x66000000);}
+            else for(int d=0;d<5&&x+d<480;d++)rgba_over(fb+y*pitch+x+d,(abgr(0x9c8e73)&0xffffff)|0x18000000);
         }
     }
     depth_world_draw();

@@ -81,8 +81,9 @@ const char *jobNames[] = {"Follow squad", "Hold position", "Mine nearest ore", "
 const char *buildNames[] = {"Campfire",       "Bedroll", "Farm plot",     "Iron forge",
                             "Research bench", "Palisade",          "Storage depot", "Wind pump"};
 const char *recipeNames[] = {"Iron bar",      "Cooked ration",  "Field dressing", "Iron sabre",
-                             "Plate cuirass", "Mechanical arm", "Mechanical leg", "Crossbow bolts"};
-const int recipeCount = 8, buildCount = 2;
+                             "Plate cuirass", "Mechanical arm", "Mechanical leg", "Crossbow bolts",
+                             "Leather vest", "Leather boots", "Smoked jerky", "Oatcakes", "Bean stew"};
+const int recipeCount=13,buildCount=8;
 const ItemDef baseDefs[BASE_ITEMS] = {
     {"Empty", "", 0, 0, -1, 0, 0, 0},
     {"Trail ration", "Restores 48 hunger. Eaten automatically below 40.", 35, 1, -1, 0, 0, 0xc39e65},
@@ -115,7 +116,7 @@ const ItemDef baseDefs[BASE_ITEMS] = {
     {"Hand tools", "Reusable for engineering. Improvised picks are enough for any lock.", 90, 1, -1, 0, 0, 0xb5ada0},
     {"Old-world relic", "Sell for silver or spend on research.", 300, 2, -1, 0, 0, 0x80c8be},
     {"Cartridge", "Ammunition for frontier guns.", 10, 0, -1, 0, 0, 0xac925b},
-    {"Cured hide", "Leatherworking and trade material.", 24, 1, -1, 0, 0, 0x78553b},
+    {"Raw hide", "Leatherworking: make leather vests or boots at a bench (Smithing).", 24, 1, -1, 0, 0, 0x78553b},
     {"Coal", "High-grade forging fuel.", 18, 2, -1, 0, 0, 0x34393a},
     {"Machine parts", "Salvage for advanced equipment.", 90, 2, -1, 0, 0, 0x698078},
     {"Blood tonic", "Restores blood and warmth over time.", 110, 1, -1, 0, 0, 0x9c5141},
@@ -597,7 +598,7 @@ void init_actor(int n, const char *name, int kind, int faction, float x, float y
     a->hair = n % 7;
     a->hairColor = n % 6;
     a->body = n % 3;
-    a->beard = n % 4;
+    a->beard=n%8;
     a->scar = n % 5;
     a->speechCooldown = 6 + n % 13;
     a->kind = kind;
@@ -1649,13 +1650,15 @@ int recruit_actor(int n) {
     return 1;
 }
 
-static const int buildWood[] = {3, 0};
+static const int buildWood[]={3,0,8,18,12,6,14,16};
+int build_metal_cost(int c){static const int metal[]={0,0,0,4,2,0,0,4};return c>=0&&c<buildCount?metal[c]:0;}
+int build_tech_required(int c){return c==3||c==7?1:0;}
 int build_wood_cost(int c) {
     return c >= 0 && c < buildCount
                ? (int)fmaxf(1, buildWood[c] - level(&g.actors[g.selected], ENGINEERING) / 30)
                : 0;
 }
-int harvest_yield(const Actor *a) { return 5 + level(a, FARMING) / 30; }
+int harvest_yield(const Actor *a) { return 5 + level(a, FARMING) / 20; }
 int research_cost(void) {
     return 150 * (g.tech + 1) * (100 - level(&g.actors[g.selected], SCIENCE) / 5) / 100;
 }
@@ -1675,11 +1678,17 @@ static const Recipe recipes[] = {{IRONBAR, 1, ORE, 3, NONE, 0, FORGE, SMITHING, 
                                  {PLATE, 1, IRONBAR, 6, CLOTH, 2, FORGE, SMITHING, 2},
                                  {ARM, 1, IRONBAR, 5, RELIC, 1, FORGE, ENGINEERING, 3},
                                  {LEG, 1, IRONBAR, 5, RELIC, 1, FORGE, ENGINEERING, 3},
-                                 {BOLTS, 10, IRONBAR, 1, WOOD, 1, FORGE, SMITHING, 0}};
+                                 {BOLTS,10,IRONBAR,1,WOOD,1,FORGE,SMITHING,0},
+                                 {LEATHER,1,HIDE,4,CLOTH,1,BENCH,SMITHING,0},
+                                 {BOOTS,1,HIDE,2,CLOTH,1,BENCH,SMITHING,0},
+                                 {JERKY,2,MEAT,2,NONE,0,CAMPFIRE,COOKING,0},
+                                 {OATCAKE,3,GRAIN,2,WATER,1,CAMPFIRE,COOKING,0},
+                                 {STEW,2,GRAIN,2,MEAT,1,CAMPFIRE,COOKING,1}};
+int cooking_yield(const Actor*a,int base){return base+level(a,COOKING)/25;}
 int recipe_requirements(int c,CraftRequirements*out){
     if(c<0||c>=recipeCount)return 0;
     const Recipe*r=&recipes[c];memset(out,0,sizeof(*out));
-    out->output=r->output;out->qty=r->qty+(c==1?level(&g.actors[g.selected],COOKING)/35:0);
+    out->output=r->output;out->qty=r->skill==COOKING?cooking_yield(&g.actors[g.selected],r->qty):r->qty;
     out->item[0]=r->in1;out->need[0]=r->n1;out->count=1;
     if(r->in2){out->item[1]=r->in2;out->need[1]=r->n2;out->count++;}
     if(c==1){out->alternate=MEAT;out->alternateNeed=2;}
@@ -1720,7 +1729,7 @@ int craft_item(int c) {
                                                              : "research bench");
         return 0;
     }
-    int in1 = r->in1, n1 = r->n1, qty = r->qty + (c == 1 ? level(a, COOKING) / 35 : 0);
+    int in1 = r->in1, n1 = r->n1, qty = (r->skill==COOKING?cooking_yield(a,r->qty):r->qty);
     if (c == 1 && inventory_count(a, GRAIN) < n1) {
         in1 = MEAT;
         n1 = 2;
@@ -1756,7 +1765,7 @@ void recipe_status(int c, char *out, int size) {
     }
     if (c == 1) {
         snprintf(out, size, "MAKES %d / GRAIN %d/3 OR MEAT %d/2 + WATER %d/1 / %s",
-                 r->qty + level(a, COOKING) / 35, inventory_count(a, GRAIN), inventory_count(a, MEAT),
+                 cooking_yield(a,r->qty), inventory_count(a, GRAIN), inventory_count(a, MEAT),
                  inventory_count(a, WATER),
                  nearby_station(CAMPFIRE, 1.7f) >= 0 ? "CAMPFIRE READY" : "NEED NEARBY CAMPFIRE");
         return;
@@ -1766,7 +1775,7 @@ void recipe_status(int c, char *out, int size) {
         snprintf(second, sizeof(second), " + %s %d/%d", itemDefs[r->in2].name, inventory_count(a, r->in2),
                  r->n2);
     snprintf(out, size, "MAKES %d / %s %d/%d%s / TIER %d/%d / %s",
-             r->qty + (c == 1 ? level(a, COOKING) / 35 : 0), itemDefs[in].name, inventory_count(a, in), need,
+             (r->skill==COOKING?cooking_yield(a,r->qty):r->qty), itemDefs[in].name, inventory_count(a, in), need,
              second, g.tech, r->tech,
              nearby_station(r->station, 1.7f) >= 0 ? "STATION READY"
              : r->station == FORGE                 ? "NEED NEARBY FORGE"
@@ -2529,14 +2538,14 @@ void simulate(float dt) {
         int town = !a->squad && (a->kind == GUARD || civilian_actor(a)) && a->homeTown >= 0 &&
                    distance(a->x, a->y, towns[a->homeTown].x, towns[a->homeTown].y) < 16
                    ? a->homeTown : -1;
-        float best = npc_sight_range(a);
+        float best=a->squad&&a->autoattack?14:npc_sight_range(a);
         float normal_reach = best;
         int local_watch = town >= 0 && watch_town(a) == town;
         if (local_watch)
             best = fmaxf(best, 14);
         for (int j = 0; j < g.actorCount; j++) {
             Actor *b = &g.actors[j];
-            if (i == j || !attackable(b))
+            if(i==j||!attackable(b)||population_hidden(j)||depth_room(a)!=depth_room(b)||actor_floor(a)!=actor_floor(b))
                 continue;
             if (a->squad && a->autoattack && !b->squad && !population_hidden(j) &&
                 (b->target == i || (b->attackPhase && b->attackTarget == i)) &&
@@ -2719,6 +2728,9 @@ int save_game(const char *path) {
     return 1;
 }
 static int validate_game(const Game *t) {
+    if(t->feedback.next<0||t->feedback.next>511)return 0;
+    for(int i=0;i<512;i++)if(t->feedback.taken[i]<0||t->feedback.taken[i]>1000000)return 0;
+    for(int i=0;i<MAX_ACTORS;i++)if(!isfinite(t->feedback.wakeTotal[i])||t->feedback.wakeTotal[i]<0)return 0;
 
     if (t->actorCount < 1 || t->actorCount > MAX_ACTORS || t->buildingCount < 0 ||
         t->buildingCount > MAX_BUILDINGS || t->nodeCount < 0 || t->nodeCount > MAX_NODES || t->selected < 0 ||
@@ -3738,7 +3750,7 @@ static void tick_input(float dt, Input in) {
     if ((p & KEY_SQUARE) && conscious(a) && !actor_in_bed(a)) {
         g.field.playingDead[g.selected] = 0;
         a->autoattack = !a->autoattack;
-        if (a->autoattack && g.depth.actors[g.selected].order == ORDER_HOLD_FIRE)
+        if (a->autoattack && (g.depth.actors[g.selected].order == ORDER_HOLD_FIRE||g.depth.actors[g.selected].order==ORDER_BLOCK))
             g.depth.actors[g.selected].order = ORDER_BALANCED;
         if(!a->autoattack){g.living.command[g.selected]=-1;a->target=-1;a->attackPhase=0;a->cooldown=fmaxf(.6f,a->cooldown);}
     }
@@ -3946,6 +3958,11 @@ void debug_snapshot(const char *path) {
     VALUE("task", &a->taskKind, 4);
     VALUE("mapzoom", &ui.mapZoom, 4);
     int qaCount=ui.screen==SCREEN_ACTIONS?nearby_actions():0;char qaActions[ACTION_LIMIT][80]={{0}};for(int q=0;q<qaCount;q++)nearby_action_label(q,qaActions[q],80);
+    NearbyTabs qaTabs;memset(&qaTabs,0,sizeof(qaTabs));if(ui.screen==SCREEN_ACTIONS)nearby_action_tabs(&qaTabs);
+    VALUE("actionrowcount",&qaTabs.rowCount,4);VALUE("actionrows",qaTabs.rows,sizeof(qaTabs.rows));
+    int activeContracts=0;for(int c=0;c<CONTRACTS;c++)activeContracts+=g.contracts[c].active==1;
+    int remaining=ui.lootActor>=0&&ui.lootActor<g.actorCount?loot_remaining(ui.lootActor):0;
+    VALUE("active_contracts",&activeContracts,4);VALUE("offer_mode",&ui.offerMode,4);VALUE("loot_percent",&remaining,4);
     VALUE("actioncount", &qaCount, 4);
     VALUE("actionlabels", qaActions, sizeof(qaActions));
     VALUE("rescuefreed",g.society.freed,sizeof(g.society.freed));

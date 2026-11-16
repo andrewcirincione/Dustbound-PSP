@@ -106,6 +106,17 @@ async def main():
      for step in cmd.get('steps',[]):
       if 'key' in step:await key(step['key'],step.get('frames',1))
       if 'choose' in step:await choose(step['choose'])
+      if 'action' in step:
+       raw=bytes.fromhex(state()['actionlabels_value']);labels=[raw[n*80:(n+1)*80].split(b'\0',1)[0].decode() for n in range(number('actioncount'))]
+       target=next((n for n,label in enumerate(labels) if step['action'].lower() in label.lower()),None)
+       assert target is not None,('action missing',step['action'],labels)
+       for _ in range(64):
+        rows=struct.unpack('<64i',bytes.fromhex(state()['actionrows_value']))[:number('actionrowcount')]
+        if target in rows:break
+        await key('right')
+       else:raise AssertionError(('action tab missing',step['action']))
+       await choose(target)
+
       if 'load' in step:await load_scene(step['load'])
       if 'wait' in step:await frames(step['wait'])
       if 'attack' in step:

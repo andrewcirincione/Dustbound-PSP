@@ -99,8 +99,7 @@ int main(void) {
     a->x = 42;
     a->y = 44;
     int before = g.buildingCount;
-    CHECK(!build_structure(6), "removed depot construction is unavailable");
-    add_build(a->x+1.9f,a->y,STORE,FREE,g.selected);
+    CHECK(build_structure(6), "player storage construction uses the restored camp menu");
     CHECK(g.buildingCount == before + 1, "legacy player depot fixture is available");
     int depot = g.buildingCount - 1, si = slot(a, ORE);
     if (si < 0) {

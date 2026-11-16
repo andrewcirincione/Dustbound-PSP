@@ -130,6 +130,7 @@ void character_finish(void) {
             inventory_add(a, COAL, 3);
         }
         if (origin == 3) {
+            inventory_remove(a,WOOD,inventory_count(a,WOOD));
             g.money = 180;
             crime_charge(a, UNION, 160, CRIME_THEFT);
             g.rep[UNION] = -20;
@@ -206,7 +207,7 @@ static void adjust_creator(int d) {
         if (ui.createRace != 2) ui.createHairColor = wrapi(ui.createHairColor + d, 6);
         break;
     case 6:
-        if (ui.createRace != 2) ui.createBeard = wrapi(ui.createBeard + d, 4);
+        if (ui.createRace != 2) ui.createBeard = wrapi(ui.createBeard + d, 8);
         break;
     }
 }

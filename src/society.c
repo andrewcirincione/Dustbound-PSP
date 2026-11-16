@@ -86,15 +86,15 @@ static const int imports[TOWNS]={IRONBAR,WOOD,GRAIN,MEDKIT,CLOTH,WATER,COAL,MEAT
 static int commodity(int it){return it==RATION||it==MEDKIT||it==ORE||it==COPPER||it==WOOD||it==CLOTH||it==WATER||it==GRAIN||it==MEAT||it==IRONBAR||it==HIDE||it==COAL||it==PARTS||it==TONIC||it==RELIC;}
 float market_factor(int town,int item){
  if(!commodity(item))return 1;
- float v=item==exports[town]?.59f:item==imports[town]?1.72f:1.f;
+ float v=item==exports[town]?.45f:item==imports[town]?1.85f:1.f;
  if(item==RATION&&exports[town]==GRAIN)v=.68f;
  if(item==RATION&&imports[town]==GRAIN)v=1.55f;
  int stock=g.stock[town][item];v+=stock<4?.25f:stock<10?.1f:stock>45?-.12f:0;
  if(S.crisis[town]==1&&(item==RATION||item==GRAIN||item==WATER))v+=.4f;
  if(S.crisis[town]==2&&(item==MEDKIT||item==IRONBAR||item==PARTS))v+=.35f;
- return bound(v,.48f,2.25f);
+ return bound(v,.38f,2.25f);
 }
-int market_percent(int t,int it,int selling){float normal=itemDefs[it].price*(selling?.75f:1);return normal>0?(int)roundf((item_price(t,it,selling)/normal-1)*100):0;}
+int market_percent(int t,int it,int selling){float normal=itemDefs[it].price*(selling?.5f:1);return normal>0?(int)roundf((item_price(t,it,selling)/normal-1)*100):0;}
 const char *trade_tip(int town){
  static char line[240];int bestItem=0,bestTown=-1,bestProfit=0;
  if(town<0)return "Ask a town merchant for current prices and transport work.";

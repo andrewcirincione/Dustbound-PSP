@@ -94,7 +94,7 @@ const char *dialogue_option(int actor, int row) {
     if(action==19)return "Let me see the warrants.";
     if(action==20)return "Where does the stagecoach go?";
     if(action==0 && npc_role(&g.actors[actor])==ROLE_INNKEEPER)return "What food and drink do you have?";
-    if(action==2 && !regional_bed_cost(town_near(g.actors[actor].x,g.actors[actor].y,14)))return "Rest at the sanctuary. Free";
+    if(action==2){static char quote[80];int price=regional_bed_cost(town_near(g.actors[actor].x,g.actors[actor].y,14));snprintf(quote,sizeof(quote),price?"Where can I rest? Beds: %d silver":"Rest at the sanctuary. Free",price);return quote;}
     if (action == 6 && npc_role(&g.actors[actor]) == ROLE_RECRUIT)
         return "Join my expedition. 300 silver";
     return labels[action];
@@ -555,7 +555,7 @@ static unsigned loot_key(int n){
 static int loot_record(int actor,int create){
     unsigned key=loot_key(actor);
     for(int i=0;i<512;i++)if(g.feedback.key[i]==key)return i;
-    if(!create)return -1;int slot=g.feedback.next++%512;g.feedback.key[slot]=key;g.feedback.taken[slot]=0;return slot;
+    if(!create)return -1;int slot=g.feedback.next;g.feedback.next=(slot+1)%512;g.feedback.key[slot]=key;g.feedback.taken[slot]=0;return slot;
 }
 int loot_remaining(int actor){
     if(actor<0||actor>=g.actorCount)return 0;
@@ -583,7 +583,7 @@ int loot_take(int slot, int all) {
         return 0;
     }
     loot_record_taken(ui.lootActor,qty);
-    if(b->kind==BEAST&&!b->dead&&(it==MEAT||it==HIDE)){
+    if(b->kind==BEAST&&!b->dead&&(it==MEAT||it==HIDE||(expedition_robot(b)>=0&&(it==PARTS||it==RELIC)))){
         b->dead=1;b->unconscious=0;b->bleed=0;b->attackPhase=b->autoattack=0;b->target=-1;
         contract_defeat(b);log_msg("Harvesting %s kills %s.",itemDefs[it].name,b->name);
     }
@@ -796,7 +796,7 @@ void skill_benefit(int skill, char *out, int size) {
     Actor *a=&g.actors[g.selected];int lv=level(a,skill);
     switch(skill) {
     case ATHLETICS: snprintf(out,size,"Current movement %.2f m/s, including load and injuries",movement_speed(a));break;
-    case STRENGTH: snprintf(out,size,"Carry limit %d; weapon strength need %d",30+lv*2+gear_bonus(a,3),weapon_strength(a->gear[0]));break;
+    case STRENGTH: snprintf(out,size,"Carry limit %d; weapon strength need %d",actor_capacity(a),weapon_strength(a->gear[0]));break;
     case DEXTERITY: snprintf(out,size,"Attack delay reduction %.2f sec before minimum/handling",lv*.003f);break;
     case MELEE: snprintf(out,size,"Melee attack score %d before injuries",lv+gear_bonus(a,0)-backpack_combat_penalty(a->gear[5]));break;
     case DEFENCE: snprintf(out,size,"Armed defence %d before stance and armor bonuses",lv-backpack_combat_penalty(a->gear[5]));break;
@@ -809,9 +809,9 @@ void skill_benefit(int skill, char *out, int size) {
     case MEDICINE: snprintf(out,size,"Dressing takes %.1f seconds. Healing follows over time.",fmaxf(1.75f,3.4f-.035f*lv-gear_bonus(a,5)*.05f));break;
     case LABOUR: snprintf(out,size,"Gathering cycle %.2f seconds",fmaxf(.8f,2.8f-lv*.035f));break;
     case FARMING: snprintf(out,size,"Harvest %d grain per crop",harvest_yield(a));break;
-    case COOKING: snprintf(out,size,"Cooked rations: +%d per batch",lv/35);break;
+    case COOKING: snprintf(out,size,"Cooked rations: +%d per batch",lv/25);break;
     case SMITHING: if(lv>=36)snprintf(out,size,"All four quality grades unlocked; research gates materials");else snprintf(out,size,"Quality grade %d of 4; next grade at skill %d",1+lv/12,(lv/12+1)*12);break;
-    case ENGINEERING: snprintf(out,size,"Building timber discount %d (minimum cost 1)",lv/30);break;
+    case ENGINEERING: snprintf(out,size,"Build farms, forges and benches; timber discount %d",lv/30);break;
     case SCIENCE: snprintf(out,size,"Research discount %d%%; next tier %d silver",lv/5,research_cost());break;
     case CROSSBOWS: snprintf(out,size,"Ranged attack score %.1f before weather and injuries",lv+gear_bonus(a,0)+level(a,PERCEPTION)*.15f);break;
     case PERCEPTION: snprintf(out,size,"Ranged attack bonus +%.1f",lv*.15f);break;

@@ -10,8 +10,8 @@ enum { UNARMED_PROFILE = WEAPON_STYLES, SPEAR_PROFILE };
 
 static const CombatProfile combatProfiles[] = {
     [WS_KATANA] = {
-        .idle = POSE(4, -16, .22f, 0, 0, 0, 0),
-        .guard = POSE(5.8f, -16.5f, -.30f, .1f, .4f, 1, 0),
+        .idle = POSE(4,-16,-.18f,0,0,0,0),
+        .guard = POSE(5.8f,-17.2f,-.56f,.1f,.4f,1,0),
         .strokeSeconds = .24f,
         .moves = {
             { /* Quick rising cut from a low chamber. */

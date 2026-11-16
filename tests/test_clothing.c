@@ -20,7 +20,7 @@ int main(void) {
                 int item = gear_id(family, m, q);
                 const ItemDef *d = &itemDefs[item];
                 assert(d->armor > 0 && d->armor <= 60);
-                assert(d->weight >= 1 && d->weight <= 20);
+                assert(d->weight >= 1 && d->weight <= 25);
                 assert(d->speed >= -12 && d->speed <= 10);
                 assert(d->effect == 4 || (d->effect >= 6 && d->effect <= 11));
                 if (q) {

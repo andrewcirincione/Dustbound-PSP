@@ -218,6 +218,6 @@ void command_attack(int n){Actor*a=&g.actors[g.selected];if(n<0||n>=g.actorCount
     g.field.playingDead[g.selected]=0;
     Actor*b=&g.actors[n];if(!hostile(a,b)&&!warrant_authorizes(n)){crime_charge(a,b->faction,100,CRIME_ASSAULT);g.rep[b->faction]-=20;log_msg("Assault: +100 bounty; faction standing -20.");}
     population_anger(n);LW.anger[n]=1;int k=event_for(n);if(k>=0)for(int i=0;i<LW.events[k].count;i++){int j=LW.events[k].members[i];if(j>=0)LW.anger[j]=1;}
-    LW.command[g.selected]=n;a->target=n;a->autoattack=1;ui.attackFocus=n;
+    LW.command[g.selected]=n;a->target=n;a->autoattack=1;if(g.depth.actors[g.selected].order==ORDER_BLOCK||g.depth.actors[g.selected].order==ORDER_HOLD_FIRE)g.depth.actors[g.selected].order=ORDER_BALANCED;ui.attackFocus=n;
 }
 #undef LW

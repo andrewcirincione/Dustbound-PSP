@@ -57,13 +57,15 @@ int placement_valid(int type, int b, float x, float y) {
     placement_init();
     if (b >= 0) return home_site_valid(type, b, ui.placeSlot, x, y);
     Actor *a = &g.actors[g.selected];
-    if ((type != 0 && type != 1) || !conscious(a) || actor_inside(a) || a->prisonTime > 0 ||
+    if ((type<0||type>=buildCount) || !conscious(a) || actor_inside(a) || a->prisonTime > 0 ||
         g.depth.actors[g.selected].captive || !isfinite(x) || !isfinite(y) ||
         distance(a->x,a->y,x,y) > 10 || town_near(x,y,10) >= 0 || !can_walk(x,y) ||
         !can_walk(x+.65f,y) || !can_walk(x-.65f,y) || !can_walk(x,y+.65f) || !can_walk(x,y-.65f)) return 0;
+    float radius=type==3||type==6?3.2f:type==2||type==7?1.8f:.85f;
+    for(int k=0;k<8;k++){float angle=k*.78539816f;if(!can_walk(x+cosf(angle)*radius,y+sinf(angle)*radius))return 0;}
     for (int i = 0; i < g.buildingCount; i++) {
         Building *other = &g.buildings[i];
-        if (portable_bedroll(i) >= 0 && distance(x,y,other->x,other->y) < 1.75f) return 0;
+        if (portable_bedroll(i) >= 0 && distance(x,y,other->x,other->y) < radius+1.0f) return 0;
     }
     for(int i=0;i<g.nodeCount;i++)if(g.nodes[i].remaining && !g.drops[i].room && distance(x,y,g.nodes[i].x,g.nodes[i].y)<1.25f)return 0;
     for (int i = 0; i < g.actorCount; i++) {
@@ -112,18 +114,22 @@ int place_camp(int type, float x, float y) {
         for(int i=0;i<PACK;i++)if(a->pack[i].item==BEDROLL_ITEM&&a->pack[i].qty){slot=i;break;}
         if(slot<0){log_msg("You need a bedroll.");return 0;}
         owner=a->stolen[slot];
-    } else if (inventory_count(a,WOOD)<build_wood_cost(0)) {
-        log_msg("You need %d timber.",build_wood_cost(0));return 0;
+    }else{
+        if(g.tech<build_tech_required(type)){log_msg("Research tier %d required.",build_tech_required(type));return 0;}
+        if(inventory_count(a,WOOD)<build_wood_cost(type)||inventory_count(a,IRONBAR)<build_metal_cost(type)){
+            log_msg("Need %d timber and %d iron bars.",build_wood_cost(type),build_metal_cost(type));return 0;
+        }
     }
-    int b=add_build(x,y,type==1?BED:CAMPFIRE,FREE,g.selected);
+    static const int types[]={CAMPFIRE,BED,FARM,FORGE,BENCH,WALL,STORE,WINDMILL};
+    int b=add_build(x,y,types[type],FREE,g.selected);
     if(b<0)return 0;
     if(type==1){inventory_remove_slot(a,slot,1);g.field.rolls[b]=owner+1;}
-    else inventory_remove(a,WOOD,build_wood_cost(0));
+    else {inventory_remove(a,WOOD,build_wood_cost(type));if(build_metal_cost(type))inventory_remove(a,IRONBAR,build_metal_cost(type));}
     g.plans.campLastNear[b]=g.time;
     g.depth.buildings[b]=(DepthBuilding){.condition=100,.fuel=12};
     if(type==0&&!g.baseExists){g.baseExists=1;g.baseX=x;g.baseY=y;g.raidTimer=420;}
-    gain(a,ENGINEERING,3);
-    log_msg(type==1?"Bedroll laid out.":"Campfire built.");
+    gain(a,ENGINEERING,type<2?3:20+build_wood_cost(type));
+    if(type==1)log_msg("Bedroll laid out.");else log_msg("Built %s.",buildNames[type]);
     return 1;
 }
 void placement_open(int type, int b) {

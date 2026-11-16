@@ -825,6 +825,8 @@ int forge_selection_item(void);
 const char *forge_selection_name(void);
 int nearby_station(int type, float radius);
 int build_wood_cost(int choice);
+int build_metal_cost(int choice);
+int build_tech_required(int choice);
 int research_cost(void);
 int harvest_yield(const Actor *actor);
 int needs_aid(const Actor *actor);

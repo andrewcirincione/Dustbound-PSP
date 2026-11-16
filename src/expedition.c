@@ -173,7 +173,7 @@ static void create_crew(int s,int floor){
   a->active=1;a->kind=z->robot?BEAST:z->occupied?(m?GUARD:floor?SETTLER:TRADER):RAIDER;a->faction=z->occupied?z->faction:HOSTILE;
   a->race=z->robot?2:seed%2;a->voice=z->robot?77+(m+floor)%2:z->occupied?(m?ROLE_MARSHAL:ROLE_MERCHANT):0;
   snprintf(a->name,sizeof(a->name),"%s",z->robot?boss?"Core Warden":m%2?"Iron Crawler":"Old Sentinel":z->occupied?m?"Outpost guard":"Outpost trader":boss?"Vault keeper":"Ruin scavenger");
-  a->healthScale=z->robot?125+tier*35+floor*15+(boss?65:0):100+tier*10;a->body=seed%3;a->skin=seed%8;a->hair=seed%7;a->hairColor=seed%6;
+  a->healthScale=z->robot?125+tier*35+floor*15+(boss?65:0):100+tier*10;a->body=seed%3;a->skin=seed%8;a->hair=seed%7;a->hairColor=seed%6;a->beard=z->robot?0:(seed>>9)%8;
   a->target=a->attackTarget=a->carrying=a->carriedBy=a->prisonTown=-1;a->homeTown=-1;
   a->x=g.buildings[b].x;a->y=g.buildings[b].y;a->blood=a->hunger=100;
   for(int l=0;l<LIMBS;l++)a->health[l]=species_health(a);

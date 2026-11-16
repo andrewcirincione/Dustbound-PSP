@@ -1,5 +1,12 @@
 # Dust — PSP frontier survival RPG
 
+## 1.2.1 — Field repairs
+
+Character fittings and walking proportions, readable forge outputs, quest offers before acceptance and Journal abandonment, physical camp chests, equipped item listings, meaningful recovery bars, injury-based carrying limits, lower resale values and heavier gear. Camp farming/workshops and cooking/leatherworking have reachable facilities and recipes. Combat ignores opponents in other rooms/floors. Older saves upgrade automatically.
+
+[Complete 1.2.1 changes](docs/RELEASE_NOTES.md) · [Qualification checkpoint](docs/FIXES_1_2_1.md)
+
+
 ## 1.2.0 — Old-world expeditions
 
 30 additional locations bring the wilderness total to 46, with 106 explorable floors. Explore larger connected interiors, climb through galleries to guarded vaults, encounter animated old-world robots, and visit occupied refuges, guild yards and faction outposts. Six new generated isometric building models and four interior materials add visual variety. Loot, wounds, cleared enemies and upper-floor progress persist. Existing saves upgrade automatically.
@@ -65,7 +72,7 @@ For a minor bounty the watch approaches and offers payment or jail. A bounty of 
 
 ## Install
 
-Extract `Dust-1.0.5-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v31 reads earlier expeditions, including v30. Existing equipment, training and town control carry over.
+Extract `Dust-1.2.1-PSP.zip` to the memory-stick root, or replace `PSP/GAME/DUSTBOUND/EBOOT.PBP`. A PSP capable of running homebrew, or PPSSPP, is required. Keep your saves before upgrading. Save format v35 reads earlier expeditions, including v34. Existing equipment, training and town control carry over.
 
 ## Controls
 
