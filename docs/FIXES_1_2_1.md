@@ -1,7 +1,7 @@
 # Dust 1.2.1 feedback checkpoint
 
 Base: published 1.2.0, source c9706bf; main 04b1e7a.
-Status: implementation complete; native qualification passes; actual PSP emulator qualification in progress. Not published.
+Status: complete and published as Dust 1.2.1. Release source `45bd9ddbf55a7fea7db0a4c15a8510751892e2a4`; all downloads independently retrieved and verified.
 
 ## Required changes
 
@@ -28,5 +28,15 @@ Status: implementation complete; native qualification passes; actual PSP emulato
 - [x] Targeted gameplay regression coverage and existing suites pass.
 - [x] Native visual review covers affected equipment and character variants.
 - [x] PSP build and package validation pass.
-- [ ] Actual EBOOT tested and screenshots inspected in PPSSPP.
-- [ ] Source checkpoints pushed; release assets verified; 1.2.1 published.
+- [x] Actual release EBOOT tested through ordinary save loads and controller input in PPSSPP 1.20.4; 39 screenshots captured and affected screens visually inspected.
+- [x] Source checkpoints pushed; all four release asset sizes and SHA-256 digests verified; 1.2.1 published.
+
+## Final provenance
+
+- [Published release](https://github.com/andrewcirincione/Dustbound-PSP/releases/tag/v1.2.1)
+- [Successful qualification and publication](https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/43938444429)
+- [Independent successful build](https://github.com/andrewcirincione/Dustbound-PSP/actions/runs/43938444903)
+- [Exact build manifest](BUILD_V121.json), [54-suite results](NATIVE_RESULTS_V121.json), [full PSP controller record](PSP_VERIFICATION_V121.json)
+- EBOOT: 12,074,456 bytes; SHA-256 `39d4b1798913e3f2529661cb230ff2c80e25f0de1da77e19fbc740e589fc0b9d`.
+- Local and GitHub builds are byte-identical. Downloaded PSP ZIP contains that same executable, with no save files or QA marker.
+- All screenshots and review sheets are in `Dust-1.2.1-Evidence.zip` on the release. No physical PSP hardware test.
