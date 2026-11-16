@@ -52,8 +52,32 @@ static int reward_weapon(unsigned seed,int tier){
  int candidates[ARSENAL_WEAPONS],n=0;for(int i=0;i<ARSENAL_WEAPONS;i++)if(arsenal_tier(WEAPON_ITEMS+i)==tier)candidates[n++]=WEAPON_ITEMS+i;
  return n?candidates[seed%n]:SABRE;
 }
+static void useful_cache(int s,int f,int c,Stack *p) {
+ const ExpeditionSite *z=&expeditionSites[s];int tier=g.expedition.tier[s],last=f==z->floors-1;
+ unsigned seed=mix(g.seed+s*9781u+f*337u+c*37u);
+ int gearTier=tier+(f>0);if(gearTier>4)gearTier=4;
+ static const int supplies[8][3]={{PARTS,COAL,COPPER},{BOLTS,MEDKIT,RATION},{RELIC,CLOTH,HERBAL_TEA},{RATION,JERKY,CLOTH},{IRONBAR,TOOLS,PARTS},{BOLTS,MEDKIT,RATION},{MEDKIT,TONIC,CLOTH},{IRONBAR,COPPER,HIDE}};
+ for(int i=0;i<3;i++)p[i]=(Stack){supplies[z->theme%8][(c+i+f)%3],1+(seed>>(i*4))%(2+tier)};
+ if(z->occupied&&tier<2){p[0]=(Stack){c%2?RATION:PARTS,2+seed%4};p[1]=(Stack){c%2?MEDKIT:BEDROLL_ITEM,1};}
+ if(c==1&&!z->occupied){p[0]=(Stack){reward_weapon(seed,gearTier),1};p[1]=(Stack){BOLTS,12+6*tier};}
+ if(c==2&&f>0){p[0]=(Stack){armor_cache_item(seed^3917u,gearTier),1};p[1]=(Stack){z->robot?PARTS:MEDKIT,2+tier};}
+ if(c==3&&last){p[0]=(Stack){reward_weapon(seed,gearTier),1};p[1]=(Stack){armor_cache_item(seed^3917u,gearTier),1};p[2]=(Stack){z->robot||z->theme==2?RELIC:TONIC,1+tier};}
+}
+static void upgrade_interiors(void) {
+ if(g.repairs.interiorsVersion)return;
+ for(int s=0;s<EXP_SITES;s++)for(int f=0;f<expeditionSites[s].floors;f++)for(int c=0;c<EXP_CHESTS;c++){
+  Stack desired[3];useful_cache(s,f,c,desired);
+  for(int i=0;i<3;i++)if(g.expedition.loot[s][f][c][i].qty>0){
+   /* An empty or partly emptied cache never gains replacement quantities. */
+   int remaining=g.expedition.loot[s][f][c][i].qty;
+   g.expedition.loot[s][f][c][i]=desired[i];
+   if(g.expedition.loot[s][f][c][i].qty>remaining)g.expedition.loot[s][f][c][i].qty=remaining;
+  }
+ }
+ g.repairs.interiorsVersion=1;
+}
 void expedition_init(void){
- if(g.expedition.version){memset(crewOwner,0,sizeof(crewOwner));for(int s=0;s<EXP_SITES;s++)for(int f=0;f<EXP_FLOORS;f++){ExpeditionCrew*c=&g.expedition.crew[s][f];if(c->initialized)for(int m=0;m<c->count;m++)if(c->live[m]>=0)crewOwner[c->live[m]]=1+(s*EXP_FLOORS+f)*EXP_GUARDS+m;}return;}
+ if(g.expedition.version){upgrade_interiors();memset(crewOwner,0,sizeof(crewOwner));for(int s=0;s<EXP_SITES;s++)for(int f=0;f<EXP_FLOORS;f++){ExpeditionCrew*c=&g.expedition.crew[s][f];if(c->initialized)for(int m=0;m<c->count;m++)if(c->live[m]>=0)crewOwner[c->live[m]]=1+(s*EXP_FLOORS+f)*EXP_GUARDS+m;}return;}
  memset(crewOwner,0,sizeof(crewOwner));
  memset(&g.expedition,0,sizeof(g.expedition));g.expedition.version=1;
  for(int i=0;i<EXP_ADDITIONS;i++){
@@ -69,14 +93,9 @@ void expedition_init(void){
  for(int s=0;s<EXP_SITES;s++){
   int b=primary(s);const ExpeditionSite*z=&expeditionSites[s];if(b<0)continue;
   int tier=z->tier;if(starter_country(g.buildings[b].x,g.buildings[b].y)&&tier>1)tier=1;g.expedition.tier[s]=tier;
-  for(int f=0;f<z->floors;f++)for(int c=0;c<EXP_CHESTS;c++){
-   Stack*p=g.expedition.loot[s][f][c];unsigned seed=mix(g.seed+s*9781u+f*337u+c*37u);
-   p[0]=(Stack){z->robot?PARTS:c%2?IRONBAR:MEDKIT,1+tier+(seed%3)};
-   p[1]=(Stack){c%2?COPPER:CLOTH,2+seed%4};
-   p[2]=(Stack){z->robot?RELIC:RATION,1+seed%2};
-   if(c==3){int rarity=tier;if(f==z->floors-1){p[0]=(Stack){reward_weapon(seed,rarity),1};p[1]=(Stack){armor_cache_item(seed^3917u,rarity),1};p[2]=(Stack){RELIC,1+tier};}}
-  }
+  for(int f=0;f<z->floors;f++)for(int c=0;c<EXP_CHESTS;c++)useful_cache(s,f,c,g.expedition.loot[s][f][c]);
  }
+ g.repairs.interiorsVersion=1;
  /* Original v33 residents are superseded by per-floor crews, not duplicated. */
  for(int i=0;i<16;i++)if(g.wilderness.guardSerial[i]){
   int k=48+i;if(g.population.groups[k].serial!=g.wilderness.guardSerial[i])continue;
@@ -107,18 +126,56 @@ int expedition_validate(const Game*s){
  }
  return 1;
 }
-int expedition_walls(int b,int floor,float*lines,int max){
- int s=expedition_site(b);if(s<0)return 0;const ExpeditionSite*z=&expeditionSites[s];int n=0;float cell=(z->theme==0||z->theme==3)?12:8;
- for(int axis=0;axis<2;axis++){
-  float bound=axis?z->h:z->w,span=axis?z->w:z->h;
-  for(float at=cell;at<bound-.5f;at+=cell){
-   float start=0;for(float door=cell/2;door<span;door+=cell){float lo=door-1.2f,hi=door+1.2f;
-    if(((s+floor*3+axis+(int)(at/cell)*2+(int)(door/cell))%5!=0)&&n<max){float*p=lines+4*n++;p[0]=axis?start:at;p[1]=axis?at:start;p[2]=axis?lo:at;p[3]=axis?at:lo;}start=hi;
-   }
-   if(start<span&&n<max){float*p=lines+4*n++;p[0]=axis?start:at;p[1]=axis?at:start;p[2]=axis?span:at;p[3]=axis?at:span;}
+static void line_wall(float *lines,int *n,int max,float x0,float y0,float x1,float y1) {
+ if(*n<max && fabsf(x1-x0)+fabsf(y1-y0)>.1f){float *p=lines+4*(*n)++;p[0]=x0;p[1]=y0;p[2]=x1;p[3]=y1;}
+}
+static void doorway(float *lines,int *n,int max,int horizontal,float at,float start,float end,float door) {
+ float lo=fmaxf(start,door-1.25f),hi=fminf(end,door+1.25f);
+ if(horizontal){line_wall(lines,n,max,start,at,lo,at);line_wall(lines,n,max,hi,at,end,at);}
+ else{line_wall(lines,n,max,at,start,at,lo);line_wall(lines,n,max,at,hi,at,end);}
+}
+static int make_walls(int b,int floor,float *lines,int max) {
+ int s=expedition_site(b);if(s<0)return 0;const ExpeditionSite*z=&expeditionSites[s];
+ int n=0;float w=z->w,h=z->h;
+ if(z->theme==5){
+  if(!floor){ /* Sleeping wings around a clear central aisle and entry hall. */
+   doorway(lines,&n,max,0,8,0,h-7,7);doorway(lines,&n,max,0,w-8,0,h-7,7);
+   doorway(lines,&n,max,1,h-7,0,8,3.5f);doorway(lines,&n,max,1,h-7,8,w-8,w/2);doorway(lines,&n,max,1,h-7,w-8,w,w-3.5f);
+  }else if(floor==1){ /* Armory, maintenance bay and a separate supply office. */
+   doorway(lines,&n,max,0,w*.42f,0,h-4,h*.48f);
+   doorway(lines,&n,max,1,h*.55f,w*.42f,w,w*.7f);
+  }else{ /* Two command offices open onto a broad briefing room. */
+   doorway(lines,&n,max,1,8,0,w/2,4);doorway(lines,&n,max,1,8,w/2,w,w-4);
+   doorway(lines,&n,max,0,w/2,0,8,4);
   }
+ }else if(z->theme==0||z->theme==4){
+  if(!floor)doorway(lines,&n,max,0,w-7,0,h-4,h/2);
+  else if(floor==1)doorway(lines,&n,max,1,h/2,0,w,w/2);
+  else{doorway(lines,&n,max,1,8,0,w,w/2);doorway(lines,&n,max,0,w/2,0,8,4);}
+ }else if(z->theme==3){
+  if(!floor){doorway(lines,&n,max,0,7,0,h-8,h/2);doorway(lines,&n,max,0,w-7,0,h-8,h/2);}
+  else doorway(lines,&n,max,1,h/2,0,w,w/2);
+ }else if(z->theme==6){
+  doorway(lines,&n,max,1,h/2,0,w,w/2);
+  if(floor)doorway(lines,&n,max,0,w/2,0,h/2,h/4);
+ }else if(z->theme==2){
+  if(floor){doorway(lines,&n,max,1,h*.4f,0,w,w/2);if(floor==2)doorway(lines,&n,max,0,w/2,0,h*.4f,h*.2f);}
+ }else if(z->theme==1){
+  doorway(lines,&n,max,1,floor?8:h-7,0,w,w/2);
+  if(floor==2)doorway(lines,&n,max,0,w/2,0,8,4);
+ }else{ /* Loading hall below, sorting rooms above, secure store at the top. */
+  if(floor)doorway(lines,&n,max,0,w/2,0,h-5,h/2);
+  else doorway(lines,&n,max,1,7,0,w,w/2);
  }
  return n;
+}
+/* Fixed site geometry is shared by all path probes, actors and render passes. */
+int expedition_walls(int b,int floor,float *lines,int max) {
+ typedef struct{unsigned seed;int b,floor,n;float lines[256];} WallCache;
+ static WallCache cache[4];static unsigned cursor;WallCache *c=NULL;
+ for(int i=0;i<4;i++)if(cache[i].n&&cache[i].seed==g.seed&&cache[i].b==b&&cache[i].floor==floor){c=&cache[i];break;}
+ if(!c){c=&cache[cursor++%4];c->seed=g.seed;c->b=b;c->floor=floor;c->n=make_walls(b,floor,c->lines,64);}
+ int n=c->n<max?c->n:max;if(n)memcpy(lines,c->lines,n*4*sizeof(float));return n;
 }
 int expedition_walkable(int b,int floor,float x,float y){
  if(!expedition_large(b))return 1;
@@ -132,23 +189,64 @@ int expedition_stair_point(int b,int floor,int up,float*x,float*y){
  int source=up?floor:floor-1;*x=source%2?2:expedition_width(b)-2;*y=source%2?expedition_height(b)-2:2;return 1;
 }
 static void prop(InteriorProp*p,int*n,float x,float y,float w,float d,int art,int action){if(*n<ROOM_PROPS)p[(*n)++]=(InteriorProp){x,y,w,d,art,action};}
-static void chest_point(int b,int c,float*x,float*y){float w=expedition_width(b),h=expedition_height(b);*x=c&1?w-3:3;*y=c&2?h-3:3;}
+static void chest_point(int b,int floor,int c,float*x,float*y){
+ float w=expedition_width(b),h=expedition_height(b);
+ *x=c&1?w-2.4f:2.4f;*y=c&2?h-4:2.4f;
+ if(floor==1){*x=c&1?w-3:3;*y=c&2?h-6:5;}
+ if(floor==2){*x=c&1?w-3:3;*y=c&2?h-6:3;}
+}
 int expedition_props(int b,int floor,InteriorProp*p){
- int s=expedition_site(b);if(s<0)return 0;const ExpeditionSite*z=&expeditionSites[s];int n=0;float w=z->w,h=z->h,cell=(z->theme==0||z->theme==3)?12:8;
- for(int c=0;c<EXP_CHESTS;c++){float x,y;chest_point(b,c,&x,&y);prop(p,&n,x,y,.46f,.42f,20,ROOM_EXP_CACHE);}
+ int s=expedition_site(b);if(s<0)return 0;const ExpeditionSite*z=&expeditionSites[s];int n=0;float w=z->w,h=z->h;
+ for(int c=0;c<EXP_CHESTS;c++){float x,y;chest_point(b,floor,c,&x,&y);prop(p,&n,x,y,.46f,.42f,20,ROOM_EXP_CACHE);}
  prop(p,&n,5,2,.7f,.32f,17,ROOM_RUIN_RECORD);
  float x,y;if(expedition_stair_point(b,floor,1,&x,&y))prop(p,&n,x,y,.7f,.55f,ART_INN_STAIRS,ROOM_EXP_UP);
  if(expedition_stair_point(b,floor,0,&x,&y))prop(p,&n,x,y,.7f,.55f,ART_STAIRS_DOWN,ROOM_EXP_DOWN);
- if(z->occupied&&floor==0){prop(p,&n,5,h-3,.8f,.35f,17,ROOM_EXP_TRADE);prop(p,&n,2,h-3,.58f,.81f,16,ROOM_REST);}
- for(float yy=cell/2;yy<h-1;yy+=cell)for(float xx=cell/2;xx<w-1;xx+=cell){
-  int kind=(int)(xx/cell+yy/cell)+s+floor;int art=z->theme==0||z->theme==4?kind%2?19:ART_IRON_STOVE:z->theme==2?ART_SIDE_ALTAR:z->theme==6?16:z->theme==5?ART_ARMOR_STAND:kind%2?ART_CARAVAN_BALES:21;
-  /* Room centers hold machinery; doorways at partition midpoints stay clear. */
-  if(distance(xx,yy,3.5f,h-.9f)>2.2f)prop(p,&n,xx,yy,.6f,art==16?.81f:.45f,art,art==16?ROOM_REST:ROOM_NONE);
-  if(n<ROOM_PROPS-2)prop(p,&n,xx-1.5f,yy+1.4f,.5f,.4f,kind%2?21:ART_CARAVAN_BALES,ROOM_NONE);
+ if(z->occupied&&floor==0)prop(p,&n,5,h-3,.8f,.35f,17,ROOM_EXP_TRADE);
+ int theme=z->theme;
+ if(theme==5){
+  if(!floor){
+   for(int side=0;side<2;side++)for(int row=0;row<4;row++){
+    float bx=side?w-3:3,by=5+row*3;
+    prop(p,&n,bx,by,.58f,.81f,16,ROOM_REST);
+   }
+   prop(p,&n,w/2,h-3,1.1f,.55f,17,ROOM_NONE);prop(p,&n,w/2+3,h-3,.6f,.45f,ART_IRON_STOVE,ROOM_NONE);
+  }else if(floor==1){
+   prop(p,&n,3,9,.6f,.45f,ART_ARMOR_STAND,ROOM_NONE);prop(p,&n,3,13,.6f,.45f,ART_ARMOR_STAND,ROOM_NONE);
+   prop(p,&n,w*.65f,4,1.1f,.55f,17,ROOM_NONE);prop(p,&n,w-3,10,.7f,.45f,21,ROOM_NONE);
+   prop(p,&n,w*.65f,h-4,.8f,.5f,19,ROOM_NONE);prop(p,&n,6,h-4,.7f,.45f,ART_CARAVAN_BALES,ROOM_NONE);
+  }else{
+   prop(p,&n,w/2,h/2+2,1.3f,.65f,17,ROOM_NONE);
+   prop(p,&n,7,3,.7f,.45f,21,ROOM_NONE);prop(p,&n,w-7,3,.7f,.45f,21,ROOM_NONE);
+   prop(p,&n,5,h/2,.58f,.81f,ART_LOW_COT,ROOM_REST);
+  }
+ }else if(theme==6||(theme==3&&floor>0)){
+  for(int side=0;side<2;side++)for(int row=0;row<3;row++)prop(p,&n,side?w-3:3,7+row*4,.58f,.81f,theme==6?ART_LOW_COT:16,ROOM_REST);
+  prop(p,&n,w/2,4,.8f,.4f,17,ROOM_NONE);prop(p,&n,w-4,h-3,.6f,.4f,ART_IRON_STOVE,ROOM_NONE);
+ }else if(theme==3){
+  prop(p,&n,3,7,.58f,.81f,16,ROOM_REST);prop(p,&n,w-3,7,.58f,.81f,16,ROOM_REST);
+  prop(p,&n,w/2,7,.8f,.4f,17,ROOM_NONE);prop(p,&n,w/2+3,7,.6f,.4f,ART_IRON_STOVE,ROOM_NONE);
+  prop(p,&n,3,h/2+3,.7f,.45f,ART_CARAVAN_BALES,ROOM_NONE);prop(p,&n,w-3,h/2+3,.7f,.45f,ART_CARAVAN_BALES,ROOM_NONE);
+ }else if(theme==0||theme==4){
+  if(!floor){
+   for(int j=0;j<3;j++)prop(p,&n,5+j*5,h/2,1.0f,.7f,theme==4?19:ART_IRON_STOVE,ROOM_NONE);
+   prop(p,&n,w-3,h/2-4,.6f,.4f,21,ROOM_NONE);
+  }else if(floor==1){
+   for(int j=0;j<3;j++)prop(p,&n,6+j*5,3,.7f,.45f,21,ROOM_NONE);
+   prop(p,&n,w/2,h-6,1.0f,.6f,19,ROOM_NONE);
+  }else{prop(p,&n,w/2,h/2,1.2f,.5f,ART_RESEARCH_TABLE,ROOM_NONE);prop(p,&n,w-6,4,.7f,.4f,21,ROOM_NONE);}
+ }else if(theme==2){
+  if(!floor){prop(p,&n,w/2,3,1.0f,.65f,ART_SIDE_ALTAR,ROOM_NONE);for(int row=0;row<2;row++)for(int side=0;side<2;side++)prop(p,&n,w/2+(side?4:-4),10+row*5,1.0f,.4f,17,ROOM_NONE);}
+  else{for(int j=0;j<3;j++)prop(p,&n,3+j*(w-6)/2,7,.65f,.45f,21,ROOM_NONE);prop(p,&n,w/2,h/2+3,1.1f,.5f,ART_RESEARCH_TABLE,ROOM_NONE);}
+ }else if(theme==1){
+  if(!floor){prop(p,&n,3,7,.58f,.81f,16,ROOM_REST);prop(p,&n,w-3,7,.58f,.81f,16,ROOM_REST);prop(p,&n,w/2,h-3,.9f,.4f,17,ROOM_NONE);}
+  else{prop(p,&n,w/2,h/2,.9f,.4f,ART_RESEARCH_TABLE,ROOM_NONE);prop(p,&n,w-3,6,.6f,.4f,21,ROOM_NONE);}
+ }else{
+  for(int side=0;side<2;side++)for(int row=0;row<2;row++)prop(p,&n,side?w-5:5,10+row*5,.8f,.5f,floor?21:ART_CARAVAN_BALES,ROOM_NONE);
+  if(z->occupied){prop(p,&n,w/2,4,.8f,.4f,17,ROOM_NONE);prop(p,&n,3,7,.58f,.81f,16,ROOM_REST);}
  }
  return n;
 }
-int expedition_cache_index(int b,int floor,float x,float y){int s=expedition_site(b);if(s<0||floor<0||floor>=EXP_FLOORS)return -1;for(int c=0;c<EXP_CHESTS;c++){float px,py;chest_point(b,c,&px,&py);if(distance(x,y,px,py)<.2f)return (s*EXP_FLOORS+floor)*EXP_CHESTS+c;}return -1;}
+int expedition_cache_index(int b,int floor,float x,float y){int s=expedition_site(b);if(s<0||floor<0||floor>=EXP_FLOORS)return -1;for(int c=0;c<EXP_CHESTS;c++){float px,py;chest_point(b,floor,c,&px,&py);if(distance(x,y,px,py)<.2f)return (s*EXP_FLOORS+floor)*EXP_CHESTS+c;}return -1;}
 Stack *expedition_cache(int encoded){if(encoded<0||encoded>=EXP_SITES*EXP_FLOORS*EXP_CHESTS)return NULL;int c=encoded%EXP_CHESTS,f=encoded/EXP_CHESTS%EXP_FLOORS,s=encoded/EXP_CHESTS/EXP_FLOORS;return g.expedition.loot[s][f][c];}
 int expedition_cache_owner(int encoded){int s=encoded/(EXP_FLOORS*EXP_CHESTS);const ExpeditionSite*z=site_def(s);return z&&z->occupied?z->faction:FREE;}
 void expedition_stairs(Actor*a,int up){

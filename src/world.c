@@ -609,7 +609,9 @@ static void depot_map(void){
 }
 int depot_public(int b) {
     return b>=0 && b<g.buildingCount && g.buildings[b].type==STORE && g.buildings[b].owner<0 &&
-        !g.frontier.variant[b] && building_town(b)>=0;
+        !g.frontier.variant[b] && expedition_site(b)<0 && wilderness_site(b)<0 &&
+        !ruined_building(b) && building_town(b)>=0 &&
+        distance(g.buildings[b].x,g.buildings[b].y,towns[building_town(b)].x,towns[building_town(b)].y)<24;
 }
 int depot_clerk(int b) {
     if(!depot_public(b))return -1;
@@ -652,7 +654,7 @@ int storage_slots(int building) {
     if(depot_public(building)){
         depot_map();return depotMapCount*16;
     }
-    return building>=0&&building<g.buildingCount&&g.buildings[building].type==STORE&&g.buildings[building].owner>=0?16:0;
+    return 0;
 }
 const Stack *storage_stack(int building,int slot) {
     if(slot<0||slot>=storage_slots(building))return NULL;
@@ -661,6 +663,7 @@ const Stack *storage_stack(int building,int slot) {
     return &g.buildings[building].storage[slot];
 }
 int storage_owner(int building,int slot) {
+    stolen_home_until(slot);
     return home_state(building)==HOME_OWNED&&slot>=0&&slot<HOME_STASH?g.homes.stolen[slot]:FREE;
 }
 int depot_fee(int b,int from,int slot) {
@@ -691,7 +694,7 @@ int storage_transfer(int b,int from,int slot) {
     if(from){
         Stack*stack=(Stack*)storage_stack(b,slot);if(!stack||!stack->item)return 0;
         int it=stack->item;
-        if(!inventory_add_owned(a,it,1,storage_owner(b,slot))){log_msg("Pack full.");return 0;}
+        if(!inventory_add_owned_until(a,it,1,storage_owner(b,slot),home?stolen_home_until(slot):0)){log_msg("Pack full.");return 0;}
         if(--stack->qty==0){stack->item=NONE;if(home)g.homes.stolen[slot]=FREE;}
         g.money-=fee;
         if(fee)log_msg("Withdrew %s. Fee %d silver.",itemDefs[it].name,fee);else log_msg("Withdrew %s.",itemDefs[it].name);
@@ -699,12 +702,13 @@ int storage_transfer(int b,int from,int slot) {
     }
     if(!item_slot_id(a,slot))return 0;
     int it=item_slot_id(a,slot),owner=item_slot_owner(a,slot),dest=-1;
+    float until=stolen_until(a,slot==PACK+GEARS?LOOT_LAYER_SLOT:slot);
     if(owner&&!home){log_msg("The depot won't accept stolen goods.");return 0;}
-    for(int i=0;i<count;i++){const Stack*stack=storage_stack(b,i);if(stack->item==it&&stack->qty<999&&storage_owner(b,i)==owner){dest=i;break;}}
+    for(int i=0;i<count;i++){const Stack*stack=storage_stack(b,i);if(stack->item==it&&stack->qty<999&&storage_owner(b,i)==owner&&(!owner||fabsf(stolen_home_until(i)-until)<.05f)){dest=i;break;}}
     if(dest<0)for(int i=0;i<count;i++)if(!storage_stack(b,i)->item){dest=i;break;}
     if(dest<0){log_msg(home?"Shared stash is full.":"Depot has no free stack.");return 0;}
     Stack*stack=(Stack*)storage_stack(b,dest);stack->item=it;stack->qty++;
-    if(home)g.homes.stolen[dest]=owner;
+    if(home){g.homes.stolen[dest]=owner;stolen_home_set(dest,until);}
     item_slot_remove(a,slot,1);g.money-=fee;
     if(fee)log_msg("Stored %s. Fee %d silver.",itemDefs[it].name,fee);else log_msg("Stored %s.",itemDefs[it].name);
     return 1;
@@ -2358,6 +2362,7 @@ static int worker_building(const Actor *a, int type) {
     for (int i = 0; i < g.buildingCount; i++) {
         Building *b = &g.buildings[i];
         float d = distance(a->x, a->y, b->x, b->y);
+        if (type==STORE&&!depot_public(i))continue;
         if (b->type == type && depth_build_ready(i) && (b->owner >= 0 || g.rep[b->faction] >= -25) && d < best) {
             found = i;
             best = d;

@@ -572,13 +572,14 @@ int loot_take(int slot, int all) {
         log_msg("Salvage needs a fallen target within reach.");
         return 0;
     }
+    float until=stolen_until(b,slot);
     int it = limb_loot_item(b,slot);
     int qty = slot < PACK && all ? b->pack[slot].qty : 1;
     int owner = slot < PACK ? b->stolen[slot] : slot<PACK+GEARS?b->gearStolen[slot-PACK]:slot==LOOT_LAYER_SLOT?g.depth.actors[ui.lootActor].layerOwner:limb_owner(b,LARM+slot-PACK-GEARS);
     int theft = !b->squad && b->faction > FREE && b->faction != HOSTILE && b->faction != WILDLIFE;
     if (theft)
         owner = b->faction;
-    if (!it || !inventory_add_owned(a, it, qty, owner)) {
+    if (!it || !inventory_add_owned_until(a, it, qty, owner, theft?0:until)) {
         log_msg("No item, or no room for that stack.");
         return 0;
     }
@@ -735,6 +736,7 @@ int item_slot_id(const Actor*a,int slot){
 }
 int item_slot_qty(const Actor*a,int slot){return !item_slot_id(a,slot)?0:slot<PACK?a->pack[slot].qty:1;}
 int item_slot_owner(const Actor*a,int slot){
+    stolen_until(a,slot==PACK+GEARS?LOOT_LAYER_SLOT:slot);
     if(slot<0)return 0;if(slot<PACK)return a->stolen[slot];if(slot<PACK+GEARS)return a->gearStolen[slot-PACK];
     return slot==PACK+GEARS?g.depth.actors[a-g.actors].layerOwner:0;
 }

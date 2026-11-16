@@ -60,13 +60,13 @@ Enter a smithy and walk to the forge. Choose slot, design, material and quality 
 
 ## 10. Crafting
 
-Enter a smithy to forge weapons or armor. Each ingredient shows HAVE/NEED, with green for enough and red for a shortage. Mechanical limbs must be bought or found. Cooking recipes at campfires include jerky, oatcakes, stew and rations; every 25 Cooking levels adds one food item per batch. Leatherworking is part of Smithing: use raw hides and cloth to make leather vests or boots at a bench. Nearby enemies do not block these services.
+Enter a smithy to forge weapons or armor. Each ingredient shows HAVE/NEED, with green for enough and red for a shortage. Mechanical limbs must be bought or found. Cooking recipes at campfires include jerky, oatcakes, stew and rations. Nearby enemies do not block these services.
 
-Start > Camp & Home > Research unlocks materials, quality and camp workshops. Research needs a nearby bench, a relic and silver. Every five Science levels reduces the silver cost by 1%. Furniture does not need research.
+Start > Camp & Home > Research unlocks materials and equipment quality. Research needs a nearby bench, a relic and silver. Furniture does not need research.
 
 ## 11. Your Outpost
 
-Start > Camp & Home > Build camp offers fires, bedrolls, farm plots, forges, research benches, palisades, storage and wind pumps. The menu quotes timber, iron and research. A bedroll must be in your inventory. Engineering reduces timber costs and speeds construction; Farming adds one grain per harvest every 20 levels. Move the placement cursor with the analog stick or D-pad, then Cross to place. Red positions are blocked. Placement clears nearby foliage. Pack a bedroll through Nearby Actions. A camp disappears after a day without a squad member nearby.
+Start > Camp & Home > Build camp offers bonfires and bedrolls. Bonfires use timber. A bedroll must be in your inventory. Move the placement cursor with the analog stick or D-pad, then Cross to place. Red positions are blocked. Placement clears nearby foliage. Pack a bedroll through Nearby Actions. A camp disappears after a day without a squad member nearby.
 
 Buy a house at its door, enter it, then choose Place furniture in Camp & Home. Buy and position a bed, chest, table, shelf or stove. Move / remove changes existing furniture without buying it again. Chests in every house you own share a free 64-stack stash.
 
@@ -146,7 +146,7 @@ Assign each survivor to one of three groups and choose its leader. A pin marks t
 
 ## 23. Camp Work & Fuel
 
-The wilderness has persistent camps, patrols, refugees, raiders, beasts, prisoners and armies. Groups travel, rest, gather and clash even far away. Camp beds are free when unoccupied. Ore seams and cuttable timber have distinct markings and sit outside settlements. Campfires turn two meat into one ration before the Cooking skill bonus. Take supplies from each physical camp chest, one item at a time. Road traders and some smugglers carry their own stock. Search a chest to see its contents before taking anything.
+The wilderness has persistent camps, patrols, refugees, raiders, beasts, prisoners and armies. Groups travel, rest, gather and clash even far away. Camp beds are free when unoccupied. Ore seams and cuttable timber have distinct markings and sit outside settlements. Campfires turn two meat into one ration. Take supplies from each physical camp chest, one item at a time. Road traders and some smugglers carry their own stock. Search a chest to see its contents before taking anything.
 
 Highlight a Bedroll in the pack and press ![cross](../assets/ui/cross.svg) to lay it out. Use Nearby Actions to rest or pack it up. Construction consumes materials when a foundation is placed. Stay beside it to build; moving cancels work. Resume from the nearby action or Camp ledger. Unfinished stations and beds cannot work.
 

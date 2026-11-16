@@ -174,7 +174,7 @@ int depth_build_action(int b) {
             return 0;
         }
         D.buildings[b].condition = fminf(100, D.buildings[b].condition + 35);
-        gain(a, ENGINEERING, 12);
+        gain(a, SMITHING, 12);
         log_msg("Structure repaired.");
         return 1;
     }
@@ -265,15 +265,17 @@ int depth_layer(int slot) {
         return 0;
     }
     Actor backup = *a;
-    int owner = a->stolen[slot];
+    int owner = item_slot_owner(a,slot);
+    float until=stolen_until(a,slot), oldUntil=stolen_until(a,LOOT_LAYER_SLOT);
     inventory_remove_slot(a, slot, 1);
-    if (z->layer && !inventory_add_owned(a, z->layer, 1, z->layerOwner)) {
+    if (z->layer && !inventory_add_owned_until(a, z->layer, 1, z->layerOwner,oldUntil)) {
         *a = backup;
         log_msg("Pack full. Layer swap cancelled.");
         return 0;
     }
     z->layer = item;
     z->layerOwner = owner;
+    stolen_set(a,LOOT_LAYER_SLOT,until);
     log_msg("Underlayer fitted. Inspect coverage in Armor Layers.");
     return 1;
 }
@@ -497,10 +499,10 @@ void depth_tick(float dt) {
                 a->taskKind = 0;
                 continue;
             }
-            float power = 1 + level(a, ENGINEERING) * .025f;
+            float power = 1 + level(a, SMITHING) * .025f;
             D.buildings[b].labor = fmaxf(0, D.buildings[b].labor - dt * power);
             a->action = D.buildings[b].labor + 1;
-            gain(a, ENGINEERING, dt * 3);
+            gain(a, SMITHING, dt * 3);
             if (!D.buildings[b].labor) {
                 a->taskKind = 0;
                 log_msg("Construction complete: %s.", context_name());

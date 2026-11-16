@@ -1159,6 +1159,9 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
     paint_torso(chest,torso?cloth:skin,li,itemDefs[torso].quality);
     float scalp = head_y(-33.f);
     painted_head(a, RX(0, scalp), RY(scalp), RX(0, headChin), RY(headChin), head_width(race) * sc, skin, li, face);
+#ifdef DUST_HEAD_OBSERVER
+    DUST_HEAD_OBSERVER(RX(0,scalp),RY(scalp),RX(0,headChin),RY(headChin),head_width(race)*sc);
+#endif
     if (a->scar)
         painted_line(RX(face * headScale, head_y(-29)), RY(head_y(-29)),
                      RX(face * 1.5f * headScale, head_y(-27)), RY(head_y(-27)), shade(0x874b38, li));

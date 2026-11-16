@@ -108,6 +108,7 @@ int home_place(int b, int slot, int type, float x, float y) {
 }
 int place_camp(int type, float x, float y) {
     Actor *a=&g.actors[g.selected];
+    if (type < 0 || type >= buildCount) return 0;
     if (!placement_valid(type,-1,x,y)) { log_msg("Choose open ground outside town."); return 0; }
     int slot=-1, owner=0;
     if (type==1) {

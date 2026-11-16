@@ -2,7 +2,7 @@
 #define DUSTBOUND_GAME_H
 #include <stdint.h>
 #define GAME_NAME "Dust"
-#define VERSION "1.2.1"
+#define VERSION "1.2.2"
 #define WORLD 1536
 #define FOG_SIZE 384
 #define WORK_REACH 1.15f
@@ -329,6 +329,7 @@ typedef struct {
 } WarrantView;
 typedef struct { float x, y; unsigned short room; unsigned char floor; } DropLocation;
 typedef struct { int initialized,count,stockDay,live[EXP_GUARDS]; Actor actor[EXP_GUARDS]; DepthActor depth[EXP_GUARDS]; } ExpeditionCrew;
+typedef struct { unsigned key; float until; } TheftStamp;
 typedef struct {
     uint32_t seed, rng;
     float time, dayTime, raidTimer, autosave;
@@ -451,7 +452,21 @@ typedef struct {
         int taken[512], next;
         float wakeTotal[MAX_ACTORS];
     } feedback;
+    /* v36: theft ages follow individual stacks and equipped pieces. */
+    struct {
+        TheftStamp actor[MAX_ACTORS][LOOT_SLOTS], home[HOME_STASH], drop[MAX_NODES];
+        int interiorsVersion;
+    } repairs;
 } Game;
+float stolen_until(const Actor *actor, int slot);
+void stolen_set(Actor *actor, int slot, float until);
+float stolen_home_until(int slot);
+void stolen_home_set(int slot, float until);
+float stolen_drop_until(int slot);
+void stolen_drop_set(int slot, float until);
+void stolen_tick(void);
+int stolen_validate(const Game *save);
+int inventory_add_owned_until(Actor *actor, int item, int qty, int owner, float until);
 void wilderness_init(void);
 int wilderness_site(int building);
 const char *wilderness_name(int site);
@@ -748,7 +763,8 @@ int town_npc_routine(int actor, float dt);
 void actor_leave_room(int actor);
 void put_down(Actor *carrier);
 int nearest_ore(float x, float y, float reach, int type);
-enum { CORE_SKILL_ROWS = SKILLS - 1 };
+enum { CORE_SKILL_ROWS = SKILLS - 5 };
+int skill_enabled(int skill);
 float context_distance(void);
 float context_reach(void);
 const char *context_name(void);

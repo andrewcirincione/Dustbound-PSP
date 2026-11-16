@@ -745,7 +745,7 @@ static int room_layout(int building, int t, int style, int floor, InteriorProp *
             put_prop(p,&n,x,y,.48f+(j%3)*.10f,.44f,20,ROOM_NONE);
         }
         put_prop(p,&n,3.8f,1.1f,.62f,.38f,21,ROOM_NONE);
-        put_prop(p,&n,3.4f,2.05f,.80f,.31f,17,depot_public(building)||b->owner>=0?ROOM_STORAGE:ROOM_CHEST);
+        put_prop(p,&n,3.4f,2.05f,.80f,.31f,17,depot_public(building)?ROOM_STORAGE:ROOM_CHEST);
     } else if (b->type == BAR) {
         int upstairs = inn_has_upstairs(building);
         if (upstairs)
@@ -1084,8 +1084,8 @@ int jail_room_open(int room) {
     }
     return 1;
 }
-static int room_clear(int room, const InteriorProp *p, int count, float x, float y) {
-    if (x < .4f || y < .4f || x > expedition_width(room-1)-.4f || y > expedition_height(room-1)-.4f || !expedition_walkable(room-1,0,x,y))
+static int room_clear(int room, int floor, const InteriorProp *p, int count, float x, float y) {
+    if (x < .4f || y < .4f || x > expedition_width(room-1)-.4f || y > expedition_height(room-1)-.4f || !expedition_walkable(room-1,floor,x,y))
         return 0;
     if (g.buildings[room - 1].type == JAIL) {
         if (fabsf(y-CELL_Y) < .24f &&
@@ -1100,11 +1100,27 @@ static int room_clear(int room, const InteriorProp *p, int count, float x, float
             return 0;
     return 1;
 }
+/* Lazy half-step collision samples are shared by repeated path searches. */
+static unsigned char roomNav[169*169];
+static InteriorProp navProps[ROOM_PROPS];
+static int navRoom=-1,navFloor,navCount,navJail;static unsigned navSeed;
+static void room_nav_begin(int room,int floor,const InteriorProp *props,int count){
+ int jail=g.buildings[room-1].type==JAIL?jail_room_open(room):0;
+ if(navRoom!=room||navFloor!=floor||navSeed!=g.seed||navCount!=count||navJail!=jail||memcmp(navProps,props,count*sizeof(*props))){
+  memset(roomNav,0,sizeof(roomNav));memcpy(navProps,props,count*sizeof(*props));navRoom=room;navFloor=floor;navSeed=g.seed;navCount=count;navJail=jail;
+ }
+}
+static int room_nav_clear(int x,int y){
+ if(x<0||y<0||x>=169||y>=169)return 0;
+ unsigned char *cell=&roomNav[y*169+x];
+ if(!*cell)*cell=room_clear(navRoom,navFloor,navProps,navCount,.5f+x*.2f,.5f+y*.2f)?1:2;
+ return *cell==1;
+}
 int room_floor_walkable(int room, int floor, float x, float y) {
     if (room <= 0 || room > g.buildingCount) return 0;
     InteriorProp p[ROOM_PROPS];
     int count = interior_floor_props(room - 1,floor,p);
-    return room_clear(room,p,count,x,y);
+    return room_clear(room,floor,p,count,x,y);
 }
 
 int interior_walkable(int room, float x, float y) {
@@ -1118,7 +1134,7 @@ void interior_clear_position(Actor *a) {
     InteriorProp p[ROOM_PROPS];
     int count = interior_floor_props(room - 1,actor_floor(a),p);
     float ox = depth_x(a), oy = depth_y(a);
-    if (room_clear(room,p,count,ox,oy))
+    if (room_clear(room,actor_floor(a),p,count,ox,oy))
         return;
     int locked = g.buildings[room - 1].type == JAIL && !jail_room_open(room);
     float best = 100, px = ox, py = oy;
@@ -1126,7 +1142,7 @@ void interior_clear_position(Actor *a) {
         for (float x = .45f; x <= expedition_width(room-1)-.4f; x += .2f) {
             if (locked && (oy < CELL_Y) != (y < CELL_Y)) continue;
             float d = (x-ox)*(x-ox)+(y-oy)*(y-oy);
-            if (d < best && room_clear(room,p,count,x,y)) {
+            if (d < best && room_clear(room,actor_floor(a),p,count,x,y)) {
                 best = d;
                 px = x;
                 py = y;
@@ -1153,7 +1169,7 @@ void room_route_toward(Actor *a, float tx, float ty, float dt) {
     int count = interior_floor_props(room-1,actor_floor(a),p);
     int clear = 1, steps = (int)ceilf(gap/.25f);
     for (int j = 1; j <= steps; j++)
-        if (!room_clear(room,p,count,x+(tx-x)*j/steps,y+(ty-y)*j/steps)) {
+        if (!room_clear(room,actor_floor(a),p,count,x+(tx-x)*j/steps,y+(ty-y)*j/steps)) {
             clear = 0;
             break;
         }
@@ -1164,6 +1180,7 @@ void room_route_toward(Actor *a, float tx, float ty, float dt) {
     }
     a->routeClock -= dt;
     if (a->routeClock <= 0 || distance(tx,ty,a->routeTargetX,a->routeTargetY) > .6f) {
+        room_nav_begin(room,actor_floor(a),p,count);
         enum { SIDE = 84, CELLS = SIDE * SIDE };
         static short parent[CELLS], queue[CELLS], path[CELLS];
         int sx = (int)fmaxf(0,fminf(SIDE-1,roundf((x-.5f)/.4f)));
@@ -1182,8 +1199,8 @@ void room_route_toward(Actor *a, float tx, float ty, float dt) {
             for (int k = 0; k < 4; k++) {
                 int nx = cx+dx[k], ny = cy+dy[k], next = ny*SIDE+nx;
                 if (nx < 0 || nx >= SIDE || ny < 0 || ny >= SIDE || parent[next] != -2 ||
-                    !room_clear(room,p,count,room_grid_point(nx),room_grid_point(ny)) ||
-                    !room_clear(room,p,count,room_grid_point(cx)+dx[k]*.2f,room_grid_point(cy)+dy[k]*.2f))
+                    !room_nav_clear(nx*2,ny*2) ||
+                    !room_nav_clear(cx*2+dx[k],cy*2+dy[k]))
                     continue;
                 parent[next] = cell;
                 queue[used++] = next;
@@ -1231,7 +1248,7 @@ void interior_move(float dx, float dy, float dt) {
         for (int side = 0; side < 4; side++) {
             float x = bed->x+offsets[side][0], y = bed->y+offsets[side][1];
             float align = side == 0 ? wx : side == 1 ? -wx : side == 2 ? wy : -wy;
-            if (align > best && room_clear(room,props,count,x,y)) {
+            if (align > best && room_clear(room,actor_floor(a),props,count,x,y)) {
                 g.interiorX = x;
                 g.interiorY = y;
                 best = align;
@@ -1244,9 +1261,9 @@ void interior_move(float dx, float dy, float dt) {
         wy /= length;
     }
     float x = g.interiorX + wx * speed, y = g.interiorY + wy * speed;
-    if (room_clear(room,props,count,x,g.interiorY))
+    if (room_clear(room,actor_floor(a),props,count,x,g.interiorY))
         g.interiorX = x;
-    if (room_clear(room,props,count,g.interiorX,y))
+    if (room_clear(room,actor_floor(a),props,count,g.interiorX,y))
         g.interiorY = y;
     a->taskKind = 0;
     walk_motion(a, g.interiorX - (x - wx * speed), g.interiorY - (y - wy * speed));

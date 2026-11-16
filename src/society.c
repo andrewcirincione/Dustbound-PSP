@@ -63,7 +63,7 @@ void weapon_xp_migrate(Game *save) {
     }
 }
 int weapon_class_level(const Actor*a,int c){int n=actor_no(a);if(c<0||c>=WEAPON_CLASSES||n<0)return 1;if(!a->squad)return level(a,c>=WC_ARCHERY?CROSSBOWS:MELEE);return (int)bound(1+sqrtf(S.weaponXP[n][c]/12),1,SKILL_CAP);}
-void weapon_class_gain(Actor*a,int w,float amount){int n=actor_no(a),c=weapon_class(w);if(n<0||c<0||!a->squad)return;S.weaponXP[n][c]=bound(S.weaponXP[n][c]+amount,0,SKILL_XP_CAP);}
+void weapon_class_gain(Actor*a,int w,float amount){int n=actor_no(a),c=weapon_class(w);if(n<0||c<0||!a->squad)return;S.weaponXP[n][c]=bound(S.weaponXP[n][c]+amount*1.5f,0,SKILL_XP_CAP);}
 float weapon_cut_ratio(int it) {
     if (!it) return 1;
     if (it == STAFF || gear_family(it) == 16) return .05f;
@@ -250,6 +250,7 @@ int society_hostile(const Actor*a,const Actor*b){
 }
 void society_actor_reset(int n){
  if(n<0||n>=MAX_ACTORS)return;
+ memset(g.repairs.actor[n],0,sizeof(g.repairs.actor[n]));
  g.war.prisonTown[n]=0;
  memset(g.charges[n],0,sizeof(g.charges[n]));
  memset(S.weaponXP[n],0,sizeof(S.weaponXP[n]));memset(S.wanted[n],0,sizeof(S.wanted[n]));memset(S.recognized[n],0,sizeof(S.recognized[n]));

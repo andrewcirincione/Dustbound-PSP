@@ -537,11 +537,14 @@ static void terrain_raw(void) {
 /* 32-pixel overscan: scrolling reuses terrain until the camera crosses a
    cache margin. Buildings/actors/weather remain live and depth-sorted. */
 static uint32_t groundCache[544 * 336];
+static int sceneryCacheKind;
 static void terrain(void) {
     static float cx, cy, lastLight;
     static uint32_t seed;
     static int valid, weather;
     int dx = (int)((cx - cy - ui.camX + ui.camY) * 22), dy = (int)((cx + cy - ui.camX - ui.camY) * 11);
+    if (sceneryCacheKind!=1) valid=0;
+    sceneryCacheKind=1;
     if (!valid || abs(dx) > 30 || abs(dy) > 30 || seed != g.seed || weather != g.weather ||
         light() != lastLight) {
         uint32_t *old = fb;
@@ -1272,11 +1275,15 @@ static void interior_draw(void) {
     roomBase = 69 - (roomScale - 20) * 2.3f;roomCamX=roomCamY=0;
     float roomW=7,roomH=7;
     if(expedition_large(id)){roomW=expedition_width(id);roomH=expedition_height(id);roomScale=20;roomBase=150;roomCamX=g.interiorX;roomCamY=g.interiorY;}
-    rect(0, 0, 480, 272, 0x3d3429);
     int cx, cy, eastX, eastY, westX, westY;
     room_project(0, 0, &cx, &cy);
     room_project(roomW, 0, &eastX, &eastY);
     room_project(0, roomH, &westX, &westY);
+    static unsigned bgSeed;static int bgRoom=-1,bgFloor,bgX,bgY;
+    int reuse=sceneryCacheKind==2&&bgSeed==g.seed&&bgRoom==id&&bgFloor==floor&&bgX==cx&&bgY==cy;
+    if(reuse){for(int yy=0;yy<272;yy++)memcpy(fb+yy*pitch,groundCache+yy*544,480*4);}
+    else{
+        rect(0,0,480,272,0x3d3429);
     float wall = style == 1 ? 38 : style == 2 ? 41 : 37;
     int wallArt = style == 3 || style == 5 ? 106 : style == 4 ? 107 : 105;
     int floorArt = style == 2 ? 105 : 104;
@@ -1292,6 +1299,9 @@ static void interior_draw(void) {
             room_project(0, j * 1.4f, &x, &y);
             texture_plane(106, x, y, 0, -wall, 3, -1.5f, 1, 1, .78f);
         }
+        for(int yy=0;yy<272;yy++)memcpy(groundCache+yy*544,fb+yy*pitch,480*4);
+        sceneryCacheKind=2;bgSeed=g.seed;bgRoom=id;bgFloor=floor;bgX=cx;bgY=cy;
+    }
     int x, y;
     if (!floor) {
         room_project(3.5f, expedition_large(id)?roomH-.14f:6.86f, &x, &y);
@@ -1373,12 +1383,7 @@ static void interior_draw(void) {
             room_furniture(&props[i]);
         }
     }
-    char roomTitle[64];
-    if(expedition_large(id))snprintf(roomTitle,sizeof(roomTitle),"%s / %s",building_name(id),expedition_floor_name(expedition_site(id),floor));else snprintf(roomTitle, sizeof(roomTitle), "%s%s", building_name(id), floor ? " / UPSTAIRS" : "");
-    const char *name = roomTitle;
-    int titleWidth = text_width(name);
-    rect(467-titleWidth,223,titleWidth+9,13,INK);
-    text(471-titleWidth,226,name,GOLD,1);
+
 }
 /* Map views share the walking camera's axes. North is up-right. */
 typedef struct { float wx, wy; int x, y; float sx, sy; } MapView;
@@ -1567,8 +1572,12 @@ static void hud(void) {
     rect(0, 0, 480, 23, INK);
     line(0, 22, 480, 22, EDGE);
     int t = g.interiorBuilding ? building_town(g.interiorBuilding - 1) : town_near(a->x, a->y, 15);
-    text(9, 8, t >= 0 ? towns[t].name : regionNames[biome(a->x, a->y)], GOLD, 1);
-    if (t >= 0)
+    if(g.interiorBuilding){
+        int bld=g.interiorBuilding-1,site=expedition_site(bld);
+        snprintf(b,sizeof(b),"%s / %s",building_name(bld),site>=0?expedition_floor_name(site,actor_floor(a)):actor_floor(a)?"Upstairs":"Interior");
+        b[50]=0;text(9,8,b,GOLD,1);
+    }else text(9, 8, t >= 0 ? towns[t].name : regionNames[biome(a->x, a->y)], GOLD, 1);
+    if (t >= 0 && !g.interiorBuilding)
         text(155, 8, factionNames[g.townOwner[t]], label_color(g.townOwner[t]), 1);
     snprintf(b, sizeof(b), "DAY %d %02d:%02d", g.day, (int)g.dayTime, (int)(g.dayTime * 60) % 60);
     text(316, 8, b, MUTED, 1);
@@ -1622,7 +1631,6 @@ static void hud(void) {
     text(320, 259, b, a->hunger < 25 ? GOLD : MUTED, 1);
     const char *status = a->dead ? "DEAD" : recovery_coma(a) ? "COMA" :
         a->unconscious > 0 ? "DOWN" : a->prisonTime > 0 ? "JAILED" :
-        limb_crawling(a) ? "CRAWLING" : limb_limping(a) ? "LIMPING" :
         actor_in_bed(a) ? "RESTING" : a->autoattack ? "FIGHT" : "PASSIVE";
     if (!strcmp(status,"FIGHT") || !strcmp(status,"PASSIVE"))
         button_icon(460 - (int)strlen(status) * 6,259,3,1,TEAL);
@@ -1832,7 +1840,8 @@ static void pack_screen(void) {
     if(wearable)preview.gear[itemDefs[it].slot]=it;
     portrait_scale(&preview,103,69,28,81,1);
     center(79,150,wearable?"PREVIEW":"WORN",wearable?GOLD:MUTED,1);
-    text(371,82,"QTY",MUTED,1);
+    text(338,82,"QTY",MUTED,1);
+    text(377,82,"WT",MUTED,1);
     text(406,82,"VAL/EA",MUTED,1);
     int first=start_row(item_view_row(ui.selection),count,10);
     for(int j=0;j<10&&first+j<count;j++) {
@@ -1841,13 +1850,11 @@ static void pack_screen(void) {
         int owner=item_slot_owner(a,k);
         if(owner)text(146,y,"!",RED,1);
         char label[100];snprintf(label,sizeof(label),"%s%s",item_slot_equipped(k)?"(E) ":"",itemDefs[id].name);
-        clipped(155,y,label,34,owner?RED:k==ui.selection?TEXT:MUTED);
-        snprintf(b,sizeof(b),"%d",item_slot_qty(a,k));text(389-text_width(b),y,b,GOLD,1);
+        clipped(155,y,label,28,owner?RED:k==ui.selection?TEXT:MUTED);
+        snprintf(b,sizeof(b),"%d",item_slot_qty(a,k));text(356-text_width(b),y,b,GOLD,1);
+        snprintf(b,sizeof(b),"%d",itemDefs[id].weight);text(389-text_width(b),y,b,MUTED,1);
         snprintf(b,sizeof(b),"%d",itemDefs[id].price);text(442-text_width(b),y,b,TEXT,1);
     }
-    snprintf(b, sizeof(b), "%d ITEMS / (E) EQUIPPED%s", count,
-             count && item_slot_owner(a,ui.selection) ? "  STOLEN" : "");
-    text(146, 183, b, count && item_slot_owner(a,ui.selection) ? RED : MUTED, 1);
     int wornDisguise=disguise_faction(a),nextDisguise=disguise_faction(&preview);
     if (count > 10) {
         snprintf(b, sizeof(b), "%d-%d OF %d", first + 1, first + 10, count);
@@ -1911,11 +1918,11 @@ static void skills_screen(void) {
     }
     static const int skills[CORE_SKILL_ROWS] = {
         ATHLETICS, STRENGTH, DEXTERITY, TOUGHNESS, DODGE, MELEE, DEFENCE, MARTIAL, PERCEPTION,
-        STEALTH, THEFT, LOCKPICK, MEDICINE, LABOUR, FARMING, COOKING, SMITHING, ENGINEERING, SCIENCE
+        STEALTH, THEFT, LOCKPICK, MEDICINE, LABOUR, SMITHING
     };
     static const struct { const char *name; int start, count, x, y; } groups[] = {
         {"BODY & MOVEMENT", 0, 5, 31, 80}, {"COMBAT", 5, 4, 31, 139},
-        {"FIELDCRAFT", 9, 4, 245, 80}, {"TRADES", 13, 6, 245, 129}
+        {"FIELDCRAFT", 9, 4, 245, 80}, {"TRADES", 13, 2, 245, 129}
     };
     for (unsigned k = 0; k < sizeof(groups) / sizeof(*groups); k++) {
         int x = groups[k].x;
@@ -1956,8 +1963,10 @@ static void health_screen(int actor, int inspect) {
         text(257,237,"\014 / \005 / \006 TAB",MUTED,1);
         if(ui.inspectTab==1){
             snprintf(b,sizeof(b),"%.16s / %s",a->name,factionNames[a->faction]);clipped(31,83,b,67,GOLD);
+            int row=0;
             for(int i=0;i<SKILLS;i++){
-                int x=i<10?31:245,y=102+(i%10)*12;
+                if(!skill_enabled(i))continue;
+                int x=row<8?31:245,y=102+(row%8)*12;row++;
                 text(x,y,skillNames[i],MUTED,1);snprintf(b,sizeof(b),"%d",level(a,i));text(x+162,y,b,TEXT,1);
             }
             int c=weapon_class(a->gear[0]);
@@ -2399,6 +2408,7 @@ static void trade_screen(void) {
                            : "\014 BUY-SELL   \005/\006 FILTER   \001 BUY ONE");
     int pictured=ui.tradeSmith==TRADE_SMITH||ui.tradeSmith==TRADE_ARMORER;
     int count = ui.sell ? item_view_count() : shop_count(), first = start_row(ui.sell ? item_view_row(ui.selection) : ui.selection, count, 6);
+    text(289,72,"QTY",MUTED,1);text(326,72,"WT",MUTED,1);text(365,72,"VAL",MUTED,1);
     for (int j = 0; j < 6 && first + j < count; j++) {
         int i = ui.sell ? item_view_slot(first+j) : first+j, it = ui.sell ? item_slot_id(&g.actors[g.selected],i) : shop_item(i);
         int y = 84 + j * 13;
@@ -2407,15 +2417,16 @@ static void trade_screen(void) {
         else row(y,i==ui.selection,"",NULL);
         if (stolen) text(pictured?137:31,y,"!",RED,1);
         char label[100];snprintf(label,sizeof(label),"%s%s",ui.sell&&item_slot_equipped(i)?"(E) ":"",itemDefs[it].name);
-        clipped(pictured?145:42,y,label,pictured?24:35,stolen?RED:i==ui.selection?TEXT:MUTED);
-        snprintf(v,sizeof(v),"%d",ui.sell?item_slot_qty(&g.actors[g.selected],i):market_quantity(ui.tradeTown, it));text(pictured?296:263,84+j*13,v,MUTED,1);
-        snprintf(v,sizeof(v),"%d S",item_price(ui.tradeTown,it,ui.sell));text(pictured?326:301,84+j*13,v,GOLD,1);
+        clipped(pictured?145:42,y,label,pictured?23:38,stolen?RED:i==ui.selection?TEXT:MUTED);
+        snprintf(v,sizeof(v),"%d",ui.sell?item_slot_qty(&g.actors[g.selected],i):market_quantity(ui.tradeTown, it));text(307-text_width(v),y,v,MUTED,1);
+        snprintf(v,sizeof(v),"%d",itemDefs[it].weight);text(338-text_width(v),y,v,MUTED,1);
+        snprintf(v,sizeof(v),"%d",item_price(ui.tradeTown,it,ui.sell));text(389-text_width(v),y,v,GOLD,1);
         if (stolen) {
-            snprintf(v,sizeof(v),"%.0f%% CLEAR",stolen_sale_chance(ui.tradeTown,i)*100);
-            text(pictured?386:375,y,v,RED,1);
+            snprintf(v,sizeof(v),"%.0f%%",stolen_sale_chance(ui.tradeTown,i)*100);
+            text(411,y,v,RED,1);
         } else {
             int pct=market_percent(ui.tradeTown,it,ui.sell);snprintf(v,sizeof(v),"%+d%%",pct);
-            text(400,y,v,pct==0?MUTED:((ui.sell?pct>0:pct<0)?0x73c58b:0xde8375),1);
+            text(411,y,v,pct==0?MUTED:((ui.sell?pct>0:pct<0)?0x73c58b:0xde8375),1);
         }
     }
     int it = ui.sell ? item_slot_id(&g.actors[g.selected],ui.selection) : shop_item(ui.selection);

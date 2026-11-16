@@ -117,7 +117,7 @@ static void travel_director(const float *near,float dt){
  }
  for(int k=0;k<POP_GROUPS;k++)if(life_alive(k)){
   float x=P.groups[k].x-a->x,y=P.groups[k].y-a->y,d=hypotf(x,y);
-  if(d<16&&population_object_count(k))g.wilderness.quiet=0;
+  if(fabsf(view_horizontal(x,y))<11&&fabsf(view_vertical(x,y))<9&&population_object_count(k))g.wilderness.quiet=0;
   if(!wilderness_guard_group(k)&&P.groups[k].count<=3&&d<42&&x*dx+y*dy>0&&fabsf(x*dy-y*dx)<18)forward++;
  }
  if(g.wilderness.cooldown>0||hostileClose||(forward>=2&&g.wilderness.danger<50)||(g.wilderness.quiet<14&&g.wilderness.danger<50))return;

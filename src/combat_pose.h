@@ -111,7 +111,7 @@ static inline const CombatProfile *combat_profile(int weapon) {
 static inline CombatPose combat_idle(int weapon) {
     CombatPose idle = combat_profile(weapon)->idle;
     /* The blade rests on the upper shoulder rather than through its socket. */
-    if(gear_family(weapon)==84){idle.blade=-2.04f;idle.handX=4.0f;idle.handY=-18.5f;}
+    if(gear_family(weapon)==84){idle.blade=-2.80f;idle.handX=6.0f;idle.handY=-19.6f;}
     return idle;
 }
 static inline CombatPose combat_pose(int weapon, int phase, float p, int variant) {

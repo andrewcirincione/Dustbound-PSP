@@ -78,12 +78,12 @@ const char *skillNames[SKILLS] = {
 const char *limbNames[LIMBS] = {"Head", "Chest", "Left arm", "Right arm", "Left leg", "Right leg"};
 const char *jobNames[] = {"Follow squad", "Hold position", "Mine nearest ore", "Tend camp farm",
                           "Field medic",  "Smelt iron",    "Cook rations",     "Haul to depot"};
-const char *buildNames[] = {"Campfire",       "Bedroll", "Farm plot",     "Iron forge",
+const char *buildNames[] = {"Bonfire",       "Bedroll", "Farm plot",     "Iron forge",
                             "Research bench", "Palisade",          "Storage depot", "Wind pump"};
 const char *recipeNames[] = {"Iron bar",      "Cooked ration",  "Field dressing", "Iron sabre",
                              "Plate cuirass", "Mechanical arm", "Mechanical leg", "Crossbow bolts",
                              "Leather vest", "Leather boots", "Smoked jerky", "Oatcakes", "Bean stew"};
-const int recipeCount=13,buildCount=8;
+const int recipeCount=13,buildCount=2;
 const ItemDef baseDefs[BASE_ITEMS] = {
     {"Empty", "", 0, 0, -1, 0, 0, 0},
     {"Trail ration", "Restores 48 hunger. Eaten automatically below 40.", 35, 1, -1, 0, 0, 0xc39e65},
@@ -116,7 +116,7 @@ const ItemDef baseDefs[BASE_ITEMS] = {
     {"Hand tools", "Reusable for engineering. Improvised picks are enough for any lock.", 90, 1, -1, 0, 0, 0xb5ada0},
     {"Old-world relic", "Sell for silver or spend on research.", 300, 2, -1, 0, 0, 0x80c8be},
     {"Cartridge", "Ammunition for frontier guns.", 10, 0, -1, 0, 0, 0xac925b},
-    {"Raw hide", "Leatherworking: make leather vests or boots at a bench (Smithing).", 24, 1, -1, 0, 0, 0x78553b},
+    {"Cured hide", "Leatherworking and trade material.", 24, 1, -1, 0, 0, 0x78553b},
     {"Coal", "High-grade forging fuel.", 18, 2, -1, 0, 0, 0x34393a},
     {"Machine parts", "Salvage for advanced equipment.", 90, 2, -1, 0, 0, 0x698078},
     {"Blood tonic", "Restores blood and warmth over time.", 110, 1, -1, 0, 0, 0x9c5141},
@@ -163,9 +163,12 @@ const char *travel_hold_reason(const Actor *a) {
     return NULL;
 }
 int level(const Actor *a, int s) { return (int)clamp(1 + sqrtf(a->xp[s] / 12), 1, SKILL_CAP); }
+int skill_enabled(int s) { return s >= 0 && s < SKILLS && s != FARMING && s != COOKING && s != ENGINEERING && s != SCIENCE; }
 void gain(Actor *a, int s, float n) {
-    if (s < 0 || s >= SKILLS || !a->squad)
+    if (!skill_enabled(s) || !a->squad)
         return;
+    if (s == MEDICINE || s == TOUGHNESS) n *= 2;
+    else if (s == MELEE || s == DEFENCE || s == DODGE || s == MARTIAL || s == CROSSBOWS || s == STRENGTH || s == DEXTERITY || s == PERCEPTION) n *= 1.5f;
     a->xp[s] = fminf(SKILL_XP_CAP, a->xp[s] + n);
 }
 static void log_write(int priority, const char *fmt, va_list ap) {
@@ -325,17 +328,24 @@ int inventory_count(const Actor *a, int item) {
     return n;
 }
 int inventory_add_owned(Actor *a, int item, int qty, int owner) {
+    return inventory_add_owned_until(a,item,qty,owner,0);
+}
+int inventory_add_owned_until(Actor *a, int item, int qty, int owner, float until) {
     if (item <= 0 || item >= ITEMS || qty <= 0 || qty > 999 || owner < 0 || owner >= FACTIONS)
         return 0;
+    if(owner && !until) until=g.time+2*DAY_SECONDS;
     for (int i = 0; i < PACK; i++)
-        if (a->pack[i].item == item && a->stolen[i] == owner && a->pack[i].qty + qty <= 999) {
+        if (a->pack[i].item == item && a->stolen[i] == owner && a->pack[i].qty + qty <= 999 &&
+            (!owner || fabsf(stolen_until(a,i)-until)<.05f)) {
             a->pack[i].qty += qty;
+            if(owner)stolen_set(a,i,until);
             return 1;
         }
     for (int i = 0; i < PACK; i++)
         if (!a->pack[i].item) {
             a->pack[i] = (Stack){item, qty};
             a->stolen[i] = owner;
+            stolen_set(a,i,until);
             return 1;
         }
     return 0;
@@ -362,7 +372,7 @@ static int use_portion(Actor *a, int slot, int amount) {
         a->pack[slot].item = remainder;
         return 1;
     }
-    if (!inventory_add_owned(a, remainder, 1, a->stolen[slot]))
+    if (!inventory_add_owned_until(a, remainder, 1, a->stolen[slot],stolen_until(a,slot)))
         return 0;
     return inventory_remove_slot(a, slot, 1);
 }
@@ -379,7 +389,7 @@ static int eat_from_pack(Actor *eater, Actor *owner, int slot) {
 
 int inventory_transfer(Actor *from, Actor *to, int slot, int qty) {
     if(from==to||qty<=0||item_slot_qty(from,slot)<qty)return 0;
-    if(!inventory_add_owned(to,item_slot_id(from,slot),qty,item_slot_owner(from,slot)))return 0;
+    if(!inventory_add_owned_until(to,item_slot_id(from,slot),qty,item_slot_owner(from,slot),stolen_until(from,slot==PACK+GEARS?LOOT_LAYER_SLOT:slot)))return 0;
     return item_slot_remove(from,slot,qty);
 }
 int pass_recipient(int row) {
@@ -949,7 +959,7 @@ void strike(int ai, int bi) {
     if (depth_distance(a, b) > (w ? itemDefs[w].range : 1.55f))
         return;
     if (ranged && !inventory_count(a, gear_family(w) >= 29 ? CARTRIDGE : BOLTS)) {
-        if (inventory_add_owned(a, w, 1, a->gearStolen[0])) {
+        if (inventory_add_owned_until(a, w, 1, a->gearStolen[0],stolen_until(a,PACK))) {
             a->gear[0] = NONE;
             a->gearStolen[0] = 0;
         }
@@ -1416,7 +1426,7 @@ int begin_treatment(int mi, int pi, int type, int slot) {
     m->taskKind = TASK_TREAT;
     m->taskIndex = (type * MAX_ACTORS + pi) * (PACK + 1) + slot + 1;
     float burden = treatment_burden(a);
-    float skill = level(m, type == TREAT_REPAIR ? ENGINEERING : MEDICINE) * .035f;
+    float skill = level(m, type == TREAT_REPAIR ? SMITHING : MEDICINE) * .035f;
     g.frontier.treatmentPhase[mi] = -1;
     g.frontier.treatmentDose[mi] = 0;
     if (type == TREAT_PRESSURE)
@@ -1498,7 +1508,7 @@ static void treatment_tick(float dt) {
         }
         if (type == TREAT_REPAIR) {
             injury_repair(a, &g.depth.actors[pi]);
-            gain(m, ENGINEERING, 25);
+            gain(m, SMITHING, 25);
             log_msg("%s repaired %s.", m->name, a->name);
         } else if (type == TREAT_PRESSURE) {
             a->bleed = 0;
@@ -1520,7 +1530,7 @@ void use_item(int s) {
     int it=item_slot_id(a,s);
     if(!it)return;
     if(item_slot_equipped(s)){
-        if(inventory_add_owned(a,it,1,item_slot_owner(a,s)))item_slot_remove(a,s,1);
+        if(inventory_add_owned_until(a,it,1,item_slot_owner(a,s),stolen_until(a,s==PACK+GEARS?LOOT_LAYER_SLOT:s)))item_slot_remove(a,s,1);
         else log_msg("Pack full; cannot unequip.");
         return;
     }
@@ -1530,16 +1540,18 @@ void use_item(int s) {
     if (it == BEDROLL_ITEM) {
         deploy_bedroll(a, s);
     } else if (itemDefs[it].slot >= 0) {
-        int e = itemDefs[it].slot, old = a->gear[e], owner = a->stolen[s], oldOwner = a->gearStolen[e];
+        int e = itemDefs[it].slot, old = a->gear[e], owner = item_slot_owner(a,s), oldOwner = item_slot_owner(a,PACK+e);
+        float until=stolen_until(a,s), oldUntil=stolen_until(a,PACK+e);
         Actor backup = *a;
         inventory_remove_slot(a, s, 1);
-        if (old && !inventory_add_owned(a, old, 1, oldOwner)) {
+        if (old && !inventory_add_owned_until(a, old, 1, oldOwner, oldUntil)) {
             *a = backup;
             log_msg("Pack full. Cannot swap equipment.");
             return;
         }
         a->gear[e] = it;
         a->gearStolen[e] = owner;
+        stolen_set(a,PACK+e,until);
         log_msg("Equipped %s.", itemDefs[it].name);
     } else if (food_capacity(it)) {
         if (a->hunger >= 99.99f)
@@ -1655,12 +1667,12 @@ int build_metal_cost(int c){static const int metal[]={0,0,0,4,2,0,0,4};return c>
 int build_tech_required(int c){return c==3||c==7?1:0;}
 int build_wood_cost(int c) {
     return c >= 0 && c < buildCount
-               ? (int)fmaxf(1, buildWood[c] - level(&g.actors[g.selected], ENGINEERING) / 30)
+               ? buildWood[c]
                : 0;
 }
-int harvest_yield(const Actor *a) { return 5 + level(a, FARMING) / 20; }
+int harvest_yield(const Actor *a) { (void)a; return 5; }
 int research_cost(void) {
-    return 150 * (g.tech + 1) * (100 - level(&g.actors[g.selected], SCIENCE) / 5) / 100;
+    return 150 * (g.tech + 1);
 }
 int build_structure(int c) {
     if (c < 0 || c >= buildCount) return 0;
@@ -1684,7 +1696,7 @@ static const Recipe recipes[] = {{IRONBAR, 1, ORE, 3, NONE, 0, FORGE, SMITHING, 
                                  {JERKY,2,MEAT,2,NONE,0,CAMPFIRE,COOKING,0},
                                  {OATCAKE,3,GRAIN,2,WATER,1,CAMPFIRE,COOKING,0},
                                  {STEW,2,GRAIN,2,MEAT,1,CAMPFIRE,COOKING,1}};
-int cooking_yield(const Actor*a,int base){return base+level(a,COOKING)/25;}
+int cooking_yield(const Actor*a,int base){(void)a;return base;}
 int recipe_requirements(int c,CraftRequirements*out){
     if(c<0||c>=recipeCount)return 0;
     const Recipe*r=&recipes[c];memset(out,0,sizeof(*out));
@@ -1853,12 +1865,14 @@ int inventory_drop(Actor *a, int slot, int qty) {
     }
     int item = item_slot_id(a,slot), owner = item_slot_owner(a,slot);
     if (item == DISPATCH_ITEM) { log_msg("Keep the dispatch for its recipient."); return 0; }
+    float until=stolen_until(a,slot==PACK+GEARS?LOOT_LAYER_SLOT:slot);
     if (!item_slot_remove(a, slot, qty))
         return 0;
     if (n == g.nodeCount)
         g.nodeCount++;
     g.nodes[n] = (Node){.x = a->x, .y = a->y, .type = NODE_DROPPED, .remaining = 1,
                         .owner = owner, .item = item, .qty = qty};
+    stolen_drop_set(n,until);
     g.drops[n] = (DropLocation){depth_x(a), depth_y(a), depth_room(a), actor_floor(a)};
     log_msg("Dropped %d %s.", qty, itemDefs[item].name);
     return 1;
@@ -1988,7 +2002,8 @@ void interact_context(int kind,int target) {
     if (ui.contextKind == 1) {
         Node *b = &g.nodes[n];
         if (b->type == NODE_DROPPED) {
-            if (b->remaining && inventory_add_owned(a, b->item, b->qty, b->owner)) {
+            float until=stolen_drop_until(n);
+            if (b->remaining && inventory_add_owned_until(a, b->item, b->qty, b->owner,until)) {
                 b->remaining = 0;
                 log_msg("Picked up %d %s.", b->qty, itemDefs[b->item].name);
             } else if (b->remaining) {
@@ -2376,6 +2391,7 @@ void simulate(float dt) {
     civil_tick(dt);
     politics_tick(dt);
     g.time += dt;
+    stolen_tick();
     g.dayTime += dt * (24.f / DAY_SECONDS);
     if (g.dayTime >= 24) {
         g.dayTime -= 24;
@@ -2703,7 +2719,7 @@ typedef struct {
     char magic[8];
     uint32_t version, size, hash;
 } SaveHeader;
-enum { SAVE_VERSION = 35, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
+enum { SAVE_VERSION = 36, V27_BUILDINGS = 384, V28_FRONTIER_BYTES = 104996 };
 int save_game(const char *path) {
     char tmp[512], bak[512];
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
@@ -2728,6 +2744,7 @@ int save_game(const char *path) {
     return 1;
 }
 static int validate_game(const Game *t) {
+    if(!stolen_validate(t))return 0;
     if(t->feedback.next<0||t->feedback.next>511)return 0;
     for(int i=0;i<512;i++)if(t->feedback.taken[i]<0||t->feedback.taken[i]>1000000)return 0;
     for(int i=0;i<MAX_ACTORS;i++)if(!isfinite(t->feedback.wakeTotal[i])||t->feedback.wakeTotal[i]<0)return 0;
@@ -3050,7 +3067,7 @@ static int save_shape(uint32_t version,uint32_t size) {
         if(version==28)extra+=sizeof(g.frontier)-(MAX_BUILDINGS-448)-V28_FRONTIER_BYTES;
         return size==end[version-28]-extra;
     }
-    return (version==34 && size==offsetof(Game,feedback)) || (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
+    return (version==35 && size==offsetof(Game,repairs)) || (version==34 && size==offsetof(Game,feedback)) || (version==SAVE_VERSION && size==sizeof(Game)) || ((version==15 || version==16) && size==2148384) || (version==14 && size==2148348) || (version==13 && size==2143228) || (version==12 && size==2127704) || (version==11 && size==627508) || (version==10 && size==626860) || (version==9 && size==618188) || (version==8 && size==573688) || (version==7 && size==435592) ||
       (version==6 && size==435556) || (version==5 && size==410656) ||
       ((version==3||version==4)&&size==404460) || (version==2&&size==404444);
 }

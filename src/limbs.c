@@ -99,11 +99,12 @@ int limb_fit(int n,int l,int slot){
  if(!(a->lostMask&(1<<l))){log_msg("Natural limb intact. Venn in Dusk Haven offers surgery.");return 0;}
  if(!can_fit(n)){log_msg("Fit limbs while awake, free and out of combat.");return 0;}
  if(inventory_count(a,PARTS)<2){log_msg("Fitting requires 2 machine parts.");return 0;}
+ float until=stolen_until(a,slot),oldUntil=stolen_until(a,PACK+GEARS+l-LARM);
  Actor backup=*a;inventory_remove_slot(a,slot,1);inventory_remove(a,PARTS,2);
- if(old&&!inventory_add_owned(a,old,1,oldOwner)){*a=backup;log_msg("No pack room for the old replacement.");return 0;}
- limb_set(a,l,it,owner);a->health[l]=limb_max_health(a,l);g.depth.actors[n].trauma[l]=0;gain(a,ENGINEERING,20);log_msg("Fitted %s to %s. Used 2 parts.",itemDefs[it].name,limbNames[l]);return 1;
+ if(old&&!inventory_add_owned_until(a,old,1,oldOwner,oldUntil)){*a=backup;log_msg("No pack room for the old replacement.");return 0;}
+ limb_set(a,l,it,owner);stolen_set(a,PACK+GEARS+l-LARM,until);a->health[l]=limb_max_health(a,l);g.depth.actors[n].trauma[l]=0;gain(a,SMITHING,20);log_msg("Fitted %s to %s. Used 2 parts.",itemDefs[it].name,limbNames[l]);return 1;
 }
-int limb_detach(int n,int l){if(n<0||n>=g.actorCount||!valid_limb(l))return 0;Actor*a=&g.actors[n];int it=limb_installed(a,l);if(!it||!can_fit(n)){log_msg("Detach a fitted replacement while out of combat.");return 0;}if(!inventory_add_owned(a,it,1,limb_owner(a,l))){log_msg("Make pack room before detaching.");return 0;}limb_set(a,l,0,0);a->health[l]=0;g.depth.actors[n].trauma[l]=0;log_msg("Detached %s. Fitting again costs 2 parts.",limbNames[l]);return 1;}
+int limb_detach(int n,int l){if(n<0||n>=g.actorCount||!valid_limb(l))return 0;Actor*a=&g.actors[n];int it=limb_installed(a,l);if(!it||!can_fit(n)){log_msg("Detach a fitted replacement while out of combat.");return 0;}if(!inventory_add_owned_until(a,it,1,limb_owner(a,l),stolen_until(a,PACK+GEARS+l-LARM))){log_msg("Make pack room before detaching.");return 0;}limb_set(a,l,0,0);a->health[l]=0;g.depth.actors[n].trauma[l]=0;log_msg("Detached %s. Fitting again costs 2 parts.",limbNames[l]);return 1;}
 int limb_surgery(int sn,int pn,int l){
  if(!limb_surgeon(sn)||pn<0||pn>=g.actorCount||!valid_limb(l))return 0;Actor*s=&g.actors[sn],*a=&g.actors[pn];
  if(!can_fit(pn)||!conscious(s)||s->target>=0||depth_distance(s,a)>TALK_REACH||s->faction==HOSTILE||g.rep[s->faction]<-25){log_msg("Surgery needs Venn nearby, awake and safe.");return 0;}

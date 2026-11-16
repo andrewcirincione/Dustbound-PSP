@@ -1,12 +1,12 @@
 TARGET = dustbound
-OBJS = src/psp_main.o src/game.o src/render.o src/content.o src/armor.o src/arsenal.o src/world.o src/expansion.o src/interior.o src/playability.o src/audio.o src/depth.o src/depth_combat.o src/society.o src/civilization.o src/limbs.o src/population.o src/politics.o src/expedition.o
+OBJS = src/psp_main.o src/game.o src/theft_age.o src/render.o src/content.o src/armor.o src/arsenal.o src/world.o src/expansion.o src/interior.o src/playability.o src/audio.o src/depth.o src/depth_combat.o src/society.o src/civilization.o src/limbs.o src/population.o src/politics.o src/expedition.o
 PSPDEV ?= /usr/local/pspdev
 PSPSDK := $(PSPDEV)/psp/sdk
 INCDIR = src
 CFLAGS = -O2 -G0 -Wall -Wextra -std=gnu99 -DPLATFORM_PSP -Wno-missing-field-initializers -Wno-misleading-indentation
 LIBS = -lm -lpsppower -lpspaudio
 EXTRA_TARGETS = EBOOT.PBP
-PSP_EBOOT_TITLE = Dust 1.2.1
+PSP_EBOOT_TITLE = Dust 1.2.2
 PSP_EBOOT_ICON = assets/ICON0.png
 PSP_EBOOT_PIC1 = assets/PIC1.png
 PSP_EBOOT_PSAR = assets/DustAmbient.mp3

@@ -257,7 +257,8 @@ int main(void) {
     g.buildingCount = 2;
     memset(&g.wilderness,0,sizeof(g.wilderness));memset(&g.expedition,0,sizeof(g.expedition)); /* This fixture replaces all world sites. */
     g.nodeCount = 0;
-    g.buildings[0] = (Building){.x = 42, .y = 44, .type = STORE, .owner = 0};
+    g.buildings[0] = (Building){.x = 42, .y = 44, .type = STORE, .owner = -1};
+    g.frontier.variant[0]=BUILD_NORMAL;
     g.buildings[0].storage[0] = (Stack){GRAIN, 18};
     g.buildings[0].storage[1] = (Stack){WATER, 6};
     g.buildings[1] = (Building){.x = 48, .y = 44, .type = CAMPFIRE, .owner = 0};
@@ -301,8 +302,8 @@ int main(void) {
     a->xp[ENGINEERING] = 117612;
     a->xp[SCIENCE] = 117612;
     a->xp[FARMING] = 117612;
-    CHECK(buildCount == 8 && build_wood_cost(3) > 0 && build_wood_cost(0) == 1);
-    CHECK(research_cost() == price * 80 / 100 && harvest_yield(a) == 10);
+    CHECK(buildCount == 2 && build_wood_cost(3) == 0 && build_wood_cost(0) == 3);
+    CHECK(research_cost() == price && harvest_yield(a) == 5);
     a->xp[COOKING] = 12 * 69 * 69;
     a->x = 42;
     a->y = 44;
@@ -313,8 +314,8 @@ int main(void) {
     inventory_add(a, WATER, 1);
     char info[240];
     recipe_status(1, info, sizeof(info));
-    CHECK(strstr(info, "MAKES 4"));
-    CHECK(craft_item(1) && inventory_count(a, RATION) == 4);
+    CHECK(strstr(info, "MAKES 2"));
+    CHECK(craft_item(1) && inventory_count(a, RATION) == 2);
     /* Replay identical combat rolls to isolate toughness and perception. */
     fresh();
     a = &g.actors[0];

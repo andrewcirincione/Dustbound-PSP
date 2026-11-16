@@ -48,7 +48,7 @@ int main(void){
  bot->dead=1;bot->health[CHEST]=-100;assert(inventory_remove(bot,PARTS,inventory_count(bot,PARTS)));interior_leave();expedition_tick(.1f);assert(c->live[0]<0&&c->actor[0].dead&&!inventory_count(&c->actor[0],PARTS));
  actor_enter_room(g.selected,b);expedition_tick(.1f);assert(c->live[0]>=0&&g.actors[c->live[0]].dead&&!inventory_count(&g.actors[c->live[0]],PARTS));
  fixture_service(ROOM_EXP_UP);interior_interact();expedition_tick(.1f);fixture_service(ROOM_EXP_UP);interior_interact();expedition_tick(.1f);assert(actor_floor(&g.actors[g.selected])==2);
- int vault=(18*EXP_FLOORS+2)*EXP_CHESTS+3;assert(arsenal_tier(expedition_cache(vault)[0].item)==g.expedition.tier[18]);
+ int vault=(18*EXP_FLOORS+2)*EXP_CHESTS+3;assert(arsenal_tier(expedition_cache(vault)[0].item)>=g.expedition.tier[18]);
  assert(save_game("build/expedition-floor2.sav")&&load_game("build/expedition-floor2.sav"));assert(actor_floor(&g.actors[g.selected])==2);
  puts("PASS: authentic v33 upgrade; occupied outpost trading, finite cache depletion, three-floor stairs/save/load, robot salvage and cleared enemies persist; vault rarity follows site tier.");
  analog_walk_to_stairs();(void)robots;return 0;

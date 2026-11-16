@@ -99,20 +99,15 @@ int main(void) {
     a->x = 42;
     a->y = 44;
     int before = g.buildingCount;
-    CHECK(build_structure(6), "player storage construction uses the restored camp menu");
-    CHECK(g.buildingCount == before + 1, "legacy player depot fixture is available");
-    int depot = g.buildingCount - 1, si = slot(a, ORE);
-    if (si < 0) {
-        inventory_add(a, ORE, 10);
-        si = slot(a, ORE);
-    }
-    a->x += .5f; /* Walk to the newly built depot. */
-    int ore = inventory_count(a, ORE);
-    CHECK(storage_transfer(depot, 0, si) && g.buildings[depot].storage[0].item == ORE &&
-              inventory_count(a, ORE) == ore - 1,
-          "depot deposits inventory resources");
-    CHECK(storage_transfer(depot, 1, 0) && inventory_count(a, ORE) == ore,
-          "depot withdrawal restores inventory");
+    CHECK(!build_structure(6), "storage depots are absent from camp construction");
+    CHECK(g.buildingCount == before, "refused construction preserves the world");
+    int depot=-1;for(int b=0;b<g.buildingCount;b++)if(depot_public(b)){depot=b;break;}
+    assert(depot>=0);g.money=100000;fixture_door(a,depot);assert(interior_enter(depot));fixture_service(ROOM_STORAGE);
+    int si=slot(a,ORE);if(si<0){inventory_add(a,ORE,10);si=slot(a,ORE);}
+    int ore=inventory_count(a,ORE);
+    CHECK(storage_transfer(depot,0,si)&&inventory_count(a,ORE)==ore-1,"actual depot accepts a paid deposit");
+    int storedSlot=-1;for(int j=0;j<storage_slots(depot);j++)if(storage_stack(depot,j)->item==ORE){storedSlot=j;break;}
+    CHECK(storedSlot>=0&&storage_transfer(depot,1,storedSlot)&&inventory_count(a,ORE)==ore,"actual depot withdrawal restores inventory");
     a->stolen[si] = UNION;
     CHECK(!storage_transfer(depot, 0, si), "stolen goods cannot lose ownership through storage");
     a->stolen[si] = 0;

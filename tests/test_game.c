@@ -235,11 +235,11 @@ int main(void) {
     a->x = 66;
     a->y = 40;
     inventory_add(a,IRONBAR,2);
-    CHECK(build_structure(4), "camp research benches can be built with timber and iron");
+    CHECK(!build_structure(4), "research benches are absent from camp construction");
+    int bench=-1;for(int b=0;b<g.buildingCount;b++)if(g.buildings[b].type==BENCH&&g.buildings[b].owner<0){bench=b;break;}
+    assert(bench>=0);a->x=g.buildings[bench].x+.65f;a->y=g.buildings[bench].y;
     inventory_add(a, RELIC, 3);
     g.money = 2000;
-    a->x += .5f;
-    finish_build();
     CHECK(research_tech() && g.tech == 1 && inventory_count(a, RELIC) == 2,
           "research consumes relic and money and unlocks a tier");
     fixture_door(a, forge);
