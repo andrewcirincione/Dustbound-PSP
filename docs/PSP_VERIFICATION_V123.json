@@ -1,0 +1,889 @@
+{
+  "id": "feedback-1.2.3",
+  "ok": true,
+  "responses": [
+    {
+      "image": "v121-title",
+      "screen": 13,
+      "frame": 267,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "iron-facing-0",
+      "screen": 0,
+      "frame": 298,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "katana-facing-0",
+      "screen": 0,
+      "frame": 342,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "greatsword-facing-0",
+      "screen": 0,
+      "frame": 386,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "iron-facing-1",
+      "screen": 0,
+      "frame": 430,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "katana-facing-1",
+      "screen": 0,
+      "frame": 474,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "greatsword-facing-1",
+      "screen": 0,
+      "frame": 518,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "backpack-0",
+      "screen": 0,
+      "frame": 562,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "backpack-1",
+      "screen": 0,
+      "frame": 606,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "backpack-2",
+      "screen": 0,
+      "frame": 650,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "backpack-3",
+      "screen": 0,
+      "frame": 694,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "backpack-4",
+      "screen": 0,
+      "frame": 738,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "backpack-5",
+      "screen": 0,
+      "frame": 782,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "backpack-6",
+      "screen": 0,
+      "frame": 826,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "backpack-7",
+      "screen": 0,
+      "frame": 870,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "iron-headwear-equipped-inventory",
+      "screen": 1,
+      "frame": 948,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "iron-walking",
+      "screen": 0,
+      "frame": 972,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "forge-output-stats",
+      "screen": 18,
+      "frame": 1074,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "forge-crafted",
+      "screen": 18,
+      "frame": 1080,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "equipped-selling",
+      "screen": 6,
+      "frame": 1194,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "equipped-sold",
+      "screen": 6,
+      "frame": 1200,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "quest-offer-before-accept",
+      "screen": 49,
+      "frame": 1272,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "quest-abandon-option",
+      "screen": 49,
+      "frame": 1326,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "quest-abandoned",
+      "screen": 19,
+      "frame": 1332,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "hair-and-beard-current",
+      "screen": 15,
+      "frame": 1398,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "hair-and-beard-variety",
+      "screen": 15,
+      "frame": 1446,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "hair-variety",
+      "screen": 15,
+      "frame": 1464,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "camp-chest-action",
+      "screen": 35,
+      "frame": 1524,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "camp-chest-opened",
+      "screen": 44,
+      "frame": 1530,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "camp-chest-taken",
+      "screen": 44,
+      "frame": 1536,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "bed-price-before-rest",
+      "screen": 35,
+      "frame": 1590,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "rest-real-recovery",
+      "screen": 0,
+      "frame": 1596,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "consciousness-recovery",
+      "screen": 0,
+      "frame": 1638,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "loot-percent-action",
+      "screen": 35,
+      "frame": 1686,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "loot-before",
+      "screen": 24,
+      "frame": 1692,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "loot-after-vital-harvest",
+      "screen": 24,
+      "frame": 1698,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "fight-approach-and-attack",
+      "screen": 0,
+      "frame": 1814,
+      "attack": 2,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "rain",
+      "screen": 0,
+      "frame": 1858,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "rain-moving",
+      "screen": 0,
+      "frame": 1866,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "greatsword-clear-face-left",
+      "screen": 0,
+      "frame": 1912,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "greatsword-clear-face-right",
+      "screen": 0,
+      "frame": 1958,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "inventory-weights-no-legend",
+      "screen": 1,
+      "frame": 1964,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "simplified-skills",
+      "screen": 2,
+      "frame": 1976,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "bonfire-bedroll-only",
+      "screen": 8,
+      "frame": 2054,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "injured-passive-label",
+      "screen": 0,
+      "frame": 2108,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "injured-fight-label",
+      "screen": 0,
+      "frame": 2114,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "stolen-before-two-days",
+      "screen": 1,
+      "frame": 2162,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "stolen-after-two-days",
+      "screen": 1,
+      "frame": 2220,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "redoubt-sleeping-quarters",
+      "screen": 0,
+      "frame": 2272,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "redoubt-walking",
+      "screen": 0,
+      "frame": 2298,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "redoubt-armory-floor",
+      "screen": 0,
+      "frame": 2344,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "redoubt-command-floor",
+      "screen": 0,
+      "frame": 2390,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "redoubt-stairs-used",
+      "screen": 0,
+      "frame": 2444,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "armory-useful-weapon-loot",
+      "screen": 44,
+      "frame": 2498,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "command-vault-rewards",
+      "screen": 44,
+      "frame": 2564,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "storehouse-chest-actions",
+      "screen": 35,
+      "frame": 2618,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "storehouse-local-chest",
+      "screen": 44,
+      "frame": 2624,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "factory-machine-hall",
+      "screen": 0,
+      "frame": 2672,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "archive-reading-floor",
+      "screen": 0,
+      "frame": 2714,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "infirmary-treatment-ward",
+      "screen": 0,
+      "frame": 2756,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "infirmary-bed-usable",
+      "screen": 0,
+      "frame": 2810,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "refuge-sleeping-gallery",
+      "screen": 0,
+      "frame": 2852,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-109-1-world",
+      "screen": 0,
+      "frame": 2898,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-109-0-world",
+      "screen": 0,
+      "frame": 2944,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-100-1-world",
+      "screen": 0,
+      "frame": 2990,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-100-0-world",
+      "screen": 0,
+      "frame": 3036,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-119-1-world",
+      "screen": 0,
+      "frame": 3082,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-119-0-world",
+      "screen": 0,
+      "frame": 3128,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-32-1-world",
+      "screen": 0,
+      "frame": 3174,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-32-0-world",
+      "screen": 0,
+      "frame": 3220,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-ready-1",
+      "screen": 0,
+      "frame": 3280,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-returned-1",
+      "screen": 0,
+      "frame": 3300,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-walking-1-0",
+      "screen": 0,
+      "frame": 3310,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-walking-1-1",
+      "screen": 0,
+      "frame": 3320,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-ready-0",
+      "screen": 0,
+      "frame": 3380,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-returned-0",
+      "screen": 0,
+      "frame": 3400,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-walking-0-0",
+      "screen": 0,
+      "frame": 3410,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "image": "carry-walking-0-1",
+      "screen": 0,
+      "frame": 3420,
+      "attack": 0,
+      "variant": 0,
+      "place": [
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "single_handed_carry_verified": true,
+  "carry_models_reviewed": 4,
+  "carry_facings_reviewed": 2,
+  "carry_guard_transitions_verified": true,
+  "carry_walking_verified": true,
+  "partial": false,
+  "eboot_sha256": "b4d72e4b17bce9c582edb9da875ca853c6535cbe644048d96f1c3a0546c95298",
+  "emulator": "Official PPSSPP 1.20.4",
+  "feedback_scenarios_verified": true,
+  "new_122_scenarios_verified": true,
+  "redoubt_floors_reviewed": 3,
+  "other_interiors_reviewed": 4,
+  "stolen_expiry_verified": true,
+  "weight_columns_verified": true,
+  "simplified_camps_verified": true,
+  "injured_stance_verified": true,
+  "backpacks_reviewed": 8,
+  "quest_offer_accept_abandon_verified": true,
+  "camp_chest_verified": true,
+  "forging_verified": true,
+  "equipped_sales_verified": true,
+  "lodging_verified": true,
+  "loot_percent_verified": true,
+  "combat_verified": true,
+  "physical_psp_tested": false
+}
