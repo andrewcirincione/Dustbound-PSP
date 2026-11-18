@@ -1,6 +1,7 @@
 # Boot alignment and single-handed shoulder carry — preview stage
 
 The user requested in-game previews before regression testing or publication.
+They approved the revised pose on 2026-11-18 and authorized the release.
 They rejected the first raised two-handed carry and specified a front elbow
 at about 90 degrees, a blade resting on the shoulder at 45 degrees, and a
 relaxed rear arm. This checkpoint implements that revised passive pose.
@@ -48,6 +49,6 @@ eight inventory views and eight walking frames.
 Revised preview EBOOT SHA-256:
 `74c20eda14092759b10e0bf58dfbd8368f81aa278601f356afddaaa2ffb23ed5`.
 
-The executable retains the 1.2.2 title while it is a preview. Main and the
-public release are unchanged. Full regression tests and publication remain
-pending user visual review. Physical PSP hardware was not tested.
+The approved preview executable retains the 1.2.2 title. Dust 1.2.3 uses the
+same approved pose with updated version labels. Its release qualification is
+recorded separately in `evidence/v123`. Physical PSP hardware was not tested.

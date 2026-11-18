@@ -1,3 +1,10 @@
+## 1.2.3 — Shoulder rest (2026-11-18)
+
+- Align right-facing boots with the legs while standing and walking.
+- Replace the passive greatsword carry with a single front hand, a 90-degree elbow and a blade resting on the shoulder at 45 degrees. Let the rear arm hang naturally.
+- Fit the painted blade edge to the shoulder for broad and narrow greatswords; preserve the regular two-handed combat stance and attack poses.
+- Preserve save format 36 and existing expeditions.
+
 ## 1.2.2 — Carry and quarters (2026-11-16)
 
 - Double menu navigation volume; preserve the selection sound.

@@ -1,10 +1,16 @@
 # Dust — PSP frontier survival RPG
 
+## 1.2.3 — Shoulder rest
+
+Right-facing boots align with the legs. Passive greatswords rest on the shoulder at 45 degrees, held by the front hand with a 90-degree elbow; the rear arm hangs naturally. Combat uses the usual two-handed guard and attacks. Existing saves remain compatible.
+
+[1.2.3 release notes](docs/RELEASE_NOTES.md) · [Approved in-game previews](evidence/shoulder-carry-preview/previous-and-revised.png)
+
 ## 1.2.2 — Carry and quarters
 
 Faster combat and medical training, simpler camps, lighter inventory text, weight columns and stolen tags that expire after two in-game days. Greatswords use a shallower shoulder carry with a bent elbow. Barracks have beds; armories, command rooms, factories, archives and refuges have distinct floor layouts and appropriate equipment/supplies. Indoor scenery and navigation are cached. Shared storage is restricted to public depots and owned-home chests.
 
-[Complete 1.2.2 changes](docs/RELEASE_NOTES.md) · [Acceptance record](docs/UPDATE_1_2_2.md)
+[Complete 1.2.2 changes](docs/RELEASE_NOTES_1_2_2.md) · [Acceptance record](docs/UPDATE_1_2_2.md)
 
 ## 1.2.0 — Old-world expeditions
 
@@ -28,7 +34,7 @@ Start > Camp & Home contains camp placement, home furniture and research. Place 
 
 Town work appears in small batches. Ask around for the person hiring, and use the Journal for the current objective and turn-in. Shop and household chests contain owned goods. Residents come and go, chests replenish after a few days, and repeated theft prompts temporary pocket searches.
 
-Fight stance closes to weapon range and repeats at the weapon's cooldown. Analog movement takes priority. Passive stance stows the weapon. Leg injuries can cause a limp or a crawl. Bed rest places the survivor on the mattress, and serious wounds take longer to dress and heal.
+Fight stance closes to weapon range and repeats at the weapon's cooldown. Analog movement takes priority. Passive stance stows other weapons and rests greatswords on the shoulder. Leg injuries can cause a limp or a crawl. Bed rest places the survivor on the mattress, and serious wounds take longer to dress and heal.
 
 All nineteen settlements have their own street plans, amenities and interiors, with painted buildings and furniture tied to local materials and culture. Brass Junction has an armorer and a six-bed inn. Vermilion Keep has a stockade, while Copper Cross uses watch cages. Guests circulate between the inn, streets and homes. Dustward Clan lodges share beds and training access for members. The Compact, Shogunate and Ash Monastery send armies against one another. Captured cities can have guarded labor yards, and nearby residents pass on news of actual raids and victories.
 

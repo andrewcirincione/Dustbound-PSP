@@ -52,6 +52,10 @@ static void reflection(void){
     int cases=0,total=0,maxDiff=0;
     for(int w=0;w<39;w++)for(int variant=0;variant<3;variant++)for(int pose=0;pose<4;pose++){
         Actor a=fresh();a.gear[0]=a.attackWeapon=weapon(w);a.gear[1]=gear_id(32+w%16,1,1);
+        /* Boot registration intentionally differs in the right-facing art.
+           Use bare feet for strict reflection; retain the full anatomy,
+           garment, weapon, and attack-pose comparison. */
+        a.gear[3]=NONE;
         a.attackPhase=pose;a.attackClock=pose==2?1-STRIKE_CONTACT:.4f;
         a.facing=1;a.attackAngle=0;draw(&a,variant);memcpy(reference,canvas,sizeof(reference));
         a.facing=0;a.attackAngle=3.14159265f;draw(&a,variant);
