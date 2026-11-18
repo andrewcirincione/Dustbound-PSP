@@ -24,9 +24,9 @@ def capture(label,armor=3,weapon=109,face=1):
     return Image.open(path).convert('RGB')
 
 def detail(im,scale):
-    return im.crop((205,78,276,154)).resize((71*scale,76*scale),Image.Resampling.NEAREST)
+    return im.crop((205,98,276,154)).resize((71*scale,56*scale),Image.Resampling.NEAREST)
 
-page=Image.new('RGB',(1008,790),BG)
+page=Image.new('RGB',(1008,690),BG)
 text(page,(16,10),'DUST | Revised one-handed shoulder carry',TITLE)
 for col,(label,title) in enumerate([('after','PREVIOUS PREVIEW'),('shoulder-carry','REVISED — 45° shoulder carry')]):
     x=16+col*496
@@ -34,13 +34,13 @@ for col,(label,title) in enumerate([('after','PREVIOUS PREVIEW'),('shoulder-carr
     im=capture(label)
     page.paste(im,(x,70))
     page.paste(detail(im,5),(x+62,360))
-text(page,(16,755),'Actual PPSSPP frames; enlarged details use the original pixels without smoothing.',fill=MUTED)
+text(page,(16,655),'Actual PPSSPP frames; enlarged details use the original pixels without smoothing.',fill=MUTED)
 page.save(OUT/'previous-and-revised.png')
 if '--primary-only' in sys.argv:
     print('Arranged first actual PSP shoulder-carry comparison.')
     raise SystemExit(0)
 
-page=Image.new('RGB',(1008,695),BG)
+page=Image.new('RGB',(1008,575),BG)
 text(page,(16,10),'DUST | Front hand carries; rear arm relaxed',TITLE)
 text(page,(16,43),'Front elbow ≈90° / blade 45° back over the shoulder',fill=ACCENT)
 loadouts=[(0,100,'Cinder Scout / Breaker-Yard Slab'),(3,109,'Quarry Jack / Ceramic Bulwark'),
@@ -49,8 +49,8 @@ for col,(armor,weapon,title) in enumerate(loadouts):
     text(page,(col*252+8,78),title,font=ImageFont.load_default(),fill=ACCENT)
     for row,face in enumerate([1,0]):
         im=detail(capture('shoulder-carry',armor,weapon,face),3)
-        page.paste(im,(col*252+19,103+row*270))
-        text(page,(col*252+8,335+row*270),'Facing right' if face else 'Facing left',fill=MUTED)
-text(page,(16,660),'Unretouched PPSSPP gameplay crops, enlarged 3×. Preview stage; release held.',fill=MUTED)
+        page.paste(im,(col*252+19,103+row*210))
+        text(page,(col*252+8,275+row*210),'Facing right' if face else 'Facing left',fill=MUTED)
+text(page,(16,540),'Unretouched PPSSPP gameplay crops, enlarged 3×. Preview stage; release held.',fill=MUTED)
 page.save(OUT/'both-facings.png')
 print('Arranged revised single-handed shoulder-carry previews from actual PSP frames.')

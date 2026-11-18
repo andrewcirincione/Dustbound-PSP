@@ -42,6 +42,9 @@ The earlier rejected pose's captures remain in
 `47e6f2c208754b1ed553403732351f7d293f1b141eae6ef20ef78b8d3c0fd3aa`.
 The new comparison sheets are in `evidence/shoulder-carry-preview`.
 
+The completed revised capture set contains 24 PSP frames: eight world views,
+eight inventory views and eight walking frames.
+
 Revised preview EBOOT SHA-256:
 `74c20eda14092759b10e0bf58dfbd8368f81aa278601f356afddaaa2ffb23ed5`.
 
