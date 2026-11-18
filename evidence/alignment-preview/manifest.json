@@ -1,0 +1,69 @@
+{
+  "stage": "visual preview pending user review",
+  "baseline_commit": "7479dea2989d5ca7aad8a430e23cbd8edf5a1f43",
+  "preview_source_commit": "3d7c1a542e5f8af556587df95be5a93687ca13b0",
+  "regression_tests_run": false,
+  "release_published": false,
+  "physical_psp_tested": false,
+  "sources": {
+    "src/combat_pose.h": "b325a9951850a621c82f09348ef50961805720341393c47d906cb0b1ca19374a",
+    "src/painted_actor.h": "cd802ce90790dd118df5cbcf314554abc96123a8f090e664aaed6e431174f33d",
+    "tests/preview_alignment.c": "ac6862c72622035aa945c15554a6b477debb63deb5fcce1274c3bd4a75169282",
+    "scripts/preview_alignment_psp.py": "4450e686bfe0a81bc993d947bd9a2765302825ef6fc103795e89023680c2318d"
+  },
+  "captures": {
+    "before": {
+      "count": 16,
+      "eboot_sha256": "a2782c183a2adc9107a1215a2c677d0dd59fe621c38e5e9fb8f4c0bcbfac2a96"
+    },
+    "after": {
+      "count": 24,
+      "eboot_sha256": "47e6f2c208754b1ed553403732351f7d293f1b141eae6ef20ef78b8d3c0fd3aa"
+    }
+  },
+  "images": {
+    "after/alignment-set-00-weapon-100-face-0-pack.png": "017c7040df5e2521bb073df8457b0a34dac0ab9a3a2889dfacd807e283c51458",
+    "after/alignment-set-00-weapon-100-face-0-world.png": "e4c9a3a5b34c5d0a1bbd8753269fbdffaca9a2e6d4f091024bf025a94a2d0aa1",
+    "after/alignment-set-00-weapon-100-face-1-pack.png": "017c7040df5e2521bb073df8457b0a34dac0ab9a3a2889dfacd807e283c51458",
+    "after/alignment-set-00-weapon-100-face-1-world.png": "bbd0aa78e35c9452d7a0dcdad3aa1e41b1b91b0fc3841b57001974266db47836",
+    "after/alignment-set-03-weapon-109-face-0-pack.png": "354efe3bb408814a7af008c73fc900f0c395c462f3b95b69e174e840da001d84",
+    "after/alignment-set-03-weapon-109-face-0-world.png": "fa34ddf359707b8b16d2c5b6c8f1d3a64c7f51f88f8ac6e35df0e9088482d71d",
+    "after/alignment-set-03-weapon-109-face-1-pack.png": "354efe3bb408814a7af008c73fc900f0c395c462f3b95b69e174e840da001d84",
+    "after/alignment-set-03-weapon-109-face-1-world.png": "5b4faee88f799f22f950809a8f5d0fb5e10102cf6c004146adb279b7efe4444f",
+    "after/alignment-set-09-weapon-119-face-0-pack.png": "321279e770742d4b29880edd7494078c456e2a094ac582c8cae2caf56637ae07",
+    "after/alignment-set-09-weapon-119-face-0-world.png": "ca3cdec2933f18397fc637a89c8e0a8faeceee67615cb67c61933b0b71d58061",
+    "after/alignment-set-09-weapon-119-face-1-pack.png": "321279e770742d4b29880edd7494078c456e2a094ac582c8cae2caf56637ae07",
+    "after/alignment-set-09-weapon-119-face-1-world.png": "879fac4ca2fff298d7e568ec49b3323e1a3dfaae919ba392062d360a73ba0f01",
+    "after/alignment-set-26-weapon-032-face-0-pack.png": "d9f47fc6e32ded682e6804710e8a6178844ee430fb1cb1ab8da598aff3315548",
+    "after/alignment-set-26-weapon-032-face-0-world.png": "51992902b30503906122f91ebc011b69589dda9c11857a6fd053e1a8c8048c78",
+    "after/alignment-set-26-weapon-032-face-1-pack.png": "d9f47fc6e32ded682e6804710e8a6178844ee430fb1cb1ab8da598aff3315548",
+    "after/alignment-set-26-weapon-032-face-1-world.png": "48d7d427ca799a87465f97fe93b6d8487c97f3276a2276e7af46ccf2373f602d",
+    "after/walking-face-0-0.png": "328ac23476ed9cc42a06af8edabfb2c07cde23756be7150765743fd7c2d936b0",
+    "after/walking-face-0-1.png": "42144244ed79475f1cb7c86bf2df14710c49fa3abe20e13a43e6949c93cdffa7",
+    "after/walking-face-0-2.png": "566eeb47da47831bf2ec4ce577d31641c97879bc6b70493a1dee11cddef25313",
+    "after/walking-face-0-3.png": "3d7031f0d8bece398f364322c508ef64e2f2d8ef9a55b7c1d0f48dc86c030e93",
+    "after/walking-face-1-0.png": "5294528229e3862a37ce4362421f48e9415f9f876908c1086f5a1453c21266a1",
+    "after/walking-face-1-1.png": "c12ad1499f228ad0d6496796afdf4223c4f062ec3e938d233054a9a1e4dc2b46",
+    "after/walking-face-1-2.png": "4f2b8ed8ed986350bb5f4fe3d4329771b1f2fe1bb00444de7f42f471f0a5462d",
+    "after/walking-face-1-3.png": "caabc0b2b0d4eefeac62471bf63cc463934cd21c6ada6cba1e4e1bf4f0099677",
+    "before/alignment-set-00-weapon-100-face-0-pack.png": "5dcfcb53123187ef4fe5446f6d64cb909701c6695977319206873ad1d1fde007",
+    "before/alignment-set-00-weapon-100-face-0-world.png": "0fb95f0a1f91215a99e7c94dacb0f73bdde19a0ddab904514b780978123a5ce8",
+    "before/alignment-set-00-weapon-100-face-1-pack.png": "5dcfcb53123187ef4fe5446f6d64cb909701c6695977319206873ad1d1fde007",
+    "before/alignment-set-00-weapon-100-face-1-world.png": "56ca4d1853e5bed8247d9dc0976588dee9efc0331f91607d118a9d488378efd5",
+    "before/alignment-set-03-weapon-109-face-0-pack.png": "b6dabaa51829e55efeffe6a43682a92b1c203eba73d79269d389c605d4b0d5ea",
+    "before/alignment-set-03-weapon-109-face-0-world.png": "dabb8613c9e855eb9ac8b879ef3e12b4dc2a4637c005dc88bd534c4c94a7cfa4",
+    "before/alignment-set-03-weapon-109-face-1-pack.png": "b6dabaa51829e55efeffe6a43682a92b1c203eba73d79269d389c605d4b0d5ea",
+    "before/alignment-set-03-weapon-109-face-1-world.png": "5002ff29c04a2f8ffc805056f7cc7242ace7916752c231b2b802770e439510de",
+    "before/alignment-set-09-weapon-119-face-0-pack.png": "609aafeeb056fc4f33f9878b9809f017f91cfec972b3a0df1c04e2c8837ae2d6",
+    "before/alignment-set-09-weapon-119-face-0-world.png": "05962cc1d2af2efeccdaabbcc6b71d1e3ab5823fd37b675401e955c8cbfcfa9d",
+    "before/alignment-set-09-weapon-119-face-1-pack.png": "609aafeeb056fc4f33f9878b9809f017f91cfec972b3a0df1c04e2c8837ae2d6",
+    "before/alignment-set-09-weapon-119-face-1-world.png": "7fda2efd3e3c09d36069d8905cf6464d966a150eaf1b020db67d9f82b8230ce7",
+    "before/alignment-set-26-weapon-032-face-0-pack.png": "3cae183e93030149decf1c5338657a89323b469de15079f7e194c6e2f1b1376e",
+    "before/alignment-set-26-weapon-032-face-0-world.png": "e9e8af1ef8094bff92b1779c2285976eeab9d117f22cf4289eff772c80e5c767",
+    "before/alignment-set-26-weapon-032-face-1-pack.png": "3cae183e93030149decf1c5338657a89323b469de15079f7e194c6e2f1b1376e",
+    "before/alignment-set-26-weapon-032-face-1-world.png": "d120805e81fd6dd0fedbbf11ec2bd1a2be4b06b448fd644ed2dc33d0a556418e",
+    "before-after-right.png": "cf9655d3ef4653ee5eb732535ab5594eff51be25a710e8ce53feec74853aa4a2",
+    "boots-before-after.png": "42e105cd3172e6c24e6087ee9891958b11afa205297db10433f883dcd0d22a7b",
+    "both-facings.png": "ec7d06cba36503ca64a78c2dd2d176d030deef1ce54f41b71968d59d98b07dcd"
+  }
+}
