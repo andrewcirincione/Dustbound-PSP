@@ -1147,8 +1147,11 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         part(mech ? 77 : id,kneeX,kneeAbsY-.35f*sc,
              x + foot * sc, y + (ankle - 2) * sc, 3.15f * sc, limbTint,
              li, itemDefs[legs].quality, face < 0, mech ? 0 : .48f, 1);
-        part(mech ? 87 : bootArt, x + foot * sc, y + (ankle - 5) * sc,
-             x + (foot + face * .6f) * sc, y + (ankle - .2f) * sc, 5.4f * sc,
+        /* The painted right-facing cuff sits just left of the part centre.
+           Follow the solved ankle with the whole boot, including during steps. */
+        float bootX=foot+(boots&&!mech&&face>0?.7f:0);
+        part(mech ? 87 : bootArt, x + bootX * sc, y + (ankle - 5) * sc,
+             x + (bootX + face * .6f) * sc, y + (ankle - .2f) * sc, 5.4f * sc,
              boots ? itemDefs[boots].color : skin, li, itemDefs[boots].quality, boot_flip(boots,face), 0, 1);
     }
     /* Pants and the hip band occlude the far arm. The hip band samples solid
