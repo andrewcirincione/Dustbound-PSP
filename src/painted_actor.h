@@ -256,6 +256,41 @@ static float weapon_center(int item,float along){
     float blend=weapon_design_blend(a),center=total?weighted/total-w->gripX:0;
     return center*w->scale*w->edgeSide*(1+(d.width-1)*blend)+d.sweep*blend*blend;
 }
+/* The lower painted edge rests on the shoulder, rather than the grip axis
+   cutting through it. Read the bearing row so broad and narrow blades fit. */
+static float shoulder_blade_edge(int item,float along){
+    const ArtSprite *s=actor_sprite(weapon_art_id(item));
+    const WeaponArt *w=weapon_art_for_item(item);
+    WeaponDesign d=weapon_design(item);
+    float a=weapon_design_unalong(along,weapon_design_anchor(item),d);
+    int row=(int)(w->gripY-a/w->scale);
+    row=row<0?0:row>=s->h?s->h-1:row;
+    int lo=s->rows[row*3+1],hi=s->rows[row*3+2],found=0;
+    float lower=0,blend=weapon_design_blend(a);
+    for(int i=lo;i<hi;i++){
+        unsigned alpha=s->palette[s->pixels[s->rows[row*3]+i-lo]]>>24;
+        if(alpha<128)continue;
+        float across=(i+.5f-w->gripX)*w->scale*w->edgeSide;
+        across=across*(1+(d.width-1)*blend)+d.sweep*blend*blend;
+        if(!found||across<lower)lower=across;
+        found=1;
+    }
+    return found?lower:-1;
+}
+static WeaponGrip shoulder_carry_grip(int item,const float shoulder[2],int face,int sc){
+    const float root2=1.41421356f,bone=actorArmLength;
+    float bias=0,station=root2*bone;
+    for(int i=0;i<2;i++){
+        bias=fminf(bone*1.4f,root2*fmaxf(.7f,.7f-shoulder_blade_edge(item,station)));
+        station=sqrtf(fmaxf(0,2*bone*bone-bias*bias*.5f));
+    }
+    /* The wrist is sqrt(2)*bone from the socket: equal upper/forearm lengths
+       therefore make a right angle. Bias lifts the blade's edge onto the cap. */
+    float sum=sqrtf(fmaxf(0,4*bone*bone-bias*bias));
+    float forward=(sum+bias)*.5f,down=(sum-bias)*.5f;
+    float angle=face>0?-2.35619449f:-.78539816f;
+    return weapon_grip(shoulder[0]+face*forward*sc,shoulder[1]+down*sc,angle,sc);
+}
 /* Small forged fittings share the same rigid handle-to-tip axis as the paint. */
 static void weapon_fitting(int item,float x,float y,int sc,float angle,int face,float li,float tip){
     WeaponDesign d=weapon_design(item);int p=d.pattern;float ca=cosf(angle),sa=sinf(angle);
@@ -1040,6 +1075,10 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
         int side=i==nearArm?0:1;
         shoulders[i][0]=bodySockets[side][0];shoulders[i][1]=bodySockets[side][1];
     }
+    int frontGreatsword=weapon&&gear_family(weapon)==84;
+    int carryArm=limb_missing(a,LARM+nearArm)?farArm:nearArm;
+    float carryBlend=frontGreatsword&&!mining&&!a->attackPhase&&block<=0&&arms
+        ?1-pose_ease(blend):0;
     float support=weapon_support_distance(weapon),supportAcross=arsenal_support_across(weapon)*face;
     if(weapon_style(weapon)==WS_BOW){
         /* Raise the bow along its aim from the shoulder. The old fixed-height
@@ -1092,13 +1131,25 @@ static void actor_painted_stance(Actor *a, int x, int y, int sc, float li, float
             wrists[i][1] = grip.y + grip.uy * along + (i!=primary?grip.ux*supportAcross:0);
         }
     }
+    if(carryBlend>0){
+        WeaponGrip carry=shoulder_carry_grip(weapon,shoulders[carryArm],face,sc);
+        for(int i=0;i<2;i++){
+            float swing=-feet[i].stride*walk;
+            float hx=i==carryArm?carry.x:shoulders[i][0]+((i?1:-1)*.35f+swing*walkX*1.35f)*sc;
+            float hy=i==carryArm?carry.y:shoulders[i][1]+(actorArmHang+swing*walkY*.55f)*sc;
+            wrists[i][0]+=(hx-wrists[i][0])*carryBlend;
+            wrists[i][1]+=(hy-wrists[i][1])*carryBlend;
+        }
+        grip.x+=(carry.x-grip.x)*carryBlend;
+        grip.y+=(carry.y-grip.y)*carryBlend;
+        if(carryBlend>.999f){primary=carryArm;twoHands=0;}
+    }
     int farReaching = !relaxed && (!weapon || twoHands || primary == farArm);
     int nearReaching = !relaxed && (!weapon || twoHands || primary == nearArm);
     painted_arm(a,farArm,shoulders[farArm],wrists[farArm],sc,face,race,skin,cloth,li,
                 !weapon&&!relaxed,!farReaching,ARM_BOTH);
     /* A greatsword held at the shoulder crosses the visible body plane.
        Stage it after the head/torso, beneath the leading arm, in both views. */
-    int frontGreatsword=weapon&&gear_family(weapon)==84;
     int restingGreatsword=frontGreatsword&&!a->attackPhase&&blend<.01f&&block<=0;
     int farWeapon=weapon&&arms&&primary==farArm&&!frontGreatsword;
     if(farWeapon)weapon_sprite(weapon,grip.x,grip.y,sc,angle,face,li);

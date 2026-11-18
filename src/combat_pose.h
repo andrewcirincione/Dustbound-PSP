@@ -110,9 +110,9 @@ static inline const CombatProfile *combat_profile(int weapon) {
 }
 static inline CombatPose combat_idle(int weapon) {
     CombatPose idle = combat_profile(weapon)->idle;
-    /* Keep the shallow carry angle, but lift the grip so the blade rests above
-       the shoulder cap. The elbow bends instead of tilting steel into the face. */
-    if(gear_family(weapon)==84){idle.blade=-2.80f;idle.handX=6.0f;idle.handY=-23.2f;}
+    /* The passive greatsword slopes 45 degrees back over the near shoulder.
+       The renderer anchors its one-handed carry to that shoulder's socket. */
+    if(gear_family(weapon)==84){idle.blade=-2.35619449f;idle.handX=3.0f;idle.handY=-17.0f;}
     return idle;
 }
 static inline CombatPose combat_pose(int weapon, int phase, float p, int variant) {

@@ -54,7 +54,7 @@ Enable = False
             name=f'alignment-set-{armor:02d}-weapon-{weapon:03d}-face-{face}'
             steps += [{'load':name},{'wait':4},{'capture':name+'-world'},
                       {'key':'triangle'},{'capture':name+'-pack'},{'key':'circle'}]
-    if label=='after':
+    if label in ('after','shoulder-carry'):
         for face in [1,0]:
             name=f'alignment-set-03-weapon-109-face-{face}'
             steps += [{'load':name}]
